@@ -1,0 +1,4 @@
+native\unity_bridge\tests\BattleLaunchRaceFixture.cs(198,13): error CS0012: 类型“System.Xml.Serialization.IXmlSerializable”在未被引用的程序集中定义。必须添加对程序集“System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089”的引用。
+c:\Users\yu\AppData\Local\JiangShen\pc\js_Data\Managed\protobuf-net.dll: (与前一个错误相关的符号位置)
+native\unity_bridge\tests\BattleLaunchRaceFixture.cs(242,58): error CS0012: 类型“System.Xml.XmlWriter”在未被引用的程序集中定义。必须添加对程序集“System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089”的引用。
+c:\Users\yu\AppData\Local\JiangShen\pc\js_Data\Managed\protobuf-net.dll: (与前一个错误相关的符号位置)

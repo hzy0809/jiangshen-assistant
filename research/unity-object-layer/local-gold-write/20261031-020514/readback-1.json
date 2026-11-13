@@ -1,0 +1,74 @@
+{
+  "status": "PASS",
+  "pid": 12844,
+  "process_creation_filetime": 134378531591407015,
+  "observed_at_utc": "2026-10-30T18:05:14.610841+00:00",
+  "completed_at_utc": "2026-10-30T18:05:14.610841+00:00",
+  "domain": {
+    "id": 0,
+    "pointer": "0x3354e70"
+  },
+  "global_class_initialized": true,
+  "global_init_flags": "0x2",
+  "character_object": "0x22b07000",
+  "fields": {
+    "character_": {
+      "name": "character_",
+      "descriptor": "0x114e4cc0",
+      "type_pointer": "0x114e53b8",
+      "type_data": 289109744,
+      "offset": 140,
+      "type_enum": 18,
+      "flags": 22,
+      "declared_ordinal": 41,
+      "offline_field_token": "0x4000957",
+      "offline_signature": "06-12-81-C4"
+    },
+    "level": {
+      "name": "level",
+      "descriptor": "0x115fae78",
+      "type_pointer": "0x1146e5c0",
+      "type_data": 0,
+      "offset": 72,
+      "type_enum": 6,
+      "flags": 6,
+      "declared_ordinal": 14,
+      "offline_field_token": "0x4000204",
+      "offline_signature": "06-06"
+    },
+    "stamina": {
+      "name": "stamina",
+      "descriptor": "0x115faeb8",
+      "type_pointer": "0x1146e5e0",
+      "type_data": 0,
+      "offset": 80,
+      "type_enum": 6,
+      "flags": 6,
+      "declared_ordinal": 18,
+      "offline_field_token": "0x4000208",
+      "offline_signature": "06-06"
+    },
+    "gold": {
+      "name": "gold",
+      "descriptor": "0x115faed8",
+      "type_pointer": "0x1146e5f0",
+      "type_data": 0,
+      "offset": 84,
+      "type_enum": 8,
+      "flags": 6,
+      "declared_ordinal": 20,
+      "offline_field_token": "0x400020a",
+      "offline_signature": "06-08"
+    }
+  },
+  "values": {
+    "level": 86,
+    "stamina": 20,
+    "gold": 20000
+  },
+  "scalar_stage_read_calls": 73,
+  "scalar_stage_requested_bytes": 587,
+  "type_stage_read_calls": 60,
+  "assembly_stage_read_calls": 376,
+  "limitation": "External bounded reads are not an atomic game-thread snapshot; identity and domain remained consistent during observed reads"
+}

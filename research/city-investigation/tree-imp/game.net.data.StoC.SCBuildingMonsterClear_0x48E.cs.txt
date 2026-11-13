@@ -1,0 +1,79 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCBuildingMonsterClear_0x48E")]
+public class SCBuildingMonsterClear_0x48E : IExtensible
+{
+	private uint _result;
+
+	private uint _id;
+
+	private uint _next_monster_time = 0u;
+
+	private Treasures _bonuses = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "next_monster_time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint next_monster_time
+	{
+		get
+		{
+			return _next_monster_time;
+		}
+		set
+		{
+			_next_monster_time = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "bonuses", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public Treasures bonuses
+	{
+		get
+		{
+			return _bonuses;
+		}
+		set
+		{
+			_bonuses = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

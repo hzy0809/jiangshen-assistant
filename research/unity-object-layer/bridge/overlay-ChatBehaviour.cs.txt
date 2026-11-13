@@ -1,0 +1,1321 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class ChatBehaviour : BaseUI
+{
+	private class ChatSingleMsg
+	{
+		public uint type;
+
+		public string msg;
+
+		public float addTime;
+
+		public string sender;
+
+		public ScenarioSection section;
+
+		public ChatSingleMsg(uint channel, string _msg, string _sender, uint achievement, uint sid)
+		{
+			type = channel;
+			_chat_channel chat_channel = Global.getTemplate("chat_channel", channel) as _chat_channel;
+			if (chat_channel != null)
+			{
+				if (__BaseUI._isunity3_5)
+				{
+					msg = chat_channel.style_u35 + "［" + chat_channel.desc + "］";
+				}
+				else
+				{
+					msg = chat_channel.style_u4 + "【" + chat_channel.desc + "】";
+				}
+			}
+			sender = _sender;
+			if (sender != null)
+			{
+				if (achievement != 0 && Global.getTemplate("achievement", (ushort)achievement) is _achievement achievement2)
+				{
+					string text = msg;
+					msg = text + __BaseUI.clrQualityString(achievement2.color) + achievement2.name + "·" + ((!__BaseUI._isunity3_5) ? chat_channel.style_u4 : chat_channel.style_u35);
+				}
+				if (channel != 6 && channel != 7)
+				{
+					string text = msg;
+					msg = text + "#usrnm=" + sid + ":\"" + sender + "\"";
+				}
+				else
+				{
+					msg += sender;
+				}
+			}
+			msg += "：#i=0";
+			msg += _msg;
+			addTime = Time.realtimeSinceStartup;
+		}
+
+		public void make(int w, GUIStyle style)
+		{
+			section = new ScenarioSection();
+			section.setParams(w, 500, __BaseUI._fontSize, 8, !__BaseUI._isunity3_5);
+			section.makes_string(msg, style, bSystem: true);
+		}
+
+		public static int Compare(ChatSingleMsg x, ChatSingleMsg y)
+		{
+			int result = 1;
+			if (x != null && x is ChatSingleMsg && y != null && y is ChatSingleMsg)
+			{
+				result = x.addTime.CompareTo(y.addTime);
+			}
+			return result;
+		}
+	}
+
+	private enum CHANNEL_STATUS
+	{
+		NORMAL,
+		NATION,
+		TEAMFIGHT
+	}
+
+	private const short nation_war_level_limit = 40;
+
+	private const int m_text_limit = 50;
+
+	private static MessengerUI messenger = null;
+
+	private static InspectUI inspect_ui = null;
+
+	private static DuelSelectUI duel_select_ui = null;
+
+	private static NationUI nation_ui = null;
+
+	private EmoteContainer emote_container;
+
+	private Vector2 emote_box_size = Vector2.zero;
+
+	private Vector2 emote_size = Vector2.zero;
+
+	private bool forbid_speech;
+
+	private string forbid_speech_key = "forbid_speech";
+
+	private static ChatBehaviour instance = null;
+
+	private CraftUI craft_ui;
+
+	private LadderUI ladder_ui;
+
+	private static int nationwar_broadcast_cost = 5;
+
+	private static int teamfight_broadcast_cost = 5;
+
+	private static Vector2 chat_whole_size = new Vector2(362f, 230f);
+
+	private static Vector2 bottom_left = new Vector2(0f, 0f);
+
+	private int enableChannelNum = 4;
+
+	private static TooltipDraw s_tooltipdraw = null;
+
+	private static string player_clicked = null;
+
+	private static Vector2 chat_popup_lowerleft;
+
+	public bool rect_dirty = true;
+
+	private string m_user_input = string.Empty;
+
+	private bool m_showChat;
+
+	private Dictionary<bool, GUIStyle> m_chat_button;
+
+	private Rect m_text_area_rect = __BaseUI._rect(0f, 0f, 0f, 0f);
+
+	private List<ChatSingleMsg> m_chat_msg = new List<ChatSingleMsg>();
+
+	private Dictionary<uint, List<ChatSingleMsg>> channel_buffer_msg = new Dictionary<uint, List<ChatSingleMsg>>();
+
+	private GUIStyle[] styleChannelList = new GUIStyle[4]
+	{
+		new GUIStyle(),
+		new GUIStyle(),
+		new GUIStyle(),
+		new GUIStyle()
+	};
+
+	private GUIStyle styleToggleFilter = new GUIStyle();
+
+	private Dictionary<uint, Texture2D[]> channel_name_tex = new Dictionary<uint, Texture2D[]>();
+
+	private GUIStyle channel_name_style = new GUIStyle();
+
+	private bool[] selectedFilter = new bool[4] { true, true, true, true };
+
+	private uint[] channel_index = new uint[4] { 3u, 2u, 6u, 1u };
+
+	private CHANNEL_STATUS channel_status;
+
+	private Vector2 m_scroll_pos;
+
+	private Vector2 m_bottom_scroll_pos;
+
+	private bool m_reset_chat_scroll;
+
+	private Rect m_listRect = __BaseUI._rect(0f, 0f, 280f, 0f);
+
+	private GUIStyle styleBtnChannel = new GUIStyle();
+
+	private GUIStyle styleBtnEmote = new GUIStyle();
+
+	private _ButtonStyle btnShowChatBox = new _ButtonStyle();
+
+	private _ButtonStyle btnHideChatBox = new _ButtonStyle();
+
+	private _ButtonStyle btnSend = new _ButtonStyle();
+
+	private _ButtonStyle btnluntan = new _ButtonStyle();
+
+	private GUIStyle input_style = new GUIStyle();
+
+	private GUIStyle output_style = new GUIStyle();
+
+	private int current_send_channel;
+
+	private uint[] send_channel_id = new uint[4] { 3u, 2u, 6u, 7u };
+
+	private Texture2D[] send_channel_tex = new Texture2D[4];
+
+	private GUIStyle dummyStyle = new GUIStyle();
+
+	private GUIStyle styleInputBG = new GUIStyle();
+
+	private GUIStyle styleChatBG = new GUIStyle();
+
+	private GUIStyle styleChannelDropbox = new GUIStyle();
+
+	private GUIStyle styleEmoteSelect = new GUIStyle();
+
+	private static _ButtonStyle[] context_btn = new _ButtonStyle[6]
+	{
+		new _ButtonStyle(),
+		new _ButtonStyle(),
+		new _ButtonStyle(),
+		new _ButtonStyle(),
+		new _ButtonStyle(),
+		new _ButtonStyle()
+	};
+
+	private float send_cooldown = -1f;
+
+	private string last_chat_message = string.Empty;
+
+	private bool show_channel_list;
+
+	private bool show_emote_box;
+
+	public static void InitNationWarBroadcastCost()
+	{
+		_buy_template buyTemplate = Global.getBuyTemplate(_buy_template.TYPE.NATIONWAR_BROADCAST, 1);
+		if (buyTemplate != null)
+		{
+			nationwar_broadcast_cost = buyTemplate.gold;
+			teamfight_broadcast_cost = nationwar_broadcast_cost;
+		}
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+		forbid_speech = PlayerPrefs.GetInt(forbid_speech_key, 0) > 0;
+		messenger = GetComponent<MessengerUI>();
+		inspect_ui = GetComponent<InspectUI>();
+		duel_select_ui = GetComponent<DuelSelectUI>();
+		emote_container = EmoteContainer.Instance;
+		if (emote_container != null)
+		{
+			emote_size.x = 0f;
+			emote_size.y = 0f;
+			for (int i = 0; i < emote_container.emotes.Length; i++)
+			{
+				Vector2 size = emote_container.emotes[i].size;
+				if (size.x > emote_size.x)
+				{
+					emote_size.x = size.x;
+				}
+				if (size.y > emote_size.y)
+				{
+					emote_size.y = size.y;
+				}
+			}
+			emote_box_size.x = emote_size.x * 6f;
+			emote_box_size.y = emote_size.y * 4f;
+		}
+		m_text_area_rect = __BaseUI._rect(27f, 10f, chat_whole_size.x - 27f - 10f, chat_whole_size.y - 63f - 10f);
+		m_text_area_rect.x = (int)m_text_area_rect.x;
+		m_text_area_rect.y = (int)m_text_area_rect.y;
+		m_listRect.width = m_text_area_rect.width;
+		instance = this;
+		craft_ui = GameObject.Find("/Craft/CraftUI").GetComponent<CraftUI>();
+		nation_ui = GameObject.Find("/Nation/NationUI").GetComponent<NationUI>();
+		ladder_ui = GameObject.Find("/Ladder/LadderUI").GetComponent<LadderUI>();
+		ScenarioSection.delegate_ClickFuncs[1] = PlayerClick;
+		ScenarioSection.delegate_ClickFuncs[2] = EquipClick;
+		ScenarioSection.delegate_ClickFuncs[3] = GeneralClick;
+		ScenarioSection.delegate_ClickFuncs[4] = ArtifactClick;
+		ScenarioSection.delegate_ClickFuncs[5] = SealDevilClick;
+		ScenarioSection.delegate_ClickFuncs[6] = SkillClick;
+		ScenarioSection.delegate_ClickFuncs[7] = GuildTreeClick;
+		ScenarioSection.delegate_ClickFuncs[8] = BattleReportClick;
+		ScenarioSection.delegate_ClickFuncs[9] = NationCityClick;
+		ScenarioSection.delegate_ClickFuncs[10] = NationSummonClick;
+		ScenarioSection.delegate_ClickFuncs[11] = GuildInviteClick;
+	}
+
+	public void SubLoading()
+	{
+		AddAsset("ui_chat");
+		AddAsset("ui_messenger");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		m_bInit = true;
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_chat");
+		styleBtnChannel.normal.background = asset.Load("button_liaotian_pindao_normal") as Texture2D;
+		styleBtnChannel.hover.background = asset.Load("button_liaotian_pindao_hover") as Texture2D;
+		styleBtnChannel.active.background = asset.Load("button_liaotian_pindao_down") as Texture2D;
+		styleBtnChannel.onHover.background = asset.Load("button_liaotian_pindao_down") as Texture2D;
+		styleBtnChannel.onActive.background = asset.Load("button_liaotian_pindao_down") as Texture2D;
+		styleBtnChannel.onNormal.background = asset.Load("button_liaotian_pindao_down") as Texture2D;
+		styleBtnChannel.alignment = TextAnchor.MiddleCenter;
+		styleBtnEmote.normal.background = asset.Load("button_biaoqing_normal") as Texture2D;
+		styleBtnEmote.hover.background = asset.Load("button_biaoqing_hover") as Texture2D;
+		styleBtnEmote.active.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onHover.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onActive.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onNormal.background = asset.Load("button_biaoqing_down") as Texture2D;
+		btnShowChatBox.make(asset, "button_liaotian_zhankai");
+		btnHideChatBox.make(asset, "button_liaotian_shouqi");
+		btnSend.make(asset, "button_liaotian_fasong");
+		btnluntan.make(asset, "button_luntan");
+		styleInputBG.normal.background = asset.Load("ui_liaotian_bar") as Texture2D;
+		styleInputBG.border = new RectOffset(7, 7, 7, 7);
+		send_channel_tex[0] = asset.Load("button_shijie_hover") as Texture2D;
+		send_channel_tex[1] = asset.Load("button_tongmeng_hover") as Texture2D;
+		send_channel_tex[2] = asset.Load("button_guozhan_hover") as Texture2D;
+		send_channel_tex[3] = asset.Load("button_laba_hover") as Texture2D;
+		styleChatBG.normal.background = asset.Load("ui_liaotian_di") as Texture2D;
+		styleChatBG.border = new RectOffset(10, 10, 10, 10);
+		styleChannelDropbox.normal.background = asset.Load("ui_liaotian_di02") as Texture2D;
+		styleChannelDropbox.border = new RectOffset(10, 10, 10, 0);
+		styleChannelList[0].normal.background = asset.Load("button_shijie_normal") as Texture2D;
+		styleChannelList[0].hover.background = asset.Load("button_shijie_hover") as Texture2D;
+		styleChannelList[0].active.background = asset.Load("button_shijie_hover") as Texture2D;
+		styleChannelList[1].normal.background = asset.Load("button_tongmeng_normal") as Texture2D;
+		styleChannelList[1].hover.background = asset.Load("button_tongmeng_hover") as Texture2D;
+		styleChannelList[1].active.background = asset.Load("button_tongmeng_hover") as Texture2D;
+		styleChannelList[2].normal.background = asset.Load("button_guozhan_normal") as Texture2D;
+		styleChannelList[2].hover.background = asset.Load("button_guozhan_hover") as Texture2D;
+		styleChannelList[2].active.background = asset.Load("button_guozhan_hover") as Texture2D;
+		styleChannelList[3].normal.background = asset.Load("button_laba_normal") as Texture2D;
+		styleChannelList[3].hover.background = asset.Load("button_laba_hover") as Texture2D;
+		styleChannelList[3].active.background = asset.Load("button_laba_hover") as Texture2D;
+		styleEmoteSelect.hover.background = asset.Load("ui_biaoqing_kuang") as Texture2D;
+		styleEmoteSelect.active.background = asset.Load("ui_biaoqing_kuang") as Texture2D;
+		styleEmoteSelect.border = new RectOffset(1, 1, 1, 1);
+		input_style.alignment = TextAnchor.MiddleLeft;
+		input_style.normal.textColor = Color.white;
+		input_style.wordWrap = false;
+		input_style.clipping = TextClipping.Clip;
+		output_style.alignment = TextAnchor.MiddleLeft;
+		output_style.normal.textColor = Color.white;
+		output_style.wordWrap = false;
+		output_style.font = __BaseUI.GetFontCache().ChineseFont;
+		AnnounceBehaviour component = GetComponent<AnnounceBehaviour>();
+		if (component != null)
+		{
+			component.Visible();
+			component.SetBg(asset.Load("ui_gongdong") as Texture2D);
+		}
+		styleToggleFilter.normal.background = asset.Load("button_gongyong_normal") as Texture2D;
+		styleToggleFilter.hover.background = asset.Load("button_gongyong_hover") as Texture2D;
+		styleToggleFilter.active.background = asset.Load("button_gongyong_down") as Texture2D;
+		styleToggleFilter.onHover.background = asset.Load("button_gongyong_down") as Texture2D;
+		styleToggleFilter.onNormal.background = asset.Load("button_gongyong_down") as Texture2D;
+		styleToggleFilter.onActive.background = asset.Load("button_gongyong_down") as Texture2D;
+		styleToggleFilter.border = new RectOffset(20, 11, 0, 0);
+		channel_name_style.padding = new RectOffset(20, 10, 0, 0);
+		channel_name_style.alignment = TextAnchor.MiddleCenter;
+		channel_name_tex[1u] = new Texture2D[2];
+		channel_name_tex[2u] = new Texture2D[2];
+		channel_name_tex[3u] = new Texture2D[2];
+		channel_name_tex[6u] = new Texture2D[2];
+		channel_name_tex[8u] = new Texture2D[2];
+		channel_name_tex[1u][0] = asset.Load("ui_zi_xt1") as Texture2D;
+		channel_name_tex[1u][1] = asset.Load("ui_zi_xt2") as Texture2D;
+		channel_name_tex[2u][0] = asset.Load("ui_zi_tm1") as Texture2D;
+		channel_name_tex[2u][1] = asset.Load("ui_zi_tm2") as Texture2D;
+		channel_name_tex[3u][0] = asset.Load("ui_zi_sj1") as Texture2D;
+		channel_name_tex[3u][1] = asset.Load("ui_zi_sj2") as Texture2D;
+		channel_name_tex[6u][0] = asset.Load("ui_zi_gz1") as Texture2D;
+		channel_name_tex[6u][1] = asset.Load("ui_zi_gz2") as Texture2D;
+		channel_name_tex[8u][0] = asset.Load("ui_zi_zc1") as Texture2D;
+		channel_name_tex[8u][1] = asset.Load("ui_zi_zc2") as Texture2D;
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_messenger");
+		context_btn[0].make(asset2, "button_chakan");
+		context_btn[1].make(asset2, "button_guanzhu");
+		context_btn[2].make(asset2, "button_siliao");
+		context_btn[3].make(asset2, "button_pingbi");
+		context_btn[4].make(asset2, "button_songhua");
+		context_btn[5].make(asset2, "button_qiecuo");
+		Enable();
+		Visible();
+		if (GetComponent<AnnounceBehaviour>() != null)
+		{
+			GetComponent<AnnounceBehaviour>().Enable();
+			GetComponent<AnnounceBehaviour>().Visible();
+		}
+	}
+
+	private void Update()
+	{
+		recalcChatSize();
+		checkChannelStatus();
+		send_cooldown -= Time.deltaTime;
+	}
+
+	public static bool isMouseInChatBox()
+	{
+		if (!instance || !instance.m_showChat)
+		{
+			return false;
+		}
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		return new Rect(bottom_left.x * __BaseUI._screenScale, (float)Screen.height - (chat_whole_size.y + bottom_left.y) * __BaseUI._screenScale, chat_whole_size.x * __BaseUI._screenScale, chat_whole_size.y * __BaseUI._screenScale).Contains(mousePosition);
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (BuildingBuildUI.m_bBuildVisible || !m_bInit)
+		{
+			return;
+		}
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		if ((craft_ui != null && craft_ui.enabled && craft_ui.gameObject.active) || (ladder_ui != null && ladder_ui.enabled && ladder_ui.gameObject.active))
+		{
+			bottom_left.x = ((float)Screen.width - chat_whole_size.x) / 2f * __BaseUI._screenScale;
+			bottom_left.y = 70f * __BaseUI._screenScale;
+		}
+		else
+		{
+			bottom_left.x = 60f;
+			bottom_left.y = 0f;
+		}
+		__BaseUI.BeginGroup(__BaseUI._rectB(bottom_left.x, chat_whole_size.y + bottom_left.y, chat_whole_size.x, chat_whole_size.y));
+		if (m_showChat)
+		{
+			GUI.Box(__BaseUI._rect(0f, 0f, chat_whole_size.x, chat_whole_size.y), string.Empty, styleChatBG);
+		}
+		GUI.Box(__BaseUI._rectB(10f, 38f, chat_whole_size.x - 20f - 60f - 5f, 27f), string.Empty, styleInputBG);
+		bool flag = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+		GUI.SetNextControlName("chat input");
+		m_user_input = GUI.TextField(__BaseUI._rectB(60f, 32f, chat_whole_size.x - 10f - 60f - 60f - 30f - 5f, 16f), m_user_input, 50, input_style);
+		m_user_input = m_user_input.Replace("\r", string.Empty);
+		m_user_input = m_user_input.Replace("\n", string.Empty);
+		m_user_input = m_user_input.Replace("\t", string.Empty);
+		if (GUI.GetNameOfFocusedControl() == "chat input" && flag)
+		{
+			m_user_input = m_user_input.TrimStart(" \r\n\t".ToCharArray());
+			m_user_input = m_user_input.TrimEnd(" \r\n\t".ToCharArray());
+			if (m_user_input.Length > 0)
+			{
+				SendChatMessage(send_channel_id[current_send_channel], m_user_input, null);
+			}
+		}
+		if (m_showChat)
+		{
+			drawChatWithBox(m_text_area_rect);
+		}
+		else
+		{
+			drawChatWithoutBox(m_text_area_rect);
+		}
+		int num = ((channel_index.Length != 4) ? 85 : 62);
+		int num2 = ((channel_index.Length != 4) ? 80 : 62);
+		for (int i = 0; i < channel_index.Length; i++)
+		{
+			bool flag2 = GUI.Toggle(__BaseUI._rectB(12 + i * num, 63f, num2, 22f), selectedFilter[i], string.Empty, styleToggleFilter);
+			GUI.Label(__BaseUI._rectB(12 + i * num, 63f, num2, 22f), channel_name_tex[channel_index[i]][flag2 ? 1 : 0], channel_name_style);
+			if (flag2 != selectedFilter[i])
+			{
+				selectedFilter[i] = flag2;
+				combine_msg_buffer();
+				m_reset_chat_scroll = true;
+			}
+		}
+		if (GUI.Toggle(__BaseUI._rectB(14f, 35f, 46f, 21f), show_channel_list, new GUIContent(send_channel_tex[current_send_channel]), styleBtnChannel))
+		{
+			if (!show_channel_list)
+			{
+				PopupUI.Register(DrawChannelSelect, CloseChannelSelect, "chat_channel", this);
+				show_channel_list = true;
+			}
+		}
+		else
+		{
+			show_channel_list = false;
+		}
+		string text = string.Empty;
+		if (Global.game_data.Contains("bbs_url"))
+		{
+			text = Global.game_data["bbs_url"].ToString();
+		}
+		if (text != string.Empty && btnluntan.Button(bBtn: true, __BaseUI._rectB(266f, 66f, 56f, 26f), string.Empty))
+		{
+			Global.IEExplore(text, "bbs_url");
+		}
+		if (btnSend.Button(bBtn: true, __BaseUI._rectRB(70f, 38f, 60f, 27f), string.Empty))
+		{
+			m_user_input = m_user_input.TrimStart(" \r\n\t".ToCharArray());
+			m_user_input = m_user_input.TrimEnd(" \r\n\t".ToCharArray());
+			if (m_user_input.Length > 0)
+			{
+				SendChatMessage(send_channel_id[current_send_channel], m_user_input, null);
+			}
+		}
+		if (emote_container != null)
+		{
+			if (GUI.Toggle(__BaseUI._rectRB(103f, 36f, 24f, 24f), show_emote_box, string.Empty, styleBtnEmote))
+			{
+				if (!show_emote_box)
+				{
+					show_emote_box = true;
+					PopupUI.Register(DrawEmoteBox, CloseEmoteBox, "chat_emote", this);
+				}
+			}
+			else
+			{
+				show_emote_box = false;
+			}
+		}
+		if (m_showChat)
+		{
+			if (btnHideChatBox.Button(bBtn: true, __BaseUI._rectRB(36f, 61f, 28f, 19f), string.Empty))
+			{
+				m_showChat = false;
+				rect_dirty = true;
+			}
+		}
+		else if (btnShowChatBox.Button(bBtn: true, __BaseUI._rectRB(36f, 61f, 28f, 19f), string.Empty))
+		{
+			m_showChat = true;
+			rect_dirty = true;
+			m_reset_chat_scroll = true;
+		}
+		if (m_showChat)
+		{
+			GUI.Button(__BaseUI._rect(0f, 0f, chat_whole_size.x, chat_whole_size.y), string.Empty, __BaseUI._textNLeft);
+		}
+		else
+		{
+			GUI.Button(__BaseUI._rect(0f, chat_whole_size.y - 40f, chat_whole_size.x, 40f), string.Empty, __BaseUI._textNLeft);
+		}
+		__BaseUI.EndGroup();
+	}
+
+	private bool DrawEmoteBox()
+	{
+		Rect position = __BaseUI._rect(bottom_left.x + chat_whole_size.x - 70f - 28f + 24f - emote_box_size.x, (float)Screen.height - bottom_left.y - 38f - emote_box_size.y, emote_box_size.x, emote_box_size.y);
+		GUI.Box(new Rect(position.x - 5f, position.y - 5f, position.width + 10f, position.height + 10f), string.Empty, __BaseUI._boxnew10Style);
+		GUI.BeginGroup(position);
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 6; j++)
+			{
+				int num = i * 6 + j;
+				float x = (float)j * emote_size.x + (emote_size.x - emote_container.emotes[num].size.x) / 2f;
+				float y = (float)i * emote_size.y + (emote_size.y - emote_container.emotes[num].size.y);
+				float x2 = emote_container.emotes[num].size.x;
+				float y2 = emote_container.emotes[num].size.y;
+				if (num >= emote_container.emotes.Length)
+				{
+					continue;
+				}
+				emote_container.DrawIndex(num, __BaseUI._rect(x, y, x2, y2));
+				if (GUI.Button(__BaseUI._rect((float)j * emote_size.x, (float)i * emote_size.y, emote_size.x, emote_size.y), string.Empty, styleEmoteSelect))
+				{
+					if (Global.getTemplate("emote_code", (uint)emote_container.emotes[num].id) is _emote_code emote_code)
+					{
+						m_user_input = m_user_input + "#" + emote_code.codeChs;
+						GUI.FocusControl("chat input");
+					}
+					PopupUI.EndPopup("chat_emote");
+				}
+			}
+		}
+		GUI.EndGroup();
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		return position.Contains(mousePosition);
+	}
+
+	private void CloseEmoteBox()
+	{
+		show_emote_box = false;
+	}
+
+	private bool DrawChannelSelect()
+	{
+		Rect position = __BaseUI._rect(bottom_left.x + 12f, (float)Screen.height - bottom_left.y - 38f - (float)(8 + 17 * enableChannelNum), 50f, 8 + 17 * enableChannelNum);
+		GUI.Box(position, string.Empty, styleChannelDropbox);
+		for (int i = 0; i < enableChannelNum; i++)
+		{
+			if (GUI.Button(__BaseUI._rect(bottom_left.x + 10f + 5f, (float)Screen.height - bottom_left.y - 38f - 4f - (float)(17 * (enableChannelNum - i)), 46f, 17f), string.Empty, styleChannelList[i]))
+			{
+				current_send_channel = i;
+				PopupUI.EndPopup("chat_channel");
+			}
+		}
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		return position.Contains(mousePosition);
+	}
+
+	private void CloseChannelSelect()
+	{
+		show_channel_list = false;
+	}
+
+	private static bool DrawPlayerContext()
+	{
+		int num = ((player_clicked == Global.character_.name) ? 1 : 6);
+		Rect position = __BaseUI._rect(chat_popup_lowerleft.x, chat_popup_lowerleft.y - (float)(10 + 22 * num), 75f, 10 + 22 * num);
+		GUI.BeginGroup(position);
+		GUI.Box(__BaseUI._rect(0f, 0f, 75f, 10 + 22 * num), string.Empty, __BaseUI._tooltipStyle);
+		for (int i = 0; i < num; i++)
+		{
+			int num2 = i;
+			if (!context_btn[num2].Button(Global.extern_enabled, __BaseUI._rect(5f, 5 + 22 * i, 65f, 22f), string.Empty))
+			{
+				continue;
+			}
+			switch (num2)
+			{
+			case 0:
+				if (inspect_ui != null)
+				{
+					inspect_ui.SubLoading(player_clicked, new Vector2(300f, 100f));
+				}
+				break;
+			case 1:
+				BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_buddy(player_clicked);
+				break;
+			case 2:
+				if (messenger != null)
+				{
+					messenger.Open(player_clicked);
+				}
+				break;
+			case 3:
+				BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_blacklist(player_clicked);
+				break;
+			case 4:
+			{
+				BuddyFlowerUI component = GameObject.Find("/Root/RootUI").GetComponent<BuddyFlowerUI>();
+				if (MainUI.handle_sub_ui(component, "buddyflower"))
+				{
+					MainUI.SetSubUI(component);
+					component.cs_buddy_flower_info(player_clicked);
+				}
+				break;
+			}
+			case 5:
+				if (SimpleDuelUI.GetInstance().isBusy() || PresetDuelUI.GetInstance().isBusy() || (nation_ui != null && nation_ui.enabled))
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(21296u), null);
+				}
+				else if (MainUI.handle_sub_ui(duel_select_ui, "duel"))
+				{
+					duel_select_ui.SubLoading(player_clicked);
+				}
+				break;
+			}
+			player_clicked = null;
+			PopupUI.EndPopup("chat_popup");
+		}
+		GUI.EndGroup();
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		return position.Contains(mousePosition);
+	}
+
+	public static void ArtifactClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (param.Count >= 3)
+		{
+			TooltipDraw_Artifact tooltipDraw_Artifact = new TooltipDraw_Artifact();
+			tooltipDraw_Artifact.make(BaseAsset.was);
+			tooltipDraw_Artifact.setArtifactByTemplate(byte.Parse((string)param[0]), short.Parse((string)param[1]), (byte)((param.Count >= 4) ? byte.Parse((string)param[2]) : 0));
+			s_tooltipdraw = tooltipDraw_Artifact;
+			chat_popup_lowerleft = GUIUtility.GUIToScreenPoint(lowerleft);
+			PopupUI.Register(DrawContextTooltip, "chat_popup", instance);
+		}
+	}
+
+	public static void EquipClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (param.Count >= 2)
+		{
+			TooltipDraw_Item tooltipDraw_Item = new TooltipDraw_Item();
+			tooltipDraw_Item.make(BaseAsset.was);
+			List<short> list = new List<short>();
+			list.Add(short.Parse((string)param[2]));
+			list.Add(short.Parse((string)param[3]));
+			list.Add(short.Parse((string)param[4]));
+			List<short> typelist = list;
+			list = new List<short>();
+			list.Add(short.Parse((string)param[5]));
+			list.Add(short.Parse((string)param[6]));
+			list.Add(short.Parse((string)param[7]));
+			List<short> paramlist = list;
+			string[] etc = ((string)param[9]).Split('|');
+			tooltipDraw_Item.setEquipmentByTemplate(byte.Parse((string)param[0]), uint.Parse((string)param[1]), typelist, paramlist, short.Parse((string)param[8]), etc);
+			s_tooltipdraw = tooltipDraw_Item;
+			chat_popup_lowerleft = GUIUtility.GUIToScreenPoint(lowerleft);
+			PopupUI.Register(DrawContextTooltip, "chat_popup", instance);
+		}
+	}
+
+	public static void GeneralClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (param.Count >= 1)
+		{
+			TooltipDraw_General_R tooltipDraw_General_R = new TooltipDraw_General_R();
+			tooltipDraw_General_R.make(BaseAsset.was);
+			tooltipDraw_General_R.DrawClickNotice = false;
+			tooltipDraw_General_R.setGeneral(ushort.Parse((string)param[0]), null, locked: false);
+			s_tooltipdraw = tooltipDraw_General_R;
+			chat_popup_lowerleft = GUIUtility.GUIToScreenPoint(lowerleft);
+			PopupUI.Register(DrawContextTooltip, "chat_popup", instance);
+		}
+	}
+
+	public static void SealDevilClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (BaseAsset.lds.IsBattling() || PresetDuelUI.GetInstance().isBusy() || SimpleDuelUI.GetInstance().isBusy())
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(20646u), null);
+		}
+		else if (param.Count >= 1)
+		{
+			ulong idleader = ulong.Parse((string)param[0]);
+			BaseUI.GetRootUI().GetComponent<SealDevilGroupUI>().cs_join(idleader);
+		}
+	}
+
+	public static void SkillClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (param.Count >= 1)
+		{
+			TooltipDraw_Skill tooltipDraw_Skill = new TooltipDraw_Skill();
+			tooltipDraw_Skill.make(BaseAsset.was);
+			tooltipDraw_Skill.setSkill(ushort.Parse((string)param[0]), string.Empty, string.Empty);
+			s_tooltipdraw = tooltipDraw_Skill;
+			chat_popup_lowerleft = GUIUtility.GUIToScreenPoint(lowerleft);
+			PopupUI.Register(DrawContextTooltip, "chat_popup", instance);
+		}
+	}
+
+	public static void GuildTreeClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (!BaseAsset.lds.IsBattling() && !PresetDuelUI.GetInstance().isBusy() && !SimpleDuelUI.GetInstance().isBusy())
+		{
+			MainUI._guild();
+			GuildUI_3 component = BaseUI.GetRootUI().GetComponent<GuildUI_3>();
+			component.cs_tree_openui();
+		}
+	}
+
+	public static void BattleReportClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (Global.extern_enabled)
+		{
+			ulong id = ulong.Parse((string)param[0]);
+			BattleReportMgrUI component = BaseUI.GetRootUI().GetComponent<BattleReportMgrUI>();
+			if (component != null)
+			{
+				component.PlayBattleReport(id, show_mgrUI: false);
+			}
+		}
+	}
+
+	public static void NationCityClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (Global.character_.level >= 40)
+		{
+			NationUI component = GameObject.Find("/Nation/NationUI").GetComponent<NationUI>();
+			if (BaseAsset.lds.IsBattling() || (!component.enabled && (PresetDuelUI.GetInstance().isBusy() || SimpleDuelUI.GetInstance().isBusy())))
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string("warning_in_battle"), null);
+				return;
+			}
+			if (component != null)
+			{
+				component.rollto_idcity = int.Parse((string)param[0]);
+			}
+			if (!component.enabled)
+			{
+				BaseAsset.lds.GetCurUI().ToDisable();
+				CSCrossNationEnter_0x611 pkt = new CSCrossNationEnter_0x611();
+				RootUI.m_client.Send(1553, pkt, NationUI.sc_crossnation_enter_0x611, new delegate_OnClose(EnableAll_callback));
+			}
+			else
+			{
+				component.RollToTargetCity();
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21022u, (short)40), null);
+		}
+	}
+
+	public static void NationSummonClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (Global.character_.level >= 40)
+		{
+			NationUI component = GameObject.Find("/Nation/NationUI").GetComponent<NationUI>();
+			if (BaseAsset.lds.IsBattling() || (!component.enabled && (PresetDuelUI.GetInstance().isBusy() || SimpleDuelUI.GetInstance().isBusy())))
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string("warning_in_battle"), null);
+				return;
+			}
+			if (component != null)
+			{
+				component.pending_summon = int.Parse((string)param[0]);
+			}
+			if (!component.enabled)
+			{
+				BaseAsset.lds.GetCurUI().ToDisable();
+				CSCrossNationEnter_0x611 pkt = new CSCrossNationEnter_0x611();
+				RootUI.m_client.Send(1553, pkt, NationUI.sc_crossnation_enter_0x611, new delegate_OnClose(EnableAll_callback));
+			}
+			else
+			{
+				component.ApplyPendingSummon();
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21022u, (short)40), null);
+		}
+	}
+
+	public static void GuildInviteClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (BaseAsset.lds.IsBattling() || PresetDuelUI.GetInstance().isBusy() || SimpleDuelUI.GetInstance().isBusy())
+		{
+			return;
+		}
+		ulong num = ulong.Parse((string)param[0]);
+		if (Global.character_.idguild == 0L)
+		{
+			GuildUI_3 guildUI_ = BaseUI.GetRootUI().GetComponent("GuildUI_3") as GuildUI_3;
+			if (MainUI.handle_sub_ui(guildUI_, "GuildUI"))
+			{
+				guildUI_.SubLoading(num);
+			}
+		}
+		else if (Global.character_.idguild == num)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9224u), null);
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9223u), null);
+		}
+	}
+
+	private static void EnableAll_callback()
+	{
+		if (BaseAsset.lds.GetCurUI() != null)
+		{
+			BaseAsset.lds.GetCurUI().ToEnable();
+		}
+		__BaseUI.my_mouseclick = true;
+	}
+
+	private static bool DrawContextTooltip()
+	{
+		if (s_tooltipdraw != null)
+		{
+			Rect position = __BaseUI._rect(chat_popup_lowerleft.x, chat_popup_lowerleft.y - (float)s_tooltipdraw.height, s_tooltipdraw.width, s_tooltipdraw.height);
+			GUI.BeginGroup(position);
+			GUI.Label(new Rect(0f, 0f, s_tooltipdraw.width, s_tooltipdraw.height), string.Empty, __BaseUI._bgTooltip);
+			s_tooltipdraw.draw();
+			GUI.EndGroup();
+			Vector3 mousePosition = Input.mousePosition;
+			mousePosition.y = (float)Screen.height - mousePosition.y;
+			return position.Contains(mousePosition);
+		}
+		return false;
+	}
+
+	private void drawChatWithBox(Rect rc)
+	{
+		rc.x -= 15f;
+		rc.width += 15f;
+		__BaseUI.BeginGroup(rc);
+		GUI.skin.customStyles = __BaseUI._vertScroll1;
+		if (m_listRect.height > rc.height)
+		{
+			m_scroll_pos = GUIHacks.BeginScrollView(new Rect(0f, 0f, rc.width, rc.height), m_scroll_pos, m_listRect, useHorizontal: false, useVertical: true, __BaseUI.normalStyle, __BaseUI._vertScroll1[0], left_vertical_scroll: true);
+		}
+		else
+		{
+			__BaseUI.BeginGroup(new Rect(15f, rc.height - m_listRect.height, rc.width - 15f, m_listRect.height));
+		}
+		m_scroll_pos.x = (int)m_scroll_pos.x;
+		if (m_listRect.height > rc.height)
+		{
+			m_scroll_pos.y = (int)m_scroll_pos.y;
+		}
+		else
+		{
+			m_scroll_pos.y = 0f;
+		}
+		Rect rect = new Rect(0f, 0f, m_listRect.width, 0f);
+		foreach (ChatSingleMsg item in m_chat_msg)
+		{
+			if (item.section != null)
+			{
+				rect.height = item.section.height;
+				if (rect.y + rect.height - m_scroll_pos.y > 0f && rect.y - m_scroll_pos.y < m_listRect.height)
+				{
+					item.section.draw(rect.x + 1f, rect.y + 1f, rect.width, rect.height, output_style, bSystem: true);
+				}
+				rect.y += rect.height;
+			}
+		}
+		if (m_listRect.height > rc.height)
+		{
+			GUIHacks.EndScrollView();
+		}
+		else
+		{
+			__BaseUI.EndGroup();
+		}
+		__BaseUI.EndGroup();
+	}
+
+	public static void PlayerClick(ArrayList param, Vector2 lowerleft)
+	{
+		if (param.Count >= 1)
+		{
+			if ((string)param[0] != "0")
+			{
+				player_clicked = (string)param[1] + ".s" + param[0];
+			}
+			else
+			{
+				player_clicked = (string)param[1];
+			}
+			chat_popup_lowerleft = GUIUtility.GUIToScreenPoint(lowerleft);
+			PopupUI.Register(DrawPlayerContext, "chat_popup", instance);
+		}
+	}
+
+	private void drawChatWithoutBox(Rect rc)
+	{
+		__BaseUI.BeginGroup(rc);
+		Rect rect = new Rect(0f, 0f, m_listRect.width, 0f);
+		rect.y -= m_listRect.height - m_text_area_rect.height;
+		foreach (ChatSingleMsg item in m_chat_msg)
+		{
+			if (item.section != null)
+			{
+				rect.height = item.section.height;
+				if (rect.y + rect.height > 0f && Time.realtimeSinceStartup - item.addTime < 30f)
+				{
+					item.section.draw(rect.x + 1f, rect.y + 1f, rect.width, rect.height, output_style, bSystem: true);
+				}
+				rect.y += rect.height;
+			}
+		}
+		__BaseUI.EndGroup();
+	}
+
+	private void shimingrenzhen()
+	{
+		Application.OpenURL(__BaseUI.load_str(9299u));
+	}
+
+	public void SendChatMessage(uint channel, string content, string receiver)
+	{
+		if (Global.fcm != 0 && Global.game_data["channel"].ToString() == "37wan")
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9297u), rmg, shimingrenzhen);
+			return;
+		}
+		if (Global.fcm != 0 && Global.character_.VIPLEVEL <= 0)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(36512u), rmg);
+			return;
+		}
+		string text = string.Empty;
+		int length = content.Length;
+		int num = 0;
+		while (num < length)
+		{
+			if (content[num] == '#')
+			{
+				num++;
+				int i = num;
+				string text2 = string.Empty;
+				bool flag = false;
+				for (; i < length; i++)
+				{
+					text2 += content[i];
+					switch (EmoteContainer.Instance.hasEmote(text2))
+					{
+					case 0:
+						flag = true;
+						num += text2.Length;
+						text = text + "#" + text2;
+						continue;
+					default:
+						continue;
+					case -2:
+						break;
+					}
+					break;
+				}
+				if (!flag)
+				{
+					text += "##";
+				}
+			}
+			else
+			{
+				text += content[num++];
+			}
+		}
+		m_user_input = string.Empty;
+		if (channel != 4 && (send_cooldown > 0f || last_chat_message == text))
+		{
+			SCChatMessage_0x220 sCChatMessage_0x = new SCChatMessage_0x220();
+			sCChatMessage_0x.channel = 5u;
+			sCChatMessage_0x.content = __BaseUI.load_str(20593u);
+			sCChatMessage_0x.sender = string.Empty;
+			sCChatMessage_0x.receiver = receiver;
+			OnReceiveMessage(sCChatMessage_0x);
+			return;
+		}
+		CSChatMessage_0x220 cSChatMessage_0x = new CSChatMessage_0x220();
+		cSChatMessage_0x.channel = channel;
+		cSChatMessage_0x.content = text;
+		if (receiver != null)
+		{
+			cSChatMessage_0x.receiver = receiver;
+		}
+		switch (channel)
+		{
+		case 7u:
+			__BaseUI.GetConsumeUI().setConsume(nationwar_broadcast_cost, 66, nation_broadcast, new object[1] { cSChatMessage_0x });
+			break;
+		case 9u:
+			__BaseUI.GetConsumeUI().setConsume(teamfight_broadcast_cost, 66, teamfight_broadcast, new object[1] { cSChatMessage_0x });
+			break;
+		default:
+			send_msg(cSChatMessage_0x);
+			break;
+		}
+	}
+
+	private void nation_broadcast(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			if (Global.character_.gold < nationwar_broadcast_cost)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(82u), rmg);
+			}
+			else
+			{
+				send_msg((CSChatMessage_0x220)objs[0]);
+			}
+		}
+		Enable();
+	}
+
+	private void teamfight_broadcast(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			if (Global.character_.gold < teamfight_broadcast_cost)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(82u), rmg);
+			}
+			else
+			{
+				send_msg((CSChatMessage_0x220)objs[0]);
+			}
+		}
+		Enable();
+	}
+
+	private void send_msg(CSChatMessage_0x220 pkt)
+	{
+		SCChatMessage_0x220 sCChatMessage_0x = new SCChatMessage_0x220();
+		sCChatMessage_0x.channel = pkt.channel;
+		sCChatMessage_0x.content = pkt.content;
+		sCChatMessage_0x.sender = Global.character_.name;
+		sCChatMessage_0x.server_sid = Global.character_.SID;
+		sCChatMessage_0x.receiver = pkt.receiver;
+		sCChatMessage_0x.achievement = Global.character_.active_achievement;
+		if (pkt.channel != 4)
+		{
+			send_cooldown = 5f;
+			last_chat_message = pkt.content;
+		}
+		if (Global.character_.level < 30 && Global.character_.VIPLEVEL < 1)
+		{
+			if (forbid_speech)
+			{
+				return;
+			}
+			if (pkt.channel == 3 && AbuseRegexFilter.hasAbuseWord(pkt.content))
+			{
+				forbid_speech = true;
+				PlayerPrefs.SetInt(forbid_speech_key, 1);
+				return;
+			}
+		}
+		RootUI.m_client.Send(544, pkt, null);
+	}
+
+	public void OnReceiveMessage(SCChatMessage_0x220 pkt)
+	{
+		if (pkt.channel == 4)
+		{
+			if (messenger != null)
+			{
+				messenger.SendMessage("ReceivePrivateMessage", pkt);
+			}
+			return;
+		}
+		string content = pkt.content;
+		if (pkt.channel == 1)
+		{
+			SendMessage("AddAnnounceMessage", content, SendMessageOptions.DontRequireReceiver);
+		}
+		if (pkt.channel == 5)
+		{
+			pkt.channel = 1u;
+		}
+		ChatSingleMsg item = new ChatSingleMsg(pkt.channel, pkt.content, pkt.sender, pkt.achievement, pkt.server_sid);
+		uint num = pkt.channel;
+		if (num == 7)
+		{
+			num = 6u;
+		}
+		if (num == 9)
+		{
+			num = 8u;
+		}
+		if (!channel_buffer_msg.ContainsKey(num))
+		{
+			channel_buffer_msg[num] = new List<ChatSingleMsg>();
+		}
+		channel_buffer_msg[num].Add(item);
+		if (channel_buffer_msg[num].Count > 60)
+		{
+			channel_buffer_msg[num].RemoveRange(0, channel_buffer_msg[num].Count - 60);
+		}
+		for (int i = 0; i < channel_index.Length; i++)
+		{
+			if (selectedFilter[i] && channel_index[i] == num)
+			{
+				m_chat_msg.Add(item);
+				if (m_chat_msg.Count > 60)
+				{
+					m_chat_msg.RemoveRange(0, m_chat_msg.Count - 60);
+				}
+				rect_dirty = true;
+				break;
+			}
+		}
+	}
+
+	private void recalcChatSize()
+	{
+		if (!rect_dirty)
+		{
+			return;
+		}
+		m_listRect.height = 0f;
+		for (int i = 0; i < m_chat_msg.Count; i++)
+		{
+			if (m_chat_msg[i].section == null)
+			{
+				m_chat_msg[i].make((int)m_listRect.width, output_style);
+			}
+			m_listRect.height += m_chat_msg[i].section.height;
+		}
+		if (!m_showChat)
+		{
+			m_scroll_pos.y = m_listRect.height - m_text_area_rect.height;
+		}
+		else
+		{
+			if (m_reset_chat_scroll)
+			{
+				m_scroll_pos.y = m_listRect.height - m_text_area_rect.height;
+				m_reset_chat_scroll = false;
+			}
+			else if (Mathf.Abs(m_bottom_scroll_pos.y - m_scroll_pos.y) < 5f)
+			{
+				m_scroll_pos.y = m_listRect.height - m_text_area_rect.height;
+			}
+			m_bottom_scroll_pos.y = m_listRect.height - m_text_area_rect.height;
+		}
+		rect_dirty = false;
+	}
+
+	private void checkChannelStatus()
+	{
+		CHANNEL_STATUS cHANNEL_STATUS = CHANNEL_STATUS.NORMAL;
+		GameObject gameObject = GameObject.Find("/TeamFight/TeamFightUI");
+		TeamFightUI teamFightUI = null;
+		if (gameObject != null)
+		{
+			teamFightUI = gameObject.GetComponent<TeamFightUI>();
+		}
+		if (teamFightUI != null && teamFightUI.enabled)
+		{
+			cHANNEL_STATUS = CHANNEL_STATUS.TEAMFIGHT;
+		}
+		else if (MainUI._nation_check(string.Empty))
+		{
+			cHANNEL_STATUS = CHANNEL_STATUS.NATION;
+		}
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_chat");
+		if (cHANNEL_STATUS != channel_status)
+		{
+			current_send_channel = 0;
+			channel_status = cHANNEL_STATUS;
+			switch (channel_status)
+			{
+			case CHANNEL_STATUS.NORMAL:
+				SetChannelIndex(new uint[3] { 3u, 2u, 1u });
+				enableChannelNum = 2;
+				break;
+			case CHANNEL_STATUS.NATION:
+				SetChannelIndex(new uint[4] { 3u, 2u, 6u, 1u });
+				styleChannelList[2].normal.background = asset.Load("button_guozhan_normal") as Texture2D;
+				styleChannelList[2].hover.background = asset.Load("button_guozhan_hover") as Texture2D;
+				styleChannelList[2].active.background = asset.Load("button_guozhan_hover") as Texture2D;
+				styleChannelList[3].normal.background = asset.Load("button_laba_normal") as Texture2D;
+				styleChannelList[3].hover.background = asset.Load("button_laba_hover") as Texture2D;
+				styleChannelList[3].active.background = asset.Load("button_laba_hover") as Texture2D;
+				enableChannelNum = 4;
+				send_channel_id[2] = 6u;
+				send_channel_id[3] = 7u;
+				send_channel_tex[2] = asset.Load("button_guozhan_hover") as Texture2D;
+				send_channel_tex[3] = asset.Load("button_laba_hover") as Texture2D;
+				break;
+			case CHANNEL_STATUS.TEAMFIGHT:
+				SetChannelIndex(new uint[4] { 3u, 2u, 8u, 1u });
+				styleChannelList[2].normal.background = asset.Load("button_zhanchang_normal") as Texture2D;
+				styleChannelList[2].hover.background = asset.Load("button_zhanchang_hover") as Texture2D;
+				styleChannelList[2].active.background = asset.Load("button_zhanchang_hover") as Texture2D;
+				styleChannelList[3].normal.background = asset.Load("button_laba_normal") as Texture2D;
+				styleChannelList[3].hover.background = asset.Load("button_laba_hover") as Texture2D;
+				styleChannelList[3].active.background = asset.Load("button_laba_hover") as Texture2D;
+				enableChannelNum = 4;
+				send_channel_id[2] = 8u;
+				send_channel_id[3] = 9u;
+				send_channel_tex[2] = asset.Load("button_zhanchang_hover") as Texture2D;
+				send_channel_tex[3] = asset.Load("button_laba_hover") as Texture2D;
+				current_send_channel = 2;
+				break;
+			}
+			combine_msg_buffer();
+		}
+	}
+
+	private void SetChannelIndex(uint[] channel_list)
+	{
+		bool[] array = new bool[channel_list.Length];
+		for (int i = 0; i < channel_list.Length; i++)
+		{
+			array[i] = true;
+			for (int j = 0; j < channel_index.Length; j++)
+			{
+				if (channel_index[j] == channel_list[i])
+				{
+					array[i] = selectedFilter[j];
+					break;
+				}
+			}
+		}
+		channel_index = channel_list;
+		selectedFilter = array;
+	}
+
+	private void combine_msg_buffer()
+	{
+		m_chat_msg.Clear();
+		for (int i = 0; i < selectedFilter.Length; i++)
+		{
+			if (selectedFilter[i])
+			{
+				uint key = channel_index[i];
+				if (channel_buffer_msg.ContainsKey(key))
+				{
+					m_chat_msg.AddRange(channel_buffer_msg[key]);
+				}
+			}
+		}
+		InsertionSort(m_chat_msg, ChatSingleMsg.Compare);
+		if (m_chat_msg.Count > 60)
+		{
+			m_chat_msg.RemoveRange(0, m_chat_msg.Count - 60);
+		}
+		rect_dirty = true;
+	}
+
+	private static void InsertionSort<T>(List<T> list, Comparison<T> comparison)
+	{
+		if (list == null)
+		{
+			throw new ArgumentNullException("list");
+		}
+		if (comparison == null)
+		{
+			throw new ArgumentNullException("comparison");
+		}
+		int count = list.Count;
+		for (int i = 1; i < count; i++)
+		{
+			T val = list[i];
+			int num = i - 1;
+			while (num >= 0 && comparison(list[num], val) > 0)
+			{
+				list[num + 1] = list[num];
+				num--;
+			}
+			list[num + 1] = val;
+		}
+	}
+}

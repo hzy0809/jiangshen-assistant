@@ -1,0 +1,417 @@
+using System.Collections;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+
+public class BuildingAllUI : BaseUI
+{
+	private Texture2D texTitle;
+
+	private Texture2D texFinish;
+
+	private Texture2D texHarvest;
+
+	private Texture2D texBuild;
+
+	private Texture2D texProduce;
+
+	private Texture2D texArrow;
+
+	private _ButtonStyle btnFrame = new _ButtonStyle();
+
+	private List<Building> m_buildings = new List<Building>();
+
+	private Vector2 scrollPos = Vector2.zero;
+
+	private float m_timeRefresh;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+		m_timeRefresh += Time.deltaTime;
+		if (m_timeRefresh > 1f)
+		{
+			SortBuilding();
+		}
+	}
+
+	public void MyLoading()
+	{
+		m_buildings.Clear();
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.m_products.Count > 0)
+			{
+				m_buildings.Add(value);
+			}
+		}
+		Hashtable templates = Global.getTemplates("building");
+		foreach (DictionaryEntry item in templates)
+		{
+			_building building = item.Value as _building;
+			if (building.open_level <= Global.character_.level && Global.character_.limitBuildingCount(building) && building.type != 1)
+			{
+				Building building2 = new Building(building);
+				building2.notbuild = true;
+				m_buildings.Add(building2);
+			}
+		}
+		foreach (Building building3 in m_buildings)
+		{
+			if (building3.product != null)
+			{
+				AddAssetSub("product" + building3.product.icon);
+			}
+		}
+		SortBuilding();
+		AddAsset("ui_buildingall");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		foreach (Building building in m_buildings)
+		{
+			if (building.product != null && building.product.texIcon == null)
+			{
+				building.product.texIcon = BaseAsset.LoadTexture("product" + building.product.icon);
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		Visible();
+		EnableAll();
+		BaseAsset.lds.Hide();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_buildingall");
+		texTitle = asset.Load("ui_biaoti") as Texture2D;
+		texFinish = asset.Load("ui_zi4") as Texture2D;
+		texHarvest = asset.Load("ui_zi3") as Texture2D;
+		texBuild = asset.Load("ui_zi2") as Texture2D;
+		texProduce = asset.Load("ui_zi1") as Texture2D;
+		texArrow = asset.Load("ui_jiantou") as Texture2D;
+		btnFrame.make(asset, "ui_bar", unable: false);
+		btnFrame.setBorder(new RectOffset(50, 20, 20, 20));
+	}
+
+	public void SortBuilding()
+	{
+		m_timeRefresh = 0f;
+		List<Building> list = new List<Building>();
+		foreach (Building building in m_buildings)
+		{
+			int num = 0;
+			bool flag = false;
+			foreach (Building item in list)
+			{
+				int num2 = CompareBuilding(building, item);
+				if (num2 == -1)
+				{
+					list.Insert(num, building);
+					flag = true;
+					break;
+				}
+				num++;
+			}
+			if (!flag)
+			{
+				list.Add(building);
+			}
+		}
+		m_buildings = list;
+	}
+
+	private int CompareBuilding(Building a, Building b)
+	{
+		if (a.canHarvest() && b.canHarvest())
+		{
+			return (b.data.open_level <= a.data.open_level) ? 1 : (-1);
+		}
+		if (a.canHarvest())
+		{
+			return -1;
+		}
+		if (b.canHarvest())
+		{
+			return 1;
+		}
+		if (a.canProduce() && b.canProduce())
+		{
+			return (b.data.open_level <= a.data.open_level) ? 1 : (-1);
+		}
+		if (a.canProduce())
+		{
+			return -1;
+		}
+		if (b.canProduce())
+		{
+			return 1;
+		}
+		if (a.isProducing() && b.isProducing())
+		{
+			return (a.start_time + a.product.time <= b.start_time + b.product.time) ? 1 : (-1);
+		}
+		if (a.isProducing())
+		{
+			return -1;
+		}
+		if (b.isProducing())
+		{
+			return 1;
+		}
+		if (a.build_time > TimeUtil.Now && b.build_time > TimeUtil.Now)
+		{
+			return (a.build_time <= b.build_time) ? 1 : (-1);
+		}
+		if (a.build_time > TimeUtil.Now)
+		{
+			return -1;
+		}
+		if (b.build_time > TimeUtil.Now)
+		{
+			return 1;
+		}
+		if (a.notbuild && b.notbuild)
+		{
+			return (b.data.open_level <= a.data.open_level) ? 1 : (-1);
+		}
+		if (a.notbuild)
+		{
+			return -1;
+		}
+		if (b.notbuild)
+		{
+			return 1;
+		}
+		return (a.cd_time <= b.cd_time) ? 1 : (-1);
+	}
+
+	private void ProduceOK()
+	{
+		EnableAll();
+		SortBuilding();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(684f, 480f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		GUI.Label(__BaseUI._rect(160f, 15f, 180f, 32f), string.Empty, __BaseUI._box13Style);
+		GUI.DrawTexture(__BaseUI._rect(175f, 15f, 23f, 23f), __BaseUI._iconMoney);
+		__BaseUI.Label(__BaseUI._rect(200f, 15f, 130f, 32f), Global.character_.money.ToString(), __BaseUI._numCenter, __BaseUI._clrYellowLight);
+		GUI.Label(__BaseUI._rect(340f, 15f, 180f, 32f), string.Empty, __BaseUI._box13Style);
+		GUI.DrawTexture(__BaseUI._rect(355f, 15f, 23f, 23f), __BaseUI._iconGold);
+		__BaseUI.Label(__BaseUI._rect(380f, 15f, 130f, 32f), Global.character_.gold.ToString(), __BaseUI._numCenter, __BaseUI._clrYellow);
+		GUI.Label(__BaseUI._rect(160f, 40f, 360f, 32f), string.Empty, __BaseUI._box13Style);
+		GUI.DrawTexture(__BaseUI._rect(190f, 40f, 23f, 23f), __BaseUI._iconWood);
+		__BaseUI.Label(__BaseUI._rect(210f, 40f, 80f, 32f), Global.character_.spirit_food.ToString(), __BaseUI._numCenter, __BaseUI._clrCyan);
+		GUI.DrawTexture(__BaseUI._rect(300f, 40f, 23f, 23f), __BaseUI._iconMine);
+		__BaseUI.Label(__BaseUI._rect(320f, 40f, 80f, 32f), Global.character_.enchant_stone.ToString(), __BaseUI._numCenter, __BaseUI._clrCyan);
+		GUI.DrawTexture(__BaseUI._rect(410f, 40f, 23f, 23f), __BaseUI._iconMana);
+		__BaseUI.Label(__BaseUI._rect(430f, 40f, 80f, 32f), Global.character_.mana.ToString(), __BaseUI._numCenter, __BaseUI._clrCyan);
+		int num = m_buildings.Count * 70;
+		GUI.skin.customStyles = __BaseUI._vertScroll1;
+		__BaseUI.BeginGroup(__BaseUI._rect(20f, 70f, w - 40f, h - 90f));
+		GUI.Label(__BaseUI._rect(0f, 0f, w - 40f, h - 90f), string.Empty, __BaseUI._box3Style);
+		scrollPos = GUI.BeginScrollView(__BaseUI._rect(0f, 10f, w - 60f, h - 110f), scrollPos, __BaseUI._rect(0f, 0f, w - 100f, num));
+		int num2 = 0;
+		foreach (Building building in m_buildings)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(0f, 10 + 70 * num2, w - 40f, 70f));
+			if (btnFrame.Button(bBtn: true, __BaseUI._rect(30f, 0f, w - 130f, 61f), string.Empty))
+			{
+				if (building.canHarvest())
+				{
+					BuildingHarvestUI.cs_building_harvest_0x482(building.id, SortBuilding);
+				}
+				else if (building.canProduce())
+				{
+					DisableAll();
+					GetComponent<BuildingProductUI>().MyLoading(building, bSub: false, ProduceOK);
+				}
+				else if (building.notbuild)
+				{
+					if (GetComponent<BuildingUI>().BuildBuilding(building.data))
+					{
+						Hide();
+						MainUI.SetSubUI(null);
+					}
+				}
+				else if (!building.isProducing() && building.build_time <= TimeUtil.Now && building.cd_time <= TimeUtil.Now)
+				{
+				}
+			}
+			__BaseUI.Label(__BaseUI._rect(90f, 20f, 100f, 20f), building.data.name, __BaseUI._textLeft, (!building.notbuild) ? __BaseUI._clrYellow : __BaseUI._clrDark, 16);
+			if (building.canHarvest())
+			{
+				if (building.product.texIcon != null)
+				{
+					GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), building.product.texIcon);
+				}
+				GUI.DrawTexture(__BaseUI._rect(200f, 18f, 112f, 22f), texFinish);
+				Rect rc = __BaseUI._rect(360f, 0f, 120f, 70f);
+				int idx = 0;
+				if (building.product.OutputCount == 1)
+				{
+					rc.y = 12f;
+				}
+				drawBar(building.product.money_output, __BaseUI._iconMoney, ref rc, ref idx);
+				drawBar(building.product.exp_output, __BaseUI._iconExp, ref rc, ref idx);
+				drawBar(building.product.spirit_output, __BaseUI._iconWood, ref rc, ref idx);
+				drawBar(building.product.enchant_output, __BaseUI._iconMine, ref rc, ref idx);
+				drawBar(building.product.mana_output, __BaseUI._iconMana, ref rc, ref idx);
+				GUI.DrawTexture(__BaseUI._rect(500f, 0f, 81f, 47f), texHarvest);
+			}
+			else if (building.canProduce())
+			{
+				GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), CapitalUI.texSleep);
+				BuildingProduct buildingProduct = null;
+				foreach (BuildingProduct product in building.m_products)
+				{
+					if (product.gold_consume == 0)
+					{
+						buildingProduct = product;
+						break;
+					}
+				}
+				if (buildingProduct != null)
+				{
+					Rect rc2 = __BaseUI._rect(200f, 0f, 120f, 70f);
+					int idx2 = 0;
+					if (buildingProduct.ConsumeCount == 1)
+					{
+						rc2.y = 12f;
+					}
+					drawBar(buildingProduct.gold_consume, __BaseUI._iconGold, ref rc2, ref idx2);
+					drawBar(buildingProduct.wood_consume, __BaseUI._iconWood, ref rc2, ref idx2);
+					drawBar(buildingProduct.mine_consume, __BaseUI._iconMine, ref rc2, ref idx2);
+					drawBar(buildingProduct.mana_consume, __BaseUI._iconMana, ref rc2, ref idx2);
+					GUI.DrawTexture(__BaseUI._rect(280f, 13f, 34f, 34f), texArrow);
+					rc2 = __BaseUI._rect(360f, 0f, 120f, 70f);
+					idx2 = 0;
+					if (buildingProduct.OutputCount == 1)
+					{
+						rc2.y = 12f;
+					}
+					drawBar(buildingProduct.money_output, __BaseUI._iconMoney, ref rc2, ref idx2);
+					drawBar(buildingProduct.exp_output, __BaseUI._iconExp, ref rc2, ref idx2);
+					drawBar(buildingProduct.spirit_output, __BaseUI._iconWood, ref rc2, ref idx2);
+					drawBar(buildingProduct.enchant_output, __BaseUI._iconMine, ref rc2, ref idx2);
+					drawBar(buildingProduct.mana_output, __BaseUI._iconMana, ref rc2, ref idx2);
+				}
+				GUI.DrawTexture(__BaseUI._rect(500f, 0f, 81f, 47f), texProduce);
+			}
+			else if (building.notbuild)
+			{
+				GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), CapitalUI.texBuild);
+				Rect rc3 = __BaseUI._rect(200f, 0f, 120f, 70f);
+				int idx3 = 0;
+				if (building.ConsumeCount == 1)
+				{
+					rc3.y = 12f;
+				}
+				drawBar(building.data.gold_consume, __BaseUI._iconGold, ref rc3, ref idx3);
+				drawBar(building.data.wood_consume, __BaseUI._iconWood, ref rc3, ref idx3);
+				drawBar(building.data.mine_consume, __BaseUI._iconMine, ref rc3, ref idx3);
+				drawBar(building.data.mana_consume, __BaseUI._iconMana, ref rc3, ref idx3);
+				GUI.DrawTexture(__BaseUI._rect(280f, 13f, 34f, 34f), texArrow);
+				rc3 = __BaseUI._rect(360f, 0f, 120f, 70f);
+				idx3 = 0;
+				BuildingProduct buildingProduct2 = null;
+				foreach (BuildingProduct product2 in building.m_products)
+				{
+					if (product2.gold_consume == 0)
+					{
+						buildingProduct2 = product2;
+						break;
+					}
+				}
+				if (buildingProduct2 != null)
+				{
+					if (buildingProduct2.OutputCount == 1)
+					{
+						rc3.y = 12f;
+					}
+					drawBar(buildingProduct2.money_output, __BaseUI._iconMoney, ref rc3, ref idx3);
+					drawBar(buildingProduct2.exp_output, __BaseUI._iconExp, ref rc3, ref idx3);
+					drawBar(buildingProduct2.spirit_output, __BaseUI._iconWood, ref rc3, ref idx3);
+					drawBar(buildingProduct2.enchant_output, __BaseUI._iconMine, ref rc3, ref idx3);
+					drawBar(buildingProduct2.mana_output, __BaseUI._iconMana, ref rc3, ref idx3);
+				}
+				GUI.DrawTexture(__BaseUI._rect(500f, 0f, 81f, 47f), texBuild);
+			}
+			else if (building.isProducing())
+			{
+				if (building.product.texIcon != null)
+				{
+					GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), building.product.texIcon);
+				}
+				__BaseUI.Label(__BaseUI._rect(180f, 20f, 100f, 20f), "生产", __BaseUI._textLeft, __BaseUI._clrCyan, 16);
+				string text = "【" + building.product.name + "】";
+				Vector2 vector = __BaseUI.CalcSize(text, __BaseUI._textLeft, 16);
+				__BaseUI.Label(__BaseUI._rect(212f, 20f, 100f, 20f), text, __BaseUI._textLeft, __BaseUI._clrGreen, 16);
+				__BaseUI.Label(__BaseUI._rect(212f + vector.x, 20f, 100f, 20f), "中...", __BaseUI._textLeft, __BaseUI._clrCyan, 16);
+				Rect rc4 = __BaseUI._rect(360f, 0f, 120f, 70f);
+				int idx4 = 0;
+				if (building.product.OutputCount == 1)
+				{
+					rc4.y = 12f;
+				}
+				drawBar(building.product.money_output, __BaseUI._iconMoney, ref rc4, ref idx4);
+				drawBar(building.product.exp_output, __BaseUI._iconExp, ref rc4, ref idx4);
+				drawBar(building.product.spirit_output, __BaseUI._iconWood, ref rc4, ref idx4);
+				drawBar(building.product.enchant_output, __BaseUI._iconMine, ref rc4, ref idx4);
+				drawBar(building.product.mana_output, __BaseUI._iconMana, ref rc4, ref idx4);
+			}
+			else if (building.build_time > TimeUtil.Now)
+			{
+				GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), CapitalUI.texCD);
+				__BaseUI.Label(__BaseUI._rect(200f, 20f, 200f, 20f), "建造中...", __BaseUI._textLeft, __BaseUI._clrGreen, 16);
+				__BaseUI.Label(__BaseUI._rect(300f, 20f, 200f, 20f), Global.getFormatTime((int)(building.build_time - TimeUtil.Now)), __BaseUI._numLeft, __BaseUI._clrGreen, 20);
+			}
+			else if (building.cd_time > TimeUtil.Now)
+			{
+				GUI.DrawTexture(__BaseUI._rect(33f, 13f, 34f, 34f), CapitalUI.texCD);
+				__BaseUI.Label(__BaseUI._rect(200f, 20f, 200f, 20f), "冷却中...", __BaseUI._textLeft, __BaseUI._clrRed, 16);
+				__BaseUI.Label(__BaseUI._rect(300f, 20f, 200f, 20f), Global.getFormatTime((int)(building.cd_time - TimeUtil.Now)), __BaseUI._numLeft, __BaseUI._clrRed, 20);
+			}
+			__BaseUI.EndGroup();
+			num2++;
+		}
+		GUI.EndScrollView();
+		__BaseUI.EndGroup();
+		if (EndGUI())
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void drawBar(uint output, Texture2D tex, ref Rect rc, ref int idx)
+	{
+		if (output != 0)
+		{
+			__BaseUI.BeginGroup(rc);
+			GUI.DrawTexture(__BaseUI._rect(0f, 8f, 23f, 23f), tex);
+			__BaseUI.Label(__BaseUI._rect(30f, 8f, 80f, 23f), output.ToString(), __BaseUI._numLeft, __BaseUI._clrYellowDark);
+			if (idx % 2 == 0)
+			{
+				rc.y += 23f;
+			}
+			else
+			{
+				rc.y -= 23f;
+				rc.x += 95f;
+			}
+			idx++;
+			__BaseUI.EndGroup();
+		}
+	}
+}

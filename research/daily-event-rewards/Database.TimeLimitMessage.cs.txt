@@ -1,0 +1,44 @@
+using UnityEngine;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class TimeLimitMessage : game.net.data.StoC.TimeLimitMessage
+{
+	public bool isactive;
+
+	public Texture2D tex;
+
+	public TimeLimitMessage()
+	{
+	}
+
+	public TimeLimitMessage(game.net.data.StoC.TimeLimitMessage d)
+	{
+		Set(d);
+	}
+
+	public virtual void reset()
+	{
+		isactive = false;
+	}
+
+	public bool is_active()
+	{
+		return (isactive && base.start_time <= TimeUtil.Now && TimeUtil.Now <= base.end_time) ? true : false;
+	}
+
+	public void Set(game.net.data.StoC.TimeLimitMessage d)
+	{
+		base.id = d.id;
+		base.type = d.type;
+		base.name = d.name;
+		base.url = d.url;
+		base.md5 = d.md5;
+		base.start_time = d.start_time;
+		base.end_time = d.end_time;
+		base.param = d.param;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

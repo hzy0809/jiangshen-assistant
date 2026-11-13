@@ -1,0 +1,1473 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "BattleReport")]
+public class BattleReport : IExtensible
+{
+	[Serializable]
+	[ProtoContract(Name = "ArmyInfo")]
+	public class ArmyInfo : IExtensible
+	{
+		[Serializable]
+		[ProtoContract(Name = "LegionInfo")]
+		public class LegionInfo : IExtensible
+		{
+			[Serializable]
+			[ProtoContract(Name = "InternalParam")]
+			public class InternalParam : IExtensible
+			{
+				private int _strength;
+
+				private int _leadership;
+
+				private int _power;
+
+				private float _hp;
+
+				private float _attack;
+
+				private float _defense;
+
+				private float _spell;
+
+				private int _hit;
+
+				private int _dodge;
+
+				private int _crit;
+
+				private int _crit_reduce;
+
+				private int _block;
+
+				private int _counter;
+
+				private int _damage_mod;
+
+				private int _protection_mod;
+
+				private uint _battle_score = 0u;
+
+				private int _heroic = 0;
+
+				private int _resilience = 0;
+
+				private float _hidden_attack = 0f;
+
+				private float _hidden_defense = 0f;
+
+				private float _hidden_spell = 0f;
+
+				private float _fixed_damage = 0f;
+
+				private float _fixed_protection = 0f;
+
+				private IExtension extensionObject;
+
+				[ProtoMember(1, IsRequired = true, Name = "strength", DataFormat = DataFormat.ZigZag)]
+				public int strength
+				{
+					get
+					{
+						return _strength;
+					}
+					set
+					{
+						_strength = value;
+					}
+				}
+
+				[ProtoMember(2, IsRequired = true, Name = "leadership", DataFormat = DataFormat.ZigZag)]
+				public int leadership
+				{
+					get
+					{
+						return _leadership;
+					}
+					set
+					{
+						_leadership = value;
+					}
+				}
+
+				[ProtoMember(3, IsRequired = true, Name = "power", DataFormat = DataFormat.ZigZag)]
+				public int power
+				{
+					get
+					{
+						return _power;
+					}
+					set
+					{
+						_power = value;
+					}
+				}
+
+				[ProtoMember(4, IsRequired = true, Name = "hp", DataFormat = DataFormat.FixedSize)]
+				public float hp
+				{
+					get
+					{
+						return _hp;
+					}
+					set
+					{
+						_hp = value;
+					}
+				}
+
+				[ProtoMember(5, IsRequired = true, Name = "attack", DataFormat = DataFormat.FixedSize)]
+				public float attack
+				{
+					get
+					{
+						return _attack;
+					}
+					set
+					{
+						_attack = value;
+					}
+				}
+
+				[ProtoMember(6, IsRequired = true, Name = "defense", DataFormat = DataFormat.FixedSize)]
+				public float defense
+				{
+					get
+					{
+						return _defense;
+					}
+					set
+					{
+						_defense = value;
+					}
+				}
+
+				[ProtoMember(7, IsRequired = true, Name = "spell", DataFormat = DataFormat.FixedSize)]
+				public float spell
+				{
+					get
+					{
+						return _spell;
+					}
+					set
+					{
+						_spell = value;
+					}
+				}
+
+				[ProtoMember(8, IsRequired = true, Name = "hit", DataFormat = DataFormat.ZigZag)]
+				public int hit
+				{
+					get
+					{
+						return _hit;
+					}
+					set
+					{
+						_hit = value;
+					}
+				}
+
+				[ProtoMember(9, IsRequired = true, Name = "dodge", DataFormat = DataFormat.ZigZag)]
+				public int dodge
+				{
+					get
+					{
+						return _dodge;
+					}
+					set
+					{
+						_dodge = value;
+					}
+				}
+
+				[ProtoMember(10, IsRequired = true, Name = "crit", DataFormat = DataFormat.ZigZag)]
+				public int crit
+				{
+					get
+					{
+						return _crit;
+					}
+					set
+					{
+						_crit = value;
+					}
+				}
+
+				[ProtoMember(11, IsRequired = true, Name = "crit_reduce", DataFormat = DataFormat.ZigZag)]
+				public int crit_reduce
+				{
+					get
+					{
+						return _crit_reduce;
+					}
+					set
+					{
+						_crit_reduce = value;
+					}
+				}
+
+				[ProtoMember(12, IsRequired = true, Name = "block", DataFormat = DataFormat.ZigZag)]
+				public int block
+				{
+					get
+					{
+						return _block;
+					}
+					set
+					{
+						_block = value;
+					}
+				}
+
+				[ProtoMember(13, IsRequired = true, Name = "counter", DataFormat = DataFormat.ZigZag)]
+				public int counter
+				{
+					get
+					{
+						return _counter;
+					}
+					set
+					{
+						_counter = value;
+					}
+				}
+
+				[ProtoMember(14, IsRequired = true, Name = "damage_mod", DataFormat = DataFormat.ZigZag)]
+				public int damage_mod
+				{
+					get
+					{
+						return _damage_mod;
+					}
+					set
+					{
+						_damage_mod = value;
+					}
+				}
+
+				[ProtoMember(15, IsRequired = true, Name = "protection_mod", DataFormat = DataFormat.ZigZag)]
+				public int protection_mod
+				{
+					get
+					{
+						return _protection_mod;
+					}
+					set
+					{
+						_protection_mod = value;
+					}
+				}
+
+				[ProtoMember(16, IsRequired = false, Name = "battle_score", DataFormat = DataFormat.TwosComplement)]
+				[DefaultValue(0L)]
+				public uint battle_score
+				{
+					get
+					{
+						return _battle_score;
+					}
+					set
+					{
+						_battle_score = value;
+					}
+				}
+
+				[ProtoMember(17, IsRequired = false, Name = "heroic", DataFormat = DataFormat.ZigZag)]
+				[DefaultValue(0)]
+				public int heroic
+				{
+					get
+					{
+						return _heroic;
+					}
+					set
+					{
+						_heroic = value;
+					}
+				}
+
+				[ProtoMember(18, IsRequired = false, Name = "resilience", DataFormat = DataFormat.ZigZag)]
+				[DefaultValue(0)]
+				public int resilience
+				{
+					get
+					{
+						return _resilience;
+					}
+					set
+					{
+						_resilience = value;
+					}
+				}
+
+				[ProtoMember(19, IsRequired = false, Name = "hidden_attack", DataFormat = DataFormat.FixedSize)]
+				[DefaultValue(0f)]
+				public float hidden_attack
+				{
+					get
+					{
+						return _hidden_attack;
+					}
+					set
+					{
+						_hidden_attack = value;
+					}
+				}
+
+				[ProtoMember(20, IsRequired = false, Name = "hidden_defense", DataFormat = DataFormat.FixedSize)]
+				[DefaultValue(0f)]
+				public float hidden_defense
+				{
+					get
+					{
+						return _hidden_defense;
+					}
+					set
+					{
+						_hidden_defense = value;
+					}
+				}
+
+				[ProtoMember(21, IsRequired = false, Name = "hidden_spell", DataFormat = DataFormat.FixedSize)]
+				[DefaultValue(0f)]
+				public float hidden_spell
+				{
+					get
+					{
+						return _hidden_spell;
+					}
+					set
+					{
+						_hidden_spell = value;
+					}
+				}
+
+				[ProtoMember(22, IsRequired = false, Name = "fixed_damage", DataFormat = DataFormat.FixedSize)]
+				[DefaultValue(0f)]
+				public float fixed_damage
+				{
+					get
+					{
+						return _fixed_damage;
+					}
+					set
+					{
+						_fixed_damage = value;
+					}
+				}
+
+				[ProtoMember(23, IsRequired = false, Name = "fixed_protection", DataFormat = DataFormat.FixedSize)]
+				[DefaultValue(0f)]
+				public float fixed_protection
+				{
+					get
+					{
+						return _fixed_protection;
+					}
+					set
+					{
+						_fixed_protection = value;
+					}
+				}
+
+				IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+				{
+					return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+				}
+			}
+
+			private string _name;
+
+			private int _level;
+
+			private int _icon;
+
+			private int _troop_base_num;
+
+			private int _troop_start_num;
+
+			private int _troop_lose_num;
+
+			private int _army_id;
+
+			private int _skill_id;
+
+			private int _location;
+
+			private int _rage_max;
+
+			private int _rage_cast;
+
+			private InternalParam _internal_param = null;
+
+			private bool _male_model = true;
+
+			private bool _isMainCharacter = false;
+
+			private readonly List<int> _used_skills = new List<int>();
+
+			private readonly List<uint> _used_buffs = new List<uint>();
+
+			private readonly List<uint> _used_damages = new List<uint>();
+
+			private bool _boss_unit = false;
+
+			private uint _color = 0u;
+
+			private int _rage_now = 0;
+
+			private readonly List<uint> _init_buffs = new List<uint>();
+
+			private readonly List<int> _used_armys = new List<int>();
+
+			private readonly List<uint> _talent_spec = new List<uint>();
+
+			private IExtension extensionObject;
+
+			[ProtoMember(1, IsRequired = true, Name = "name", DataFormat = DataFormat.Default)]
+			public string name
+			{
+				get
+				{
+					return _name;
+				}
+				set
+				{
+					_name = value;
+				}
+			}
+
+			[ProtoMember(2, IsRequired = true, Name = "level", DataFormat = DataFormat.ZigZag)]
+			public int level
+			{
+				get
+				{
+					return _level;
+				}
+				set
+				{
+					_level = value;
+				}
+			}
+
+			[ProtoMember(3, IsRequired = true, Name = "icon", DataFormat = DataFormat.ZigZag)]
+			public int icon
+			{
+				get
+				{
+					return _icon;
+				}
+				set
+				{
+					_icon = value;
+				}
+			}
+
+			[ProtoMember(4, IsRequired = true, Name = "troop_base_num", DataFormat = DataFormat.ZigZag)]
+			public int troop_base_num
+			{
+				get
+				{
+					return _troop_base_num;
+				}
+				set
+				{
+					_troop_base_num = value;
+				}
+			}
+
+			[ProtoMember(5, IsRequired = true, Name = "troop_start_num", DataFormat = DataFormat.ZigZag)]
+			public int troop_start_num
+			{
+				get
+				{
+					return _troop_start_num;
+				}
+				set
+				{
+					_troop_start_num = value;
+				}
+			}
+
+			[ProtoMember(6, IsRequired = true, Name = "troop_lose_num", DataFormat = DataFormat.ZigZag)]
+			public int troop_lose_num
+			{
+				get
+				{
+					return _troop_lose_num;
+				}
+				set
+				{
+					_troop_lose_num = value;
+				}
+			}
+
+			[ProtoMember(7, IsRequired = true, Name = "army_id", DataFormat = DataFormat.ZigZag)]
+			public int army_id
+			{
+				get
+				{
+					return _army_id;
+				}
+				set
+				{
+					_army_id = value;
+				}
+			}
+
+			[ProtoMember(8, IsRequired = true, Name = "skill_id", DataFormat = DataFormat.ZigZag)]
+			public int skill_id
+			{
+				get
+				{
+					return _skill_id;
+				}
+				set
+				{
+					_skill_id = value;
+				}
+			}
+
+			[ProtoMember(9, IsRequired = true, Name = "location", DataFormat = DataFormat.ZigZag)]
+			public int location
+			{
+				get
+				{
+					return _location;
+				}
+				set
+				{
+					_location = value;
+				}
+			}
+
+			[ProtoMember(10, IsRequired = true, Name = "rage_max", DataFormat = DataFormat.ZigZag)]
+			public int rage_max
+			{
+				get
+				{
+					return _rage_max;
+				}
+				set
+				{
+					_rage_max = value;
+				}
+			}
+
+			[ProtoMember(11, IsRequired = true, Name = "rage_cast", DataFormat = DataFormat.ZigZag)]
+			public int rage_cast
+			{
+				get
+				{
+					return _rage_cast;
+				}
+				set
+				{
+					_rage_cast = value;
+				}
+			}
+
+			[ProtoMember(12, IsRequired = false, Name = "internal_param", DataFormat = DataFormat.Default)]
+			[DefaultValue(null)]
+			public InternalParam internal_param
+			{
+				get
+				{
+					return _internal_param;
+				}
+				set
+				{
+					_internal_param = value;
+				}
+			}
+
+			[ProtoMember(13, IsRequired = false, Name = "male_model", DataFormat = DataFormat.Default)]
+			[DefaultValue(true)]
+			public bool male_model
+			{
+				get
+				{
+					return _male_model;
+				}
+				set
+				{
+					_male_model = value;
+				}
+			}
+
+			[ProtoMember(14, IsRequired = false, Name = "isMainCharacter", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool isMainCharacter
+			{
+				get
+				{
+					return _isMainCharacter;
+				}
+				set
+				{
+					_isMainCharacter = value;
+				}
+			}
+
+			[ProtoMember(15, Name = "used_skills", DataFormat = DataFormat.ZigZag, Options = MemberSerializationOptions.Packed)]
+			public List<int> used_skills => _used_skills;
+
+			[ProtoMember(16, Name = "used_buffs", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
+			public List<uint> used_buffs => _used_buffs;
+
+			[ProtoMember(17, Name = "used_damages", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
+			public List<uint> used_damages => _used_damages;
+
+			[ProtoMember(18, IsRequired = false, Name = "boss_unit", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool boss_unit
+			{
+				get
+				{
+					return _boss_unit;
+				}
+				set
+				{
+					_boss_unit = value;
+				}
+			}
+
+			[ProtoMember(19, IsRequired = false, Name = "color", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(0L)]
+			public uint color
+			{
+				get
+				{
+					return _color;
+				}
+				set
+				{
+					_color = value;
+				}
+			}
+
+			[ProtoMember(20, IsRequired = false, Name = "rage_now", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int rage_now
+			{
+				get
+				{
+					return _rage_now;
+				}
+				set
+				{
+					_rage_now = value;
+				}
+			}
+
+			[ProtoMember(21, Name = "init_buffs", DataFormat = DataFormat.TwosComplement)]
+			public List<uint> init_buffs => _init_buffs;
+
+			[ProtoMember(22, Name = "used_armys", DataFormat = DataFormat.ZigZag)]
+			public List<int> used_armys => _used_armys;
+
+			[ProtoMember(23, Name = "talent_spec", DataFormat = DataFormat.TwosComplement)]
+			public List<uint> talent_spec => _talent_spec;
+
+			IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+			{
+				return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+			}
+		}
+
+		[Serializable]
+		[ProtoContract(Name = "SpiritBeastInfo")]
+		public class SpiritBeastInfo : IExtensible
+		{
+			private uint _id;
+
+			private uint _level;
+
+			private readonly List<int> _skill_id = new List<int>();
+
+			private readonly List<uint> _used_buffs = new List<uint>();
+
+			private readonly List<uint> _used_damages = new List<uint>();
+
+			private IExtension extensionObject;
+
+			[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+			public uint id
+			{
+				get
+				{
+					return _id;
+				}
+				set
+				{
+					_id = value;
+				}
+			}
+
+			[ProtoMember(2, IsRequired = true, Name = "level", DataFormat = DataFormat.TwosComplement)]
+			public uint level
+			{
+				get
+				{
+					return _level;
+				}
+				set
+				{
+					_level = value;
+				}
+			}
+
+			[ProtoMember(3, Name = "skill_id", DataFormat = DataFormat.ZigZag, Options = MemberSerializationOptions.Packed)]
+			public List<int> skill_id => _skill_id;
+
+			[ProtoMember(4, Name = "used_buffs", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
+			public List<uint> used_buffs => _used_buffs;
+
+			[ProtoMember(5, Name = "used_damages", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
+			public List<uint> used_damages => _used_damages;
+
+			IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+			{
+				return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+			}
+		}
+
+		[Serializable]
+		[ProtoContract(Name = "CardInfo")]
+		public class CardInfo : IExtensible
+		{
+			private uint _id;
+
+			private uint _stack_times = 1u;
+
+			private IExtension extensionObject;
+
+			[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+			public uint id
+			{
+				get
+				{
+					return _id;
+				}
+				set
+				{
+					_id = value;
+				}
+			}
+
+			[ProtoMember(2, IsRequired = false, Name = "stack_times", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(1L)]
+			public uint stack_times
+			{
+				get
+				{
+					return _stack_times;
+				}
+				set
+				{
+					_stack_times = value;
+				}
+			}
+
+			IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+			{
+				return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+			}
+		}
+
+		private string _name;
+
+		private int _level;
+
+		private bool _npc;
+
+		private int _initiative;
+
+		private readonly List<LegionInfo> _legions = new List<LegionInfo>();
+
+		private SpiritBeastInfo _beast = null;
+
+		private readonly List<CardInfo> _cards = new List<CardInfo>();
+
+		private IExtension extensionObject;
+
+		[ProtoMember(1, IsRequired = true, Name = "name", DataFormat = DataFormat.Default)]
+		public string name
+		{
+			get
+			{
+				return _name;
+			}
+			set
+			{
+				_name = value;
+			}
+		}
+
+		[ProtoMember(2, IsRequired = true, Name = "level", DataFormat = DataFormat.ZigZag)]
+		public int level
+		{
+			get
+			{
+				return _level;
+			}
+			set
+			{
+				_level = value;
+			}
+		}
+
+		[ProtoMember(3, IsRequired = true, Name = "npc", DataFormat = DataFormat.Default)]
+		public bool npc
+		{
+			get
+			{
+				return _npc;
+			}
+			set
+			{
+				_npc = value;
+			}
+		}
+
+		[ProtoMember(4, IsRequired = true, Name = "initiative", DataFormat = DataFormat.ZigZag)]
+		public int initiative
+		{
+			get
+			{
+				return _initiative;
+			}
+			set
+			{
+				_initiative = value;
+			}
+		}
+
+		[ProtoMember(5, Name = "legions", DataFormat = DataFormat.Default)]
+		public List<LegionInfo> legions => _legions;
+
+		[ProtoMember(6, IsRequired = false, Name = "beast", DataFormat = DataFormat.Default)]
+		[DefaultValue(null)]
+		public SpiritBeastInfo beast
+		{
+			get
+			{
+				return _beast;
+			}
+			set
+			{
+				_beast = value;
+			}
+		}
+
+		[ProtoMember(7, Name = "cards", DataFormat = DataFormat.Default)]
+		public List<CardInfo> cards => _cards;
+
+		IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+		{
+			return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+		}
+	}
+
+	[Serializable]
+	[ProtoContract(Name = "GameTurn")]
+	public class GameTurn : IExtensible
+	{
+		[Serializable]
+		[ProtoContract(Name = "Action")]
+		public class Action : IExtensible
+		{
+			[ProtoContract(Name = "ActionType")]
+			public enum ActionType
+			{
+				[ProtoEnum(Name = "skillActionHead", Value = 3)]
+				skillActionHead = 3,
+				[ProtoEnum(Name = "skillActionEnd", Value = 4)]
+				skillActionEnd,
+				[ProtoEnum(Name = "skillHandle", Value = 5)]
+				skillHandle,
+				[ProtoEnum(Name = "skillHandleEnd", Value = 6)]
+				skillHandleEnd,
+				[ProtoEnum(Name = "targetHandleBegin", Value = 7)]
+				targetHandleBegin,
+				[ProtoEnum(Name = "targetHandleEnd", Value = 8)]
+				targetHandleEnd,
+				[ProtoEnum(Name = "one_pass_begin", Value = 9)]
+				one_pass_begin,
+				[ProtoEnum(Name = "one_pass_end", Value = 10)]
+				one_pass_end,
+				[ProtoEnum(Name = "move", Value = 11)]
+				move,
+				[ProtoEnum(Name = "block", Value = 12)]
+				block,
+				[ProtoEnum(Name = "beHit", Value = 13)]
+				beHit,
+				[ProtoEnum(Name = "addRage", Value = 14)]
+				addRage,
+				[ProtoEnum(Name = "buffOperation", Value = 15)]
+				buffOperation,
+				[ProtoEnum(Name = "dead", Value = 16)]
+				dead,
+				[ProtoEnum(Name = "revive", Value = 17)]
+				revive,
+				[ProtoEnum(Name = "dodge", Value = 18)]
+				dodge,
+				[ProtoEnum(Name = "counterBegin", Value = 19)]
+				counterBegin,
+				[ProtoEnum(Name = "counterEnd", Value = 20)]
+				counterEnd,
+				[ProtoEnum(Name = "transform", Value = 21)]
+				transform,
+				[ProtoEnum(Name = "transformBack", Value = 22)]
+				transformBack
+			}
+
+			[ProtoContract(Name = "LegionSide")]
+			public enum LegionSide
+			{
+				[ProtoEnum(Name = "LEGION_LEFT", Value = 0)]
+				LEGION_LEFT,
+				[ProtoEnum(Name = "LEGION_RIGHT", Value = 1)]
+				LEGION_RIGHT
+			}
+
+			[ProtoContract(Name = "BuffOperationType")]
+			public enum BuffOperationType
+			{
+				[ProtoEnum(Name = "add_buff", Value = 1)]
+				add_buff = 1,
+				[ProtoEnum(Name = "remove_buff", Value = 2)]
+				remove_buff
+			}
+
+			private ActionType _type;
+
+			private LegionSide _side;
+
+			private int _location;
+
+			private int _skill_id = 0;
+
+			private bool _is_normal = false;
+
+			private uint _damage_type = 0u;
+
+			private int _add_rage_num = 0;
+
+			private uint _combo = 0u;
+
+			private LegionSide _target_side = LegionSide.LEGION_LEFT;
+
+			private readonly List<int> _target_locations = new List<int>();
+
+			private int _hit_point = 0;
+
+			private bool _critical = false;
+
+			private readonly List<uint> _buff_effects = new List<uint>();
+
+			private BuffOperationType _buff_op = BuffOperationType.add_buff;
+
+			private uint _buff = 0u;
+
+			private uint _duration = 0u;
+
+			private int _army_id = 0;
+
+			private int _rage_max_transform = 0;
+
+			private int _rage_cast_transform = 0;
+
+			private int _transform_skill_id = 0;
+
+			private bool _executed = false;
+
+			private bool _is_sub_skill = false;
+
+			private int _absorb_point = 0;
+
+			private IExtension extensionObject;
+
+			[ProtoMember(1, IsRequired = true, Name = "type", DataFormat = DataFormat.TwosComplement)]
+			public ActionType type
+			{
+				get
+				{
+					return _type;
+				}
+				set
+				{
+					_type = value;
+				}
+			}
+
+			[ProtoMember(2, IsRequired = true, Name = "side", DataFormat = DataFormat.TwosComplement)]
+			public LegionSide side
+			{
+				get
+				{
+					return _side;
+				}
+				set
+				{
+					_side = value;
+				}
+			}
+
+			[ProtoMember(3, IsRequired = true, Name = "location", DataFormat = DataFormat.ZigZag)]
+			public int location
+			{
+				get
+				{
+					return _location;
+				}
+				set
+				{
+					_location = value;
+				}
+			}
+
+			[ProtoMember(4, IsRequired = false, Name = "skill_id", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int skill_id
+			{
+				get
+				{
+					return _skill_id;
+				}
+				set
+				{
+					_skill_id = value;
+				}
+			}
+
+			[ProtoMember(5, IsRequired = false, Name = "is_normal", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool is_normal
+			{
+				get
+				{
+					return _is_normal;
+				}
+				set
+				{
+					_is_normal = value;
+				}
+			}
+
+			[ProtoMember(6, IsRequired = false, Name = "damage_type", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(0L)]
+			public uint damage_type
+			{
+				get
+				{
+					return _damage_type;
+				}
+				set
+				{
+					_damage_type = value;
+				}
+			}
+
+			[ProtoMember(7, IsRequired = false, Name = "add_rage_num", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int add_rage_num
+			{
+				get
+				{
+					return _add_rage_num;
+				}
+				set
+				{
+					_add_rage_num = value;
+				}
+			}
+
+			[ProtoMember(8, IsRequired = false, Name = "combo", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(0L)]
+			public uint combo
+			{
+				get
+				{
+					return _combo;
+				}
+				set
+				{
+					_combo = value;
+				}
+			}
+
+			[ProtoMember(9, IsRequired = false, Name = "target_side", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(LegionSide.LEGION_LEFT)]
+			public LegionSide target_side
+			{
+				get
+				{
+					return _target_side;
+				}
+				set
+				{
+					_target_side = value;
+				}
+			}
+
+			[ProtoMember(10, Name = "target_locations", DataFormat = DataFormat.ZigZag, Options = MemberSerializationOptions.Packed)]
+			public List<int> target_locations => _target_locations;
+
+			[ProtoMember(11, IsRequired = false, Name = "hit_point", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int hit_point
+			{
+				get
+				{
+					return _hit_point;
+				}
+				set
+				{
+					_hit_point = value;
+				}
+			}
+
+			[ProtoMember(12, IsRequired = false, Name = "critical", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool critical
+			{
+				get
+				{
+					return _critical;
+				}
+				set
+				{
+					_critical = value;
+				}
+			}
+
+			[ProtoMember(13, Name = "buff_effects", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
+			public List<uint> buff_effects => _buff_effects;
+
+			[ProtoMember(14, IsRequired = false, Name = "buff_op", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(BuffOperationType.add_buff)]
+			public BuffOperationType buff_op
+			{
+				get
+				{
+					return _buff_op;
+				}
+				set
+				{
+					_buff_op = value;
+				}
+			}
+
+			[ProtoMember(15, IsRequired = false, Name = "buff", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(0L)]
+			public uint buff
+			{
+				get
+				{
+					return _buff;
+				}
+				set
+				{
+					_buff = value;
+				}
+			}
+
+			[ProtoMember(16, IsRequired = false, Name = "duration", DataFormat = DataFormat.TwosComplement)]
+			[DefaultValue(0L)]
+			public uint duration
+			{
+				get
+				{
+					return _duration;
+				}
+				set
+				{
+					_duration = value;
+				}
+			}
+
+			[ProtoMember(17, IsRequired = false, Name = "army_id", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int army_id
+			{
+				get
+				{
+					return _army_id;
+				}
+				set
+				{
+					_army_id = value;
+				}
+			}
+
+			[ProtoMember(18, IsRequired = false, Name = "rage_max_transform", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int rage_max_transform
+			{
+				get
+				{
+					return _rage_max_transform;
+				}
+				set
+				{
+					_rage_max_transform = value;
+				}
+			}
+
+			[ProtoMember(19, IsRequired = false, Name = "rage_cast_transform", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int rage_cast_transform
+			{
+				get
+				{
+					return _rage_cast_transform;
+				}
+				set
+				{
+					_rage_cast_transform = value;
+				}
+			}
+
+			[ProtoMember(21, IsRequired = false, Name = "transform_skill_id", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int transform_skill_id
+			{
+				get
+				{
+					return _transform_skill_id;
+				}
+				set
+				{
+					_transform_skill_id = value;
+				}
+			}
+
+			[ProtoMember(20, IsRequired = false, Name = "executed", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool executed
+			{
+				get
+				{
+					return _executed;
+				}
+				set
+				{
+					_executed = value;
+				}
+			}
+
+			[ProtoMember(22, IsRequired = false, Name = "is_sub_skill", DataFormat = DataFormat.Default)]
+			[DefaultValue(false)]
+			public bool is_sub_skill
+			{
+				get
+				{
+					return _is_sub_skill;
+				}
+				set
+				{
+					_is_sub_skill = value;
+				}
+			}
+
+			[ProtoMember(23, IsRequired = false, Name = "absorb_point", DataFormat = DataFormat.ZigZag)]
+			[DefaultValue(0)]
+			public int absorb_point
+			{
+				get
+				{
+					return _absorb_point;
+				}
+				set
+				{
+					_absorb_point = value;
+				}
+			}
+
+			IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+			{
+				return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+			}
+		}
+
+		private readonly List<Action> _actions = new List<Action>();
+
+		private int _left_move_num = -1;
+
+		private int _right_move_num = -1;
+
+		private IExtension extensionObject;
+
+		[ProtoMember(1, Name = "actions", DataFormat = DataFormat.Default)]
+		public List<Action> actions => _actions;
+
+		[ProtoMember(2, IsRequired = false, Name = "left_move_num", DataFormat = DataFormat.ZigZag)]
+		[DefaultValue(-1)]
+		public int left_move_num
+		{
+			get
+			{
+				return _left_move_num;
+			}
+			set
+			{
+				_left_move_num = value;
+			}
+		}
+
+		[ProtoMember(3, IsRequired = false, Name = "right_move_num", DataFormat = DataFormat.ZigZag)]
+		[DefaultValue(-1)]
+		public int right_move_num
+		{
+			get
+			{
+				return _right_move_num;
+			}
+			set
+			{
+				_right_move_num = value;
+			}
+		}
+
+		IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+		{
+			return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+		}
+	}
+
+	[ProtoContract(Name = "ResultStatus")]
+	public enum ResultStatus
+	{
+		[ProtoEnum(Name = "LEFT_WIN", Value = 1)]
+		LEFT_WIN = 1,
+		[ProtoEnum(Name = "LEFT_LOSE", Value = 2)]
+		LEFT_LOSE,
+		[ProtoEnum(Name = "DRAW", Value = 3)]
+		DRAW
+	}
+
+	[ProtoContract(Name = "BattleType")]
+	public enum BattleType
+	{
+		[ProtoEnum(Name = "Normal_Battle", Value = 1)]
+		Normal_Battle = 1,
+		[ProtoEnum(Name = "Boss_Battle", Value = 2)]
+		Boss_Battle,
+		[ProtoEnum(Name = "PvP_Battle", Value = 3)]
+		PvP_Battle
+	}
+
+	private ArmyInfo _left_army;
+
+	private ArmyInfo _right_army;
+
+	private ResultStatus _result_status;
+
+	private readonly List<GameTurn> _game_turns = new List<GameTurn>();
+
+	private uint _battle_field = 0u;
+
+	private float _battle_length = 0f;
+
+	private BattleType _type = BattleType.Normal_Battle;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "left_army", DataFormat = DataFormat.Default)]
+	public ArmyInfo left_army
+	{
+		get
+		{
+			return _left_army;
+		}
+		set
+		{
+			_left_army = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "right_army", DataFormat = DataFormat.Default)]
+	public ArmyInfo right_army
+	{
+		get
+		{
+			return _right_army;
+		}
+		set
+		{
+			_right_army = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "result_status", DataFormat = DataFormat.TwosComplement)]
+	public ResultStatus result_status
+	{
+		get
+		{
+			return _result_status;
+		}
+		set
+		{
+			_result_status = value;
+		}
+	}
+
+	[ProtoMember(4, Name = "game_turns", DataFormat = DataFormat.Default)]
+	public List<GameTurn> game_turns => _game_turns;
+
+	[ProtoMember(5, IsRequired = false, Name = "battle_field", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint battle_field
+	{
+		get
+		{
+			return _battle_field;
+		}
+		set
+		{
+			_battle_field = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "battle_length", DataFormat = DataFormat.FixedSize)]
+	[DefaultValue(0f)]
+	public float battle_length
+	{
+		get
+		{
+			return _battle_length;
+		}
+		set
+		{
+			_battle_length = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "type", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(BattleType.Normal_Battle)]
+	public BattleType type
+	{
+		get
+		{
+			return _type;
+		}
+		set
+		{
+			_type = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

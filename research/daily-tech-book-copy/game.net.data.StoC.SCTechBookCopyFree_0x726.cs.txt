@@ -1,0 +1,92 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCTechBookCopyFree_0x726")]
+public class SCTechBookCopyFree_0x726 : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error,
+		[ProtoEnum(Name = "NoTimes", Value = 2)]
+		NoTimes,
+		[ProtoEnum(Name = "Copying", Value = 3)]
+		Copying
+	}
+
+	private Operate _operate;
+
+	private uint _tech_book_copy_finish_time;
+
+	private uint _tech_book_copy_num = 0u;
+
+	private bool _isCrit = false;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "tech_book_copy_finish_time", DataFormat = DataFormat.TwosComplement)]
+	public uint tech_book_copy_finish_time
+	{
+		get
+		{
+			return _tech_book_copy_finish_time;
+		}
+		set
+		{
+			_tech_book_copy_finish_time = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "tech_book_copy_num", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint tech_book_copy_num
+	{
+		get
+		{
+			return _tech_book_copy_num;
+		}
+		set
+		{
+			_tech_book_copy_num = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "isCrit", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool isCrit
+	{
+		get
+		{
+			return _isCrit;
+		}
+		set
+		{
+			_isCrit = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

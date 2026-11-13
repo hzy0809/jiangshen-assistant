@@ -1,0 +1,151 @@
+{
+  "utc": "2026-10-30T17:07:54.829093+00:00",
+  "mode": "live",
+  "mono_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "layout": {
+    "cache_embedded_offset": 672,
+    "cache_header_size": 24,
+    "cache_expected_callback_rvas": [
+      8744,
+      228436,
+      228447
+    ],
+    "class_token_offset": 56,
+    "class_next_offset": 168,
+    "max_chain_nodes": 64,
+    "accessors": {
+      "mono_class_get_image": {
+        "rva": 91436,
+        "offset": 44,
+        "bytes": "558bec8b45088b402c5dc3"
+      },
+      "mono_class_get_name": {
+        "rva": 91549,
+        "offset": 48,
+        "bytes": "558bec8b45088b40305dc3"
+      },
+      "mono_class_get_namespace": {
+        "rva": 91560,
+        "offset": 52,
+        "bytes": "558bec8b45088b40345dc3"
+      },
+      "mono_class_get_parent": {
+        "rva": 91504,
+        "offset": 36,
+        "bytes": "558bec8b45088b40245dc3"
+      }
+    },
+    "proofs": {
+      "image_embedded_cache": {
+        "rva": 96231,
+        "bytes": "ff750c8d87a002000050e80018ffff"
+      },
+      "cache_lookup": {
+        "rva": 36897,
+        "bytes": "ff750cff1633d2f7760c8b46148b3c90eb1057ff5604593b450c741157ff56088b385985ff75eb33c05f5e5dc38bc7ebf8"
+      },
+      "cache_key_callback": {
+        "rva": 228436,
+        "bytes": "558bec8b45088b40385dc3"
+      },
+      "cache_next_callback": {
+        "rva": 228447,
+        "bytes": "558bec8b450805a80000005dc3"
+      },
+      "cache_hash_callback": {
+        "rva": 8744,
+        "bytes": "8b442404c3"
+      }
+    }
+  },
+  "whitelisted_types": [
+    {
+      "assembly": "Assembly-CSharp-firstpass",
+      "namespace": "",
+      "name": "Global",
+      "token": "0x200014f"
+    },
+    {
+      "assembly": "Assembly-CSharp",
+      "namespace": "",
+      "name": "MainUI",
+      "token": "0x20001af"
+    },
+    {
+      "assembly": "Assembly-CSharp-firstpass",
+      "namespace": "Database",
+      "name": "Character",
+      "token": "0x2000071"
+    },
+    {
+      "assembly": "pbdata",
+      "namespace": "Database",
+      "name": "_character",
+      "token": "0x200002f"
+    }
+  ],
+  "status": "PASS",
+  "pid": 12844,
+  "process_creation_filetime": 134378531591407015,
+  "root_domain": "0x3354e70",
+  "mono_base": "0x10000000",
+  "classes": [
+    {
+      "assembly": "Assembly-CSharp-firstpass",
+      "namespace": "",
+      "name": "Global",
+      "token": "0x200014f",
+      "bucket_nodes_visited": 1,
+      "status": "PASS",
+      "class": "0x114e4960",
+      "image": "0x107698d8",
+      "parent": "0x43f0ce0",
+      "cache_bucket_count": 557,
+      "cache_entry_count": 648
+    },
+    {
+      "assembly": "Assembly-CSharp",
+      "namespace": "",
+      "name": "MainUI",
+      "token": "0x20001af",
+      "bucket_nodes_visited": 1,
+      "status": "PASS",
+      "class": "0x1081a870",
+      "image": "0x1076a9b8",
+      "parent": "0x446d078",
+      "cache_bucket_count": 557,
+      "cache_entry_count": 673
+    },
+    {
+      "assembly": "Assembly-CSharp-firstpass",
+      "namespace": "Database",
+      "name": "Character",
+      "token": "0x2000071",
+      "bucket_nodes_visited": 2,
+      "status": "PASS",
+      "class": "0x113b76f0",
+      "image": "0x107698d8",
+      "parent": "0x113b43b0",
+      "cache_bucket_count": 557,
+      "cache_entry_count": 648
+    },
+    {
+      "assembly": "pbdata",
+      "namespace": "Database",
+      "name": "_character",
+      "token": "0x200002f",
+      "bucket_nodes_visited": 1,
+      "status": "PASS",
+      "class": "0x113b43b0",
+      "image": "0x44dac00",
+      "parent": "0x43f0ce0",
+      "cache_bucket_count": 557,
+      "cache_entry_count": 500
+    }
+  ],
+  "assembly_stage_read_calls": 274,
+  "assembly_stage_requested_bytes": 654,
+  "type_stage_read_calls": 60,
+  "type_stage_requested_bytes": 524,
+  "live_game_scalars": "UNVERIFIED: disabled; no object/static field data read"
+}

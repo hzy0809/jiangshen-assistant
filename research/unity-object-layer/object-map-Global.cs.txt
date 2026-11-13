@@ -1,0 +1,1194 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using Database;
+using UnityEngine;
+using game.net;
+using game.net.data.StoC;
+
+public class Global
+{
+	public const int er_maxRank = 5;
+
+	public static BattleActivity_Setting assault_setting = new BattleActivity_Setting();
+
+	public static Event_Setting fund_setting = new Event_Setting();
+
+	public static Event_Setting grave_event_setting = new Event_Setting();
+
+	public static Event_Setting chinese_new_year_lottery_setting = new Event_Setting();
+
+	public static Event_Setting newyear_checkin_setting = new Event_Setting();
+
+	public static BattleActivity_Setting rescue_setting = new BattleActivity_Setting();
+
+	public static SpecialOffer_Setting atrifact_upgrade_advanced_setting = new SpecialOffer_Setting();
+
+	public static bool m_bInit = false;
+
+	public static tcp_base m_client;
+
+	public static bool bigui = false;
+
+	public static int PLAYER_LEVEL_MAX = 105;
+
+	public static bool extern_enabled = true;
+
+	public static bool relogin = false;
+
+	public static bool is_return_server = false;
+
+	public static bool zhuan_fu = false;
+
+	public static string zf_url = string.Empty;
+
+	public static uint asset_version = 0u;
+
+	public static string launcher_exe = string.Empty;
+
+	public static IDictionary game_data;
+
+	public static string mobile_url = string.Empty;
+
+	public static string i18n = string.Empty;
+
+	public static bool bgmode_run = true;
+
+	public static ulong userid = 0uL;
+
+	public static uint zoneid = 0u;
+
+	public static string tempid = string.Empty;
+
+	public static uint premium_fund_time_new = 1410123600u;
+
+	public static uint premium_time_new = 1389715200u;
+
+	public static bool is_new_user = false;
+
+	public static ushort idcampaign_start = 70;
+
+	public static bool isNewFirstRecharge = false;
+
+	public static bool isNewVipReward = false;
+
+	public static bool isTestServer = false;
+
+	public static uint serverOpenTimeTest;
+
+	public static bool isRuneActivityOpen = false;
+
+	public static bool isGiftbagOpen = false;
+
+	public static SpecialItemShopTemp specialitemshoptemp = new SpecialItemShopTemp();
+
+	public static Database.CostTimesWave costtimeswave = new Database.CostTimesWave();
+
+	public static ChristmasEventTemplate christmaseventtemplate = new ChristmasEventTemplate();
+
+	public static Dictionary<uint, Database.CraftShopItem> craftshopitems = new Dictionary<uint, Database.CraftShopItem>();
+
+	public static Dictionary<uint, CraftWorldChampion> craftWorldChampions = new Dictionary<uint, CraftWorldChampion>();
+
+	public static Character character_ = new Character();
+
+	public static CrossCraft craft_ = new CrossCraft();
+
+	public static CrossCraft craft_world = new CrossCraft();
+
+	public static CrossCraft craft_tactic = new CrossCraft();
+
+	public static CrossNation nation_ = new CrossNation();
+
+	public static CrossTeamFight teamfight_ = new CrossTeamFight();
+
+	public static CrossLadder ladder_ = new CrossLadder();
+
+	public static bool anti_addicted_on = false;
+
+	public static int fcm = 0;
+
+	public static Dictionary<ulong, byte[]> battle_reports = new Dictionary<ulong, byte[]>();
+
+	public static Dictionary<ulong, byte[]> cross_reports = new Dictionary<ulong, byte[]>();
+
+	public static List<byte> lucky_products = new List<byte>();
+
+	public static bool isMobile = false;
+
+	public static Dictionary<uint, ServerCraftWorldBet> serverCraftWorldBets = new Dictionary<uint, ServerCraftWorldBet>();
+
+	public static Dictionary<uint, List<ServerCraftWorldBetStatistics>> servercraftworldbetstatistics = new Dictionary<uint, List<ServerCraftWorldBetStatistics>>();
+
+	public static List<CraftWorldTopRank> craftworldtoprank = new List<CraftWorldTopRank>();
+
+	public static Hashtable FirstChecks = new Hashtable();
+
+	public static Hashtable GuideChecks = new Hashtable();
+
+	public static List<long> FormGens = new List<long>();
+
+	private static readonly string[] strNumbers = new string[10] { "零", "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+
+	private static readonly string[] strNumbers2 = new string[10] { "零", "十", "二十", "三十", "四十", "五十", "六十", "七十", "八十", "九十" };
+
+	public static int newgen_count;
+
+	public static int _quest_act_num = 0;
+
+	public static bool isNewNewbieActivity = false;
+
+	public static bool isNewerZhaoYunQuest = false;
+
+	public static bool showEquipmentUI = false;
+
+	public static bool EquipmentUI_isSetToolTips = true;
+
+	public static bool fullScreenUI = false;
+
+	public static Dictionary<string, ImageMessage> image_messages = new Dictionary<string, ImageMessage>();
+
+	public static List<Database.LoginMessage> login_messages = new List<Database.LoginMessage>();
+
+	public static List<Database.TimeLimitMessage> timelimit_messages = new List<Database.TimeLimitMessage>();
+
+	public static TimeLimitMessage_Spirit tlm_spirit = new TimeLimitMessage_Spirit();
+
+	public static TimeLimitMessage_Exchange tlm_exchange = new TimeLimitMessage_Exchange();
+
+	public static List<Database.TempEventMessage> tempevent_messages = new List<Database.TempEventMessage>();
+
+	public static Database.ShopLimit shoplimit = null;
+
+	public static Database.AssaultShop assaultshop = null;
+
+	public static Dictionary<byte, SimpleShop> simpleShops = new Dictionary<byte, SimpleShop>();
+
+	public static bool jsnetcafe = false;
+
+	public static bool is_premium_fund_new()
+	{
+		return (character_.server_open_time > premium_fund_time_new) ? true : false;
+	}
+
+	public static bool is_premium_new()
+	{
+		return (character_.server_open_time > premium_time_new) ? true : false;
+	}
+
+	public static bool isArtifactUpgradeAdvancedEventOpen()
+	{
+		if (TimeUtil.Now >= atrifact_upgrade_advanced_setting.start_time && TimeUtil.Now <= atrifact_upgrade_advanced_setting.end_time)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void ExternalCall(string functionName, params object[] args)
+	{
+		if (is_new_user)
+		{
+			Application.ExternalCall(functionName, args);
+		}
+	}
+
+	public static Hashtable getTemplates(string name)
+	{
+		return db_loader.getTable(name);
+	}
+
+	public static object getTemplate(string name, uint id)
+	{
+		return db_loader.getObject(name, id);
+	}
+
+	public static _buy_template getBuyTemplate(_buy_template.TYPE type, int count)
+	{
+		Hashtable templates = getTemplates("buy_template");
+		foreach (DictionaryEntry item in templates)
+		{
+			_buy_template buy_template = item.Value as _buy_template;
+			if (buy_template.type == (byte)type && buy_template.count_min <= count && buy_template.count_max >= count)
+			{
+				return buy_template;
+			}
+		}
+		return null;
+	}
+
+	public byte[] getBattleReport(ulong id)
+	{
+		if (battle_reports.ContainsKey(id))
+		{
+			return battle_reports[id];
+		}
+		return null;
+	}
+
+	public byte[] getCrossReport(ulong id)
+	{
+		if (cross_reports.ContainsKey(id))
+		{
+			return cross_reports[id];
+		}
+		return null;
+	}
+
+	public static void makeLuckyProducts(List<uint> lp)
+	{
+		lucky_products.Clear();
+		foreach (uint item in lp)
+		{
+			lucky_products.Add((byte)item);
+		}
+	}
+
+	public static BuildingIsland getIsland(byte id)
+	{
+		foreach (BuildingArea value in character_.building_areas.Values)
+		{
+			if (value.m_islands.ContainsKey(id))
+			{
+				return value.m_islands[id];
+			}
+		}
+		return null;
+	}
+
+	public static string getText(string name)
+	{
+		return getText(name, "chs");
+	}
+
+	public static string getText(string name, string type)
+	{
+		Hashtable templates = getTemplates("text_names");
+		if (templates.ContainsKey(name))
+		{
+			return getText((uint)templates[name], "chs");
+		}
+		return string.Empty;
+	}
+
+	public static string getText(uint id)
+	{
+		return getText(id, "chs");
+	}
+
+	public static string getText(uint id, string type)
+	{
+		if (getTemplate("text", id) is _text text)
+		{
+			if (type == "chs")
+			{
+				return text.text_chs;
+			}
+			return text.text_chs;
+		}
+		return string.Empty;
+	}
+
+	public static string get_uibutton(uint idui_button)
+	{
+		return (!(getTemplate("ui_button", idui_button) is _ui_button ui_button)) ? string.Empty : ui_button.name;
+	}
+
+	public static int get_treasure_filter(uint idtreasure_filter)
+	{
+		if (idtreasure_filter > 9)
+		{
+			idtreasure_filter = 9u;
+		}
+		return (getTemplate("treasure_filter", idtreasure_filter) as _treasure_filter).gold;
+	}
+
+	public static int get_exp_require_character(int level)
+	{
+		if (getTemplate("exp_require_character", (uint)level) is _exp_require_character exp_require_character)
+		{
+			return (int)exp_require_character.exp;
+		}
+		return 0;
+	}
+
+	public static string get_trooprank(byte idrank)
+	{
+		if (getTemplate("campaign_troop_rank", idrank) is _campaign_troop_rank campaign_troop_rank)
+		{
+			return campaign_troop_rank.name;
+		}
+		return string.Empty;
+	}
+
+	public static void add_scenario(Scenario s)
+	{
+		character_.addScenario(s.id);
+	}
+
+	public static string getFormatNumber(long number)
+	{
+		if (number < 100000)
+		{
+			return number.ToString();
+		}
+		if (number < 1000000000)
+		{
+			return __BaseUI.load_str(20930u, (float)(number / 10000));
+		}
+		return (float)(number / 100000000) + __BaseUI.load_str(20737u);
+	}
+
+	public static string getFormatNeedFloatNumber(uint number)
+	{
+		if (number < 100000)
+		{
+			return number.ToString();
+		}
+		if (number < 1000000000)
+		{
+			double num = (double)number / 10000.0;
+			return __BaseUI.load_str(20930u, num);
+		}
+		return (double)number / 100000000.0 + __BaseUI.load_str(20737u);
+	}
+
+	public static string getFormatDateAndTime(uint t)
+	{
+		DateTime dateTime = TimeUtil.ServerTime(t);
+		return string.Format(__BaseUI.load_str(20598u), dateTime.Month, dateTime.Day) + $"{dateTime.Hour:D2}:" + $"{dateTime.Minute:D2}";
+	}
+
+	public static string getFormatDate(uint t)
+	{
+		DateTime dateTime = TimeUtil.ServerTime(t);
+		return string.Format(__BaseUI.load_str(20598u), dateTime.Month, dateTime.Day);
+	}
+
+	public static string getFormatDateTime(uint t)
+	{
+		DateTime dateTime = TimeUtil.ServerTime(t);
+		int num = dateTime.Hour;
+		if (num == 0)
+		{
+			num = 24;
+		}
+		return $"{num:D2}:" + $"{dateTime.Minute:D2}";
+	}
+
+	public static string getFormatTime(int t)
+	{
+		int num = t / 3600;
+		int num2 = (t - num * 3600) / 60;
+		int num3 = t - num * 3600 - num2 * 60;
+		return $"{num:D2}:" + $"{num2:D2}:" + $"{num3:D2}";
+	}
+
+	public static string getStringTime(int t)
+	{
+		int num = t / 3600;
+		int num2 = (t - num * 3600) / 60;
+		int num3 = t - num * 3600 - num2 * 60;
+		string text = string.Empty;
+		if (num > 0)
+		{
+			text = text + num + __BaseUI.load_str(21438u);
+		}
+		if (num2 > 0)
+		{
+			text = text + num2 + __BaseUI.load_str(21439u);
+		}
+		if (num3 > 0)
+		{
+			text = text + num3 + __BaseUI.load_str(21440u);
+		}
+		return text;
+	}
+
+	public static string getStringTime2(int t)
+	{
+		int num = t / 86400;
+		int num2 = (t - num * 86400) / 3600;
+		int num3 = (t - num * 86400 - num2 * 3600) / 60;
+		int num4 = t - num * 86400 - num2 * 3600 - num3 * 60;
+		string text = string.Empty;
+		if (num > 0)
+		{
+			text = text + num + __BaseUI.load_str(9272u);
+		}
+		if (num2 > 0)
+		{
+			text = text + num2 + __BaseUI.load_str(21438u);
+		}
+		if (num3 > 0)
+		{
+			text = text + num3 + __BaseUI.load_str(21439u);
+		}
+		if (num4 > 0)
+		{
+			text = text + num4 + __BaseUI.load_str(21440u);
+		}
+		return text;
+	}
+
+	public static string getStringTimeIntervalBefore(uint time)
+	{
+		int num = 0;
+		string empty = string.Empty;
+		if (TimeUtil.ThisDay > time)
+		{
+			num = (((TimeUtil.ThisDay - time) % 86400 != 0) ? ((int)(TimeUtil.ThisDay - time) / 86400 + 1) : ((int)(TimeUtil.ThisDay - time) / 86400));
+			return __BaseUI.load_str(20129u, num);
+		}
+		if (TimeUtil.Now > time)
+		{
+			if (TimeUtil.Now - time > 3600)
+			{
+				num = (int)(TimeUtil.Now - time) / 3600;
+				return __BaseUI.load_str(20130u, num);
+			}
+			if (TimeUtil.Now - time > 60)
+			{
+				num = (int)(TimeUtil.Now - time) / 60;
+				return __BaseUI.load_str(20131u, num);
+			}
+			num = (int)(TimeUtil.Now - time);
+			return __BaseUI.load_str(20132u, num);
+		}
+		return __BaseUI.load_str(20132u, 0);
+	}
+
+	public static string getStringTimeIntervalAfter(uint time)
+	{
+		int num = 0;
+		string empty = string.Empty;
+		if (time > TimeUtil.Now)
+		{
+			if (time - TimeUtil.Now > 86400)
+			{
+				num = (int)(time - TimeUtil.ThisDay) / 86400;
+				return __BaseUI.load_str(20907u, num);
+			}
+			if (time - TimeUtil.Now > 3600)
+			{
+				num = (((time - TimeUtil.Now) % 3600 != 0) ? ((int)(time - TimeUtil.Now) / 3600 + 1) : ((int)(time - TimeUtil.Now) / 3600));
+				return __BaseUI.load_str(20908u, num);
+			}
+			if (time - TimeUtil.Now > 60)
+			{
+				num = (((time - TimeUtil.Now) % 60 != 0) ? ((int)(time - TimeUtil.Now) / 60 + 1) : ((int)(time - TimeUtil.Now) / 60));
+				return __BaseUI.load_str(20909u, num);
+			}
+			num = (int)(time - TimeUtil.Now);
+			return __BaseUI.load_str(20911u, num);
+		}
+		return __BaseUI.load_str(20911u, 0);
+	}
+
+	public static Color ParseColor(string clr)
+	{
+		string text = "FF000000";
+		if (clr.Length < 8)
+		{
+			clr = text.Substring(0, 8 - clr.Length) + clr;
+		}
+		float[] array = new float[4];
+		for (int i = 0; i < 4; i++)
+		{
+			array[i] = (float)int.Parse(clr.Substring(i * 2, 2), NumberStyles.AllowHexSpecifier) / 255f;
+		}
+		return new Color(array[1], array[2], array[3], array[0]);
+	}
+
+	public static _buy_template get_buy_template(_buy_template.TYPE type, int count)
+	{
+		Hashtable templates = getTemplates("buy_template");
+		foreach (DictionaryEntry item in templates)
+		{
+			_buy_template buy_template = item.Value as _buy_template;
+			if (buy_template.type == (byte)type && buy_template.count_min <= count && buy_template.count_max >= count)
+			{
+				return buy_template;
+			}
+		}
+		return null;
+	}
+
+	public static void setFirstCheck(string name, bool bCheck)
+	{
+		if (!(name == string.Empty))
+		{
+			FirstChecks[name] = bCheck;
+		}
+	}
+
+	public static bool getFirstCheck(string name)
+	{
+		if (FirstChecks.Contains(name))
+		{
+			return (bool)FirstChecks[name];
+		}
+		return false;
+	}
+
+	public static void setGuideCheck(string name, bool bCheck)
+	{
+		if (!(name == string.Empty))
+		{
+			GuideChecks[name] = bCheck;
+		}
+	}
+
+	public static bool getGuideCheck(string name)
+	{
+		if (GuideChecks.Contains(name))
+		{
+			return (bool)GuideChecks[name];
+		}
+		return false;
+	}
+
+	public static void _change_formgen(List<long> genids)
+	{
+		FormGens = genids;
+	}
+
+	public static string getStringFromInt(int num)
+	{
+		if (num < 0 || num > 999)
+		{
+			return string.Empty;
+		}
+		string text = string.Empty;
+		if (num >= 100)
+		{
+			text = text + strNumbers[num / 100] + "百";
+			num %= 100;
+		}
+		if (num >= 10)
+		{
+			text += strNumbers2[num / 10];
+			num %= 10;
+		}
+		else if (text != string.Empty && num != 0)
+		{
+			text += "零";
+		}
+		if (num > 0 || text == string.Empty)
+		{
+			text += strNumbers[num];
+		}
+		return text;
+	}
+
+	public static Color getEquipmentColor(uint id)
+	{
+		return ParseColor((getTemplate("item_quality", id) as _item_quality).color);
+	}
+
+	public static _general_template getGeneralTemplate(uint id)
+	{
+		_general_template general_template = getTemplate("general_template", id) as _general_template;
+		if (general_template == null)
+		{
+			general_template = new _general_template();
+		}
+		return general_template;
+	}
+
+	public static _army_template getArmyTemplate(uint id)
+	{
+		if (!(getTemplate("army_template", id) is _army_template result))
+		{
+			return getTemplate("army_template", 1u) as _army_template;
+		}
+		return result;
+	}
+
+	public static _skill getSkillTemplate(uint id)
+	{
+		if (!(getTemplate("skill", id) is _skill result))
+		{
+			return getTemplate("skill", 1u) as _skill;
+		}
+		return result;
+	}
+
+	public static _spirit_skill getSpiritSkillTemplate(uint id)
+	{
+		_spirit_skill spirit_skill = getTemplate("spirit_skill", id) as _spirit_skill;
+		if (spirit_skill == null)
+		{
+			spirit_skill = new _spirit_skill();
+		}
+		return spirit_skill;
+	}
+
+	public static _spirit_skill_type getSpiritSkillTypeTemplate(uint id)
+	{
+		_spirit_skill_type spirit_skill_type = getTemplate("spirit_skill_type", id) as _spirit_skill_type;
+		if (spirit_skill_type == null)
+		{
+			spirit_skill_type = new _spirit_skill_type();
+		}
+		return spirit_skill_type;
+	}
+
+	public static _amulet_template getAmuletTemplate(uint id)
+	{
+		_amulet_template amulet_template = getTemplate("amulet_template", id) as _amulet_template;
+		if (amulet_template == null)
+		{
+			amulet_template = new _amulet_template();
+		}
+		return amulet_template;
+	}
+
+	public static _gem_template getGemTemplate(uint id)
+	{
+		_gem_template gem_template = getTemplate("gem_template", id) as _gem_template;
+		if (gem_template == null)
+		{
+			gem_template = new _gem_template();
+		}
+		return gem_template;
+	}
+
+	public static _treasure_type getTreasureTypeTemplate(uint id)
+	{
+		_treasure_type treasure_type = getTemplate("treasure_type", id) as _treasure_type;
+		if (treasure_type == null)
+		{
+			treasure_type = new _treasure_type();
+		}
+		return treasure_type;
+	}
+
+	public static _treasure_type getTreasureTypeTemplate(string name)
+	{
+		Hashtable templates = getTemplates("treasure_type");
+		foreach (DictionaryEntry item in templates)
+		{
+			_treasure_type treasure_type = (_treasure_type)item.Value;
+			if (treasure_type.name == name)
+			{
+				return treasure_type;
+			}
+		}
+		return new _treasure_type();
+	}
+
+	public static _artifact_template getArtifactTemplate(uint id)
+	{
+		_artifact_template artifact_template = getTemplate("artifact_template", id) as _artifact_template;
+		if (artifact_template == null)
+		{
+			artifact_template = new _artifact_template();
+		}
+		return artifact_template;
+	}
+
+	public static _grave getGraveTemplate(uint id)
+	{
+		_grave grave = getTemplate("grave", id) as _grave;
+		if (grave == null)
+		{
+			grave = new _grave();
+		}
+		return grave;
+	}
+
+	public static _sealdevil_campaign getSDCampaignTemplate(uint id)
+	{
+		_sealdevil_campaign sealdevil_campaign = getTemplate("sealdevil_campaign", id) as _sealdevil_campaign;
+		if (sealdevil_campaign == null)
+		{
+			sealdevil_campaign = new _sealdevil_campaign();
+		}
+		return sealdevil_campaign;
+	}
+
+	public static ushort GetOriginId(uint g_id)
+	{
+		_general_origin general_origin = getTemplate("general_origin", g_id) as _general_origin;
+		ushort result = (ushort)g_id;
+		if (general_origin != null)
+		{
+			result = general_origin.origin;
+		}
+		return result;
+	}
+
+	public static void IEExplore(string url, string type)
+	{
+		Logger.Log("IEExplore:" + url);
+		if (Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			try
+			{
+				Process process = new Process();
+				process.EnableRaisingEvents = false;
+				process.StartInfo.FileName = "iexplore";
+				process.StartInfo.Arguments = url;
+				process.Start();
+				return;
+			}
+			catch
+			{
+				return;
+			}
+		}
+		Application.ExternalCall("OpenWindow", url, type);
+	}
+
+	public static int CalcLevelSlot()
+	{
+		int result = 0;
+		Hashtable templates = getTemplates("general_slot");
+		ArrayList arrayList = new ArrayList(templates.Keys);
+		arrayList.Sort();
+		for (int i = 0; i < arrayList.Count && character_.level >= ((_general_slot)templates[arrayList[i]]).level; i++)
+		{
+			result = ((_general_slot)templates[arrayList[i]]).slot;
+		}
+		return result;
+	}
+
+	public static void Level10Http()
+	{
+		Application.ExternalCall("ads_js_conv10");
+	}
+
+	public static void newgen_unlock(int count)
+	{
+		newgen_count += count;
+	}
+
+	public static void newgen_reset(int count)
+	{
+		newgen_count = count;
+	}
+
+	public static void newgen_remove()
+	{
+		newgen_count--;
+	}
+
+	public static float CalcServerOpenDays()
+	{
+		int server_open_time = character_.server_open_time;
+		return (float)(TimeUtil.Now - character_.server_open_time) / 60f / 60f / 24f;
+	}
+
+	public static float CalcServerOpenDaysTest()
+	{
+		int num = (int)serverOpenTimeTest;
+		return (float)(TimeUtil.Now - serverOpenTimeTest) / 60f / 60f / 24f;
+	}
+
+	public static string getRuneName(int idrune)
+	{
+		_rune_template rune_template = getTemplate("rune_template", (uint)idrune) as _rune_template;
+		_rune_names rune_names = getTemplate("rune_names", rune_template.rune_type) as _rune_names;
+		string text = __BaseUI.load_str(rune_names.name);
+		return __BaseUI.load_str(21275u, rune_template.rank, text);
+	}
+
+	public static void add_image_message(string name, string url, string md5, uint len)
+	{
+		image_messages[name] = new ImageMessage(name, url, md5, len);
+	}
+
+	public static ImageMessage get_image_message(string name)
+	{
+		if (image_messages.ContainsKey(name))
+		{
+			return image_messages[name];
+		}
+		return null;
+	}
+
+	public static void add_login_message(game.net.data.StoC.LoginMessage d)
+	{
+		login_messages.Add(new Database.LoginMessage(d));
+		add_image_message(d.name, d.url, d.md5, d.file_size);
+	}
+
+	public static void add_timelimit_message(game.net.data.StoC.TimeLimitMessage d)
+	{
+		timelimit_messages.Add(new Database.TimeLimitMessage(d));
+		add_image_message(d.name, d.url, d.md5, d.file_size);
+		if (d.type == "spirit")
+		{
+			tlm_spirit.Set(d);
+			tlm_spirit.isactive = true;
+			string[] array = d.param.Split(',');
+			for (int i = 0; i < array.Length; i++)
+			{
+				string[] array2 = array[i].Split(':');
+				if (array2.Length > 1)
+				{
+					if (array2[0] == "exp")
+					{
+						tlm_spirit.exp_extern = float.Parse(array2[1]);
+					}
+					else if (array2[0] == "fruit")
+					{
+						tlm_spirit.fruit_extern = float.Parse(array2[1]);
+					}
+					else if (array2[0] == "unlimit")
+					{
+						tlm_spirit.unlimit_time = array2[1] == "true";
+					}
+					else if (array2[0] == "diamond_gold_ratio")
+					{
+						tlm_spirit.diamond_gold_ratio = int.Parse(array2[1]);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (!(d.type == "exchange"))
+			{
+				return;
+			}
+			tlm_exchange.Set(d);
+			tlm_exchange.isactive = true;
+			string[] array3 = d.param.Split(',');
+			for (int j = 0; j < array3.Length; j++)
+			{
+				string[] array4 = array3[j].Split(':');
+				if (array4.Length > 1)
+				{
+					if (array4[0] == "money")
+					{
+						tlm_exchange.money_extern = float.Parse(array4[1]);
+					}
+					else if (array4[0] == "diamond_gold_ratio")
+					{
+						tlm_spirit.diamond_gold_ratio = int.Parse(array4[1]);
+					}
+				}
+			}
+		}
+	}
+
+	public static void clearTimeLimitMessages()
+	{
+		timelimit_messages.Clear();
+		tlm_spirit.reset();
+		tlm_exchange.reset();
+	}
+
+	public static void add_tempevent_message(game.net.data.StoC.TempEventMessage d)
+	{
+		tempevent_messages.Add(new Database.TempEventMessage(d));
+		add_image_message(d.name, d.url, d.md5, d.file_size);
+	}
+
+	public static void clearTempEventMessages()
+	{
+		tempevent_messages.Clear();
+	}
+
+	public static string DecodeUnicode(string str)
+	{
+		string text = string.Empty;
+		MatchCollection matchCollection = Regex.Matches(str, "\\\\u([\\w]{2})([\\w]{2})", RegexOptions.IgnoreCase);
+		byte[] array = new byte[2];
+		foreach (Match item in matchCollection)
+		{
+			array[0] = (byte)int.Parse(item.Groups[2].Value, NumberStyles.HexNumber);
+			array[1] = (byte)int.Parse(item.Groups[1].Value, NumberStyles.HexNumber);
+			text += Encoding.Unicode.GetString(array);
+		}
+		return text;
+	}
+
+	public static GUIStyle getBonusSmallIcon(ushort idtreasure, int param0)
+	{
+		GUIStyle gUIStyle = new GUIStyle();
+		gUIStyle.normal.background = GetIcon(idtreasure, param0);
+		return gUIStyle;
+	}
+
+	public static Texture2D GetIcon(int treid, int param0)
+	{
+		Texture2D result = null;
+		switch (treid)
+		{
+		case 4:
+			result = __BaseUI._iconMoney;
+			break;
+		case 5:
+			result = __BaseUI._iconMana;
+			break;
+		case 6:
+			result = __BaseUI._iconPractice;
+			break;
+		case 8:
+			result = __BaseUI._tex2Dexp;
+			break;
+		case 10:
+			result = __BaseUI._iconEnchant;
+			break;
+		case 9:
+			result = __BaseUI._iconFruit;
+			break;
+		case 51:
+			result = __BaseUI._icondragonball4;
+			break;
+		case 55:
+			result = __BaseUI._iconjinengsuipian;
+			break;
+		case 46:
+			result = __BaseUI._iconGemEssence;
+			break;
+		case 18:
+			result = __BaseUI._iconReputation;
+			break;
+		case 39:
+			result = __BaseUI.icon_purplesoul;
+			break;
+		case 40:
+			result = __BaseUI.icon_orangesoul;
+			break;
+		case 30:
+			result = __BaseUI._iconStone;
+			break;
+		case 45:
+			result = __BaseUI._iconGemShard;
+			break;
+		case 38:
+			result = __BaseUI.icon_bluesoul;
+			break;
+		case 69:
+			result = __BaseUI._iconkeji;
+			break;
+		case 63:
+			result = __BaseUI._iconHighStone;
+			break;
+		case 7:
+			result = __BaseUI._iconGold;
+			break;
+		case 52:
+			result = __BaseUI._icondragonball5;
+			break;
+		case 61:
+			result = __BaseUI._iconDiamond;
+			break;
+		case 57:
+			result = __BaseUI._iconDarkIron;
+			break;
+		case 73:
+			result = __BaseUI._iconchoujiangquan;
+			break;
+		case 74:
+			result = __BaseUI._iconDragonSoul;
+			break;
+		case 75:
+			result = __BaseUI._iconspirit_skill_essence_blue;
+			break;
+		case 76:
+			result = __BaseUI._iconspirit_skill_essence_purple;
+			break;
+		case 77:
+			result = __BaseUI._iconspirit_skill_essence_orange;
+			break;
+		case 80:
+			result = __BaseUI._icon_xinwu_lv;
+			break;
+		case 81:
+			result = __BaseUI._icon_xinwu_lan;
+			break;
+		case 82:
+			result = __BaseUI._icon_xinwu_zi;
+			break;
+		case 83:
+			result = __BaseUI._icon_xinwu_cheng;
+			break;
+		case 91:
+			result = __BaseUI._icon_elements[param0];
+			break;
+		case 65:
+			result = __BaseUI._iconWood;
+			break;
+		case 94:
+			result = __BaseUI._iconDivine_soul;
+			break;
+		}
+		return result;
+	}
+
+	public static long getTreasureNum(int idtreasure)
+	{
+		long result = 0L;
+		switch (idtreasure)
+		{
+		case 4:
+			result = character_.money;
+			break;
+		case 5:
+			result = character_.mana;
+			break;
+		case 6:
+			result = character_.practice;
+			break;
+		case 7:
+			result = character_.gold;
+			break;
+		case 9:
+			result = character_.spirit_food;
+			break;
+		case 10:
+			result = character_.enchant_stone;
+			break;
+		case 18:
+			result = (int)character_.reputation;
+			break;
+		case 30:
+			result = character_.stone;
+			break;
+		case 38:
+			result = character_.generalsoul_blue;
+			break;
+		case 39:
+			result = character_.generalsoul_purple;
+			break;
+		case 40:
+			result = character_.generalsoul_orange;
+			break;
+		case 48:
+			result = character_.fruit1;
+			break;
+		case 49:
+			result = character_.fruit2;
+			break;
+		case 50:
+			result = character_.fruit3;
+			break;
+		case 51:
+			result = character_.fruit4;
+			break;
+		case 52:
+			result = character_.fruit5;
+			break;
+		case 57:
+			result = character_.dark_iron;
+			break;
+		case 63:
+			result = character_.high_stone;
+			break;
+		case 69:
+			result = character_.tech_book;
+			break;
+		}
+		return result;
+	}
+
+	public static string GetPercentStr(string type)
+	{
+		switch (type)
+		{
+		case "spec_hit":
+		case "spec_crit":
+		case "spec_damage":
+		case "spec_dodge":
+		case "spec_crit_reduce":
+		case "spec_protection":
+		case "spec_counter":
+		case "spec_block":
+			return "%";
+		default:
+			return string.Empty;
+		}
+	}
+
+	public static List<_Treasure> GetTechUpTre(int id)
+	{
+		int num = 0;
+		List<_Treasure> list = new List<_Treasure>();
+		for (int i = 1; i <= 5; i++)
+		{
+			if (character_.techtree.getTreasureType(id, (ushort)character_.techtree.get_Next_Techpoint(id), i) != -1)
+			{
+				num++;
+			}
+		}
+		Texture2D[] array = new Texture2D[num];
+		for (int j = 1; j <= num; j++)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure = character_.techtree.getTreasure(id, (ushort)character_.techtree.get_Next_Techpoint(id), j);
+			if (treasure != null)
+			{
+				array[j - 1] = GetIcon(treasure.type, treasure.param[0]);
+				treasure.texIcon = array[j - 1];
+				list.Add(treasure);
+			}
+		}
+		return list;
+	}
+
+	public static uint get_Last_RefreshTime(uint time)
+	{
+		if (time > TimeUtil.ThisDay + 18000)
+		{
+			return TimeUtil.ThisDay + 18000;
+		}
+		uint num;
+		for (num = 0u; time <= TimeUtil.ThisDay - 86400 * num + 18000 && num <= 30; num++)
+		{
+		}
+		return TimeUtil.ThisDay - 86400 * num + 18000;
+	}
+
+	public static int bagua_activity(int _type, uint treasuretype)
+	{
+		bool flag = false;
+		Hashtable templates = getTemplates("bagua_activity");
+		foreach (DictionaryEntry item in templates)
+		{
+			_bagua_activity bagua_activity = item.Value as _bagua_activity;
+			if (bagua_activity.type == _type)
+			{
+				int num = 0;
+				switch (TimeUtil.WeekDay)
+				{
+				case DayOfWeek.Monday:
+					num = 1;
+					break;
+				case DayOfWeek.Tuesday:
+					num = 2;
+					break;
+				case DayOfWeek.Wednesday:
+					num = 3;
+					break;
+				case DayOfWeek.Thursday:
+					num = 4;
+					break;
+				case DayOfWeek.Friday:
+					num = 5;
+					break;
+				case DayOfWeek.Saturday:
+					num = 6;
+					break;
+				case DayOfWeek.Sunday:
+					num = 7;
+					break;
+				}
+				if (num == bagua_activity.day)
+				{
+					flag = true;
+					break;
+				}
+			}
+		}
+		return (!flag || treasuretype == 36 || treasuretype == 0) ? 1 : 2;
+	}
+}

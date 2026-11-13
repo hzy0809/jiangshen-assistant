@@ -1,0 +1,599 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class MessengerUI : BaseUI
+{
+	private class Message
+	{
+		public ScenarioSection section;
+
+		public string cont = string.Empty;
+
+		public string time = string.Empty;
+
+		public bool isme;
+
+		public bool sex;
+
+		public void Messages()
+		{
+		}
+	}
+
+	private class ChatSession
+	{
+		public string opname;
+
+		public Texture2D icon;
+
+		public List<Message> messages = new List<Message>();
+
+		public int height;
+
+		public int id_win = -1;
+
+		public float scroll_pos;
+
+		public string input_string = string.Empty;
+
+		public Rect rc;
+
+		public bool isHaoYouChar;
+
+		public ChatSession(string name)
+		{
+			opname = name;
+		}
+	}
+
+	private class PendingChatSession
+	{
+		public float target_pos;
+
+		public float current_pos;
+
+		public ChatSession session;
+
+		public PendingChatSession(ChatSession s)
+		{
+			session = s;
+		}
+	}
+
+	private const int max_show_pending = 6;
+
+	private Dictionary<string, ChatSession> sessions = new Dictionary<string, ChatSession>();
+
+	private Dictionary<int, ChatSession> active_sessions = new Dictionary<int, ChatSession>();
+
+	private List<PendingChatSession> pending_sessions = new List<PendingChatSession>();
+
+	private ChatBehaviour chat_behaviour;
+
+	private InspectUI inspect_ui;
+
+	private EmoteContainer emote_container;
+
+	private Vector2 emote_box_size = Vector2.zero;
+
+	private Vector2 emote_size = Vector2.zero;
+
+	private static MessengerUI instance;
+
+	private static int id_win_auto_incr = 1;
+
+	private GUIStyle msg_bg = new GUIStyle();
+
+	private GUIStyle icon_male = new GUIStyle();
+
+	private GUIStyle icon_female = new GUIStyle();
+
+	private GUIStyle styleInputBG = new GUIStyle();
+
+	private _ButtonStyle b_check = new _ButtonStyle();
+
+	private _ButtonStyle b_flower = new _ButtonStyle();
+
+	private _ButtonStyle b_follow = new _ButtonStyle();
+
+	private _ButtonStyle b_block = new _ButtonStyle();
+
+	private _ButtonStyle b_send = new _ButtonStyle();
+
+	private _ButtonStyle b_close = new _ButtonStyle();
+
+	private _ButtonStyle b_pending = new _ButtonStyle();
+
+	private _ButtonStyle b_clearpending = new _ButtonStyle();
+
+	private GUIStyle styleBtnEmote = new GUIStyle();
+
+	private GUIStyle styleEmoteSelect = new GUIStyle();
+
+	private GUIStyle t_wrap = new GUIStyle();
+
+	private GUIStyle outputStyle = new GUIStyle();
+
+	private bool show_emote_box;
+
+	private float pending_w = 500f;
+
+	private int focuswid;
+
+	private Vector2 emote_box_pos = Vector2.zero;
+
+	private ChatSession session_using_emote;
+
+	private int shown_pending_num => (pending_sessions.Count >= 6) ? 6 : pending_sessions.Count;
+
+	public static bool isMouseInChatBox()
+	{
+		if (!instance)
+		{
+			return false;
+		}
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		foreach (KeyValuePair<int, ChatSession> active_session in instance.active_sessions)
+		{
+			if (active_session.Value.rc.Contains(mousePosition))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+		chat_behaviour = GetComponent<ChatBehaviour>();
+		inspect_ui = GetComponent<InspectUI>();
+		emote_container = EmoteContainer.Instance;
+		if (emote_container != null)
+		{
+			emote_size.x = 0f;
+			emote_size.y = 0f;
+			for (int i = 0; i < emote_container.emotes.Length; i++)
+			{
+				Vector2 size = emote_container.emotes[i].size;
+				if (size.x > emote_size.x)
+				{
+					emote_size.x = size.x;
+				}
+				if (size.y > emote_size.y)
+				{
+					emote_size.y = size.y;
+				}
+			}
+			emote_box_size.x = emote_size.x * 6f;
+			emote_box_size.y = emote_size.y * 4f;
+		}
+		instance = this;
+	}
+
+	private void Update()
+	{
+		if (pending_sessions.Count > 0)
+		{
+			int num = shown_pending_num;
+			for (int i = 0; i < num; i++)
+			{
+				pending_sessions[i].current_pos = Mathf.MoveTowards(pending_sessions[i].current_pos, pending_sessions[i].target_pos, 10f);
+			}
+		}
+	}
+
+	public void SubLoading()
+	{
+		AddAsset("ui_chat");
+		AddAsset("ui_messenger");
+		AddAsset("ui_main");
+		CollectingStart();
+		StartLoading();
+	}
+
+	public void Open(string name)
+	{
+		addSession(name);
+		activateSession(name);
+	}
+
+	private void addSession(string name)
+	{
+		if (!sessions.ContainsKey(name))
+		{
+			ChatSession chatSession = new ChatSession(name);
+			chatSession.scroll_pos = 0f;
+			chatSession.rc = __BaseUI._rect(270f, 50f, 600f, 600f);
+			sessions.Add(name, chatSession);
+		}
+	}
+
+	public void activateSession(string name)
+	{
+		if (!sessions.ContainsKey(name))
+		{
+			return;
+		}
+		if (!active_sessions.ContainsKey(sessions[name].id_win))
+		{
+			sessions[name].id_win = ++id_win_auto_incr;
+			active_sessions[sessions[name].id_win] = sessions[name];
+			_CalcHeight(name);
+			for (int i = 0; i < pending_sessions.Count; i++)
+			{
+				if (pending_sessions[i].session.opname == name)
+				{
+					pending_sessions.RemoveAt(i);
+					recalc_pending_pos();
+					break;
+				}
+			}
+			if (sessions[name].icon == null)
+			{
+				CSUserIcon_0x240 cSUserIcon_0x = new CSUserIcon_0x240();
+				cSUserIcon_0x.name = name;
+				RootUI.m_client.Send(576, cSUserIcon_0x, sc_user_icon);
+			}
+		}
+		focuswid = sessions[name].id_win;
+	}
+
+	private void sc_user_icon(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCUserIcon_0x240 sCUserIcon_0x = JSProtoBuf.Serializer.Deserialize<SCUserIcon_0x240>(stream);
+			if (sessions.ContainsKey(sCUserIcon_0x.name))
+			{
+				AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+				sessions[sCUserIcon_0x.name].icon = asset.Load("ui_zhu_xitong" + sCUserIcon_0x.icon) as Texture2D;
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_chat");
+		styleBtnEmote.normal.background = asset.Load("button_biaoqing_normal") as Texture2D;
+		styleBtnEmote.hover.background = asset.Load("button_biaoqing_hover") as Texture2D;
+		styleBtnEmote.active.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onHover.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onActive.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleBtnEmote.onNormal.background = asset.Load("button_biaoqing_down") as Texture2D;
+		styleEmoteSelect.hover.background = asset.Load("ui_biaoqing_kuang") as Texture2D;
+		styleEmoteSelect.active.background = asset.Load("ui_biaoqing_kuang") as Texture2D;
+		styleEmoteSelect.border = new RectOffset(1, 1, 1, 1);
+		styleInputBG.normal.background = asset.Load("ui_liaotian_bar") as Texture2D;
+		styleInputBG.border = new RectOffset(7, 7, 7, 7);
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_messenger");
+		msg_bg.normal.background = asset2.Load("ui_miliao_di1") as Texture2D;
+		icon_female.normal.background = asset2.Load("ui_touxiang1") as Texture2D;
+		icon_male.normal.background = asset2.Load("ui_touxiang2") as Texture2D;
+		b_check.make(asset2, "button_chakan");
+		b_flower.make(asset2, "button_songhua");
+		b_follow.make(asset2, "button_guanzhu");
+		b_block.make(asset2, "button_pingbi");
+		b_send.make(asset2, "button_fasong");
+		b_close.make(asset2, "button_guanbi");
+		b_pending.make(asset2, "button_youjian");
+		b_clearpending.make(asset2, "button_guanbi3");
+		t_wrap.wordWrap = true;
+		t_wrap.normal.textColor = __BaseUI._clrYellowLight;
+		outputStyle.wordWrap = false;
+		outputStyle.alignment = TextAnchor.UpperLeft;
+		Visible();
+		Enable();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Announce;
+		GUI.skin.customStyles = __BaseUI._vertScroll1;
+		foreach (KeyValuePair<int, ChatSession> active_session in active_sessions)
+		{
+			active_session.Value.rc = GUI.Window(active_session.Value.id_win, active_session.Value.rc, DrawChat, string.Empty, __BaseUI.normalStyle);
+		}
+		if (Event.current.type == EventType.Repaint && focuswid > 0)
+		{
+			GUI.FocusWindow(focuswid);
+			focuswid = -1;
+		}
+		if (pending_sessions.Count > 0)
+		{
+			GUI.BeginGroup(__BaseUI._rectCB(pending_w / 2f, 150f, pending_w, 50f));
+			int num = shown_pending_num;
+			if (num < pending_sessions.Count)
+			{
+				float num2 = (pending_w - (float)(57 * num)) / 2f;
+				if (b_clearpending.Button(IsEnable(), __BaseUI._rect(num2 + (float)(num * 57), 12f, 30f, 23f), new GUIContent(string.Empty, __BaseUI.load_str(20389u))))
+				{
+					pending_sessions.Clear();
+				}
+			}
+			num = shown_pending_num;
+			int num3 = -1;
+			GUI.EndGroup();
+		}
+		GUI.skin = null;
+		DrawTooltip();
+	}
+
+	private void DrawTooltip()
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (Input.GetMouseButton(0))
+		{
+			GUI.tooltip = string.Empty;
+		}
+		if (Event.current.type == EventType.Repaint && GUI.tooltip != lastTooltip)
+		{
+			if (GUI.tooltip == string.Empty)
+			{
+				lastTooltip = string.Empty;
+				tooltipUI.HideTooltip("MessengerUI");
+			}
+			else
+			{
+				tooltipUI.ShowTooltipCommon(GUI.tooltip, "MessengerUI");
+				lastTooltip = GUI.tooltip;
+			}
+		}
+	}
+
+	private void DrawChat(int windowid)
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 362f, 414f), string.Empty, msg_bg);
+		ChatSession chatSession = active_sessions[windowid];
+		if (chatSession.icon != null)
+		{
+			GUI.DrawTexture(__BaseUI._rect(10f, 10f, 52f, 52f), chatSession.icon);
+		}
+		__BaseUI.Label(__BaseUI._rect(70f, 30f, 150f, 20f), __BaseUI.load_str(20390u, chatSession.opname), __BaseUI._textLeft, Color.white);
+		if (b_check.Button(bBtn: true, __BaseUI._rect(66f, 59f, 65f, 22f), string.Empty) && inspect_ui != null)
+		{
+			inspect_ui.SubLoading(chatSession.opname, new Vector2(Screen.width / 2, 100f));
+			chatSession.rc.x = Screen.width / 2 - 363;
+			chatSession.rc.y = 104f;
+		}
+		if (b_flower.Button(bBtn: true, __BaseUI._rect(134f, 59f, 65f, 22f), string.Empty))
+		{
+			BuddyFlowerUI component = GameObject.Find("/Root/RootUI").GetComponent<BuddyFlowerUI>();
+			if (MainUI.handle_sub_ui(component, "buddyflower"))
+			{
+				MainUI.SetSubUI(component);
+				component.cs_buddy_flower_info(chatSession.opname);
+			}
+		}
+		if (b_follow.Button(bBtn: true, __BaseUI._rect(202f, 59f, 65f, 22f), string.Empty))
+		{
+			BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_buddy(chatSession.opname);
+		}
+		if (b_block.Button(bBtn: true, __BaseUI._rect(270f, 59f, 65f, 22f), string.Empty))
+		{
+			BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_blacklist(chatSession.opname);
+		}
+		if (b_send.Button(bBtn: true, __BaseUI._rect(260f, 370f, 80f, 22f), string.Empty))
+		{
+			_Say(chatSession.opname, chatSession.input_string);
+			chatSession.input_string = string.Empty;
+		}
+		if (b_close.Button(bBtn: true, __BaseUI._rect(175f, 370f, 80f, 22f), string.Empty))
+		{
+			active_sessions.Remove(windowid);
+		}
+		if (emote_container != null)
+		{
+			if (GUI.Toggle(__BaseUI._rect(145f, 369f, 24f, 24f), show_emote_box, string.Empty, styleBtnEmote))
+			{
+				if (!show_emote_box)
+				{
+					show_emote_box = true;
+					emote_box_pos = GUIUtility.GUIToScreenPoint(new Vector2(145f * __BaseUI._screenScale, 365f * __BaseUI._screenScale));
+					session_using_emote = chatSession;
+					PopupUI.Register(DrawEmoteBox, CloseEmoteBox, "chat_emote", this);
+				}
+			}
+			else
+			{
+				show_emote_box = false;
+			}
+		}
+		GUI.BeginGroup(__BaseUI._rect(37f, 370f, 100f, 22f));
+		ScenarioSection scenarioSection = new ScenarioSection();
+		scenarioSection.font_size = 14;
+		scenarioSection.makes_string(__BaseUI.load_str(20391u, (50 - chatSession.input_string.Length).ToString()), __BaseUI._textNLeft);
+		Rect rc = new Rect(0f, 2f, scenarioSection.width, 20f);
+		scenarioSection.draw(rc, __BaseUI._textLeft);
+		GUI.EndGroup();
+		bool flag = Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter);
+		string text = "privatechat" + windowid;
+		GUI.SetNextControlName(text);
+		chatSession.input_string = GUI.TextArea(__BaseUI._rect(37f, 292f, 290f, 54f), chatSession.input_string, 50, t_wrap);
+		if (flag && GUI.GetNameOfFocusedControl() == text)
+		{
+			_Say(chatSession.opname, chatSession.input_string);
+			chatSession.input_string = string.Empty;
+		}
+		Vector2 scrollPosition = new Vector2(0f, chatSession.scroll_pos);
+		Rect position = __BaseUI._rect(30f, 85f, 307f, 187f);
+		Rect contentRect = __BaseUI._rect(0f, 0f, 290f, chatSession.height);
+		float num = 0f;
+		scrollPosition = GUIHacks.BeginScrollView(position, scrollPosition, contentRect, useHorizontal: false, useVertical: true, __BaseUI.normalStyle, __BaseUI._vertScroll1[0]);
+		foreach (Message message in chatSession.messages)
+		{
+			string text2 = ((!message.isme) ? chatSession.opname : Global.character_.name);
+			__BaseUI.Label(__BaseUI._rect(0f, num, 100f, 27f), text2, __BaseUI._textLeft, (!message.isme) ? __BaseUI._clrGreen : __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(__BaseUI._textLeft.CalcSize(new GUIContent(text2)).x + 10f, num, 120f, 27f), message.time, __BaseUI._numLeft, __BaseUI._clrCyan);
+			num += 27f;
+			if (message.section != null)
+			{
+				message.section.draw(18f * __BaseUI._screenScale, num * __BaseUI._screenScale, 242f * __BaseUI._screenScale, message.section.height, outputStyle);
+			}
+			num += message.section.height;
+		}
+		GUIHacks.EndScrollView();
+		chatSession.scroll_pos = (int)scrollPosition.y;
+		GUI.DragWindow();
+	}
+
+	private void _Say(string op_name, string msg)
+	{
+		chat_behaviour.SendChatMessage(4u, msg, op_name);
+	}
+
+	private void callbackOnClickPending(object arg)
+	{
+		activateSession((string)arg);
+	}
+
+	private void _CalcHeight(string op_name)
+	{
+		if (!sessions.ContainsKey(op_name))
+		{
+			return;
+		}
+		ChatSession chatSession = sessions[op_name];
+		if (!active_sessions.ContainsKey(chatSession.id_win))
+		{
+			return;
+		}
+		float num = 0f;
+		foreach (Message message in chatSession.messages)
+		{
+			num += 27f;
+			if (message.section == null)
+			{
+				message.section = new ScenarioSection();
+				message.section.setParams((int)(242f * __BaseUI._screenScale), 1000, 14);
+				message.section.makes_string(((!message.isme) ? "#c=FFFF00" : "#c=FFFFCC") + message.cont, outputStyle);
+			}
+			num += message.section.height;
+		}
+		chatSession.height = (int)num;
+		if ((float)chatSession.height > __BaseUI._screenScale * 187f)
+		{
+			chatSession.scroll_pos = chatSession.height - (int)(__BaseUI._screenScale * 187f);
+		}
+		else
+		{
+			chatSession.scroll_pos = 0f;
+		}
+	}
+
+	private void ReceivePrivateMessage(SCChatMessage_0x220 pkt)
+	{
+		if (pkt.content == null || pkt.content.Length == 0)
+		{
+			return;
+		}
+		Message message = new Message();
+		message.cont = pkt.content;
+		DateTime now = DateTime.Now;
+		message.time = now.Hour + ":" + now.Minute + ":" + now.Second;
+		string text = null;
+		if (pkt.sender == Global.character_.name)
+		{
+			message.isme = true;
+			text = pkt.receiver;
+		}
+		else
+		{
+			message.isme = false;
+			text = pkt.sender;
+		}
+		if (!sessions.ContainsKey(text))
+		{
+			addSession(text);
+		}
+		sessions[text].messages.Add(message);
+		if (!active_sessions.ContainsKey(sessions[text].id_win))
+		{
+			bool flag = false;
+			for (int i = 0; i < pending_sessions.Count; i++)
+			{
+				if (pending_sessions[i].session.opname == text)
+				{
+					flag = true;
+				}
+			}
+			if (!flag)
+			{
+				addPendingSession(sessions[text], text);
+			}
+		}
+		else
+		{
+			_CalcHeight(text);
+		}
+	}
+
+	private bool DrawEmoteBox()
+	{
+		Rect position = __BaseUI._rect(emote_box_pos.x, emote_box_pos.y - emote_box_size.y, emote_box_size.x, emote_box_size.y);
+		GUI.Box(new Rect(position.x - 5f, position.y - 5f, position.width + 10f, position.height + 10f), string.Empty, __BaseUI._boxnew10Style);
+		GUI.BeginGroup(position);
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 6; j++)
+			{
+				int num = i * 6 + j;
+				float x = (float)j * emote_size.x + (emote_size.x - emote_container.emotes[num].size.x) / 2f;
+				float y = (float)i * emote_size.y + (emote_size.y - emote_container.emotes[num].size.y);
+				float x2 = emote_container.emotes[num].size.x;
+				float y2 = emote_container.emotes[num].size.y;
+				if (num >= emote_container.emotes.Length)
+				{
+					continue;
+				}
+				emote_container.DrawIndex(num, __BaseUI._rect(x, y, x2, y2));
+				if (GUI.Button(__BaseUI._rect((float)j * emote_size.x, (float)i * emote_size.y, emote_size.x, emote_size.y), string.Empty, styleEmoteSelect))
+				{
+					if (Global.getTemplate("emote_code", (uint)emote_container.emotes[num].id) is _emote_code emote_code)
+					{
+						ChatSession chatSession = session_using_emote;
+						chatSession.input_string = chatSession.input_string + "#" + emote_code.codeChs;
+						GUI.FocusControl("chat input");
+					}
+					PopupUI.EndPopup("chat_emote");
+				}
+			}
+		}
+		GUI.EndGroup();
+		Vector3 mousePosition = Input.mousePosition;
+		mousePosition.y = (float)Screen.height - mousePosition.y;
+		return position.Contains(mousePosition);
+	}
+
+	private void CloseEmoteBox()
+	{
+		show_emote_box = false;
+	}
+
+	private void addPendingSession(ChatSession s, string tempname)
+	{
+		PendingChatSession pendingChatSession = new PendingChatSession(s);
+		pendingChatSession.current_pos = pending_w;
+		pending_sessions.Add(pendingChatSession);
+		recalc_pending_pos();
+		FlowerMessUI.FMUI f = new FlowerMessUI.FMUI(b_pending, tempname, callbackOnClickPending);
+		BaseUI.GetRootUI().GetComponent<FlowerMessUI>().ADDFM(f);
+	}
+
+	private void recalc_pending_pos()
+	{
+		int num = shown_pending_num;
+		float num2 = (pending_w - (float)(57 * num)) / 2f;
+		for (int i = 0; i < num; i++)
+		{
+			pending_sessions[i].target_pos = num2 + (float)(i * 57);
+		}
+	}
+}

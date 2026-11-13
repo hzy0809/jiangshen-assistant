@@ -1,0 +1,21 @@
+{"scenario":"arena_reply_wrong_opponent_blocked","status":"PASS","checks":9}
+{"scenario":"arena_reply_premium_blocked","status":"PASS","checks":9}
+{"scenario":"arena_reply_wire_and_identity_negatives","status":"PASS","checks":225}
+{"scenario":"arena_reply_valid_defaults_loss_rewards","status":"PASS","checks":32}
+{"scenario":"arena_reply_report_mutation_unknown","status":"PASS","checks":7}
+{"scenario":"arena_real_adapter_settled_return","status":"PASS","checks":21}
+{"scenario":"arena_duplicate_receipt_unknown","status":"PASS","checks":9}
+{"scenario":"arena_pre_callback_target_replaced","status":"PASS","checks":8}
+{"scenario":"arena_wrong_close_instance","status":"PASS","checks":8}
+{"scenario":"arena_pause_resume","status":"PASS","checks":12}
+{"scenario":"arena_stop_pending_callback","status":"PASS","checks":8}
+{"scenario":"arena_stock_callback_unknown","status":"PASS","checks":8}
+{"scenario":"arena_repeated_nonbattle_callbacks","status":"PASS","checks":6}
+{"scenario":"arena_timeout_no_replay","status":"PASS","checks":9}
+{"scenario":"arena_guard_denial_no_stock_start","status":"PASS","checks":5}
+{"scenario":"grave_real_adapter_request_end_return","status":"PASS","checks":22}
+{"scenario":"grave_unknown_end_no_retry","status":"PASS","checks":16}
+{"scenario":"grave_replaced_troop_identity","status":"PASS","checks":13}
+{"scenario":"grave_pause_stop_no_ownership","status":"PASS","checks":24}
+{"scenario":"grave_guard_denial_no_stock_start","status":"PASS","checks":7}
+{"status":"PASS","scenarios":20,"failed":0,"checks":458,"scope":"production Arena/Grave adapters and settlement; fake client/Unity and instrumented launch-guard substitute; no actual IPC or guard race","game_access":false}

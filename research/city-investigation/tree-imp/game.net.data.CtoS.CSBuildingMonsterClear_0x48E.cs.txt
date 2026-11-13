@@ -1,0 +1,31 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSBuildingMonsterClear_0x48E")]
+public class CSBuildingMonsterClear_0x48E : IExtensible
+{
+	private uint _id;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

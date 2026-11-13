@@ -1,0 +1,33 @@
+{
+  "utc": "2026-10-30T17:42:48.1759148Z",
+  "mode": "controller-assigned final exact-reference compile; metadata-only readback",
+  "compile_exit_code": 0,
+  "sha256": "EE8267B06F7A16E60829FC7E4C6789DABDC9DA5BC5D1487FDE8C9BE47A849B69",
+  "metadata": [
+    "assembly=JSUnityProbe_1b17560a74d66532",
+    "version=0.0.0.0",
+    "metadata=v2.0.50727",
+    "corflags=ILOnly, Requires32Bit",
+    "machine=I386",
+    "reference=mscorlib, Version=2.0.5.0, Token=7cec85d7bea7798e",
+    "reference=UnityEngine, Version=0.0.0.0, Token="
+  ],
+  "checks": {
+    "name": true,
+    "legacy_metadata": true,
+    "x86": true,
+    "exact_references": true
+  },
+  "failed": 0,
+  "source_hashes": [
+    {
+      "file": "Protocol.cs",
+      "sha256": "396AF9F6FC6EF101F800FE0F5F3FC4E5555F2EC8BBA39B435622900B1AAF2CBD"
+    },
+    {
+      "file": "Probe.cs",
+      "sha256": "7312C4F6838EE134BC66FE9938EDED8878227570A266CE833C4CEE6DC4345313"
+    }
+  ],
+  "runtime_ui": "UNVERIFIED; no game load, enumeration, action or resource operation by managed author"
+}

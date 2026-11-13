@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "scope": "synthetic offline exact field descriptors; no process APIs called",
+  "checks": [
+    "syntax and exact native+managed hash proof PASS",
+    "exact ordinal field type/name/flags/parent PASS",
+    "wrong field type refused",
+    "static mismatch refused",
+    "byref rejected",
+    "wrong declaring class refused",
+    "special negative offset refused"
+  ]
+}

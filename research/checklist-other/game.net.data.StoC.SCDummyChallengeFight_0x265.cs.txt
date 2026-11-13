@@ -1,0 +1,44 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCDummyChallengeFight_0x265")]
+public class SCDummyChallengeFight_0x265 : IExtensible
+{
+	private readonly List<byte[]> _report = new List<byte[]>();
+
+	private readonly List<int> _start_turn_index = new List<int>();
+
+	private DummyChallengeStatus _reward_status = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, Name = "report", DataFormat = DataFormat.Default)]
+	public List<byte[]> report => _report;
+
+	[ProtoMember(2, Name = "start_turn_index", DataFormat = DataFormat.ZigZag)]
+	public List<int> start_turn_index => _start_turn_index;
+
+	[ProtoMember(3, IsRequired = false, Name = "reward_status", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public DummyChallengeStatus reward_status
+	{
+		get
+		{
+			return _reward_status;
+		}
+		set
+		{
+			_reward_status = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

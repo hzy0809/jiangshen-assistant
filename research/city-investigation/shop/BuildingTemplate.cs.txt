@@ -1,0 +1,12 @@
+using Database;
+using UnityEngine;
+
+public class BuildingTemplate : _building
+{
+	public Texture2D texIcon;
+
+	public BuildingTemplate(_building d)
+	{
+		Set(d);
+	}
+}

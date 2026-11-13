@@ -1,0 +1,97 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "db_character_pointrace_report")]
+public class db_character_pointrace_report : IExtensible
+{
+	private ulong _idother = 0uL;
+
+	private ulong _idbattle_report = 0uL;
+
+	private uint _time = 0u;
+
+	private bool _iswin = false;
+
+	private uint _rank = 0u;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = false, Name = "idother", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idother
+	{
+		get
+		{
+			return _idother;
+		}
+		set
+		{
+			_idother = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "idbattle_report", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idbattle_report
+	{
+		get
+		{
+			return _idbattle_report;
+		}
+		set
+		{
+			_idbattle_report = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint time
+	{
+		get
+		{
+			return _time;
+		}
+		set
+		{
+			_time = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "rank", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint rank
+	{
+		get
+		{
+			return _rank;
+		}
+		set
+		{
+			_rank = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

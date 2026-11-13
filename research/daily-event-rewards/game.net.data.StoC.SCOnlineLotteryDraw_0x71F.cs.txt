@@ -1,0 +1,83 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCOnlineLotteryDraw_0x71F")]
+public class SCOnlineLotteryDraw_0x71F : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error
+	}
+
+	private Operate _operate;
+
+	private int _iditem_got;
+
+	private db_character_online_lottery _onlinelottery;
+
+	private readonly List<db_character_online_lottery_item> _lotteryitems = new List<db_character_online_lottery_item>();
+
+	private readonly List<Treasure> _bonus = new List<Treasure>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "iditem_got", DataFormat = DataFormat.TwosComplement)]
+	public int iditem_got
+	{
+		get
+		{
+			return _iditem_got;
+		}
+		set
+		{
+			_iditem_got = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "onlinelottery", DataFormat = DataFormat.Default)]
+	public db_character_online_lottery onlinelottery
+	{
+		get
+		{
+			return _onlinelottery;
+		}
+		set
+		{
+			_onlinelottery = value;
+		}
+	}
+
+	[ProtoMember(4, Name = "lotteryitems", DataFormat = DataFormat.Default)]
+	public List<db_character_online_lottery_item> lotteryitems => _lotteryitems;
+
+	[ProtoMember(5, Name = "bonus", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonus => _bonus;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

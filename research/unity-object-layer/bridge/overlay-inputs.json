@@ -1,0 +1,103 @@
+{
+  "method": "offline ILSpy; target assemblies are not executed",
+  "types": [
+    {
+      "type": "PopupUI",
+      "assembly": "Assembly-CSharp-firstpass.dll",
+      "input_sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87",
+      "artifact": "overlay-PopupUI.cs.txt",
+      "artifact_sha256": "4FF5145C4EC1D8F84FEC6B835EDC80BF51F4C31D33960C34DFFD6A3310D36EB1"
+    },
+    {
+      "type": "TooltipUI",
+      "assembly": "Assembly-CSharp-firstpass.dll",
+      "input_sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87",
+      "artifact": "overlay-TooltipUI.cs.txt",
+      "artifact_sha256": "B2D9AF2B3BB2CD1F23E051DCAE675A73CD7FD1147B14360BC101FC19002FD3A6"
+    },
+    {
+      "type": "MeshScript",
+      "assembly": "Assembly-CSharp-firstpass.dll",
+      "input_sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87",
+      "artifact": "overlay-MeshScript.cs.txt",
+      "artifact_sha256": "D79D384053E01F9C0264CD8CAE1A1B43A3C4DA2DCA6F0DD9F975FC32E2160E78"
+    },
+    {
+      "type": "Database.BuildingArea",
+      "assembly": "Assembly-CSharp-firstpass.dll",
+      "input_sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87",
+      "artifact": "overlay-Database.BuildingArea.cs.txt",
+      "artifact_sha256": "C220B4E65B8105592624646566F14D5B6848471130FE4C7B97836E7A73E60873"
+    },
+    {
+      "type": "BuildingMonsterScript",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-BuildingMonsterScript.cs.txt",
+      "artifact_sha256": "0A0F433DBDEC5B709A791423D5A78299C5FFC930FD681783BEE36D106F6133C3"
+    },
+    {
+      "type": "BuildingBehaviourScript",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-BuildingBehaviourScript.cs.txt",
+      "artifact_sha256": "39161B90F2689AEE460551900E2776012C69EEC0381C2FB3B1F751016A5B911B"
+    },
+    {
+      "type": "SecretShopNPC",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-SecretShopNPC.cs.txt",
+      "artifact_sha256": "07BCEBDC637C49E6D2FC571806F59E6E0B9C07A3CB3607A5935861A87F51B846"
+    },
+    {
+      "type": "CheckLauncherVersion",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-CheckLauncherVersion.cs.txt",
+      "artifact_sha256": "88C39EBFA48CABABAE211E6AB01F289BC36D504191101D8B4F085BC17B4C6819"
+    },
+    {
+      "type": "FlowerMessUI",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-FlowerMessUI.cs.txt",
+      "artifact_sha256": "5CB6B1AB83F708570EF940FFC000F0D22CD99944883BC4D863CB6F6B31BD4029"
+    },
+    {
+      "type": "ChatBehaviour",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-ChatBehaviour.cs.txt",
+      "artifact_sha256": "2C1B9E42FDA3ACEA4E78AC4871A8AAB3773B51A69F98D7791FF132B20D70AE45"
+    },
+    {
+      "type": "AnnounceBehaviour",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-AnnounceBehaviour.cs.txt",
+      "artifact_sha256": "84BA6AC5B3C6D3C899A6D10CE69F5B1B8661B60F5CEF11F3024802CAACE2DE30"
+    },
+    {
+      "type": "MessengerUI",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-MessengerUI.cs.txt",
+      "artifact_sha256": "6179690CABCB614182C8EE62D05D9528434F6C5209E31A0D70AD6D542D384980"
+    },
+    {
+      "type": "MeditationUI",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-MeditationUI.cs.txt",
+      "artifact_sha256": "D1ED1D271939B7BBFBA80EC736B72D40722E8C8EF167DEA713D2D5ABB2C13418"
+    },
+    {
+      "type": "CapitalUI",
+      "assembly": "Assembly-CSharp.dll",
+      "input_sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "artifact": "overlay-CapitalUI.cs.txt",
+      "artifact_sha256": "A5B07382D0DB05E67A8DE371E033979DD07C1936E32C33D9D3F293E455DF2DB0"
+    }
+  ]
+}

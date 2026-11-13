@@ -1,0 +1,89 @@
+using System;
+using Database;
+using UnityEngine;
+using game.net.data.StoC;
+
+public class TrialInfo
+{
+	public ushort[] idcampaign = new ushort[5];
+
+	public byte[] idcategory = new byte[5];
+
+	public Texture2D[] texIcon = new Texture2D[5];
+
+	public uint[] icon = new uint[5];
+
+	public string[] name = new string[5];
+
+	public byte cur_level;
+
+	public ushort trial_rank;
+
+	public byte chest_got;
+
+	public uint refresh_time;
+
+	public byte bossid;
+
+	public byte bosskilled;
+
+	public uint bosslosetimes;
+
+	public uint bosscd;
+
+	public uint[] exp = new uint[5];
+
+	public uint stamina;
+
+	public void setParam(game.net.data.StoC.TrialInfo pkt)
+	{
+		for (int i = 0; i < Math.Min(pkt.idcampaign.Count, 5); i++)
+		{
+			idcampaign[i] = (ushort)pkt.idcampaign[i];
+		}
+		for (int j = 0; j < Math.Min(pkt.idcategory.Count, 5); j++)
+		{
+			idcategory[j] = (byte)pkt.idcategory[j];
+		}
+		cur_level = (byte)pkt.cur_level;
+		trial_rank = (ushort)pkt.trial_rank;
+		chest_got = (byte)pkt.chest_got;
+		refresh_time = pkt.refresh_time;
+		bossid = (byte)pkt.bossid;
+		bosscd = pkt.bosscd;
+		bosskilled = (byte)pkt.bossiskilled;
+		bosslosetimes = pkt.bosslosetimes;
+		stamina = pkt.stamina;
+		for (int k = 0; k < 5; k++)
+		{
+			ushort id = idcampaign[k];
+			byte b = idcategory[k];
+			_campaign campaign = Global.getTemplate("campaign", id) as _campaign;
+			_campaign_copy_category campaign_copy_category = campaign.m_copy.m_categorys[b] as _campaign_copy_category;
+			if (campaign_copy_category.m_troops != null)
+			{
+				name[k] = campaign_copy_category.name;
+				foreach (object value in campaign_copy_category.m_troops.Values)
+				{
+					_campaign_copy_troop campaign_copy_troop = (_campaign_copy_troop)value;
+					if (campaign_copy_troop.difficulty != 5)
+					{
+						continue;
+					}
+					foreach (_campaign_copy_troop_army army2 in campaign_copy_troop.m_armys)
+					{
+						if (army2.captain)
+						{
+							uint idarmy = army2.idarmy;
+							_army army = Global.getTemplate("army", idarmy) as _army;
+							icon[k] = army.icon;
+							break;
+						}
+					}
+					break;
+				}
+			}
+			exp[k] = pkt.exp[k];
+		}
+	}
+}

@@ -1,0 +1,401 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "db_building")]
+public class db_building : IExtensible
+{
+	private uint _id;
+
+	private string _name = "";
+
+	private string _desc = "";
+
+	private uint _type;
+
+	private uint _icon;
+
+	private string _model_name = "";
+
+	private uint _open_level;
+
+	private uint _area;
+
+	private int _limit;
+
+	private int _population;
+
+	private int _automatic;
+
+	private uint _gold_consume;
+
+	private uint _wood_consume;
+
+	private uint _mine_consume;
+
+	private uint _mana_consume;
+
+	private uint _wood_sell;
+
+	private uint _mine_sell;
+
+	private uint _mana_sell;
+
+	private uint _capacity;
+
+	private uint _prebuilding;
+
+	private uint _build_time;
+
+	private bool _interact;
+
+	private uint _material_consume;
+
+	private string _drawing_tips = "";
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = false, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "desc", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string desc
+	{
+		get
+		{
+			return _desc;
+		}
+		set
+		{
+			_desc = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "type", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint type
+	{
+		get
+		{
+			return _type;
+		}
+		set
+		{
+			_type = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "icon", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint icon
+	{
+		get
+		{
+			return _icon;
+		}
+		set
+		{
+			_icon = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "model_name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string model_name
+	{
+		get
+		{
+			return _model_name;
+		}
+		set
+		{
+			_model_name = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "open_level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint open_level
+	{
+		get
+		{
+			return _open_level;
+		}
+		set
+		{
+			_open_level = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "area", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint area
+	{
+		get
+		{
+			return _area;
+		}
+		set
+		{
+			_area = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = false, Name = "limit", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int limit
+	{
+		get
+		{
+			return _limit;
+		}
+		set
+		{
+			_limit = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = false, Name = "population", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int population
+	{
+		get
+		{
+			return _population;
+		}
+		set
+		{
+			_population = value;
+		}
+	}
+
+	[ProtoMember(11, IsRequired = false, Name = "automatic", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int automatic
+	{
+		get
+		{
+			return _automatic;
+		}
+		set
+		{
+			_automatic = value;
+		}
+	}
+
+	[ProtoMember(12, IsRequired = false, Name = "gold_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint gold_consume
+	{
+		get
+		{
+			return _gold_consume;
+		}
+		set
+		{
+			_gold_consume = value;
+		}
+	}
+
+	[ProtoMember(13, IsRequired = false, Name = "wood_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint wood_consume
+	{
+		get
+		{
+			return _wood_consume;
+		}
+		set
+		{
+			_wood_consume = value;
+		}
+	}
+
+	[ProtoMember(14, IsRequired = false, Name = "mine_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint mine_consume
+	{
+		get
+		{
+			return _mine_consume;
+		}
+		set
+		{
+			_mine_consume = value;
+		}
+	}
+
+	[ProtoMember(15, IsRequired = false, Name = "mana_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint mana_consume
+	{
+		get
+		{
+			return _mana_consume;
+		}
+		set
+		{
+			_mana_consume = value;
+		}
+	}
+
+	[ProtoMember(16, IsRequired = false, Name = "wood_sell", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint wood_sell
+	{
+		get
+		{
+			return _wood_sell;
+		}
+		set
+		{
+			_wood_sell = value;
+		}
+	}
+
+	[ProtoMember(17, IsRequired = false, Name = "mine_sell", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint mine_sell
+	{
+		get
+		{
+			return _mine_sell;
+		}
+		set
+		{
+			_mine_sell = value;
+		}
+	}
+
+	[ProtoMember(18, IsRequired = false, Name = "mana_sell", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint mana_sell
+	{
+		get
+		{
+			return _mana_sell;
+		}
+		set
+		{
+			_mana_sell = value;
+		}
+	}
+
+	[ProtoMember(19, IsRequired = false, Name = "capacity", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint capacity
+	{
+		get
+		{
+			return _capacity;
+		}
+		set
+		{
+			_capacity = value;
+		}
+	}
+
+	[ProtoMember(20, IsRequired = false, Name = "prebuilding", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint prebuilding
+	{
+		get
+		{
+			return _prebuilding;
+		}
+		set
+		{
+			_prebuilding = value;
+		}
+	}
+
+	[ProtoMember(21, IsRequired = false, Name = "build_time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint build_time
+	{
+		get
+		{
+			return _build_time;
+		}
+		set
+		{
+			_build_time = value;
+		}
+	}
+
+	[ProtoMember(22, IsRequired = false, Name = "interact", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool interact
+	{
+		get
+		{
+			return _interact;
+		}
+		set
+		{
+			_interact = value;
+		}
+	}
+
+	[ProtoMember(23, IsRequired = false, Name = "material_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint material_consume
+	{
+		get
+		{
+			return _material_consume;
+		}
+		set
+		{
+			_material_consume = value;
+		}
+	}
+
+	[ProtoMember(24, IsRequired = false, Name = "drawing_tips", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string drawing_tips
+	{
+		get
+		{
+			return _drawing_tips;
+		}
+		set
+		{
+			_drawing_tips = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

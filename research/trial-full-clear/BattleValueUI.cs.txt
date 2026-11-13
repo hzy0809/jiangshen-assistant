@@ -1,0 +1,206 @@
+using Database;
+using UnityEngine;
+
+public class BattleValueUI : BaseUI
+{
+	private string title_string;
+
+	private Texture2D title;
+
+	private GUIStyle bg;
+
+	private GUIStyle[] rank = new GUIStyle[4];
+
+	private Texture2D[] rank_bar = new Texture2D[4];
+
+	private GUIStyle rank_frame;
+
+	private GUIStyle rank_frame_lock;
+
+	private GUIStyle[] icon = new GUIStyle[8];
+
+	private GUIStyle[] desc = new GUIStyle[8];
+
+	private GUIStyle arena_rank;
+
+	private GUIStyle score_bg;
+
+	private Texture2D score_bar;
+
+	private GUIStyle score_frame;
+
+	private _ButtonStyle b_go = new _ButtonStyle();
+
+	private Vector2[] listpos = new Vector2[8]
+	{
+		new Vector2(51f, 76f),
+		new Vector2(68f, 142f),
+		new Vector2(85f, 208f),
+		new Vector2(102f, 274f),
+		new Vector2(340f, 93f),
+		new Vector2(357f, 159f),
+		new Vector2(374f, 225f),
+		new Vector2(391f, 291f)
+	};
+
+	public void MyLoading()
+	{
+		MainUI._battlevalue_failed();
+	}
+
+	private new void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public void SubLoading(string entry)
+	{
+		if (entry == "normal")
+		{
+			title_string = "ui_biaoti1";
+		}
+		else if (entry == "battle")
+		{
+			title_string = "ui_biaoti2";
+		}
+		Global.character_.battle_value.calc_char_value();
+		AddAsset("ui_battlevalue");
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_battlevalue");
+		title = asset.Load(title_string) as Texture2D;
+		score_bar = asset.Load("ui_battlevalue_bar2") as Texture2D;
+		__BaseUI.init_lable(asset, "ui_di3", ref bg);
+		__BaseUI.init_lable(asset, "ui_zi_c", ref rank[0]);
+		__BaseUI.init_lable(asset, "ui_zi_b", ref rank[1]);
+		__BaseUI.init_lable(asset, "ui_zi_a", ref rank[2]);
+		__BaseUI.init_lable(asset, "ui_zi_s", ref rank[3]);
+		rank_bar[0] = asset.Load("ui_tiao_c") as Texture2D;
+		rank_bar[1] = asset.Load("ui_tiao_b") as Texture2D;
+		rank_bar[2] = asset.Load("ui_tiao_a") as Texture2D;
+		rank_bar[3] = asset.Load("ui_tiao_s") as Texture2D;
+		__BaseUI.init_lable(asset, "icon_xingling_normal", ref icon[0]);
+		__BaseUI.init_lable(asset, "icon_zhuangbei_normal", ref icon[1]);
+		__BaseUI.init_lable(asset, "icon_lingshou_normal", ref icon[2]);
+		__BaseUI.init_lable(asset, "ui_fabao", ref icon[4]);
+		__BaseUI.init_lable(asset, "icon_zhaomu_normal", ref icon[3]);
+		__BaseUI.init_lable(asset, "icon_hufu_normal", ref icon[5]);
+		__BaseUI.init_lable(asset, "ui_shenjiang", ref icon[6]);
+		__BaseUI.init_lable(asset, "icon_tianfu_normal", ref icon[7]);
+		__BaseUI.init_lable(asset, "ui_zi_xl", ref desc[0]);
+		__BaseUI.init_lable(asset, "ui_zi_qh", ref desc[1]);
+		__BaseUI.init_lable(asset, "ui_zi_ls", ref desc[2]);
+		__BaseUI.init_lable(asset, "ui_zi_fb", ref desc[4]);
+		__BaseUI.init_lable(asset, "ui_zi_zm", ref desc[3]);
+		__BaseUI.init_lable(asset, "ui_zi_hf", ref desc[5]);
+		__BaseUI.init_lable(asset, "ui_zi_sy", ref desc[6]);
+		__BaseUI.init_lable(asset, "ui_zi_tf", ref desc[7]);
+		__BaseUI.init_lable(asset, "ui_bar1", ref rank_frame);
+		__BaseUI.init_lable(asset, "ui_bar1_1", ref rank_frame_lock);
+		__BaseUI.init_lable(asset, "ui_bar2", ref arena_rank);
+		__BaseUI.init_lable(asset, "ui_tiao_zhandouli1", ref score_bg);
+		__BaseUI.init_lable(asset, "ui_tiao_zhandouli2", ref score_frame);
+		b_go.make(asset, "button_qianwang");
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		int num = 668;
+		int num2 = 408;
+		if (BeginGUI(num, num2, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, title))
+		{
+			__BaseUI.Label(__BaseUI._rect(23f, 52f, 620f, 331f), string.Empty, __BaseUI._boxnew11Style);
+			__BaseUI.Label(__BaseUI._rect(157f, 69f, 355f, 298f), string.Empty, bg);
+			__BaseUI.Label(__BaseUI._rect(213f, 15f, 235f, 32f), string.Empty, score_bg);
+			uint battle_value = (Global.getTemplate("battle_value", (uint)Global.character_.level) as _battle_value).battle_value;
+			float num3 = (float)Global.character_.battlescore_form / (float)battle_value;
+			if (num3 > 1f)
+			{
+				num3 = 1f;
+			}
+			GUI.DrawTexture(__BaseUI._rect(218f, 15f, 225f * num3, 32f), score_bar);
+			__BaseUI.Label(__BaseUI._rect(213f, 15f, 235f, 32f), string.Empty, score_frame);
+			__BaseUI._fontNumber2.draw(__BaseUI._rect(339f, 16f, 105f, 19f), Global.character_.battlescore_form.ToString(), TextAnchor.UpperLeft);
+			bool unlock_desc = false;
+			for (int i = 0; i < 8; i++)
+			{
+				DrawOneValue(i, ref unlock_desc);
+			}
+			if (EndGUI())
+			{
+				MainUI.SetSubUI(null);
+			}
+		}
+	}
+
+	private void DrawOneValue(int i, ref bool unlock_desc)
+	{
+		if (Global.character_.battle_value.unlock_check[i])
+		{
+			__BaseUI.Label(__BaseUI._rect(listpos[i].x + 29f, listpos[i].y + 4f, 207f, 55f), string.Empty, rank_frame);
+			GUI.DrawTextureWithTexCoords(__BaseUI._rect(listpos[i].x + 42f, listpos[i].y + 16f, 148f * Global.character_.battle_value.cur_value[i], 32f), rank_bar[Global.character_.battle_value.cur_rank[i]], new Rect(0f, 0f, Global.character_.battle_value.cur_value[i], 1f));
+			__BaseUI.Label(__BaseUI._rect(listpos[i].x, listpos[i].y, 54f, 66f), string.Empty, icon[i]);
+			__BaseUI.Label(__BaseUI._rect(listpos[i].x + 53f, listpos[i].y + 24f, 60f, 18f), string.Empty, desc[i]);
+			__BaseUI.Label(__BaseUI._rect(listpos[i].x + 118f, listpos[i].y - 20f, 64f, 74f), string.Empty, rank[Global.character_.battle_value.cur_rank[i]]);
+			if (b_go.Button(bBtn: true, __BaseUI._rect(listpos[i].x + 181f, listpos[i].y + 10f, 45f, 43f), string.Empty))
+			{
+				go_bvui(i);
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(listpos[i].x + 2f, listpos[i].y + 3f, 232f, 55f), string.Empty, rank_frame_lock);
+			_battle_value_category battle_value_category = Global.getTemplate("battle_value_category", (uint)(i + 1)) as _battle_value_category;
+			if (!unlock_desc)
+			{
+				__BaseUI.Label(__BaseUI._rect(listpos[i].x + 2f, listpos[i].y + 3f, 232f, 55f), battle_value_category.unlock, __BaseUI._textCenter, __BaseUI._clrRed);
+				unlock_desc = true;
+			}
+		}
+	}
+
+	public static void go_bvui(int i)
+	{
+		switch (i)
+		{
+		case 0:
+			MainUI._army_star();
+			break;
+		case 1:
+			MainUI._general_person();
+			break;
+		case 2:
+			MainUI._army_spirit();
+			break;
+		case 4:
+			MainUI._general_person();
+			break;
+		case 3:
+			MainUI._army_recruit();
+			break;
+		case 5:
+			MainUI._amulet();
+			break;
+		case 6:
+			MainUI._divine_general();
+			break;
+		case 7:
+			MainUI._genius_ui();
+			break;
+		}
+	}
+}

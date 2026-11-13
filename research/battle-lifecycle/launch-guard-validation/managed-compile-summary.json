@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "compile_exit": 0,
+  "source_hashes_stable": true,
+  "references": "pinned installed legacy mscorlib and UnityEngine",
+  "package_write": false,
+  "runtime_deployment": false,
+  "arguments": [
+    "/nologo",
+    "/noconfig",
+    "/target:library",
+    "/platform:x86",
+    "/nostdlib+",
+    "/warn:4",
+    "/warnaserror+",
+    "/define:JSB_DAILY_REWARD_ENABLED,JSB_DAILY_TIMED_ENABLED,JSB_DAILY_STONE_ENABLED,JSB_DAILY_MINGSHI_ENABLED,JSB_DAILY_ARENA_ENABLED,JSB_DAILY_SOUL_ENABLED,JSB_DAILY_REFINE_ENABLED,JSB_DAILY_WOOD_ENABLED",
+    "/out:G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-lifecycle\\launch-guard-validation\\JSAssistantBridge-compile-only.dll",
+    "/reference:C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\mscorlib.dll",
+    "/reference:C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\UnityEngine.dll"
+  ]
+}

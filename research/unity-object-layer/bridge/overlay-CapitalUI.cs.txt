@@ -1,0 +1,1033 @@
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class CapitalUI : BaseUI
+{
+	public static bool m_bFriend = false;
+
+	public static bool m_bFriend2 = false;
+
+	public static int m_bFriend3 = 0;
+
+	public static GameObject root;
+
+	public static GameObject mesh;
+
+	public static GameObject root_lines;
+
+	public static GameObject root_monsters;
+
+	public static Dictionary<byte, GameObject> floors = new Dictionary<byte, GameObject>();
+
+	public static Dictionary<byte, BuildingArea> building_areas;
+
+	public static BuildingArea curArea;
+
+	private bool m_bRefreshing;
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private Texture2D texIconFrame;
+
+	private Texture2D texIconFrame2;
+
+	private Texture2D texQuest;
+
+	private Texture2D texProgress;
+
+	private Texture2D texLock;
+
+	private Texture2D texManaBar;
+
+	private Texture2D ui_bar_yq;
+
+	private _ButtonStyle Btn_yqchoujiang = new _ButtonStyle();
+
+	private _ButtonStyle btnLock = new _ButtonStyle();
+
+	public static _ButtonStyle b_shop = new _ButtonStyle();
+
+	public static Texture2D texIdle;
+
+	public static Texture2D texCD;
+
+	public static Texture2D texCDFrame;
+
+	public static Texture2D texStop;
+
+	public static _ButtonStyle btnHarvest = new _ButtonStyle();
+
+	public static _ButtonStyle btnMonster = new _ButtonStyle();
+
+	public static _ButtonStyle btn_kecaiji = new _ButtonStyle();
+
+	public static Texture2D ui_zi_cjz;
+
+	public static Texture2D texSleep;
+
+	public static Texture2D texChest;
+
+	public static Texture2D texSword;
+
+	public static Texture2D texStone;
+
+	public static Texture2D texBuild;
+
+	public static Texture2D ui_icon_cj;
+
+	public static Texture2D ui_tiao_cj;
+
+	public static Texture2D ui_bar_cj;
+
+	public static Texture2D[,] texAreaNames = new Texture2D[5, 2];
+
+	public static Texture2D[] texAreaArrows = new Texture2D[4];
+
+	public static Texture2D texEdit;
+
+	public static Texture2D texAccept;
+
+	public static Texture2D ui_zi_sjz2;
+
+	public static Rect rect28;
+
+	private BGMHandler.BGMControl bgm_ctrl;
+
+	private GameObject secret_shop_npc;
+
+	public static Dictionary<int, Texture2D> BuildProductTex = new Dictionary<int, Texture2D>();
+
+	private Rect m_btnRc = default(Rect);
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	public static void Set(bool bFriend, Dictionary<byte, BuildingArea> _building_areas, BuildingArea _curArea)
+	{
+		m_bFriend = bFriend;
+		m_bFriend2 = bFriend;
+		m_bFriend3 = (bFriend ? 1 : 0);
+		building_areas = _building_areas;
+		curArea = _curArea;
+	}
+
+	public void RefreshBuildingQuests()
+	{
+		foreach (BuildingQuest value in Global.character_.building_quests.Values)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (value.texIcons[i] == null)
+				{
+					string iconName = value.getIconName((byte)i);
+					if (iconName != string.Empty)
+					{
+						AddAssetSub(iconName);
+					}
+				}
+			}
+		}
+		StartLoadingSub();
+	}
+
+	public void RefreshBuildingProducts()
+	{
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.product != null && value.product.mesh == null)
+			{
+				AddAssetSub(value.product.model_name);
+			}
+		}
+		StartLoadingSub();
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_main");
+		AddAsset("ui_capital");
+		AddAsset("blob_shadow");
+		AddAsset("ui_buildingup");
+		Set(bFriend: false, Global.character_.building_areas, Global.character_.curArea);
+		foreach (BuildingQuest value in Global.character_.building_quests.Values)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				string iconName = value.getIconName((byte)i);
+				if (iconName != string.Empty)
+				{
+					AddAssetSub(iconName);
+				}
+			}
+		}
+		string text = "capital0/";
+		AddAsset(text + "capital");
+		AddAsset(text + "line");
+		AddAssetSub("capital0/zc_jianzao01");
+		AddAssetSub("capital0/zc_jianzao02");
+		LoadArea(Global.character_.curArea);
+		foreach (BuildingArea value2 in Global.character_.building_areas.Values)
+		{
+			if (value2.id != Global.character_.curArea.id)
+			{
+				LoadArea(value2);
+			}
+		}
+		foreach (Database.BuildingMonster value3 in Global.character_.building_monsters.Values)
+		{
+			AddAssetSub(value3.model_name);
+		}
+		if (Global.character_.m_demon != null)
+		{
+			AddAssetSub(Global.character_.m_demon.model_name);
+		}
+		AddAsset("capital0/shenmishangren");
+		AddAsset("zhucheng_huaban");
+		CollectingStart();
+	}
+
+	private void LoadArea(BuildingArea area)
+	{
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (!area.m_islands.ContainsKey(value.idisland))
+			{
+				continue;
+			}
+			AddAssetSub(value.data.model_name);
+			if (value.product != null)
+			{
+				if (value.product.texIcon == null)
+				{
+					AddAssetSub("product" + value.product.icon);
+				}
+				if (value.product.mesh == null)
+				{
+					AddAssetSub(value.product.model_name);
+				}
+			}
+		}
+		foreach (object value2 in Global.getTemplates("building_default").Values)
+		{
+			_building_default building_default = (_building_default)value2;
+			bool flag = false;
+			foreach (Building value3 in Global.character_.buildings.Values)
+			{
+				if (value3.idbuilding == building_default.idbuilding)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag && Global.getTemplate("building_floor", building_default.idisland) is _building_floor building_floor)
+			{
+				AddAssetSub(building_floor.floor_name);
+			}
+		}
+	}
+
+	private void CreateArea(BuildingArea area)
+	{
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (!area.m_islands.ContainsKey(value.idisland))
+			{
+				continue;
+			}
+			if (value.mesh == null)
+			{
+				value.makeObject();
+			}
+			if (value.product != null && value.product.mesh == null)
+			{
+				AssetBundle asset = BaseAsset.was.GetAsset(value.product.model_name);
+				if (asset != null)
+				{
+					value.product.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+					value.product.mesh.transform.parent = value.rootMesh.transform;
+					value.product.mesh.transform.localPosition = Vector3.zero;
+					value.product.mesh.AddComponent<BuildingProductScript>().setBuilding(value);
+				}
+			}
+		}
+	}
+
+	public void loadFloor(byte idisland)
+	{
+		if (Global.getTemplate("building_floor", idisland) is _building_floor building_floor)
+		{
+			AddAssetSub(building_floor.floor_name);
+			StartLoadingSub();
+		}
+	}
+
+	public void loadBuilding(byte id)
+	{
+		Building building = Global.character_.buildings[id];
+		AddAssetSub(building.data.model_name);
+		StartLoadingSub();
+	}
+
+	public Texture2D GetBPicon(int iconid)
+	{
+		Texture2D result = null;
+		if (BuildProductTex.ContainsKey(iconid))
+		{
+			result = BuildProductTex[iconid];
+		}
+		else
+		{
+			AddAssetSub("product" + iconid);
+			StartLoadingSub();
+		}
+		return result;
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (AssetName.Contains("product"))
+		{
+			string s = AssetName.Replace("product", string.Empty);
+			int key = int.Parse(s);
+			if (!BuildProductTex.ContainsKey(key))
+			{
+				Texture2D value = BaseAsset.LoadTexture(AssetName);
+				BuildProductTex.Add(key, value);
+			}
+		}
+		foreach (Building value2 in Global.character_.buildings.Values)
+		{
+			if (value2.product != null && value2.product.texIcon == null)
+			{
+				value2.product.texIcon = BaseAsset.LoadTexture("product" + value2.product.icon);
+			}
+		}
+		foreach (BuildingQuest value3 in Global.character_.building_quests.Values)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				if (value3.texIcons[i] == null)
+				{
+					string iconName = value3.getIconName((byte)i);
+					if (iconName != string.Empty)
+					{
+						value3.texIcons[i] = BaseAsset.LoadTexture(iconName);
+					}
+				}
+			}
+		}
+		foreach (BuildingArea value4 in Global.character_.building_areas.Values)
+		{
+			CreateArea(value4);
+		}
+		foreach (Database.BuildingMonster value5 in Global.character_.building_monsters.Values)
+		{
+			if (!(value5.mesh == null) || !(root_monsters != null))
+			{
+				continue;
+			}
+			AssetBundle asset = BaseAsset.was.GetAsset(value5.model_name);
+			if (!(asset != null))
+			{
+				continue;
+			}
+			value5.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+			BaseAsset.SetLayerRecursively(value5.mesh, 10);
+			value5.mesh.transform.position = value5.pos;
+			value5.mesh.transform.eulerAngles = value5.rot;
+			value5.mesh.transform.localScale = new Vector3(3f, 3f, 3f);
+			value5.mesh.transform.parent = root_monsters.transform;
+			BuildingMonsterScript buildingMonsterScript = value5.mesh.AddComponent<BuildingMonsterScript>();
+			buildingMonsterScript.setMonster(this, value5, bFriend: false);
+			if (value5.idkiller != 0L)
+			{
+				value5.mesh.animation.Play("dead");
+			}
+			GameObject gameObject = BaseAsset.Instantiate_mainAsset("blob_shadow") as GameObject;
+			if (gameObject != null)
+			{
+				BaseAsset.SetLayerRecursively(gameObject, 10);
+				gameObject.tag = "blob_shadow";
+				gameObject.transform.parent = value5.mesh.transform;
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localScale = gameObject.transform.localScale * value5.mesh.transform.localScale.x;
+				if (QualitySettings.names[QualitySettings.GetQualityLevel()] != "Fastest")
+				{
+					OptionUI.disable_blob_shadow(gameObject);
+				}
+			}
+		}
+		if (Global.character_.m_demon != null && Global.character_.m_demon.mesh == null)
+		{
+			Global.character_.m_demon.make(BaseAsset.was.GetAsset(Global.character_.m_demon.model_name), root.transform, this, bFriend: false);
+		}
+		if (!AssetName.Contains("capital0/zc_xindiban"))
+		{
+			return;
+		}
+		foreach (object value6 in Global.getTemplates("building_floor").Values)
+		{
+			_building_floor building_floor = (_building_floor)value6;
+			if (building_floor.floor_name == AssetName)
+			{
+				AssetBundle asset2 = BaseAsset.was.GetAsset(AssetName);
+				GameObject gameObject2 = Object.Instantiate(BaseAsset.was.GetAsset(AssetName).mainAsset) as GameObject;
+				gameObject2.transform.parent = root.transform;
+				if (Global.getTemplate("building_island", building_floor.idisland) is _building_island d)
+				{
+					BuildingIsland buildingIsland = new BuildingIsland(d);
+					buildingIsland.pos.x += 5f;
+					buildingIsland.pos.z += 5f;
+					gameObject2.transform.position = buildingIsland.pos;
+					floors[building_floor.idisland] = gameObject2;
+				}
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+		btnRight.Clear();
+		_ButtonMain buttonMain = new _ButtonMain(asset, "icon_jianzao", "jianzao", 62f, __BaseUI._iconMask2, _build, null);
+		buttonMain.setMarkNum(_build_count, __BaseUI._markNumStyle);
+		btnRight.Add(buttonMain);
+		btnRight.Add(new _ButtonMain(asset, "icon_yidong", string.Empty, 62f, __BaseUI._iconMask2, _adjust, null));
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_capital");
+		AssetBundle asset3 = BaseAsset.was.GetAsset("ui_buildingup");
+		texIconFrame = asset2.Load("ui_icondi") as Texture2D;
+		texIconFrame2 = asset2.Load("ui_icondi3") as Texture2D;
+		texQuest = asset2.Load("ui_icon1") as Texture2D;
+		texProgress = asset2.Load("ui_new") as Texture2D;
+		texLock = asset2.Load("ui_zhu_bar5") as Texture2D;
+		texBuild = asset2.Load("jianzao") as Texture2D;
+		btnLock.make(asset2, "button_jiesuo", unable: false);
+		texManaBar = asset2.Load("ui_zhu_lingqi") as Texture2D;
+		Btn_yqchoujiang.make(asset2, "button_yqchoujiang");
+		ui_bar_yq = asset2.Load("ui_bar_yq") as Texture2D;
+		texIdle = asset2.Load("zi2_normal") as Texture2D;
+		texCD = asset2.Load("cd") as Texture2D;
+		texCDFrame = asset2.Load("cd_di") as Texture2D;
+		texStop = asset2.Load("zi3_normal") as Texture2D;
+		btnHarvest.make(asset2, "zi1", unable: false);
+		btnHarvest.setBorder(new RectOffset(0, 0, 0, 37));
+		btn_kecaiji.make(asset2, "ui_zi_kcj", unable: false);
+		btn_kecaiji.setBorder(new RectOffset(0, 0, 0, 37));
+		b_shop.make(asset2, "button_shangdian");
+		texSleep = asset2.Load("0001") as Texture2D;
+		texChest = asset2.Load("0005") as Texture2D;
+		texSword = asset2.Load("ui_icon5") as Texture2D;
+		texStone = asset2.Load("product123") as Texture2D;
+		ui_zi_cjz = asset3.Load("ui_zi_cjz") as Texture2D;
+		ui_zi_sjz2 = asset2.Load("ui_zi_sjz2") as Texture2D;
+		ui_icon_cj = asset3.Load("ui_icon_cj") as Texture2D;
+		ui_bar_cj = asset3.Load("ui_bar_cj") as Texture2D;
+		ui_tiao_cj = asset3.Load("ui_tiao_cj") as Texture2D;
+		for (int i = 0; i < 5; i++)
+		{
+			texAreaNames[i, 0] = asset2.Load("ui_area" + (i + 1) + "_h") as Texture2D;
+			texAreaNames[i, 1] = asset2.Load("ui_area" + (i + 1) + "_v") as Texture2D;
+		}
+		for (int j = 0; j < 4; j++)
+		{
+			texAreaArrows[j] = asset2.Load("ui_yidong" + (j + 1)) as Texture2D;
+		}
+		texEdit = asset2.Load("ui_zi") as Texture2D;
+		texAccept = asset2.Load("ui_xiezhu") as Texture2D;
+		if (root == null)
+		{
+			root = new GameObject();
+			root.name = "CapitalRoot";
+			root.transform.parent = base.gameObject.transform;
+			AssetBundle asset4 = BaseAsset.was.GetAsset("capital0/capital");
+			if (asset4 != null)
+			{
+				mesh = Object.Instantiate(asset4.mainAsset) as GameObject;
+				mesh.transform.parent = root.transform;
+			}
+			Building.root_buildings = new GameObject();
+			Building.root_buildings.name = "buildings";
+			Building.root_buildings.transform.parent = root.transform;
+			root_lines = new GameObject();
+			root_lines.name = "lines";
+			root_lines.transform.parent = root.transform;
+			root_monsters = new GameObject();
+			root_monsters.name = "monsters";
+			root_monsters.transform.parent = root.transform;
+			foreach (BuildingArea value in Global.character_.building_areas.Values)
+			{
+				foreach (BuildingIsland value2 in value.m_islands.Values)
+				{
+					if (value2.root == null)
+					{
+						value2.root = new GameObject();
+						value2.root.name = "island_" + value2.id;
+						value2.root.transform.parent = root_lines.transform;
+						value2.root.transform.position = value2.pos;
+						AssetBundle asset5 = BaseAsset.was.GetAsset("capital0/line");
+						if (asset5 != null)
+						{
+							if (value2.height > 0)
+							{
+								for (byte b = 0; b < value2.height + 1; b++)
+								{
+									GameObject gameObject = Object.Instantiate(asset5.mainAsset) as GameObject;
+									gameObject.name = "liney_" + b;
+									gameObject.transform.parent = value2.root.transform;
+									gameObject.transform.localPosition = new Vector3((float)(int)value2.width * Building._step / 2f, 0.1f, (float)(int)b * Building._step);
+									gameObject.transform.localScale = new Vector3(value2.width * 3, 3f, 3f);
+								}
+							}
+							if (value2.width > 0)
+							{
+								for (byte b2 = 0; b2 < value2.width + 1; b2++)
+								{
+									GameObject gameObject2 = Object.Instantiate(asset5.mainAsset) as GameObject;
+									gameObject2.name = "linex_" + b2;
+									gameObject2.transform.parent = value2.root.transform;
+									gameObject2.transform.localPosition = new Vector3((float)(int)b2 * Building._step, 0.1f, (float)(int)value2.height * Building._step / 2f);
+									gameObject2.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+									gameObject2.transform.localScale = new Vector3(value2.height * 3, 3f, 3f);
+								}
+							}
+						}
+					}
+					value2.setColor(new Color(0f, 1f, 0f, 1f));
+				}
+			}
+		}
+		root_lines.SetActiveRecursively(state: false);
+		if (bgm_ctrl == null)
+		{
+			bgm_ctrl = BGMHandler.Instance.Play("music/bgm_capital");
+			if (bgm_ctrl != null)
+			{
+				bgm_ctrl.FadeIn(5f);
+			}
+		}
+		Visible();
+		cs_mysteryshopcheck();
+	}
+
+	protected override void PostInit()
+	{
+		foreach (Database.BuildingMonster value in Global.character_.building_monsters.Values)
+		{
+			if (value.mesh != null && value.idkiller != 0L)
+			{
+				value.mesh.animation.Play("dead");
+			}
+		}
+		if (Global.character_.m_demon != null && Global.character_.m_demon.mesh != null && Global.character_.m_demon.killed)
+		{
+			Global.character_.m_demon.mesh.animation.Play("dead");
+		}
+		if (Global.character_.show_buddy_list > 0)
+		{
+			Setbuddylistadd();
+		}
+	}
+
+	private void Setbuddylistadd()
+	{
+		BuddyListAddUI component = BaseUI.GetRootUI().GetComponent<BuddyListAddUI>();
+		component.cs_buddylistshow();
+	}
+
+	public override void Destroy()
+	{
+		if (bgm_ctrl != null)
+		{
+			bgm_ctrl.FadeOut(1f);
+			bgm_ctrl = null;
+		}
+		base.Destroy();
+		if (root != null)
+		{
+			Object.Destroy(root);
+			root = null;
+			mesh = null;
+			Building.root_buildings = null;
+			root_lines = null;
+			root_monsters = null;
+			secret_shop_npc = null;
+		}
+		foreach (BuildingArea value in Global.character_.building_areas.Values)
+		{
+			foreach (Building value2 in Global.character_.buildings.Values)
+			{
+				value2.root = null;
+			}
+		}
+		foreach (Database.BuildingMonster value3 in Global.character_.building_monsters.Values)
+		{
+			value3.mesh = null;
+		}
+	}
+
+	private void Update()
+	{
+		if (Global.character_.checkUI(53u) && Global.character_.next_demon_time <= TimeUtil.Now && !m_bRefreshing)
+		{
+			m_bRefreshing = true;
+			cs_player_refresh_demon_0x26();
+		}
+		foreach (BuildingQuest value in Global.character_.building_quests.Values)
+		{
+			if (value.m_fNewTime > 0f)
+			{
+				value.m_fNewTime -= Time.deltaTime;
+				if (value.m_fNewTime < 0f)
+				{
+					value.m_fNewTime = 0f;
+				}
+			}
+			if (!value.m_bRemoving && value.checkQuest())
+			{
+				value.m_bRemoving = true;
+				CSBuildingQuestFinished_0x48B cSBuildingQuestFinished_0x48B = new CSBuildingQuestFinished_0x48B();
+				cSBuildingQuestFinished_0x48B.id = value.id;
+				RootUI.m_client.Send(1163, cSBuildingQuestFinished_0x48B, null);
+			}
+		}
+		if (Global.character_.building_monsters.Count < 3 && Global.character_.next_monster_time <= TimeUtil.Now && m_bRefreshing)
+		{
+			m_bRefreshing = true;
+			CSBuildingMonsterRefresh_0x48C pkt = new CSBuildingMonsterRefresh_0x48C();
+			RootUI.m_client.Send(1164, pkt, null);
+		}
+	}
+
+	private void drawResource(Rect rc, string msg, Color clr, Texture2D icon)
+	{
+		GUI.BeginGroup(rc);
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 100f, 30f), msg, __BaseUI._numLeft, clr);
+		GUI.EndGroup();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main;
+		__BaseUI.my_enabled = IsEnable();
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.build_time != 0 && value.build_time <= TimeUtil.Now)
+			{
+				value.build_time = 0u;
+				value.makeMesh();
+			}
+		}
+		if (BuildingBuildUI.m_bBuildVisible)
+		{
+			return;
+		}
+		int capacityMax = Global.character_.capacityMax;
+		GUI.BeginGroup(__BaseUI._rect(20f, 110f, 233f, 57f));
+		__BaseUI.Box(__BaseUI._rect(0f, 0f, 233f, 57f), texManaBar);
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 63f, 30f), new GUIContent(string.Empty, "resource"), __BaseUI.normalStyle, GUI.color);
+		__BaseUI.Label(__BaseUI._rect(100f, 0f, 133f, 30f), new GUIContent(string.Empty, "material"), __BaseUI.normalStyle, GUI.color);
+		__BaseUI.Label(__BaseUI._rect(0f, 25f, 63f, 30f), new GUIContent(string.Empty, "youqing"), __BaseUI.normalStyle, GUI.color);
+		__BaseUI.Label(__BaseUI._rect(63f, 4f, 60f, 31f), Global.character_.mana.ToString(), __BaseUI._numLeft, __BaseUI._clrCyan);
+		__BaseUI.Label(__BaseUI._rect(167f, 4f, 60f, 31f), Global.character_.building_material.ToString(), __BaseUI._numLeft, __BaseUI._clrCyan);
+		__BaseUI.Label(__BaseUI._rect(63f, 25f, 60f, 31f), Global.character_.friend_point + "/50", __BaseUI._numLeft, __BaseUI._clrCyan);
+		if (Btn_yqchoujiang.Button(bBtn: true, __BaseUI._rect(113f, 29f, 66f, 19f), string.Empty))
+		{
+			FriendLotteryUI component = BaseUI.GetRootUI().GetComponent<FriendLotteryUI>();
+			if (MainUI.handle_sub_ui(component, "friend_lottery"))
+			{
+				MainUI.SetSubUI(component);
+				component.MyLoading();
+			}
+		}
+		GUI.EndGroup();
+		draw_left_bar();
+		draw_right_bar();
+		if (!curArea.unlocked)
+		{
+			GUI.BeginGroup(__BaseUI._rectC(173f, 48f, 346f, 97f));
+			__BaseUI.Box(__BaseUI._rect(0f, 0f, 346f, 97f), new GUIContent(string.Empty, "Background"), texLock);
+			if (curArea.data.open_level > Global.character_.level)
+			{
+				__BaseUI.Label(__BaseUI._rect(120f, 40f, 246f, 20f), "解锁需要玩家达到", __BaseUI._textLeft, __BaseUI._clrYellow, 18);
+				__BaseUI.Label(__BaseUI._rect(280f, 40f, 100f, 20f), curArea.data.open_level + "级", __BaseUI._textLeft, __BaseUI._clrRed, 18);
+			}
+			else
+			{
+				if (curArea.data.open_gold != 0)
+				{
+					__BaseUI.Label(__BaseUI._rect(130f, 18f, 200f, 20f), "解锁需要花费", __BaseUI._textLeft, __BaseUI._clrCyan);
+					__BaseUI.Label(__BaseUI._rect(225f, 18f, 200f, 20f), curArea.data.open_gold + "金币", __BaseUI._textLeft, __BaseUI._clrYellow);
+				}
+				if (btnLock.Button(bBtn: true, __BaseUI._rect(140f, 38f, 143f, 52f), string.Empty))
+				{
+					if (curArea.data.open_gold != 0)
+					{
+						__BaseUI.GetConsumeUI().setConsume((int)curArea.data.open_gold, 20, BuildingAreaUnlock);
+					}
+					else
+					{
+						cs_building_area_unlock_0x48f();
+					}
+				}
+			}
+			GUI.EndGroup();
+		}
+		__BaseUI.my_enabled = true;
+		drawTooltips();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		if (tip == "resource")
+		{
+			string empty = string.Empty;
+			string text = empty;
+			empty = text + __BaseUI.load_str(20193u) + " " + Global.character_.mana + "/" + Global.character_.capacityMax;
+			__BaseUI.GetTooltipUI().ShowTooltipCommon2(empty, "CapitalUI", 300);
+		}
+		else if (tip.Contains("quest"))
+		{
+			byte key = byte.Parse(tip.Replace("quest", string.Empty));
+			BuildingQuest buildingQuest = Global.character_.building_quests[key];
+			if (buildingQuest != null)
+			{
+				string text2 = buildingQuest.data.name;
+				text2 = text2 + "\n\n    " + buildingQuest.Message;
+				__BaseUI.GetTooltipUI().ShowTooltipCommon2(text2, "CapitalUI", 300);
+			}
+		}
+		else if (tip.Contains("youqing"))
+		{
+			__BaseUI.GetTooltipUI().ShowTooltipCommon2(__BaseUI.load_str(9145u), "CapitalUI", 300);
+		}
+		else if (tip.Contains("material"))
+		{
+			__BaseUI.GetTooltipUI().ShowTooltipCommon2(__BaseUI.load_str(21555u), "CapitalUI", 300);
+		}
+	}
+
+	private void draw_left_bar()
+	{
+		int num = 0;
+		foreach (BuildingQuest value in Global.character_.building_quests.Values)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(15f, 138 + num * 62, 170f, 75f));
+			bool flag = false;
+			bool flag2 = false;
+			Rect rect = __BaseUI._rect(9f, 9f, 55f, 55f);
+			if (__BaseUI.my_enabled)
+			{
+				Vector2 point = new Vector2(Input.mousePosition.x - __BaseUI._rcCur.x, (float)Screen.height - Input.mousePosition.y - __BaseUI._rcCur.y);
+				if (rect.Contains(point))
+				{
+					flag = true;
+					if (Input.GetMouseButton(0))
+					{
+						flag2 = true;
+					}
+				}
+			}
+			if (flag)
+			{
+				GUI.Label(__BaseUI._rect(7f, 6f, 59f, 59f), string.Empty, __BaseUI._iconMask2);
+			}
+			if (flag2 || !__BaseUI.my_enabled)
+			{
+				GUI.backgroundColor = __BaseUI._clrDark;
+			}
+			GUI.DrawTexture(rect, texIconFrame2);
+			if (value.Icon != null)
+			{
+				__BaseUI.Box(__BaseUI._rect(15f, 15f, 44f, 44f), value.Icon);
+			}
+			__BaseUI.Box(rect, texIconFrame);
+			__BaseUI.Box(__BaseUI._rect(0f, 5f, 31f, 23f), texQuest);
+			if (GUI.Button(rect, new GUIContent(string.Empty, "quest" + value.id), __BaseUI.normalStyle))
+			{
+				BuildingQuestUI component = GetComponent<BuildingQuestUI>();
+				component.MyLoading(value);
+			}
+			if (value.m_fNewTime > 0f)
+			{
+				if (value.m_fNewTime > 9f)
+				{
+					GUI.backgroundColor = new Color(1f, 1f, 1f, 10f - value.m_fNewTime);
+				}
+				else if (value.m_fNewTime > 1f)
+				{
+					GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+				}
+				else
+				{
+					GUI.backgroundColor = new Color(1f, 1f, 1f, value.m_fNewTime);
+				}
+				__BaseUI.Box(__BaseUI._rect(55f, 15f, 69f, 45f), texProgress);
+			}
+			GUI.backgroundColor = Color.white;
+			__BaseUI.EndGroup();
+			num++;
+		}
+	}
+
+	public Rect getBtnRc()
+	{
+		return m_btnRc;
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectR(80f, 110 + num * 62, 75f, 75f));
+			if (item.name == "jianzao")
+			{
+				Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(8f, 7f));
+				m_btnRc = new Rect(vector.x, vector.y, 59f, 59f);
+			}
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	public void _build()
+	{
+		BuildingUI component = GetComponent<BuildingUI>();
+		if (_build_count() == 0)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21557u), rmg);
+			return;
+		}
+		MainUI.SetSubUI(null);
+		component.MyLoading();
+	}
+
+	private int _build_count()
+	{
+		int num = 0;
+		foreach (BuildingDrawing value in Global.character_.buildingdrawings.Values)
+		{
+			if (value.num != 0)
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	private void _adjust()
+	{
+		BuildingBuildUI.m_bBuildVisible = false;
+		BuildingBuildUI component = GetComponent<BuildingBuildUI>();
+		component.MyLoading(null, null);
+	}
+
+	private void _harvest_all()
+	{
+		int num = 0;
+		int num2 = 0;
+		int num3 = 0;
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.product != null && value.start_time + value.product.time <= TimeUtil.Now)
+			{
+				num += (int)value.product.spirit_output;
+				num2 += (int)value.product.mana_output;
+				num3 += (int)value.product.enchant_output;
+			}
+		}
+		int capacityMax = Global.character_.capacityMax;
+		if ((num > 0 && num + Global.character_.spirit_food > capacityMax) || (num2 > 0 && num2 + Global.character_.mana > capacityMax) || (num3 > 0 && num3 + Global.character_.enchant_stone > capacityMax))
+		{
+			DisableAll();
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20205u), __BaseUI.load_str(20176u), null, WantHarvestAllOK, _bCancel: true);
+		}
+		else
+		{
+			cs_building_harvestall_0x488();
+		}
+	}
+
+	private void WantHarvestAllOK(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			cs_building_harvestall_0x488();
+		}
+	}
+
+	private bool _harvest_all_check(string name)
+	{
+		return Global.character_.VIPLEVEL >= 3;
+	}
+
+	private void _manager()
+	{
+		BuildingAllUI component = GetComponent<BuildingAllUI>();
+		if (MainUI.handle_sub_ui(component, "building_all"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _manager_check(string name)
+	{
+		return true;
+	}
+
+	private void cs_player_refresh_demon_0x26()
+	{
+		CSPlayerRefreshDemon_0x26 pkt = new CSPlayerRefreshDemon_0x26();
+		RootUI.m_client.Send(38, pkt, sc_player_refresh_demon_0x26);
+	}
+
+	private void sc_player_refresh_demon_0x26(MemoryStream stream, object arg)
+	{
+		m_bRefreshing = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCPlayerRefreshDemon_0x26 sCPlayerRefreshDemon_0x = JSProtoBuf.Serializer.Deserialize<SCPlayerRefreshDemon_0x26>(stream);
+		Global.character_.next_demon_time = sCPlayerRefreshDemon_0x.next_demon_time;
+		if (Global.character_.m_demon != null)
+		{
+			if (Global.character_.m_demon.mesh != null)
+			{
+				Object.Destroy(Global.character_.m_demon.mesh);
+			}
+			Global.character_.m_demon = null;
+		}
+		if (sCPlayerRefreshDemon_0x.demon != null)
+		{
+			Global.character_.m_demon = new Database.Demon(sCPlayerRefreshDemon_0x.demon);
+			AddAssetSub(Global.character_.m_demon.model_name);
+			StartLoadingSub();
+		}
+	}
+
+	private void cs_building_harvestall_0x488()
+	{
+		CSBuildingHarvestAll_0x488 pkt = new CSBuildingHarvestAll_0x488();
+		RootUI.m_client.Send(1160, pkt, sc_building_harvestall_0x488);
+	}
+
+	private void sc_building_harvestall_0x488(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuildingHarvestAll_0x488 sCBuildingHarvestAll_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingHarvestAll_0x488>(stream);
+		foreach (uint id in sCBuildingHarvestAll_0x.ids)
+		{
+			BuildingHarvestUI.harvest((byte)id, sCBuildingHarvestAll_0x.start_time, null);
+		}
+	}
+
+	public void BuildingMonsterRefresh()
+	{
+		m_bRefreshing = false;
+		foreach (Database.BuildingMonster value in Global.character_.building_monsters.Values)
+		{
+			if (value.mesh == null)
+			{
+				AddAssetSub(value.model_name);
+			}
+		}
+		StartLoadingSub();
+	}
+
+	private void BuildingAreaUnlock(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_building_area_unlock_0x48f();
+		}
+	}
+
+	private void cs_building_area_unlock_0x48f()
+	{
+		CSBuildingAreaUnlock_0x48F cSBuildingAreaUnlock_0x48F = new CSBuildingAreaUnlock_0x48F();
+		cSBuildingAreaUnlock_0x48F.id = curArea.id;
+		RootUI.m_client.Send(1167, cSBuildingAreaUnlock_0x48F, sc_building_area_unlock_0x48f);
+	}
+
+	private void sc_building_area_unlock_0x48f(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBuildingAreaUnlock_0x48F sCBuildingAreaUnlock_0x48F = JSProtoBuf.Serializer.Deserialize<SCBuildingAreaUnlock_0x48F>(stream);
+			BuildingArea buildingArea = Global.character_.building_areas[(byte)sCBuildingAreaUnlock_0x48F.id];
+			buildingArea.unlocked = true;
+			if (buildingArea.data.open_gold != 0)
+			{
+				Global.character_.gold -= (int)buildingArea.data.open_gold;
+				__BaseUI.drawStateBubble("gold-" + buildingArea.data.open_gold);
+			}
+		}
+	}
+
+	private void cs_mysteryshopcheck()
+	{
+		CSMysteryShopCheck_0x250 cSMysteryShopCheck_0x = new CSMysteryShopCheck_0x250();
+		cSMysteryShopCheck_0x.last_check_timestamp = Global.character_.last_mystery_shop_refresh;
+		RootUI.m_client.Send(592, cSMysteryShopCheck_0x, sc_mysteryshopcheck);
+	}
+
+	private void sc_mysteryshopcheck(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCMysteryShopCheck_0x250 sCMysteryShopCheck_0x = JSProtoBuf.Serializer.Deserialize<SCMysteryShopCheck_0x250>(stream);
+		if (sCMysteryShopCheck_0x.result == 0)
+		{
+			if (Global.character_.mystery_shop == null)
+			{
+				Global.character_.mystery_shop = new Database.MysteryShop();
+			}
+			Global.character_.mystery_shop.make(sCMysteryShopCheck_0x.mystery_shop);
+			if (secret_shop_npc == null)
+			{
+				secret_shop_npc = BaseAsset.Instantiate_mainAsset("capital0/shenmishangren") as GameObject;
+			}
+			if (secret_shop_npc != null && secret_shop_npc.transform != null && root != null && root.transform != null)
+			{
+				secret_shop_npc.transform.parent = root.transform;
+				SecretShopNPC componentInChildren = secret_shop_npc.GetComponentInChildren<SecretShopNPC>();
+				componentInChildren.SpecialDay = Global.character_.mystery_shop.special_day != 0;
+			}
+		}
+	}
+
+	public void playflower()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("zhucheng_huaban");
+		if (asset != null)
+		{
+			GameObject gameObject = Object.Instantiate(asset.mainAsset) as GameObject;
+			if (gameObject != null)
+			{
+				Quaternion localRotation = gameObject.transform.localRotation;
+				Vector3 localPosition = gameObject.transform.localPosition;
+				gameObject.transform.parent = mesh.transform;
+				gameObject.transform.localRotation = localRotation;
+				gameObject.transform.localPosition = localPosition;
+				Object.Destroy(gameObject, 22f);
+			}
+		}
+	}
+}

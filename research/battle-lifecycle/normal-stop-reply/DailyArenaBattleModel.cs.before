@@ -1,0 +1,967 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Reflection;
+using System.Threading;
+using UnityEngine;
+using D = JiangShen.AssistantRuntime.SharedDevelopmentContext;
+using Reader = JiangShen.AssistantRuntime.PlayerStateServerSnapshot.Reader;
+
+namespace JiangShen.AssistantRuntime
+{
+    internal delegate D DailyArenaBattleContextProvider();
+    internal delegate bool DailyArenaBattleInvocationCheck();
+    internal delegate bool DailyArenaBattleInvocationGate(DailyArenaBattleInvocationCheck sample, DailyArenaBattleInvocationCheck check);
+
+    // One operation owns the arena page across independently settled natural
+    // challenges, then releases it once rewards, quota or cooldown stops play.
+    // The server dispatches replies by opcode, so these observations do not
+    // provide a request nonce or exclude a late reply from an earlier caller.
+    internal sealed class DailyArenaBattleModel
+    {
+        internal const int TaskId = 9, CategoryId = 3, Required = 5;
+        private const int NaturalLimit = 12;
+        private const int MoneyLimit = 20000, ReputationLimit = 200;
+        private const ushort EnterOp = 1123, BattleOp = 1120, ActivityOp = 355;
+        private static readonly Type[] CallbackArgs = { typeof(MemoryStream), typeof(object) };
+
+        private sealed class Frame
+        {
+            internal D Context;
+            internal object Role, Client, Arena, Loader, Row, ListedRow, Template, Target, Candidates, Sub;
+            internal DailyTransport Transport;
+            internal Component Select, Panel, Reward, Compare, Main;
+            internal ulong RoleId, Opponent;
+            internal uint Cycle, Now, GoldConsumed, TargetRank, Cooldown;
+            internal int Count, Listed, Refresh, ListedRefresh, Gold, Bound, ChallengeCount, Purchased, Money, Reputation, Index = -1;
+            internal bool RewardsComplete { get { return Money >= MoneyLimit && Reputation >= ReputationLimit; } }
+            internal bool Home, Loading, Battling;
+            internal bool Coherent { get { return Count == Listed && Refresh == ListedRefresh; } }
+            internal bool SameOwner(Frame before)
+            {
+                return before != null && ReferenceEquals(Role, before.Role) && ReferenceEquals(Client, before.Client) &&
+                    ReferenceEquals(Arena, before.Arena) && RoleId == before.RoleId && Cycle == before.Cycle &&
+                    Transport.Same(before.Transport);
+            }
+            internal bool SamePremium(Frame before)
+            { return Gold == before.Gold && Bound == before.Bound && GoldConsumed == before.GoldConsumed && Purchased == before.Purchased; }
+            internal bool SameOffer(Frame before)
+            {
+                return SameOwner(before) && SamePremium(before) && Count == before.Count && Listed == before.Listed &&
+                    Refresh == before.Refresh && ListedRefresh == before.ListedRefresh && ChallengeCount == before.ChallengeCount &&
+                    Money == before.Money && Reputation == before.Reputation &&
+                    ReferenceEquals(Sub, before.Sub) && ReferenceEquals(Candidates, before.Candidates) &&
+                    ReferenceEquals(Target, before.Target) && Opponent == before.Opponent && TargetRank == before.TargetRank &&
+                    Index == before.Index && Cooldown == before.Cooldown && Home == before.Home &&
+                    Loading == before.Loading && Battling == before.Battling;
+            }
+        }
+
+        private Frame frame, queuedFrame, baseline;
+        private string operationId = "", queuedAction = "", status = "IDLE", reason = "", nextAction = "", signature = "";
+        private int sequence, revision, started, progressRefresh, completedBattles, roundSequence;
+        private bool stopped, touched, attempted, closed, entered, progressObserved, cancelled;
+        private bool skipInvoked, battleClosed, rewardConfirmed, compareClosed, arenaClosed, battleProgressObserved;
+        private bool guiInvocationAttempted, observationAvailable, roundSettled, battleCallbackReturned, settlementInvalid;
+        private object battleReport;
+        private ReplyTap enterReply, battleReply, activity;
+        private BattleReceipt receipt;
+        private Component battle, battleResult;
+        private readonly DailyRefreshAdmission refresh;
+
+        internal DailyArenaBattleModel() : this(DailyRefreshGate.Read) { }
+        internal DailyArenaBattleModel(DailyRefreshAdmission readRefresh) { refresh = readRefresh; }
+        internal int Revision { get { return revision; } }
+        internal bool Busy { get { return queuedFrame != null || touched || enterReply != null || battleReply != null || activity != null; } }
+        internal bool MutationAttempted { get { return attempted; } }
+        internal bool GuiInvocationAttempted { get { return guiInvocationAttempted; } }
+        internal bool OutcomeUnknown { get { return status == "UNKNOWN"; } }
+        internal bool Unresolved { get { return attempted && status != "COMPLETED" && status != "UNAVAILABLE" || OutcomeUnknown; } }
+
+        internal void Capture(D context)
+        {
+            if (stopped) { Detach(); return; }
+            observationAvailable = false;
+            try
+            {
+                frame = Read(context);
+                observationAvailable = true;
+                if (baseline != null && (!frame.SameOwner(baseline) || !frame.SamePremium(baseline)))
+                    throw new ProbeFailure("arena_battle_role_cycle_or_premium_changed");
+                Observe();
+            }
+            catch (Exception error)
+            {
+                nextAction = "";
+                if (attempted) settlementInvalid = true;
+                reason = error is ProbeFailure ? error.Message : "arena_battle_observation_failed";
+                status = attempted ? "UNKNOWN" : "UNAVAILABLE";
+                Detach();
+            }
+            PublishRevision();
+        }
+
+        private void Observe()
+        {
+            nextAction = "";
+            CheckTap(enterReply);
+            CheckTap(battleReply);
+            CheckTap(activity);
+            if (status == "UNKNOWN") return;
+            if (closed)
+            {
+                // A finished activity counter does not consume the remaining
+                // natural arena challenges. Re-evaluate cooldown on every
+                // capture so a later script run can resume without a reset.
+                if (receipt != null && receipt.Result == 0 || cancelled)
+                {
+                    status = cancelled ? "RETRYABLE" : "COMPLETED";
+                    if (frame.RewardsComplete)
+                        reason = "arena_battle_daily_rewards_complete";
+                    else if (frame.ChallengeCount >= NaturalLimit)
+                        reason = "arena_battle_natural_attempts_exhausted";
+                    else if (frame.Cooldown > frame.Now)
+                    { status = "UNAVAILABLE"; reason = "arena_battle_cooldown"; }
+                    else if (frame.Index < 0)
+                    { status = "UNAVAILABLE"; reason = "arena_battle_no_opponent"; }
+                    else if (HomeReady()) nextAction = "open";
+                }
+                return;
+            }
+            if (cancelled)
+            {
+                if (HomeReady())
+                {
+                    closed = true; touched = false; status = "RETRYABLE";
+                    reason = "arena_battle_revision_changed_retryable"; Detach();
+                    nextAction = "open";
+                }
+                else { status = "PENDING"; reason = "arena_battle_cancel_pending"; }
+                return;
+            }
+            if (touched && unchecked((uint)(Environment.TickCount - started)) > 300000)
+                throw new ProbeFailure("arena_battle_operation_timeout");
+            if (queuedFrame != null) return;
+            if (!attempted)
+            {
+                if (!frame.Coherent) { Unavailable("daily_progress_inconsistent"); return; }
+                if (frame.RewardsComplete) { Unavailable("arena_battle_daily_rewards_complete"); return; }
+                if (frame.ChallengeCount >= NaturalLimit) { Unavailable("arena_battle_natural_attempts_exhausted"); return; }
+                if (frame.Cooldown > frame.Now) { Unavailable("arena_battle_cooldown"); return; }
+                if (!frame.Home || frame.Loading) { status = "WAITING"; reason = "arena_battle_loading"; return; }
+                if (frame.Sub == null) Offer("open");
+                else if (ReferenceEquals(frame.Sub, frame.Select) && Ready(frame.Select)) Offer("enter");
+                else if (ReferenceEquals(frame.Sub, frame.Compare) && Ready(frame.Compare) &&
+                    frame.Panel != null && ClosesArenaCompare(frame)) Offer("compare_close");
+                else if (ReferenceEquals(frame.Sub, frame.Panel) && Ready(frame.Panel))
+                {
+                    if (!entered) Offer("refresh");
+                    else if (frame.Index < 0) Unavailable("arena_battle_no_opponent");
+                    else Offer("challenge");
+                }
+                else if (!touched && operationId == "" && frame.Sub != null &&
+                    !ReferenceEquals(frame.Sub, frame.Select) && !ReferenceEquals(frame.Sub, frame.Panel) &&
+                    !ReferenceEquals(frame.Sub, frame.Compare))
+                {
+                    // Another task or the user still owns this panel. Decline
+                    // entry without hiding it or latching a terminal state;
+                    // the next capture can offer entry once home is free.
+                    status = "UNAVAILABLE"; reason = "arena_battle_unrelated_ui_open";
+                }
+                else { status = "WAITING"; reason = "arena_battle_waiting_arena"; }
+                return;
+            }
+            if (receipt == null || !roundSettled && (battleReply == null || !battleReply.Returned))
+            { status = "PENDING"; reason = "arena_battle_waiting_reply"; return; }
+            if (receipt.Result != 0)
+            {
+                status = "UNAVAILABLE";
+                reason = receipt.Result == 1 ? "arena_battle_target_changed" : "arena_battle_server_rejected";
+                if (frame.Home && Ready(frame.Panel)) nextAction = "close";
+                return;
+            }
+            if (receipt.GoldConsumed != 0 || frame.ChallengeCount != baseline.ChallengeCount + 1)
+                throw new ProbeFailure("arena_battle_cost_or_attempt_readback_changed");
+            if (receipt.ReportOpponent != 0 && receipt.ReportOpponent != baseline.Opponent ||
+                receipt.EnvelopeReportId != 0 && receipt.EnvelopeReportId != receipt.ReportId)
+                throw new ProbeFailure("arena_battle_receipt_target_changed");
+            if (frame.Money != baseline.Money + receipt.Money || frame.Reputation != baseline.Reputation + receipt.Reputation)
+                throw new ProbeFailure("arena_battle_reward_readback_changed");
+            battleProgressObserved = true;
+            if (frame.Count < baseline.Count || frame.Count > baseline.Count + 1 ||
+                frame.Listed < baseline.Count || frame.Listed > baseline.Count + 1)
+                throw new ProbeFailure("arena_battle_daily_progress_changed");
+            BindBattle();
+            object activeInterpreter = battle == null ? null : D.Read(battle, "interpreter");
+            if (activeInterpreter == null || !ReferenceEquals(D.Read(activeInterpreter, "m_report"), battleReport) ||
+                !BattleReplyPreflight.Matches(receipt.DetachedReport, battleReport))
+                throw new ProbeFailure("arena_battle_callback_report_changed");
+            if (battleResult != null && D.Visible(battleResult) && Ready(battleResult) &&
+                ReferenceEquals(D.Read(battleResult, "battle_ui"), battle))
+            { status = "RESULT"; reason = ""; nextAction = "battle_close"; return; }
+            // Arena replies settle the challenge before its report is played.
+            // currmg still points at the old city during battle_enter, so neither
+            // the reply nor that pointer proves that the UI has returned home.
+            if (frame.Battling || Visible(battle) || Visible(battleResult))
+            {
+                if (!skipInvoked && CanShowResult())
+                { status = "BATTLE"; reason = ""; nextAction = "skip"; }
+                else { status = "BATTLE"; reason = "arena_battle_waiting_result"; }
+                return;
+            }
+            if (frame.Reward != null && Ready(frame.Reward) && ClosesArena(frame.Reward))
+            { status = "REWARD"; reason = ""; nextAction = "reward_confirm"; return; }
+            if (ReferenceEquals(frame.Sub, frame.Compare) && Ready(frame.Compare) && ClosesArenaCompare(frame))
+            { status = "COMPARE"; reason = ""; nextAction = "compare_close"; return; }
+            if (battleClosed && (ArenaReady() || arenaClosed && HomeReady()))
+            {
+                // Losing returns through the stock comparison callback, which
+                // reloads this panel and requests a fresh challenger list.
+                if (enterReply != null && !enterReply.Returned)
+                { status = "WAITING"; reason = "arena_battle_waiting_enter_reply"; return; }
+                // Activity 9 may stop publishing increments once it is 5/5.
+                // Its earlier increments remain separately correlated; a later
+                // battle is proven by the stock receipt and challenge_count.
+                bool dailyReady = baseline.Count >= Required ||
+                    progressObserved && frame.Count == baseline.Count + 1 && frame.Refresh == progressRefresh;
+                if (battleProgressObserved && frame.Coherent && dailyReady)
+                {
+                    if (!roundSettled) { roundSettled = true; completedBattles++; Detach(); }
+                    status = "COMPLETED";
+                    reason = progressObserved ? "arena_battle_and_daily_progress_observed" : "arena_battle_natural_progress_observed";
+                    if (arenaClosed && HomeReady()) { closed = true; touched = false; }
+                    else if (frame.RewardsComplete || frame.ChallengeCount >= NaturalLimit ||
+                        frame.Cooldown > frame.Now || frame.Index < 0) nextAction = "close";
+                    else nextAction = "continue";
+                }
+                else { status = "WAITING"; reason = "arena_battle_waiting_daily_progress"; }
+                return;
+            }
+            status = "BATTLE"; reason = "arena_battle_waiting_result";
+        }
+
+        private void Offer(string action) { status = "READY"; reason = ""; nextAction = action; }
+        private void Unavailable(string detail)
+        {
+            status = "UNAVAILABLE"; reason = detail;
+            Component panel = frame.Sub as Component;
+            if (touched && frame.Home && Ready(panel)) nextAction = "close";
+        }
+        private static void CheckTap(ReplyTap tap)
+        { if (tap != null && tap.Error != null) throw new ProbeFailure(tap.Error); }
+
+        internal bool Queue(int taskId, ulong role, string id, int seq, int expectedRevision, string action, out string why)
+        {
+            why = "arena_battle_queue_stopped:" + action;
+            if (stopped) return false;
+            why = "arena_battle_queue_task_changed:" + action;
+            if (taskId != TaskId) return false;
+            why = "arena_battle_queue_observation_unavailable:" + action + ":" + reason;
+            if (!observationAvailable || frame == null) return false;
+            why = "arena_battle_queue_already_queued:" + action;
+            if (queuedFrame != null) return false;
+            why = "arena_battle_queue_role_changed:" + action;
+            if (role != frame.RoleId) return false;
+            why = "arena_battle_queue_sequence_changed:" + action + ":" + seq + "->" + sequence;
+            if (seq <= sequence) return false;
+            why = "arena_battle_queue_revision_changed:" + action + ":" + expectedRevision + "->" + revision;
+            if (expectedRevision != revision) return false;
+            why = "arena_battle_queue_operation_id_invalid:" + action;
+            if (!Command.ValidNonce(id)) return false;
+            why = "arena_battle_queue_action_changed:" + action + "->" + nextAction;
+            if (action == "cancel")
+            {
+                // Only release this operation's pre-challenge arena page.
+                // All identity, revision and fresh-GUI checks still apply.
+                why = "arena_battle_cancel_unavailable";
+                if (!touched || attempted || closed || cancelled || operationId != id || !frame.Home || frame.Loading ||
+                    !(frame.Sub == null || ReferenceEquals(frame.Sub, frame.Select) && Ready(frame.Select) ||
+                        ReferenceEquals(frame.Sub, frame.Panel) && Ready(frame.Panel))) return false;
+            }
+            else if (action != nextAction || action == "") return false;
+            if (action == "continue")
+            {
+                why = "arena_battle_previous_round_unsettled";
+                if (!roundSettled || closed || !ArenaReady()) return false;
+            }
+            if (closed)
+            {
+                why = "arena_battle_queue_closed_action:" + action;
+                if (action != "open") return false;
+                why = "arena_battle_operation_already_finished";
+                if (status == "RETRYABLE" && operationId == id) return false;
+                ResetOperation();
+            }
+            why = "arena_battle_queue_operation_changed:" + action;
+            if (operationId != "" && operationId != id) return false;
+            operationId = id; sequence = seq; queuedAction = action; queuedFrame = frame;
+            why = ""; return true;
+        }
+
+        internal bool ExecuteGui(DailyArenaBattleContextProvider fresh, DevelopmentPublication publish,
+            DailyArenaBattleInvocationGate begin, out string why)
+        {
+            guiInvocationAttempted = false;
+            why = "arena_battle_not_queued";
+            Frame before = queuedFrame;
+            string action = queuedAction;
+            if (before == null || stopped || !D.Gui) return false;
+            object client = before.Client;
+            if (!Monitor.TryEnter(client, 0)) { why = "arena_battle_client_busy"; return false; }
+            try
+            {
+                Frame current = Read(fresh());
+                if (!current.SameOffer(before)) { NotInvoked("arena_battle_offer_changed"); why = reason; return false; }
+                if ((action == "challenge" || action == "continue") &&
+                    (action == "challenge" && attempted || action == "continue" && (!roundSettled || !ArenaReady(current)) ||
+                    !current.Coherent || current.RewardsComplete || current.Index < 0 ||
+                    current.ChallengeCount >= NaturalLimit || current.Cooldown > current.Now))
+                { NotInvoked("arena_battle_free_challenge_unavailable"); why = reason; return false; }
+                if (action == "skip" && !CanShowResult())
+                { NotInvoked("arena_battle_skip_state_changed"); why = reason; return false; }
+                if (action == "compare_close" && (!ReferenceEquals(current.Sub, current.Compare) ||
+                    !Ready(current.Compare) || current.Panel == null || !ClosesArenaCompare(current)))
+                { NotInvoked("arena_battle_compare_state_changed"); why = reason; return false; }
+                if (action == "refresh" && (!ReferenceEquals(current.Sub, current.Panel) || !Ready(current.Panel)))
+                { NotInvoked("arena_battle_panel_state_changed"); why = reason; return false; }
+                publish();
+                Frame accepted = null;
+                if (!begin(delegate
+                {
+                    accepted = Read(fresh());
+                    return !stopped && accepted.SameOffer(before) && D.Gui &&
+                        (action != "compare_close" || ReferenceEquals(accepted.Sub, accepted.Compare) &&
+                            Ready(accepted.Compare) && accepted.Panel != null && ClosesArenaCompare(accepted)) &&
+                        (action != "continue" || roundSettled && ArenaReady(accepted) && accepted.Cooldown <= accepted.Now) &&
+                        (action != "refresh" || ReferenceEquals(accepted.Sub, accepted.Panel) && Ready(accepted.Panel));
+                }, delegate { return !stopped && accepted != null && accepted.Transport.StillCurrent() && D.Gui; }))
+                { NotInvoked("arena_battle_gui_cancelled"); why = reason; return false; }
+                queuedFrame = null; queuedAction = ""; frame = accepted; observationAvailable = true;
+                if (!touched) { touched = true; started = Environment.TickCount; }
+                guiInvocationAttempted = true;
+                Invoke(action);
+                why = ""; PublishRevision(); return true;
+            }
+            catch (Exception error)
+            {
+                queuedFrame = null; queuedAction = ""; nextAction = "";
+                if (attempted) settlementInvalid = true;
+                status = attempted ? "UNKNOWN" : "UNAVAILABLE";
+                reason = error is ProbeFailure ? error.Message : "arena_battle_stock_call_failed";
+                why = reason; Detach(); PublishRevision(); return false;
+            }
+            finally { Monitor.Exit(client); }
+        }
+
+        private void Invoke(string action)
+        {
+            nextAction = "";
+            if (action == "open")
+            {
+                status = "OPENING";
+                D.Method(Model.GameType("MainUI"), "_battle_arena", Type.EmptyTypes, true, typeof(void)).Invoke(null, null);
+            }
+            else if (action == "enter")
+            {
+                status = "ENTERING"; entered = false;
+                D.Method(frame.Select.GetType(), "arenaMyLoading", Type.EmptyTypes, true, typeof(void)).Invoke(null, null);
+                Restore(ref enterReply);
+                enterReply = Attach(frame.Client, EnterOp, frame.Panel, "sc_arena_enter_0x463", delegate(byte[] body) { entered = true; });
+            }
+            else if (action == "refresh")
+            {
+                status = "ENTERING"; entered = false;
+                Restore(ref enterReply);
+                D.Call(frame.Panel, "cs_arena_enter_0x463");
+                enterReply = Attach(frame.Client, EnterOp, frame.Panel, "sc_arena_enter_0x463", delegate(byte[] body)
+                {
+                    if (body == null || body.Length == 0) throw new ProbeFailure("arena_battle_enter_reply_missing");
+                    entered = true;
+                });
+            }
+            else if (action == "challenge" || action == "continue")
+            {
+                if (action == "continue") ResetRound();
+                baseline = frame;
+                Frame requestFrame = frame; string requestId = operationId; int requestSequence = sequence;
+                BattleReceipt validated = null;
+                roundSequence = requestSequence;
+                activity = Attach(frame.Client, ActivityOp, null, "handelActvity", ReadProgress);
+                D.Selection(frame.Panel, "m_challengeIdx", frame.Index);
+                attempted = true; status = "PENDING"; reason = "arena_battle_waiting_reply";
+                BattleLaunchAttempt requestLaunch = BattleLaunch.Direct(BattleMode.Arena, frame.Panel, frame.Target, delegate
+                { return !stopped && ReferenceEquals(baseline, requestFrame) && frame.SameOffer(requestFrame); }, delegate
+                {
+                    D.Call(frame.Panel, "Hideme");
+                    D.Call(frame.Panel, "cs_arena_challenge_0x460");
+                }, BattleOp);
+                battleReply = Attach(frame.Client, BattleOp, frame.Panel, "sc_arena_challenge_0x460",
+                    delegate(byte[] body)
+                    {
+                        BattleReceipt decoded = validated;
+                        if (decoded == null) throw new ProbeFailure("arena_battle_preflight_missing");
+                        decoded.OperationId = requestId; decoded.Sequence = requestSequence;
+                        receipt = decoded;
+                        if (decoded.Result == 0)
+                        {
+                            BindBattle();
+                            object interpreter = battle == null ? null : D.Read(battle, "interpreter");
+                            battleReport = interpreter == null ? null : D.Read(interpreter, "m_report");
+                            if (battleReport == null) throw new ProbeFailure("arena_battle_callback_report_missing");
+                            if (!BattleReplyPreflight.Matches(decoded.DetachedReport, battleReport))
+                                throw new ProbeFailure("arena_battle_callback_report_changed");
+                            requestLaunch.InitialResponseApplied(battle, battleReport);
+                        }
+                        battleCallbackReturned = true;
+                    }, delegate
+                    {
+                        Frame prior = Read(null);
+                        IList targets = D.Read(requestFrame.Arena, "challengers") as IList;
+                        if (stopped || operationId != requestId || sequence != requestSequence ||
+                            !ReferenceEquals(baseline, requestFrame) || !attempted ||
+                            !prior.SameOwner(requestFrame) || !prior.SamePremium(requestFrame) ||
+                            !ReferenceEquals(prior.Target, requestFrame.Target) || prior.Opponent != requestFrame.Opponent ||
+                            prior.TargetRank != requestFrame.TargetRank || !ReferenceEquals(prior.Candidates, requestFrame.Candidates) ||
+                            prior.ChallengeCount != requestFrame.ChallengeCount ||
+                            prior.Money != requestFrame.Money || prior.Reputation != requestFrame.Reputation ||
+                            !ReferenceEquals(prior.Panel, requestFrame.Panel) || targets == null ||
+                            requestFrame.Index < 0 || requestFrame.Index >= targets.Count ||
+                            !ReferenceEquals(targets[requestFrame.Index], requestFrame.Target) ||
+                            D.Int(D.Read(requestFrame.Panel, "m_challengeIdx")) != requestFrame.Index)
+                            throw new ProbeFailure("arena_battle_callback_owner_changed");
+                    }, delegate(byte[] body)
+                    {
+                        validated = BattleReceipt.Decode(body);
+                        validated.Preflight(requestFrame.Opponent);
+                    });
+            }
+            else if (action == "battle_close")
+            {
+                D.Call(battleResult, "Hide");
+                D.Call(battle, "battle_exit");
+                battleClosed = true;
+            }
+            else if (action == "skip")
+            {
+                if (!BattleSettlement.PresentSettled(battle, baseline.Panel, BattleMode.Arena, operationId,
+                    baseline.Target, baseline.Opponent.ToString(CultureInfo.InvariantCulture), receipt,
+                    BattleOp, receipt.ReportId, VerifySettledBattle))
+                    throw new ProbeFailure("arena_battle_shared_presentation_unverified");
+                skipInvoked = true;
+            }
+            else if (action == "reward_confirm")
+            {
+                Delegate close = D.Read(frame.Reward, "OnClose") as Delegate;
+                D.Call(frame.Reward, "Hide");
+                InvokeClose(close);
+                rewardConfirmed = true;
+            }
+            else if (action == "compare_close")
+            {
+                Delegate close = D.Read(frame.Compare, "OnClose") as Delegate;
+                D.Call(frame.Compare, "Hide");
+                InvokeClose(close);
+                Restore(ref enterReply);
+                enterReply = Attach(frame.Client, EnterOp, frame.Panel, "sc_arena_enter_0x463", delegate(byte[] body) { entered = true; });
+                compareClosed = true;
+            }
+            else if (action == "close")
+            {
+                Component panel = frame.Sub as Component ?? frame.Panel;
+                D.Call(panel, "Hide");
+                D.Method(Model.GameType("MainUI"), "SetSubUI", new Type[] { Model.FirstType("__BaseUI") }, true, typeof(void))
+                    .Invoke(null, new object[] { null });
+                arenaClosed = true;
+                if (!attempted || receipt != null && receipt.Result != 0)
+                { touched = false; closed = true; Detach(); }
+            }
+            else if (action == "cancel")
+            {
+                if (frame.Sub != null)
+                {
+                    D.Call(frame.Sub, "Hide");
+                    D.Method(Model.GameType("MainUI"), "SetSubUI", new Type[] { Model.FirstType("__BaseUI") }, true, typeof(void))
+                        .Invoke(null, new object[] { null });
+                }
+                cancelled = true; status = "PENDING"; reason = "arena_battle_cancel_pending";
+            }
+        }
+
+        private void ReadProgress(byte[] body)
+        {
+            if (!attempted || baseline == null) return;
+            int changedRefresh;
+            int? count = GuildReceipt.Progress(body, TaskId, out changedRefresh);
+            if (!count.HasValue || count.Value == baseline.Count) return;
+            if (count.Value != baseline.Count + 1) throw new ProbeFailure("arena_battle_daily_increment_changed");
+            progressObserved = true; progressRefresh = changedRefresh;
+        }
+
+        private Frame Read(D supplied)
+        {
+            D context = touched && frame != null ? frame.Context : supplied;
+            if (context == null || context.Character == null) throw new ProbeFailure("arena_battle_context_unavailable");
+            object role = context.Character;
+            object currentRole = D.Static(Model.FirstType("Global"), "character_");
+            ulong roleId = Convert.ToUInt64(D.Read(role, "id"), CultureInfo.InvariantCulture);
+            if (currentRole == null || roleId == 0) throw new ProbeFailure("arena_battle_context_unavailable");
+            if (!ReferenceEquals(role, currentRole))
+            {
+                ulong currentId = Convert.ToUInt64(D.Read(currentRole, "id"), CultureInfo.InvariantCulture);
+                if (currentId == 0) throw new ProbeFailure("arena_battle_context_unavailable");
+                throw new ProbeFailure(currentId != roleId ? "arena_battle_character_changed" : "arena_battle_character_owner_changed");
+            }
+            Frame f = new Frame { Context = context, Role = role, Client = context.Client,
+                RoleId = roleId,
+                Arena = D.Read(role, "arena"), Gold = D.Int(D.Read(role, "gold")), Bound = D.Int(D.Read(role, "bind_gold")),
+                GoldConsumed = Convert.ToUInt32(D.Read(role, "gold_consume"), CultureInfo.InvariantCulture) };
+            f.Transport = DailyTransport.Read(f.Client);
+            if (f.Transport == null) throw new ProbeFailure("arena_battle_transport_unavailable");
+            uint day;
+            string clock = refresh(role, out f.Now, out day, out f.Cycle);
+            if (clock != "") throw new ProbeFailure(clock);
+            f.ChallengeCount = D.Int(D.Read(f.Arena, "challenge_count"));
+            f.Purchased = D.Int(D.Read(f.Arena, "challenge_buy"));
+            f.Money = D.Int(D.Read(f.Arena, "money")); f.Reputation = D.Int(D.Read(f.Arena, "reputation"));
+            f.Select = context.Find("ArenaSelectUI"); f.Panel = context.Find("ArenaUI");
+            f.Reward = context.GrowthRewardDialog(); f.Compare = Find(context.All, "BattleValueCompareUI");
+            f.Sub = context.SubUi; f.Loader = D.Static(Model.FirstType("BaseAsset"), "lds");
+            f.Battling = (bool)D.Read(f.Loader, "isBattling");
+            string level = context.Root == null ? "" : D.Read(context.Root, "LevelID") as string;
+            f.Home = !f.Battling && context.Root != null && context.Root.gameObject.activeInHierarchy &&
+                (level == "Capital" || level == "Campaign") && ReferenceEquals(D.Read(f.Loader, "currmg"), context.Root);
+            f.Main = !f.Home ? null : context.Root.GetComponentInChildren(Model.GameType("MainUI"));
+            f.Loading = (bool)D.Method(f.Loader.GetType(), "isVisible", Type.EmptyTypes, false, typeof(bool)).Invoke(f.Loader, null);
+            object cooldown = D.Method(role.GetType(), "getCooldown", new Type[] { typeof(byte) }, false, Model.FirstType("Database.Cooldown"))
+                .Invoke(role, new object[] { (byte)3 });
+            f.Cooldown = cooldown == null ? 0 : Convert.ToUInt32(D.Read(cooldown, "time"), CultureInfo.InvariantCulture);
+            ReadTask(f);
+            IList challengers = D.Read(f.Arena, "challengers") as IList;
+            f.Candidates = challengers;
+            if (challengers != null)
+                for (int i = 0; i < challengers.Count && i < 7; i++)
+                {
+                    object candidate = challengers[i];
+                    // ArenaChallenger inherits these pure protobuf properties
+                    // from pbdata; they are not Database fields.
+                    ulong id = (ulong)D.Method(candidate.GetType(), "get_id", Type.EmptyTypes, false, typeof(ulong)).Invoke(candidate, null);
+                    uint rank = (uint)D.Method(candidate.GetType(), "get_rank", Type.EmptyTypes, false, typeof(uint)).Invoke(candidate, null);
+                    if (id == 0 || id == f.RoleId || rank == 0 || rank < f.TargetRank) continue;
+                    f.Index = i; f.Target = candidate; f.Opponent = id; f.TargetRank = rank;
+                }
+            return f;
+        }
+
+        private static void ReadTask(Frame f)
+        {
+            IDictionary rows = D.Read(f.Role, "acts") as IDictionary, categories = D.Read(f.Role, "act_rewards") as IDictionary;
+            object category = categories == null ? null : categories[(uint)CategoryId];
+            IDictionary listed = category == null ? null : D.Read(category, "acts") as IDictionary;
+            f.Row = rows == null ? null : rows[(uint)TaskId]; f.ListedRow = listed == null ? null : listed[(uint)TaskId];
+            f.Template = D.Template("activity", TaskId);
+            if (f.Row == null || f.ListedRow == null || f.Template == null ||
+                D.Int(D.Read(f.Template, "id")) != TaskId || D.Int(D.Read(f.Template, "idreward")) != CategoryId ||
+                D.Int(D.Read(f.Template, "cond_param")) != Required || !D.Bool(D.Read(f.Template, "active")) ||
+                !ReferenceEquals(D.Read(f.Row, "temp"), f.Template) || !ReferenceEquals(D.Read(f.ListedRow, "temp"), f.Template))
+                throw new ProbeFailure("arena_battle_activity_unavailable");
+            f.Count = D.Int(D.Read(f.Row, "condition_param")); f.Listed = D.Int(D.Read(f.ListedRow, "condition_param"));
+            f.Refresh = D.Int(D.Read(f.Row, "refresh_time")); f.ListedRefresh = D.Int(D.Read(f.ListedRow, "refresh_time"));
+        }
+
+        private void BindBattle()
+        {
+            if (battle != null) return;
+            GameObject game = GameObject.Find("Battle/BattleUI");
+            if (game == null) return;
+            battle = game.GetComponent("BattleUI") as Component;
+            battleResult = game.GetComponent("BattleNormalResultUI") as Component;
+            if (battle != null && receipt.ReportId != Convert.ToUInt64(D.Read(battle, "m_reportid"), CultureInfo.InvariantCulture))
+                throw new ProbeFailure("arena_battle_report_changed");
+        }
+
+        private bool CanShowResult()
+        {
+            if (stopped || !VerifySettledBattle() || battleClosed || !Ready(battle) ||
+                frame.Loading || !(bool)D.Read(battle, "bBattle_started") ||
+                (bool)D.Read(battle, "bUseBattleEnd") || (bool)D.Read(battle, "bNeedWaitForBattleEnd") ||
+                receipt.ReportId != Convert.ToUInt64(D.Read(battle, "m_reportid"), CultureInfo.InvariantCulture)) return false;
+            Delegate close = D.Read(battle, "OnClose") as Delegate;
+            object interpreter = D.Read(battle, "interpreter");
+            return close != null && ReferenceEquals(close.Target, frame.Panel) && close.Method.Name == "BattleClose" &&
+                close.Method.DeclaringType == Model.GameType("ArenaUI") && interpreter != null &&
+                D.Read(interpreter, "m_report") != null &&
+                (bool)D.Method(battle.GetType(), "get_ArmyBehaviourCreated", Type.EmptyTypes, false, typeof(bool))
+                    .Invoke(battle, null);
+        }
+
+        private bool VerifySettledBattle()
+        {
+            if (settlementInvalid || status == "UNKNOWN" && !stopped || baseline == null || receipt == null || receipt.Result != 0 ||
+                !battleCallbackReturned || battleReply != null && (!battleReply.Returned || battleReply.Error != null) ||
+                receipt.OperationId != operationId || receipt.Sequence != roundSequence || receipt.ReportId == 0 ||
+                baseline.Target == null || baseline.Opponent == 0 || battle == null || battleReport == null) return false;
+            Frame current = Read(null);
+            object interpreter = D.Read(battle, "interpreter");
+            Delegate close = D.Read(battle, "OnClose") as Delegate;
+            return current.SameOwner(baseline) && current.SamePremium(baseline) &&
+                ReferenceEquals(current.Panel, baseline.Panel) && current.ChallengeCount == baseline.ChallengeCount + 1 &&
+                receipt.GoldConsumed == 0 && current.Money == baseline.Money + receipt.Money &&
+                current.Reputation == baseline.Reputation + receipt.Reputation &&
+                (receipt.ReportOpponent == 0 || receipt.ReportOpponent == baseline.Opponent) &&
+                (receipt.EnvelopeReportId == 0 || receipt.EnvelopeReportId == receipt.ReportId) &&
+                interpreter != null && ReferenceEquals(D.Read(interpreter, "m_report"), battleReport) &&
+                BattleReplyPreflight.Matches(receipt.DetachedReport, battleReport) &&
+                receipt.ReportId == Convert.ToUInt64(D.Read(battle, "m_reportid"), CultureInfo.InvariantCulture) &&
+                close != null && ReferenceEquals(close.Target, baseline.Panel) && close.Method.Name == "BattleClose" &&
+                close.Method.DeclaringType == Model.GameType("ArenaUI");
+        }
+
+        private bool HomeReady()
+        {
+            return observationAvailable && frame != null && frame.Home && !frame.Loading && !frame.Battling && frame.Sub == null &&
+                frame.Main != null && D.Enabled(frame.Main) && (bool)D.Static(Model.FirstType("Global"), "extern_enabled") &&
+                !Visible(battle) && !Visible(battleResult) && !Visible(frame.Reward) && !Loading(frame.Reward) &&
+                !Visible(frame.Compare) && !Loading(frame.Compare) && !Visible(frame.Panel) && !Loading(frame.Panel) &&
+                !Visible(frame.Select) && !Loading(frame.Select);
+        }
+
+        private bool ArenaReady() { return ArenaReady(frame); }
+        private bool ArenaReady(Frame observed)
+        {
+            return observationAvailable && observed != null && baseline != null &&
+                ReferenceEquals(observed.Panel, baseline.Panel) && observed.Home && !observed.Loading && !observed.Battling &&
+                (observed.Sub == null || ReferenceEquals(observed.Sub, observed.Panel)) && Ready(observed.Panel) &&
+                !Visible(battle) && !Visible(battleResult) && !Visible(observed.Reward) && !Loading(observed.Reward) &&
+                !Visible(observed.Compare) && !Loading(observed.Compare) && !Visible(observed.Select) && !Loading(observed.Select);
+        }
+
+        private bool ClosesArena(Component reward)
+        {
+            Delegate close = D.Read(reward, "OnClose") as Delegate;
+            return close != null && ReferenceEquals(close.Target, frame.Panel) && close.Method.Name == "EnableAll";
+        }
+
+        private static bool ClosesArenaCompare(Frame observed)
+        {
+            Delegate close = observed.Compare == null ? null : D.Read(observed.Compare, "OnClose") as Delegate;
+            return close != null && close.Method.IsStatic && close.Method.Name == "arenaMyLoading" &&
+                close.Method.DeclaringType == Model.GameType("ArenaSelectUI");
+        }
+
+        private static Component Find(UnityEngine.Object[] all, string name)
+        {
+            Type type = Model.GameType(name);
+            foreach (UnityEngine.Object item in all)
+            { Component component = item as Component; if (component != null && component.GetType() == type) return component; }
+            return null;
+        }
+        private static bool Visible(Component component) { return component != null && D.Visible(component); }
+        private static bool Loading(Component component) { return component != null && D.Loading(component); }
+        private static bool Ready(Component component) { return Visible(component) && D.Enabled(component) && !D.Loading(component); }
+        private static void InvokeClose(Delegate close)
+        {
+            if (close == null) throw new ProbeFailure("arena_battle_close_callback_missing");
+            ((DevelopmentPublication)Delegate.CreateDelegate(typeof(DevelopmentPublication), close.Target, close.Method))();
+        }
+
+        internal void NotInvoked(string detail)
+        { queuedFrame = null; queuedAction = ""; reason = detail; PublishRevision(); }
+        internal void Stop()
+        {
+            stopped = true; queuedFrame = null; nextAction = "";
+            if (!closed) { status = attempted ? "UNKNOWN" : "STOPPED"; reason = "arena_battle_stopped"; }
+            Detach(); PublishRevision();
+        }
+        private void ResetOperation()
+        {
+            ResetRound(); operationId = ""; entered = cancelled = false; completedBattles = 0;
+        }
+        private void ResetRound()
+        {
+            // A continuation reaches here only after the previous receipt,
+            // account deltas and return UI were proven. Keep page ownership and
+            // its entry observation; never reset an ambiguous challenge.
+            Detach(); baseline = null; receipt = null; attempted = closed = progressObserved = roundSettled = false;
+            skipInvoked = battleClosed = rewardConfirmed = compareClosed = arenaClosed = battleProgressObserved = false;
+            battleCallbackReturned = settlementInvalid = false; battleReport = null; roundSequence = 0;
+            battle = battleResult = null; progressRefresh = 0; started = Environment.TickCount;
+        }
+        private static void Restore(ref ReplyTap tap)
+        { if (tap != null && tap.Restore()) tap = null; }
+        private void Detach()
+        {
+            if (battleReply != null && battleReply.Error != null) settlementInvalid = true;
+            Restore(ref enterReply); Restore(ref battleReply); Restore(ref activity);
+        }
+        private void PublishRevision()
+        { string value = ViewJson() + OperationJson(); if (value != signature) { signature = value; revision++; } }
+        internal string ViewJson()
+        {
+            bool observed = observationAvailable && frame != null;
+            return "{\"task_id\":9,\"role_id\":" + D.Q(!observed ? "" : frame.RoleId.ToString(CultureInfo.InvariantCulture)) +
+                ",\"observation_available\":" + D.B(observed) +
+                ",\"home_ready\":" + D.B(HomeReady()) +
+                ",\"ui_sub\":" + D.Q(!observed || frame.Sub == null ? "" : frame.Sub.GetType().Name) +
+                ",\"ui_home\":" + D.B(observed && frame.Home) +
+                ",\"ui_loading\":" + D.B(observed && frame.Loading) +
+                ",\"compare_visible\":" + D.B(observed && Visible(frame.Compare)) +
+                ",\"compare_enabled\":" + D.B(observed && frame.Compare != null && D.Enabled(frame.Compare)) +
+                ",\"compare_loading\":" + D.B(observed && Loading(frame.Compare)) +
+                ",\"compare_is_sub\":" + D.B(observed && frame.Compare != null && ReferenceEquals(frame.Sub, frame.Compare)) +
+                ",\"compare_callback_matches\":" + D.B(observed && ClosesArenaCompare(frame)) +
+                ",\"arena_panel_available\":" + D.B(observed && frame.Panel != null) +
+                ",\"refresh_cycle\":" + (!observed ? 0 : frame.Cycle) + ",\"current\":" + (!observed ? -1 : frame.Count) +
+                ",\"required\":5,\"next_action\":" + D.Q(nextAction) + ",\"gate\":" + D.Q(reason) +
+                ",\"opponent_id\":" + D.Q(frame == null ? "" : frame.Opponent.ToString(CultureInfo.InvariantCulture)) +
+                ",\"opponent_rank\":" + (frame == null ? 0 : frame.TargetRank) +
+                ",\"challenge_count\":" + (frame == null ? 0 : frame.ChallengeCount) +
+                ",\"natural_limit\":" + NaturalLimit +
+                ",\"natural_remaining\":" + (!observed ? -1 : Math.Max(0, NaturalLimit - frame.ChallengeCount)) +
+                ",\"daily_money\":" + (!observed ? -1 : frame.Money) + ",\"daily_money_limit\":" + MoneyLimit +
+                ",\"daily_reputation\":" + (!observed ? -1 : frame.Reputation) + ",\"daily_reputation_limit\":" + ReputationLimit +
+                ",\"daily_rewards_complete\":" + D.B(observed && frame.RewardsComplete) +
+                ",\"challenge_buy\":" + (!observed ? -1 : frame.Purchased) +
+                ",\"server_now\":" + (!observed ? 0 : frame.Now) +
+                ",\"cooldown_remaining\":" + (!observed || frame.Cooldown <= frame.Now ? 0 : frame.Cooldown - frame.Now) +
+                ",\"cooldown_until\":" + (frame == null ? 0 : frame.Cooldown) + "}";
+        }
+        internal string OperationJson()
+        {
+            return "{\"id\":" + D.Q(operationId) + ",\"sequence\":" + sequence + ",\"status\":" + D.Q(status) +
+                ",\"reason\":" + D.Q(reason) + ",\"mutation_attempted\":" + D.B(attempted) + ",\"closed\":" + D.B(closed) +
+                ",\"skip_invoked\":" + D.B(skipInvoked) + ",\"battle_closed\":" + D.B(battleClosed) +
+                ",\"reward_confirmed\":" + D.B(rewardConfirmed) + ",\"compare_closed\":" + D.B(compareClosed) +
+                ",\"arena_closed\":" + D.B(arenaClosed) +
+                ",\"stock_callback_returned\":" + D.B(battleCallbackReturned) +
+                ",\"round_settled\":" + D.B(roundSettled) + ",\"battles_completed\":" + completedBattles +
+                ",\"account_progress_correlated\":" + D.B(progressObserved) +
+                ",\"battle_progress_observed\":" + D.B(battleProgressObserved) +
+                ",\"challenge_count_before\":" + (baseline == null ? -1 : baseline.ChallengeCount) +
+                ",\"challenge_count_after\":" + (frame == null ? -1 : frame.ChallengeCount) +
+                ",\"reward_money\":" + (receipt == null ? 0 : receipt.Money) +
+                ",\"reward_reputation\":" + (receipt == null ? 0 : receipt.Reputation) +
+                ",\"progress_before\":" + (baseline == null ? -1 : baseline.Count) + ",\"progress_after\":" + (frame == null ? -1 : frame.Count) +
+                ",\"won\":" + (receipt == null ? "null" : D.B(receipt.Win)) + ",\"response_provenance\":\"opcode_only\"}";
+        }
+        internal string Json()
+        { return "{\"schema\":1,\"revision\":" + revision + ",\"view\":" + ViewJson() + ",\"operation\":" + OperationJson() + "}"; }
+
+        private ReplyTap Attach(object client, ushort opcode, Component receiver, string methodName, Action<byte[]> read,
+            DevelopmentPublication check = null, Action<byte[]> preflight = null)
+        {
+            IDictionary handlers = D.Read(client, "m_handlers") as IDictionary;
+            object handler = handlers == null ? null : handlers[opcode];
+            if (handler == null) throw new ProbeFailure("arena_battle_handler_missing");
+            Delegate original = D.Read(handler, "handler") as Delegate;
+            if (original == null || original.GetInvocationList().Length != 1 || !ReferenceEquals(original.Target, receiver) ||
+                original.Method.Name != methodName || D.Read(handler, "arg") != null)
+                throw new ProbeFailure("arena_battle_handler_changed");
+            return new ReplyTap(client, handlers, opcode, handler, original, read, check, preflight);
+        }
+
+        private sealed class ReplyTap
+        {
+            private readonly object client, handler;
+            private readonly IDictionary handlers;
+            private readonly ushort opcode;
+            private readonly Delegate original, wrapper;
+            private readonly FieldInfo field;
+            private readonly DevelopmentNormalCallback forward;
+            private readonly Action<byte[]> read;
+            private readonly Action<byte[]> preflight;
+            private readonly DevelopmentPublication check;
+            private int calls;
+            private volatile bool armed = true;
+            internal bool Returned;
+            internal string Error;
+            internal ReplyTap(object client, IDictionary handlers, ushort opcode, object handler, Delegate original, Action<byte[]> read,
+                DevelopmentPublication check, Action<byte[]> preflight)
+            {
+                this.client = client; this.handlers = handlers; this.opcode = opcode; this.handler = handler; this.original = original; this.read = read; this.check = check; this.preflight = preflight;
+                field = handler.GetType().GetField("handler", D.Instance);
+                forward = (DevelopmentNormalCallback)(original.Target == null ?
+                    Delegate.CreateDelegate(typeof(DevelopmentNormalCallback), original.Method) :
+                    Delegate.CreateDelegate(typeof(DevelopmentNormalCallback), original.Target, original.Method));
+                wrapper = Delegate.CreateDelegate(original.GetType(), this, GetType().GetMethod("Dispatch", D.Instance));
+                field.SetValue(handler, wrapper);
+            }
+            private void Dispatch(MemoryStream stream, object arg)
+            {
+                if (opcode == BattleOp) { DispatchBattle(stream, arg); return; }
+                byte[] body = null;
+                if (armed)
+                {
+                    if (stream == null) Error = "arena_battle_reply_timeout";
+                    else body = stream.ToArray();
+                    try
+                    {
+                        if (arg != null || handlers.Contains(opcode) && !ReferenceEquals(handlers[opcode], handler))
+                            throw new ProbeFailure("arena_battle_callback_handler_changed");
+                        if (check != null) check();
+                    }
+                    catch (Exception error) { Error = error is ProbeFailure ? error.Message : "arena_battle_callback_boundary_changed"; return; }
+                }
+                try { forward(stream, arg); }
+                catch { if (armed) Error = "arena_battle_stock_callback_failed"; throw; }
+                if (!armed || body == null || Error != null) return;
+                try { read(body); Returned = true; }
+                catch (Exception error) { Error = error is ProbeFailure ? error.Message : "arena_battle_reply_invalid"; }
+            }
+            private void DispatchBattle(MemoryStream stream, object arg)
+            {
+                lock (client)
+                {
+                    if (Interlocked.Increment(ref calls) != 1)
+                    { if (Error == null) Error = "arena_battle_duplicate_callback"; return; }
+                    if (!armed) { if (Error == null) Error = "arena_battle_callback_disarmed"; return; }
+                    byte[] body;
+                    try
+                    {
+                        if (stream == null) throw new ProbeFailure("arena_battle_reply_timeout");
+                        if (!stream.CanRead || stream.Position != 0 || stream.Length == 0 || stream.Length > BattleReplyPreflight.MaxPacketBytes)
+                            throw new ProbeFailure("arena_battle_reply_stream_invalid");
+                        if (arg != null || D.Read(handler, "arg") != null || !ReferenceEquals(field.GetValue(handler), wrapper) ||
+                            handlers.Contains(opcode) && !ReferenceEquals(handlers[opcode], handler))
+                            throw new ProbeFailure("arena_battle_callback_handler_changed");
+                        if (check == null || preflight == null) throw new ProbeFailure("arena_battle_preflight_missing");
+                        body = stream.ToArray(); check(); preflight(body);
+                    }
+                    catch (Exception error)
+                    { Error = error is ProbeFailure ? error.Message : "arena_battle_reply_invalid"; return; }
+                    if (!armed || Error != null) return;
+                    try { forward(stream, arg); }
+                    catch { Error = "arena_battle_stock_callback_failed"; throw; }
+                    try { read(body); Returned = true; }
+                    catch (Exception error) { Error = error is ProbeFailure ? error.Message : "arena_battle_reply_invalid"; }
+                }
+            }
+            internal bool Restore()
+            {
+                armed = false;
+                if (!Monitor.TryEnter(client, 0)) return false;
+                try
+                {
+                    // Keep the one-shot battle wrapper closed while a late
+                    // reply is pending; restoring stock would bypass preflight.
+                    if (opcode != BattleOp && ReferenceEquals(handlers[opcode], handler) && ReferenceEquals(field.GetValue(handler), wrapper))
+                        field.SetValue(handler, original);
+                    return true;
+                }
+                finally { Monitor.Exit(client); }
+            }
+        }
+
+        private sealed class BattleReceipt
+        {
+            internal uint Result, GoldConsumed;
+            internal int Money, Reputation;
+            internal bool Win;
+            internal ulong ReportId, ReportOpponent, EnvelopeReportId;
+            internal object DetachedReport;
+            private byte[] compressedReport;
+            internal string OperationId;
+            internal int Sequence;
+            internal static BattleReceipt Decode(byte[] body)
+            {
+                object native = BattleReplyPreflight.Deserialize(body, "game.net.data.StoC.SCArenaChallenge_0x460");
+                BattleReceipt packet = new BattleReceipt();
+                packet.compressedReport = native.GetType().GetProperty("report").GetValue(native, null) as byte[];
+                Reader reader = new Reader(body, 0, body.Length);
+                int fields = 0;
+                while (!reader.End)
+                {
+                    int wire, tag = reader.Tag(out wire);
+                    if (wire == 0 && (tag == 1 || tag == 2 || tag == 8 || tag == 10))
+                    {
+                        int bit = 1 << tag;
+                        if ((fields & bit) != 0) throw new FormatException("arena_battle_duplicate_field");
+                        fields |= bit;
+                        ulong value = reader.Varint();
+                        if (tag == 1) packet.Result = checked((uint)value);
+                        else if (tag == 2) { if (value > 1) throw new FormatException(); packet.Win = value != 0; }
+                        else if (tag == 8) packet.GoldConsumed = checked((uint)value);
+                        else packet.ReportId = value;
+                    }
+                    else if ((tag == 4 || tag == 5 || tag == 9) && wire == 2)
+                    {
+                        int bit = 1 << tag;
+                        if ((fields & bit) != 0) throw new FormatException("arena_battle_duplicate_field");
+                        fields |= bit;
+                        Reader message = reader.Message();
+                        if (tag == 4) { if (message.End) throw new FormatException("arena_battle_report_missing"); }
+                        else if (tag == 5) ReadReportIdentity(message, packet);
+                        else ReadRewards(message, packet);
+                    }
+                    else reader.Skip(wire);
+                }
+                if ((fields & (1 << 1)) == 0) throw new FormatException("arena_battle_result_missing");
+                if (packet.Result == 0 && (packet.ReportId == 0 || (fields & (1 << 4)) == 0))
+                    throw new FormatException("arena_battle_report_missing");
+                return packet;
+            }
+
+            internal void Preflight(ulong opponent)
+            {
+                if (GoldConsumed != 0) throw new ProbeFailure("arena_battle_reply_premium_unexpected");
+                // result=1 replaces the native challenger list. The protocol
+                // provides no rejection request/target echo proving that safe.
+                if (Result != 0) throw new ProbeFailure("arena_battle_rejection_identity_unverified");
+                if (opponent == 0 || ReportOpponent == 0 || ReportOpponent != opponent ||
+                    ReportId == 0 || EnvelopeReportId == 0 || EnvelopeReportId != ReportId)
+                    throw new ProbeFailure("arena_battle_receipt_target_changed");
+                DetachedReport = BattleReplyPreflight.Validate(compressedReport, Win);
+            }
+
+            private static void ReadReportIdentity(Reader envelope, BattleReceipt packet)
+            {
+                bool seen = false;
+                while (!envelope.End)
+                {
+                    int wire, tag = envelope.Tag(out wire);
+                    if (tag != 1 || wire != 2) { envelope.Skip(wire); continue; }
+                    if (seen) throw new FormatException(); seen = true;
+                    Reader report = envelope.Message(); int fields = 0;
+                    while (!report.End)
+                    {
+                        int itemWire, field = report.Tag(out itemWire);
+                        if ((field == 1 || field == 2) && itemWire == 0)
+                        {
+                            int bit = 1 << field;
+                            if ((fields & bit) != 0) throw new FormatException(); fields |= bit;
+                            ulong value = report.Varint();
+                            if (field == 1) packet.ReportOpponent = value; else packet.EnvelopeReportId = value;
+                        }
+                        else report.Skip(itemWire);
+                    }
+                }
+            }
+
+            private static void ReadRewards(Reader list, BattleReceipt packet)
+            {
+                while (!list.End)
+                {
+                    int wire, tag = list.Tag(out wire);
+                    if (tag != 1 || wire != 2) { list.Skip(wire); continue; }
+                    Reader treasure = list.Message();
+                    uint type = 0; int amount = 0;
+                    while (!treasure.End)
+                    {
+                        int itemWire, field = treasure.Tag(out itemWire);
+                        if (itemWire == 0 && field == 1) type = checked((uint)treasure.Varint());
+                        else if (itemWire == 0 && field == 3)
+                        {
+                            uint encoded = checked((uint)treasure.Varint());
+                            amount = (int)(encoded >> 1) ^ -(int)(encoded & 1);
+                        }
+                        else treasure.Skip(itemWire);
+                    }
+                    if ((type == 4 || type == 18) && amount < 0) throw new FormatException("arena_battle_negative_reward");
+                    if (type == 4) packet.Money = checked(packet.Money + amount);
+                    else if (type == 18) packet.Reputation = checked(packet.Reputation + amount);
+                }
+            }
+        }
+    }
+}

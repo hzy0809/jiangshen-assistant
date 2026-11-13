@@ -1,0 +1,22 @@
+[
+  {
+    "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Assembly-CSharp.dll",
+    "sha256": "c1c8ebac7ddef4173c873a00774975a5ca366f95b19164c4ca775165eb994911"
+  },
+  {
+    "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Assembly-CSharp-firstpass.dll",
+    "sha256": "29d8fa2cb55e800ccdf1cdc6c5b274b924ea7d03c989296dfa569731e02a8d87"
+  },
+  {
+    "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\pbdata.dll",
+    "sha256": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab"
+  },
+  {
+    "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\mscorlib.dll",
+    "sha256": "3f34c90ab282e8f3546946263087fb5002cf96ef9f412dd4011dab3f0f7cd8a4"
+  },
+  {
+    "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\UnityEngine.dll",
+    "sha256": "d479befc03afb0f2071ffcf108847f06a0d560075eb8a76980f0ae929115ed73"
+  }
+]

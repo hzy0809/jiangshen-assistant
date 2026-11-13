@@ -1,0 +1,179 @@
+using UnityEngine;
+
+public class BaseUI : __BaseUI
+{
+	private static RootUI rootUI;
+
+	private static ChatBehaviour chatBehaviour;
+
+	private static FormationUI formationUI;
+
+	public static NationUI _nation_ui;
+
+	public static TeamFightUI _teamfight_ui;
+
+	public static LadderUI _ladder_ui;
+
+	public static ChatBehaviour GetChatBehaviour()
+	{
+		if (chatBehaviour != null)
+		{
+			return chatBehaviour;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			chatBehaviour = GameObject.Find("Root/RootUI").GetComponent<ChatBehaviour>();
+		}
+		return chatBehaviour;
+	}
+
+	public static RootUI GetRootUI()
+	{
+		if (rootUI != null)
+		{
+			return rootUI;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			rootUI = GameObject.Find("Root/RootUI").GetComponent<RootUI>();
+		}
+		return rootUI;
+	}
+
+	public static FormationUI GetFormationUI()
+	{
+		if (formationUI != null)
+		{
+			return formationUI;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			formationUI = GameObject.Find("Root/RootUI").GetComponent<FormationUI>();
+		}
+		return formationUI;
+	}
+
+	public static BonusListUI GetBonusListUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<BonusListUI>();
+		}
+		return null;
+	}
+
+	public static MainUI GetMainUI()
+	{
+		return BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+	}
+
+	public BaseUI GetMainUI_Level()
+	{
+		if (base.name == "SealDevil")
+		{
+			return BaseAsset.lds.GetCurUI().GetComponentInChildren<SealDevilUI>();
+		}
+		if (base.name == "Brawl")
+		{
+			return BaseAsset.lds.GetCurUI().GetComponentInChildren<BrawlUI>();
+		}
+		return BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+	}
+
+	public static BattleUI GetBattleUI()
+	{
+		if (GameObject.Find("Battle/BattleUI") != null)
+		{
+			return GameObject.Find("Battle/BattleUI").GetComponent<BattleUI>();
+		}
+		return null;
+	}
+
+	public static BattleValueUI GetBattleFailedUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<BattleValueUI>();
+		}
+		return null;
+	}
+
+	public static BattleGuideUI GetBattleGuideUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<BattleGuideUI>();
+		}
+		return null;
+	}
+
+	public static BonusUI GetBonusUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<BonusUI>();
+		}
+		return null;
+	}
+
+	public static BonusGetUI GetBonusGetUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<BonusGetUI>();
+		}
+		return null;
+	}
+
+	public static ChestLotUI GetChestLotUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<ChestLotUI>();
+		}
+		return null;
+	}
+
+	public static NationUI GetNationUI()
+	{
+		if (_nation_ui != null)
+		{
+			return _nation_ui;
+		}
+		if (GameObject.Find("Nation/NationUI") != null)
+		{
+			_nation_ui = GameObject.Find("Nation/NationUI").GetComponent<NationUI>();
+		}
+		return _nation_ui;
+	}
+
+	public static TeamFightUI GetTeamFightUI()
+	{
+		if (_teamfight_ui != null)
+		{
+			return _teamfight_ui;
+		}
+		if (GameObject.Find("TeamFight/TeamFightUI") != null)
+		{
+			_teamfight_ui = GameObject.Find("TeamFight/TeamFightUI").GetComponent<TeamFightUI>();
+		}
+		return _teamfight_ui;
+	}
+
+	public static LadderUI GetLadderUI()
+	{
+		if (_ladder_ui != null)
+		{
+			return _ladder_ui;
+		}
+		if (GameObject.Find("Ladder/LadderUI") != null)
+		{
+			_ladder_ui = GameObject.Find("Ladder/LadderUI").GetComponent<LadderUI>();
+		}
+		return _ladder_ui;
+	}
+
+	protected void setScrollLock(bool slock)
+	{
+	}
+}

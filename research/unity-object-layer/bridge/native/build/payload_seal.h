@@ -1,0 +1,1 @@
+#define JSB_PAYLOAD_SHA256 "5cca9f8804454ea34a6aba9d3ecb28a74ad06b56a5ca071da77a02a5fad9aff1"

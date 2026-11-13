@@ -1,0 +1,42 @@
+{
+  "protocol": 1,
+  "payload_sha256": "c951dfabcd7d9ae3d2a5f823262461c55339e15aa6e68f39266393e4620111af",
+  "compiler": "..\\tools\\zig-windows-x86_64-0.13.0\\zig.exe",
+  "live_run": false,
+  "sources": [
+    {
+      "file": "bridge.c",
+      "sha256": "b3dd34e05c54dd07f1ff9cf11dcec1dad1759c23eee7b896865197f7f8b50dc0"
+    },
+    {
+      "file": "bridge.h",
+      "sha256": "9b745b414429911a670230d1ec268d0e506184e64c588eedd6f7fd0a0594c473"
+    },
+    {
+      "file": "bridge.def",
+      "sha256": "c11315d9e48bb63b0d8587e68f6ece0514b4b1536d27cac1a37a12128e98d52e"
+    },
+    {
+      "file": "host.c",
+      "sha256": "fc2d8fcbeaace1e3c19d47496e6041e4375a89b49d1d9591593eec78187156e0"
+    },
+    {
+      "file": "build.ps1",
+      "sha256": "21a1443d3fd233226a53d3e7ec0a1aa4f9989b506ca87da28a1f81c86bd60f32"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "bridge.dll",
+      "sha256": "c9f3d09be295c1acc82f122320899c6a984d8f543e4ba48adb1349985f5c6577"
+    },
+    {
+      "file": "bridge_host.exe",
+      "sha256": "bb5c6b7b666d801582a63f5b75e31e38b5ca1a1e798c56d4c5d4a452f8d4402b"
+    },
+    {
+      "file": "JSUnityProbe.dll",
+      "sha256": "c951dfabcd7d9ae3d2a5f823262461c55339e15aa6e68f39266393e4620111af"
+    }
+  ]
+}

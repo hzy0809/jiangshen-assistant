@@ -1,0 +1,2 @@
+native\unity_bridge\tests\NormalStopModeReplyTests.cs(90,88): error CS1061: “JiangShen.AssistantRuntime.DailyPointRaceModel”不包含“Revision”的定义，并且找不到可接受类型为“JiangShen.AssistantRuntime.DailyPointRaceModel”的第一个参数的扩展方法“Revision”(是否缺少 using 指令或程序集引用?)
+native\unity_bridge\tests\NormalStopModeReplyTests.cs(124,91): error CS1061: “JiangShen.AssistantRuntime.DailyPointRaceModel”不包含“Revision”的定义，并且找不到可接受类型为“JiangShen.AssistantRuntime.DailyPointRaceModel”的第一个参数的扩展方法“Revision”(是否缺少 using 指令或程序集引用?)

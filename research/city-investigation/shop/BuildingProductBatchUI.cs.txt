@@ -1,0 +1,241 @@
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BuildingProductBatchUI : BaseUI
+{
+	private static readonly int[] batch_times = new int[3] { 20, 50, 100 };
+
+	private _ButtonStyle btnBatch = new _ButtonStyle();
+
+	private _ButtonStyle[] btnTimes = new _ButtonStyle[3]
+	{
+		new _ButtonStyle(),
+		new _ButtonStyle(),
+		new _ButtonStyle()
+	};
+
+	private Texture2D texTitle;
+
+	private Texture2D texZiSelect;
+
+	private Texture2D texZiBatch;
+
+	private Texture2D texZiConsume;
+
+	private Texture2D texFrameTimes;
+
+	private Building building;
+
+	private Texture2D texProduct;
+
+	private BuildingProduct product;
+
+	private bool m_bSub;
+
+	private int m_times = 20;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public void MyLoading(Building data, bool bSub, delegate_OnClose onClose)
+	{
+		m_bSub = bSub;
+		OnClose = onClose;
+		if (IsVisible() && building != null && building.id == data.id)
+		{
+			MyClose();
+			return;
+		}
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		building = data;
+		AddAsset("ui_building");
+		if (building.m_products.Count > 0)
+		{
+			BuildingProduct buildingProduct = building.m_products[building.m_products.Count - 1];
+			if (buildingProduct.texIconB == null)
+			{
+				AddAsset("product" + buildingProduct.icon + "_b");
+			}
+			product = building.m_products[0];
+			if (product.texIcon == null)
+			{
+				AddAsset("product" + product.icon);
+			}
+			if (product.texZi == null)
+			{
+				AddAsset("product" + product.icon + "_zi");
+			}
+		}
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	private void MyClose()
+	{
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+		Hide();
+		if (m_bSub)
+		{
+			MainUI.SetSubUI(null);
+		}
+		building = null;
+		product = null;
+		texProduct = null;
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+		if (m_bSub)
+		{
+			MainUI.SetSubUI(this);
+		}
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_building");
+		texTitle = asset.Load("ui_biaoti02") as Texture2D;
+		texZiSelect = asset.Load("ui_zi_cishu") as Texture2D;
+		texZiBatch = asset.Load("ui_zi_shengchan") as Texture2D;
+		texZiConsume = asset.Load("ui_zi_jinbi") as Texture2D;
+		texFrameTimes = asset.Load("ui_shurukuang") as Texture2D;
+		btnBatch.make(asset, "button_piliang", unable: false);
+		btnTimes[0].make(asset, "button_20", unable: false);
+		btnTimes[1].make(asset, "button_50", unable: false);
+		btnTimes[2].make(asset, "button_100", unable: false);
+		if (building.m_products.Count > 0)
+		{
+			BuildingProduct buildingProduct = building.m_products[building.m_products.Count - 1];
+			if (texProduct == null)
+			{
+				texProduct = BaseAsset.LoadTexture("product" + buildingProduct.icon + "_b");
+			}
+		}
+		if (product != null)
+		{
+			if (product.texIcon == null)
+			{
+				product.texIcon = BaseAsset.LoadTexture("product" + product.icon);
+			}
+			if (product.texZi == null)
+			{
+				product.texZi = BaseAsset.LoadTexture("product" + product.icon + "_zi");
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(523f, 355f, (!m_bSub) ? __BaseUI.UIDepth_Sub2 : __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		__BaseUI.BeginGroup(__BaseUI._rect(30f, 58f, 466f, 210f));
+		GUI.Label(__BaseUI._rect(0f, 0f, 466f, 210f), string.Empty, __BaseUI._boxnew2Style);
+		GUI.DrawTexture(__BaseUI._rect(43f, 50f, 101f, 17f), texZiSelect);
+		__BaseUI.BeginGroup(__BaseUI._rect(150f, 28f, 270f, 60f));
+		GUI.Label(__BaseUI._rect(0f, 0f, 270f, 60f), string.Empty, __BaseUI._boxnew6Style);
+		GUI.DrawTexture(__BaseUI._rect(20f, 20f, 66f, 22f), texFrameTimes);
+		__BaseUI._numNCenter.normal.textColor = __BaseUI._clrWhite;
+		string s = GUI.TextField(__BaseUI._rect(20f, 20f, 40f, 22f), m_times.ToString(), 4, __BaseUI._numNCenter);
+		int.TryParse(s, out m_times);
+		if (m_times <= 0)
+		{
+			m_times = 0;
+		}
+		if (m_times > 1000)
+		{
+			m_times = 1000;
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			if (btnTimes[i].Button(bBtn: true, __BaseUI._rect(100 + i * 55, 20f, 48f, 22f), string.Empty))
+			{
+				m_times = batch_times[i];
+			}
+		}
+		__BaseUI.EndGroup();
+		int gold = (building.goldConsume((int)product.time) + building.goldmanaConsume((int)product.mana_consume)) * m_times;
+		__BaseUI.BeginGroup(__BaseUI._rect(46f, 106f, 376f, 70f));
+		GUI.Label(__BaseUI._rect(0f, 0f, 376f, 70f), string.Empty, __BaseUI._boxnew6Style);
+		if (texProduct != null)
+		{
+			__BaseUI.Box(__BaseUI._rect(5f, 5f, 160f, 56f), texProduct);
+		}
+		GUI.DrawTexture(__BaseUI._rect(140f, 15f, 59f, 17f), texZiBatch);
+		GUI.DrawTexture(__BaseUI._rect(140f, 40f, 59f, 17f), texZiConsume);
+		__BaseUI.Box(__BaseUI._rect(230f, 38f, 23f, 23f), __BaseUI._iconGold);
+		if (product != null)
+		{
+			__BaseUI.Box(__BaseUI._rect(230f, 10f, 23f, 23f), product.OutputIcon);
+			__BaseUI.Label(__BaseUI._rect(280f, 10f, 100f, 23f), (product.Output * m_times).ToString(), __BaseUI._numNLeft, __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(280f, 38f, 100f, 23f), gold.ToString(), __BaseUI._numNLeft, __BaseUI._clrWhite);
+		}
+		__BaseUI.EndGroup();
+		__BaseUI.EndGroup();
+		if (btnBatch.Button(bBtn: true, __BaseUI._rect(w / 2f - 55f, 280f, 110f, 40f), string.Empty))
+		{
+			DisableAll();
+			__BaseUI.GetConsumeUI().setConsume(gold, 34, ProduceBatchOK);
+		}
+		if (EndGUI())
+		{
+			Hide();
+			if (m_bSub)
+			{
+				MainUI.SetSubUI(null);
+			}
+			GetComponent<BuildingProductUI>().MyLoading(building, m_bSub, OnClose);
+			building = null;
+			product = null;
+			texProduct = null;
+		}
+	}
+
+	private void ProduceBatchOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_building_produce_batch_0x494();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	public void cs_building_produce_batch_0x494()
+	{
+		CSBuildingProduceBatch_0x494 cSBuildingProduceBatch_0x = new CSBuildingProduceBatch_0x494();
+		cSBuildingProduceBatch_0x.id = building.id;
+		cSBuildingProduceBatch_0x.idproduct = product.id;
+		cSBuildingProduceBatch_0x.batch_times = (uint)m_times;
+		RootUI.m_client.Send(1172, cSBuildingProduceBatch_0x, sc_building_produce_batch_0x494);
+	}
+
+	public void sc_building_produce_batch_0x494(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBuildingProduceBatch_0x494 sCBuildingProduceBatch_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingProduceBatch_0x494>(stream);
+			if (sCBuildingProduceBatch_0x.result == 0)
+			{
+				Global.character_.gold -= (int)sCBuildingProduceBatch_0x.gold_consume;
+				__BaseUI.drawStateBubble("gold-" + sCBuildingProduceBatch_0x.gold_consume);
+				BuildingHarvestUI.harvestBatch(sCBuildingProduceBatch_0x.id, sCBuildingProduceBatch_0x.idproduct, sCBuildingProduceBatch_0x.batch_times, EnableAll);
+			}
+		}
+	}
+}

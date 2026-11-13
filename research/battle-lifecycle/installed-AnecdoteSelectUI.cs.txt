@@ -1,0 +1,833 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class AnecdoteSelectUI : CampaignBaseUI
+{
+	public class _AnecdoteCampaign
+	{
+		public string name;
+
+		public ushort idcampaign;
+
+		public Texture2D texIcon;
+
+		public Texture2D texIconBig;
+
+		public Database.Campaign campaign;
+
+		public Database.Campaign campaign_elite;
+
+		public Database.Campaign campaign_hero1;
+
+		public Database.Campaign campaign_hero2;
+
+		public Database.Campaign campaign_hero3;
+	}
+
+	private class _ChapterCampaigns
+	{
+		public List<_AnecdoteCampaign> campaigns = new List<_AnecdoteCampaign>();
+
+		public int m_iPage;
+
+		public int m_iCampaign;
+
+		public int m_iFinishCount;
+
+		public _RadioStyle btnStyle = new _RadioStyle();
+	}
+
+	private _AnecdoteCampaign m_anecdote;
+
+	private _ChapterCampaigns m_chapter;
+
+	private Texture2D texTitle;
+
+	private Texture2D texBG;
+
+	private Texture2D texPortrait;
+
+	private Texture2D texStamina;
+
+	private Texture2D[,] texMode = new Texture2D[2, 2];
+
+	private Texture2D texAttack;
+
+	private Texture2D[] texProcess = new Texture2D[2];
+
+	private Texture2D texEnemy;
+
+	private Texture2D texKilled;
+
+	private Texture2D texFinished;
+
+	private Texture2D texNew;
+
+	private Texture2D texLock;
+
+	private Texture2D texFinishCount;
+
+	private Texture2D texFrameFinish;
+
+	private Texture2D texFrameNormal;
+
+	private Texture2D texFrameLock;
+
+	private Texture2D texBonusGeneral;
+
+	private Texture2D texBonus;
+
+	private GUIStyle ui_zi_jiesuo = new GUIStyle();
+
+	private GUIStyle ui_zi_yijiesuo = new GUIStyle();
+
+	private GUIStyle ui_zi_jiangli = new GUIStyle();
+
+	private _ButtonStyle[] btnSelect = new _ButtonStyle[2]
+	{
+		new _ButtonStyle(),
+		new _ButtonStyle()
+	};
+
+	private _ButtonStyle btnAuto = new _ButtonStyle();
+
+	private GUIStyle ui_mengban_down = new GUIStyle();
+
+	private GUIStyle ui_mengban_top = new GUIStyle();
+
+	private int campaign_cur = -1;
+
+	private Vector2 scrollPos = Vector2.zero;
+
+	private float m_fTime;
+
+	private float m_fNewAlpha = 1f;
+
+	private CSCampaignNew_0x409 pktNew = new CSCampaignNew_0x409();
+
+	private Texture2D texFrameNormalHero;
+
+	private GUIStyle ui_zi_yingxiong = new GUIStyle();
+
+	private GUIStyle ui_xing1 = new GUIStyle();
+
+	private GUIStyle ui_xing2 = new GUIStyle();
+
+	private GUIStyle ui_xing3 = new GUIStyle();
+
+	private GUIStyle ui_lingshou = new GUIStyle();
+
+	private GUIStyle ui_jineng = new GUIStyle();
+
+	private GUIStyle ui_xing_tongguan = new GUIStyle();
+
+	private GUIStyle ui_zi11 = new GUIStyle();
+
+	public static _AnecdoteCampaign cur_ac;
+
+	public static int cur_idx;
+
+	private int anecdote_scrollid;
+
+	private static GameObject HoverMesh;
+
+	private ushort anecID;
+
+	private Rect m_anecRc = new Rect(0f, 0f, 0f, 0f);
+
+	public List<uint> get_all_chapters()
+	{
+		List<uint> list = new List<uint>();
+		foreach (_AnecdoteCampaign campaign in m_chapter.campaigns)
+		{
+			list.Add(campaign.idcampaign);
+		}
+		return list;
+	}
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = true;
+		anecdote_scrollid = ScrollControl.RegisterInfo();
+	}
+
+	public override void Update()
+	{
+		if (m_campaign != null && m_campaign.mesh != null)
+		{
+			GameObject gameObject = null;
+			InGUIBehaviour component = m_campaign.mesh.GetComponent<InGUIBehaviour>();
+			Ray ray = component.InGUI_Camera.ScreenPointToRay(Input.mousePosition);
+			foreach (CampaignTroop value in m_campaign.troops_.Values)
+			{
+				if (!(value.mesh == null) && value.mesh.collider.Raycast(ray, out var _, 9999f))
+				{
+					gameObject = value.mesh;
+				}
+			}
+			if (gameObject != HoverMesh)
+			{
+				if (HoverMesh != null)
+				{
+					HoverMesh.BroadcastMessage("OnMouseExit", SendMessageOptions.DontRequireReceiver);
+				}
+				if (gameObject != null)
+				{
+					gameObject.BroadcastMessage("OnMouseEnter", SendMessageOptions.DontRequireReceiver);
+				}
+				HoverMesh = gameObject;
+			}
+			if (gameObject != null)
+			{
+				if (Input.GetMouseButtonDown(0))
+				{
+					gameObject.BroadcastMessage("OnMouseDown", SendMessageOptions.DontRequireReceiver);
+				}
+				if (Input.GetMouseButtonUp(0))
+				{
+					gameObject.BroadcastMessage("OnMouseUp", SendMessageOptions.DontRequireReceiver);
+				}
+			}
+		}
+		m_fTime += Time.deltaTime;
+		if (m_fTime > 2f)
+		{
+			m_fTime = 0f;
+		}
+		if (m_fTime < 0.75f)
+		{
+			m_fNewAlpha = m_fTime / 0.75f;
+		}
+		else if (m_fTime < 1.25f)
+		{
+			m_fNewAlpha = 1f;
+		}
+		else
+		{
+			m_fNewAlpha = (2f - m_fTime) / 0.75f;
+		}
+	}
+
+	public override void Hide()
+	{
+		base.Hide();
+		if (m_campaign == null)
+		{
+			return;
+		}
+		if (m_campaign.mesh != null)
+		{
+			Object.Destroy(m_campaign.mesh);
+			m_campaign.mesh = null;
+		}
+		foreach (CampaignTroop value in m_campaign.troops_.Values)
+		{
+			value.arrow_mesh = null;
+			value.mesh = null;
+		}
+		m_campaign = null;
+		GetComponent<CampaignTroopUI>().Hide();
+		EnableAll();
+	}
+
+	public override void PrepareLoading(string id)
+	{
+	}
+
+	protected override void PostInit()
+	{
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_anecdote");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+		makeChapters();
+	}
+
+	private void LoadChapter(Database.Campaign c)
+	{
+		if (c == null)
+		{
+			return;
+		}
+		if (c.texIcon == null && c.m_troopsArray.Count > 0)
+		{
+			_campaign_troop campaign_troop = c.m_troops[c.m_troopsArray[c.m_troopsArray.Count - 1]] as _campaign_troop;
+			c.texIcon = BaseAsset.LoadTexture("face" + campaign_troop.icon);
+		}
+		foreach (_Treasure drop in c.drops)
+		{
+			if (drop.texIcon == null)
+			{
+				drop.texIcon = BaseAsset.LoadTexture(drop.getIconName());
+			}
+		}
+	}
+
+	protected override void AssetLoaded(string name)
+	{
+		if (m_campaign == null)
+		{
+			_ChapterCampaigns chapter = m_chapter;
+			for (int num = chapter.campaigns.Count - 1; num >= 0; num--)
+			{
+				_AnecdoteCampaign anecdoteCampaign = chapter.campaigns[num];
+				LoadChapter(anecdoteCampaign.campaign);
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+		MainUI.SetSubUI(this);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_anecdote");
+		if (m_campaign == null)
+		{
+			texTitle = asset.Load("ui_biaoti") as Texture2D;
+			texBG = asset.Load("ui_di") as Texture2D;
+			texPortrait = asset.Load("ui_jianzhou") as Texture2D;
+			texStamina = asset.Load("ui_zi2") as Texture2D;
+			texMode[0, 0] = asset.Load("ui_icon2") as Texture2D;
+			texMode[0, 1] = asset.Load("ui_icon1") as Texture2D;
+			texMode[1, 0] = asset.Load("ui_icon4") as Texture2D;
+			texMode[1, 1] = asset.Load("ui_icon3") as Texture2D;
+			texAttack = asset.Load("ui_dao") as Texture2D;
+			texProcess[0] = asset.Load("ui_zi5") as Texture2D;
+			texProcess[1] = asset.Load("ui_zi") as Texture2D;
+			texEnemy = asset.Load("ui_icon6") as Texture2D;
+			texKilled = asset.Load("ui_icon5") as Texture2D;
+			texFinished = asset.Load("ui_tong") as Texture2D;
+			texNew = asset.Load("ui_xin") as Texture2D;
+			texLock = asset.Load("ui_suo") as Texture2D;
+			texFinishCount = asset.Load("ui_zi8") as Texture2D;
+			ui_zi_yijiesuo.normal.background = asset.Load("ui_zi_yijiesuo") as Texture2D;
+			ui_zi_jiesuo.normal.background = asset.Load("ui_zi_jiesuo") as Texture2D;
+			ui_zi_jiangli.normal.background = asset.Load("ui_zi_jiangli") as Texture2D;
+			ui_mengban_down.normal.background = asset.Load("ui_mengban_down") as Texture2D;
+			ui_mengban_top.normal.background = asset.Load("ui_mengban_top") as Texture2D;
+			btnSelect[0].make(asset, "ui_bar2", unable: false);
+			btnSelect[0].btnStyle.active.background = btnSelect[0].btnStyle.normal.background;
+			btnSelect[1].make(asset, "ui_bar1", unable: false);
+			btnSelect[1].btnStyle.active.background = btnSelect[1].btnStyle.normal.background;
+			btnAuto.make(asset, "button_zidong", unable: false);
+			texFrameFinish = asset.Load("ui_guanka2_normal") as Texture2D;
+			texFrameNormal = asset.Load("ui_guanka1_normal") as Texture2D;
+			texFrameLock = asset.Load("ui_guanka_unable") as Texture2D;
+			texBonusGeneral = asset.Load("ui_zi10") as Texture2D;
+			texBonus = asset.Load("ui_zi9") as Texture2D;
+			texFrameNormalHero = asset.Load("ui_guanka3_normal") as Texture2D;
+			ui_zi_yingxiong.normal.background = asset.Load("ui_zi_yingxiong") as Texture2D;
+			ui_xing1.normal.background = asset.Load("ui_xing1") as Texture2D;
+			ui_xing2.normal.background = asset.Load("ui_xing2") as Texture2D;
+			ui_xing3.normal.background = asset.Load("ui_xing3") as Texture2D;
+			ui_lingshou.normal.background = asset.Load("ui_lingshou") as Texture2D;
+			ui_jineng.normal.background = asset.Load("ui_jineng") as Texture2D;
+			ui_xing_tongguan.normal.background = asset.Load("ui_xing_tongguan") as Texture2D;
+			ui_zi11.normal.background = asset.Load("ui_zi11") as Texture2D;
+		}
+		else
+		{
+			foreach (GameObject destroyPool in m_destroyPools)
+			{
+				Object.Destroy(destroyPool);
+			}
+			m_destroyPools.Clear();
+			createCampaign(8);
+			if (m_campaign.mesh != null)
+			{
+				InGUIBehaviour inGUIBehaviour = m_campaign.mesh.AddComponent<InGUIBehaviour>();
+				inGUIBehaviour.InGUI_Camera = m_campaign.mesh.GetComponentInChildren<Camera>();
+				inGUIBehaviour.InGUI_Camera.enabled = false;
+				Camera_Set component = inGUIBehaviour.InGUI_Camera.GetComponent<Camera_Set>();
+				if (component != null)
+				{
+					component.enabled = false;
+				}
+			}
+			foreach (DictionaryEntry troop in m_troops)
+			{
+				CampaignTroop campaignTroop = (CampaignTroop)troop.Value;
+				if (campaignTroop.visible)
+				{
+					createATroop(campaignTroop, 8);
+				}
+			}
+		}
+		m_bInit = true;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (BeginGUI(707f, 472f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(w / 2f - 190f, 15f, 380f, 36f));
+			GUI.Label(__BaseUI._rect(0f, 0f, 380f, 36f), string.Empty, __BaseUI._box15Style);
+			GUI.DrawTexture(__BaseUI._rect(34f, 12f, 56f, 15f), texFinishCount);
+			__BaseUI.Label(__BaseUI._rect(96f, 11f, 100f, 14f), m_chapter.m_iFinishCount.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(140f, 12f, 110f, 15f), new GUIContent(string.Empty, __BaseUI.load_str(9078u)), ui_zi11, GUI.backgroundColor);
+			__BaseUI.Label(__BaseUI._rect(260f, 11f, 110f, 15f), Global.character_.anecdote_hero_try.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+			__BaseUI.EndGroup();
+			showAnecdotes2();
+			if (EndGUI())
+			{
+				MainUI.SetSubUI(null);
+			}
+		}
+	}
+
+	private void drawAnecdote2(int idx, Rect rc, _AnecdoteCampaign ac)
+	{
+		if (ac == null)
+		{
+			return;
+		}
+		Database.Campaign campaign = ac.campaign;
+		if (campaign == null)
+		{
+			return;
+		}
+		__BaseUI.BeginGroup(rc);
+		if (anecID != 0 && campaign.id == anecID)
+		{
+			Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(15f, 10f));
+			m_anecRc = new Rect(vector.x, vector.y, 277f, 121f);
+		}
+		__BaseUI.Box(__BaseUI._rect(11f, 11f, 96f, 96f), campaign.texIcon);
+		Color clr = __BaseUI._clrGreen;
+		Color clr2 = __BaseUI._clrYellowDark;
+		if (campaign.idcampaign_type == 4)
+		{
+			if (campaign.finished && campaign.star_level == 3)
+			{
+				GUI.DrawTexture(__BaseUI._rect(0f, 0f, 590f, 121f), texFrameFinish);
+				__BaseUI.Label(__BaseUI._rect(205f, 30f, 187f, 44f), string.Empty, ui_xing_tongguan);
+			}
+			else
+			{
+				GUI.DrawTexture(__BaseUI._rect(0f, 0f, 590f, 121f), texFrameNormalHero);
+				for (int i = 1; i < 4; i++)
+				{
+					if (i == campaign.star_level)
+					{
+						__BaseUI.Label(__BaseUI._rect(215 + (campaign.star_level - 1) * 50, 15f, 49f, 50f), string.Empty, ui_xing1);
+					}
+					else
+					{
+						__BaseUI.Label(__BaseUI._rect(215 + (i - 1) * 50, 15f, 49f, 50f), string.Empty, ui_xing2);
+					}
+					if (i < campaign.star_level)
+					{
+						__BaseUI.Label(__BaseUI._rect(215 + (i - 1) * 50, 15f, 49f, 50f), string.Empty, ui_xing3);
+					}
+				}
+				__BaseUI.Label(__BaseUI._rect(8f, 64f, 188f, 60f), string.Empty, ui_zi_yingxiong);
+				string desc = campaign.desc;
+				string[] array = new string[2]
+				{
+					string.Empty,
+					string.Empty
+				};
+				if (desc != string.Empty)
+				{
+					if (desc.Contains("s"))
+					{
+						array = desc.Split('s');
+					}
+					else
+					{
+						array[0] = desc;
+					}
+				}
+				if (campaign.star_level > 1)
+				{
+					__BaseUI.Label(__BaseUI._rect(133f, 79f, 33f, 31f), new GUIContent(string.Empty, array[0]), ui_lingshou, GUI.backgroundColor);
+				}
+				if (campaign.star_level > 2)
+				{
+					__BaseUI.Label(__BaseUI._rect(169f, 79f, 33f, 31f), new GUIContent(string.Empty, array[1]), ui_jineng, GUI.backgroundColor);
+				}
+				for (int j = 0; j < campaign.drops.Count && j < 3; j++)
+				{
+					_Treasure treasure = campaign.drops[j];
+					__BaseUI.Box(__BaseUI._rect(511 - j * 64, 22f, 46f, 46f), new GUIContent(string.Empty, "bonus" + campaign.id + "," + j), treasure.texIcon);
+				}
+			}
+		}
+		else if (campaign.finished)
+		{
+			GUI.DrawTexture(__BaseUI._rect(0f, 0f, 590f, 121f), texFrameFinish);
+		}
+		else if (!campaign.real_unlocked)
+		{
+			GUI.DrawTexture(__BaseUI._rect(0f, 0f, 590f, 121f), texFrameLock);
+			clr = __BaseUI._clrDark;
+			clr2 = __BaseUI._clrDark;
+		}
+		else
+		{
+			GUI.DrawTexture(__BaseUI._rect(0f, 0f, 590f, 121f), texFrameNormal);
+			if (campaign.unlock_general)
+			{
+			}
+			for (int k = 0; k < campaign.drops.Count && k < 5; k++)
+			{
+				_Treasure treasure2 = campaign.drops[k];
+				__BaseUI.Box(__BaseUI._rect(511 - k * 64, 22f, 46f, 46f), new GUIContent(string.Empty, "bonus" + campaign.id + "," + k), treasure2.texIcon);
+			}
+		}
+		_campaign_troop campaign_troop = campaign.m_troops[campaign.m_troopsArray[campaign.m_troopsArray.Count - 1]] as _campaign_troop;
+		__BaseUI.ShadowLabel(__BaseUI._rect(103f, 43f, 160f, 24f), campaign_troop.name, __BaseUI._textLeft, __BaseUI._clrGreen, 18, new Vector2(2f, 2f));
+		__BaseUI.Label(__BaseUI._rect(123f, 16f, 40f, 24f), idx.ToString(), __BaseUI._numCenter, clr2, 24);
+		__BaseUI.ShadowLabel(__BaseUI._rect(306f, 82f, 96f, 18f), campaign.min_time_name, __BaseUI._textCenter, clr, (!__BaseUI._isunity3_5) ? 14 : 16);
+		__BaseUI.ShadowLabel(__BaseUI._rect(468f, 82f, 96f, 18f), campaign.min_score_name, __BaseUI._textCenter, clr, (!__BaseUI._isunity3_5) ? 14 : 16);
+		if (campaign.real_unlocked && __BaseUI._hover6Button.Button(campaign.unlocked, __BaseUI._rect(0f, 0f, 590f, 121f), string.Empty))
+		{
+			rmg.ToDisable();
+			cur_ac = ac;
+			cur_idx = idx;
+			BaseUI.GetRootUI().cs_campaign_enter(campaign.id, rmg);
+			Hide();
+			MainUI.SetSubUI(null);
+		}
+		if (campaign.tmp_first && campaign.real_unlocked)
+		{
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, m_fNewAlpha);
+			__BaseUI.Box(__BaseUI._rect(95f, 15f, 37f, 35f), texNew);
+			GUI.backgroundColor = backgroundColor;
+			if (campaign.first)
+			{
+				campaign.first = false;
+				pktNew.ids.Add(campaign.id);
+			}
+		}
+		if (campaign.finished)
+		{
+			if (campaign.unlock_general)
+			{
+				__BaseUI.Label(__BaseUI._rect(8f, 74f, 181f, 51f), string.Empty, ui_zi_yijiesuo);
+			}
+		}
+		else if (campaign.idcampaign_type != 4)
+		{
+			if (!campaign.real_unlocked)
+			{
+				if (campaign.unlock_general)
+				{
+					__BaseUI.Label(__BaseUI._rect(8f, 74f, 181f, 51f), string.Empty, ui_zi_jiesuo);
+				}
+			}
+			else if (campaign.unlock_general)
+			{
+				__BaseUI.Label(__BaseUI._rect(8f, 74f, 181f, 51f), string.Empty, ui_zi_jiesuo);
+			}
+		}
+		__BaseUI.EndGroup();
+	}
+
+	private void showAnecdotes2()
+	{
+		_ChapterCampaigns chapter = m_chapter;
+		pktNew.ids.Clear();
+		int num = chapter.campaigns.Count * 130;
+		if (chapter != null)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(50f, 60f, 626f, h - 80f));
+			scrollPos = ScrollControl.infos[anecdote_scrollid].scrollpos;
+			scrollPos = GUIHacks.BeginScrollView(__BaseUI._rect(0f, 0f, 626f, h - 80f), scrollPos, __BaseUI._rect(0f, 0f, 590f, num), useHorizontal: false, h - 80f < (float)num, new GUIStyle(), __BaseUI._vertScroll1[0], 130, 0, anecdote_scrollid);
+			ScrollControl.infos[anecdote_scrollid].scrollpos = scrollPos;
+			int num2 = (int)(scrollPos.y / 130f);
+			if (num2 >= chapter.campaigns.Count)
+			{
+				num2 = chapter.campaigns.Count - 1;
+			}
+			if (num2 < 0)
+			{
+				num2 = 0;
+			}
+			int num3 = ((num2 + 4 <= chapter.campaigns.Count) ? (num2 + 4) : chapter.campaigns.Count);
+			for (int i = num2; i < num3; i++)
+			{
+				_AnecdoteCampaign ac = chapter.campaigns[i];
+				drawAnecdote2(i + 1, __BaseUI._rect(0f, i * 130, 590f, 140f), ac);
+			}
+			GUIHacks.EndScrollView();
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 590f, 16f), string.Empty, ui_mengban_top);
+			__BaseUI.Label(__BaseUI._rect(0f, h - 80f - 16f, 590f, 16f), string.Empty, ui_mengban_down);
+			__BaseUI.EndGroup();
+		}
+		if (pktNew.ids.Count > 0)
+		{
+			RootUI.m_client.Send(1033, pktNew, null);
+		}
+	}
+
+	public Rect getAnecRc()
+	{
+		return m_anecRc;
+	}
+
+	public void set_anecID(ushort param)
+	{
+		anecID = param;
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("bonus"))
+		{
+			string[] array = tip.Replace("bonus", string.Empty).Split(',');
+			ushort id = ushort.Parse(array[0]);
+			int index = int.Parse(array[1]);
+			Database.Campaign campaign = Global.character_.getCampaign(id);
+			campaign.drops[index].PrepTooltip();
+		}
+		else if (tip != null)
+		{
+			tooltipUI.ShowTooltipContent(string.Empty, tip, 300, __BaseUI._fontSize);
+		}
+	}
+
+	private void SelectClose()
+	{
+		EnableAll();
+	}
+
+	public void _makeCampaigns()
+	{
+		m_campaign = null;
+		_ChapterCampaigns chapterCampaigns = (m_chapter = new _ChapterCampaigns());
+		List<Database.Campaign> list = new List<Database.Campaign>();
+		Hashtable templates = Global.getTemplates("campaign");
+		_campaign campaign = null;
+		foreach (DictionaryEntry item in templates)
+		{
+			_campaign campaign2 = item.Value as _campaign;
+			if (Global.getTemplate("campaign_type", campaign2.idcampaign_type) is _campaign_type { chapter: not false } && campaign2.start)
+			{
+				campaign = campaign2;
+				break;
+			}
+		}
+		list.Add(Global.character_.getCampaign(campaign.id));
+		for (int i = 0; i < list.Count; i++)
+		{
+			Database.Campaign campaign3 = list[i];
+			foreach (ushort next_campaign in campaign3.m_next_campaigns)
+			{
+				Database.Campaign campaign4 = Global.character_.getCampaign(next_campaign);
+				if (campaign4 != null && !list.Contains(campaign4))
+				{
+					list.Add(campaign4);
+				}
+			}
+		}
+		campaign_cur = -1;
+		int num = 0;
+		int num2 = 0;
+		Database.Campaign campaign5 = null;
+		foreach (Database.Campaign item2 in list)
+		{
+			if (item2.idcampaign_type != 2 || !item2.unlocked)
+			{
+				continue;
+			}
+			item2.tmp_first = item2.first;
+			_AnecdoteCampaign anecdoteCampaign = new _AnecdoteCampaign();
+			anecdoteCampaign.name = item2.name;
+			anecdoteCampaign.campaign = item2;
+			anecdoteCampaign.idcampaign = item2.id;
+			anecdoteCampaign.campaign_elite = item2;
+			chapterCampaigns.campaigns.Add(anecdoteCampaign);
+			item2.real_unlocked = true;
+			if (campaign5 != null && !campaign5.finished)
+			{
+				item2.real_unlocked = false;
+			}
+			else if (item2.finished)
+			{
+				chapterCampaigns.m_iFinishCount++;
+			}
+			if (!item2.finished && campaign_cur == -1)
+			{
+				campaign_cur = num2;
+			}
+			if (campaign_cur != -1)
+			{
+				num++;
+				if (num >= 5)
+				{
+					break;
+				}
+			}
+			campaign5 = item2;
+			num2++;
+			if (item2.m_next_campaigns.Count <= 0)
+			{
+				continue;
+			}
+			anecdoteCampaign.campaign_hero1 = Global.character_.getCampaign(item2.m_next_campaigns[0]);
+			if (anecdoteCampaign.campaign_hero1 == null)
+			{
+				continue;
+			}
+			anecdoteCampaign.campaign_hero1.star_level = 1;
+			if (anecdoteCampaign.campaign.finished)
+			{
+				anecdoteCampaign.campaign = anecdoteCampaign.campaign_hero1;
+				anecdoteCampaign.campaign.unlocked = (anecdoteCampaign.campaign.real_unlocked = true);
+			}
+			if (anecdoteCampaign.campaign_hero1.m_next_campaigns.Count <= 0)
+			{
+				continue;
+			}
+			anecdoteCampaign.campaign_hero2 = Global.character_.getCampaign(anecdoteCampaign.campaign_hero1.m_next_campaigns[0]);
+			if (anecdoteCampaign.campaign_hero2 == null)
+			{
+				continue;
+			}
+			anecdoteCampaign.campaign_hero2.star_level = 2;
+			if (anecdoteCampaign.campaign.finished)
+			{
+				anecdoteCampaign.campaign = anecdoteCampaign.campaign_hero2;
+				anecdoteCampaign.campaign.unlocked = (anecdoteCampaign.campaign.real_unlocked = true);
+			}
+			if (anecdoteCampaign.campaign_hero2.m_next_campaigns.Count <= 0)
+			{
+				continue;
+			}
+			anecdoteCampaign.campaign_hero3 = Global.character_.getCampaign(anecdoteCampaign.campaign_hero2.m_next_campaigns[0]);
+			if (anecdoteCampaign.campaign_hero3 != null)
+			{
+				anecdoteCampaign.campaign_hero3.star_level = 3;
+				if (anecdoteCampaign.campaign.finished)
+				{
+					anecdoteCampaign.campaign = anecdoteCampaign.campaign_hero3;
+					anecdoteCampaign.campaign.unlocked = (anecdoteCampaign.campaign.real_unlocked = true);
+					anecdoteCampaign.campaign.unlock_general = anecdoteCampaign.campaign_elite.unlock_general;
+				}
+			}
+		}
+		chapterCampaigns.m_iPage = (chapterCampaigns.campaigns.Count - 1) / 3;
+	}
+
+	public void SetCampaigns()
+	{
+		_makeCampaigns();
+		cs_anecdote_records_0x40A();
+		MyLoading();
+	}
+
+	private void cs_anecdote_records_0x40A()
+	{
+		CSAnecdoteRecords_0x40A cSAnecdoteRecords_0x40A = new CSAnecdoteRecords_0x40A();
+		foreach (_AnecdoteCampaign campaign in m_chapter.campaigns)
+		{
+			byte b = campaign.campaign.m_troopsArray[campaign.campaign.m_troopsArray.Count - 1];
+			cSAnecdoteRecords_0x40A.ids.Add((uint)((campaign.campaign.id << 16) | (b << 8)));
+		}
+		RootUI.m_client.Send(1034, cSAnecdoteRecords_0x40A, sc_anecdote_records_0x40A);
+	}
+
+	public static void sc_anecdote_records_0x40A(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCAnecdoteRecords_0x40A sCAnecdoteRecords_0x40A = JSProtoBuf.Serializer.Deserialize<SCAnecdoteRecords_0x40A>(stream);
+		foreach (AnecdoteRecord record in sCAnecdoteRecords_0x40A.records)
+		{
+			if (Global.character_.campaigns_.ContainsKey((ushort)record.idcampaign))
+			{
+				Database.Campaign campaign = Global.character_.campaigns_[(ushort)record.idcampaign];
+				string[] array = record.min_score.Split(',');
+				if (array.Length > 0)
+				{
+					campaign.min_score_name = array[0];
+				}
+				array = record.min_time.Split(',');
+				if (array.Length > 0)
+				{
+					campaign.min_time_name = array[0];
+				}
+			}
+		}
+	}
+
+	private void makeChapters()
+	{
+		_ChapterCampaigns chapter = m_chapter;
+		for (int num = chapter.campaigns.Count - 1; num >= 0; num--)
+		{
+			_AnecdoteCampaign anecdoteCampaign = chapter.campaigns[num];
+			makeChapter(anecdoteCampaign.campaign);
+		}
+		if (!m_bInit)
+		{
+			scrollPos.y = campaign_cur * 130;
+			if (campaign_cur > chapter.campaigns.Count - 3)
+			{
+				scrollPos.y = (chapter.campaigns.Count - 3) * 130;
+			}
+			if (scrollPos.y < 0f)
+			{
+				scrollPos.y = 0f;
+			}
+			ScrollControl.infos[anecdote_scrollid].SetStartPos(scrollPos);
+		}
+		if (asset_names.Count > 0)
+		{
+			Disable();
+			CollectingStart(bCollecting: false);
+			StartLoading();
+		}
+		else
+		{
+			Show();
+		}
+	}
+
+	private void makeChapter(Database.Campaign c)
+	{
+		if (c == null)
+		{
+			return;
+		}
+		if (c.texIcon == null && c.m_troopsArray.Count > 0)
+		{
+			_campaign_troop campaign_troop = c.m_troops[c.m_troopsArray[c.m_troopsArray.Count - 1]] as _campaign_troop;
+			AddAssetSub("face" + campaign_troop.icon);
+		}
+		foreach (_Treasure drop in c.drops)
+		{
+			AddAssetSub(drop.getIconName());
+		}
+	}
+
+	private void makeCampaign(Database.Campaign c)
+	{
+		m_campaign = c;
+		AddAsset("campaign/arrow_red");
+		LoadCampaignChapter();
+		setTroops();
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+}

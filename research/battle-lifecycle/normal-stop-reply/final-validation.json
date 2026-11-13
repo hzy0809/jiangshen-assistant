@@ -1,0 +1,73 @@
+{
+  "status": "PASS",
+  "current_source_manifests_match": true,
+  "drift": [],
+  "runs": {
+    "fixed-final": {
+      "status": "PASS",
+      "scenarios": 88,
+      "failed": 0,
+      "checks": 1600,
+      "source_hashes_stable": true,
+      "real_battle_launch": true,
+      "real_named_ipc": true,
+      "pinned_dependencies": {
+        "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+        "protobuf-net.dll": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+        "Ionic.Zlib.dll": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+      },
+      "game_access": false,
+      "network_access": false,
+      "limits": "Production models/guard/helpers and named event/mutex are real; stock callbacks, Unity scenes, dispatch transport and manual presentation are detached fixtures. No live game, physical UI, deployment, server cost or business acceptance."
+    },
+    "arena-final": {
+      "status": "PASS",
+      "compile_exit": 0,
+      "test_exit": 0,
+      "source_hashes_stable": true,
+      "game_access": false,
+      "network_access": false,
+      "dependency_sha256": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+      "pbdata_sha256": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+      "ionic_sha256": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30",
+      "source_manifest": "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-lifecycle\\normal-stop-reply\\arena-final\\sources.json",
+      "results": "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-lifecycle\\normal-stop-reply\\arena-final\\results.jsonl",
+      "limitations": "Detached fake Unity/client callbacks and instrumented BattleLaunch substitute, with pinned real pbdata/protobuf/Ionic and constructed compressed reports. Real named-event/mutex IPC, guard race/cancellation, live scene/loading/rendering, real success field availability, server cost, and business acceptance are not tested. PointRace adapter is run separately; Probe/training-surrender/0x368 routes not covered."
+    },
+    "point-final": {
+      "status": "PASS",
+      "compile_exit": 0,
+      "test_exit": 0,
+      "source_hashes_stable": true,
+      "game_access": false,
+      "network_access": false,
+      "dependency_sha256": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+      "pbdata_sha256": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+      "ionic_sha256": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30",
+      "source_manifest": "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-lifecycle\\normal-stop-reply\\point-final\\sources.json",
+      "results": "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-lifecycle\\normal-stop-reply\\point-final\\results.jsonl",
+      "limitations": "Detached fake Unity/client and instrumented BattleLaunch substitute, with pinned real pbdata/protobuf/Ionic and constructed compressed reports. Real named-event/mutex IPC, guard race/cancellation, real success field availability, live scene, initial 0x464 entry, paid branch, free-refresh 0x467, rendering, server cost, and business acceptance are not tested."
+    },
+    "demon-final": {
+      "status": "PASS",
+      "scenario": "suite",
+      "compile_exit": 0,
+      "test_exit": 0,
+      "source_hashes_stable": true,
+      "model_sha256": "f186536d515679598d5b84ea69a6a6f1d3cb9cd91a7ea02b0dd87e90bda20097",
+      "scenario_count": 63,
+      "checks": 659,
+      "dependencies": {
+        "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+        "protobuf-net.dll": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+        "Ionic.Zlib.dll": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+      },
+      "production_full_model": true,
+      "production_helpers_reader_transport_clock": true,
+      "actual_protobuf_and_deflate": true,
+      "game_access": false,
+      "network_access": false,
+      "limitations": "Detached Unity, stock presentation callback, Model scene inventory, BattleLaunch and BattleSettlement substitutes. Pinned protobuf and deflate code are real; no live game, rendering, IPC guard, physical interaction, deployment, or business acceptance."
+    }
+  }
+}

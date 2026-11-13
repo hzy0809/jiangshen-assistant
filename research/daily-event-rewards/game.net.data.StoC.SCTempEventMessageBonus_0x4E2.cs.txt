@@ -1,0 +1,48 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCTempEventMessageBonus_0x4E2")]
+public class SCTempEventMessageBonus_0x4E2 : IExtensible
+{
+	private uint _result;
+
+	private TempEventMessage _msg = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "msg", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public TempEventMessage msg
+	{
+		get
+		{
+			return _msg;
+		}
+		set
+		{
+			_msg = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

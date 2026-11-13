@@ -1,0 +1,6 @@
+Assembly-CSharp-firstpass.dll __BaseUI.Enable MethodDef=0x06000F8A Attributes=Public, Virtual, HideBySig, VtableLayoutMask ImplAttributes=IL Signature=20-00-01 IL=02-17-7D-73-16-00-04-2A
+Assembly-CSharp-firstpass.dll __BaseUI.Disable MethodDef=0x06000F8B Attributes=Public, Virtual, HideBySig, VtableLayoutMask ImplAttributes=IL Signature=20-00-01 IL=02-16-7D-73-16-00-04-2A
+Assembly-CSharp-firstpass.dll __BaseUI declared Enable/Disable count=2
+__BaseUI.enable FieldDef=0x04001673 Attributes=Private Signature=06-02
+Assembly-CSharp.dll BaseUI declared Enable/Disable count=0
+Assembly-CSharp.dll MainUI declared Enable/Disable count=0

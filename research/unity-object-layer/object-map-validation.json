@@ -1,0 +1,81 @@
+{
+  "scope": "offline artifact and source identity consistency only; no runtime or game DLL execution",
+  "checks": [
+    {
+      "check": "input hash Assembly-CSharp.dll",
+      "result": "PASS"
+    },
+    {
+      "check": "input hash Assembly-CSharp-firstpass.dll",
+      "result": "PASS"
+    },
+    {
+      "check": "input hash dbdata.dll",
+      "result": "PASS"
+    },
+    {
+      "check": "input hash pbdata.dll",
+      "result": "PASS"
+    },
+    {
+      "check": "object-map-Global.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-character-base.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-Database.Character.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-LoginUI.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-LoadScreen.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-_ButtonMain.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-FormationUI.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-MainUI.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-BattleUI.cs.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-Character.il.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-typedef-tokens.txt",
+      "result": "PASS",
+      "missing": []
+    },
+    {
+      "check": "object-map-field-route-candidates.txt",
+      "result": "PASS",
+      "missing": []
+    }
+  ]
+}

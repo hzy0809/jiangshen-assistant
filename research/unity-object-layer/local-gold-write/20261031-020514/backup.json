@@ -1,0 +1,98 @@
+{
+  "before": {
+    "status": "PASS",
+    "pid": 12844,
+    "process_creation_filetime": 134378531591407015,
+    "observed_at_utc": "2026-10-30T18:05:14.482185+00:00",
+    "completed_at_utc": "2026-10-30T18:05:14.482185+00:00",
+    "domain": {
+      "id": 0,
+      "pointer": "0x3354e70"
+    },
+    "global_class_initialized": true,
+    "global_init_flags": "0x2",
+    "character_object": "0x22b07000",
+    "fields": {
+      "character_": {
+        "name": "character_",
+        "descriptor": "0x114e4cc0",
+        "type_pointer": "0x114e53b8",
+        "type_data": 289109744,
+        "offset": 140,
+        "type_enum": 18,
+        "flags": 22,
+        "declared_ordinal": 41,
+        "offline_field_token": "0x4000957",
+        "offline_signature": "06-12-81-C4"
+      },
+      "level": {
+        "name": "level",
+        "descriptor": "0x115fae78",
+        "type_pointer": "0x1146e5c0",
+        "type_data": 0,
+        "offset": 72,
+        "type_enum": 6,
+        "flags": 6,
+        "declared_ordinal": 14,
+        "offline_field_token": "0x4000204",
+        "offline_signature": "06-06"
+      },
+      "stamina": {
+        "name": "stamina",
+        "descriptor": "0x115faeb8",
+        "type_pointer": "0x1146e5e0",
+        "type_data": 0,
+        "offset": 80,
+        "type_enum": 6,
+        "flags": 6,
+        "declared_ordinal": 18,
+        "offline_field_token": "0x4000208",
+        "offline_signature": "06-06"
+      },
+      "gold": {
+        "name": "gold",
+        "descriptor": "0x115faed8",
+        "type_pointer": "0x1146e5f0",
+        "type_data": 0,
+        "offset": 84,
+        "type_enum": 8,
+        "flags": 6,
+        "declared_ordinal": 20,
+        "offline_field_token": "0x400020a",
+        "offline_signature": "06-08"
+      }
+    },
+    "values": {
+      "level": 86,
+      "stamina": 20,
+      "gold": 450
+    },
+    "scalar_stage_read_calls": 73,
+    "scalar_stage_requested_bytes": 587,
+    "type_stage_read_calls": 60,
+    "assembly_stage_read_calls": 376,
+    "limitation": "External bounded reads are not an atomic game-thread snapshot; identity and domain remained consistent during observed reads"
+  },
+  "gold_address": "0x22b07054",
+  "reference_slot": "0x10c7d86c",
+  "old_gold": 450,
+  "target_gold": 20000,
+  "neighbor_address": "0x22b07050",
+  "neighbor_bytes": "14000000c201000077010000",
+  "mono_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "managed_sha256": {
+    "Assembly-CSharp.dll": "c1c8ebac7ddef4173c873a00774975a5ca366f95b19164c4ca775165eb994911",
+    "Assembly-CSharp-firstpass.dll": "29d8fa2cb55e800ccdf1cdc6c5b274b924ea7d03c989296dfa569731e02a8d87",
+    "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab"
+  },
+  "page": {
+    "BaseAddress": "0x22b07000",
+    "AllocationBase": "0x21c00000",
+    "AllocationProtect": "0x40",
+    "PartitionId": "0x0",
+    "RegionSize": "0xfa000",
+    "State": "0x1000",
+    "Protect": "0x40",
+    "Type": "0x20000"
+  }
+}

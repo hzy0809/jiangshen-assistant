@@ -1,0 +1,257 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
+using UnityEngine;
+
+public class CheckLauncherVersion : BaseUI
+{
+	private class FileVersionInfo
+	{
+		public int length;
+
+		public string md5;
+
+		public FileVersionInfo(int l, string m)
+		{
+			length = l;
+			md5 = m;
+		}
+	}
+
+	private const string version_url = "http://jsi.xd.com/api/launcherversionnew?platform=";
+
+	private const string md5file = "launcher.md5";
+
+	private const string setup_file_url = "http://js.xd.com/game_statics/js/js_setup.exe?ver=20121229";
+
+	private string[] need_check_platform = new string[1] { "xd" };
+
+	private string platform_name;
+
+	private string new_setup_name;
+
+	private string cdn_url = string.Empty;
+
+	private string cdn_path = string.Empty;
+
+	private string launcher_path;
+
+	private Dictionary<string, string> tree_index_map;
+
+	private Dictionary<string, string> diff_index_map;
+
+	private MD5CryptoServiceProvider md5_crypto = new MD5CryptoServiceProvider();
+
+	private Dictionary<string, FileVersionInfo> file_version_info = new Dictionary<string, FileVersionInfo>();
+
+	private List<string> need_update_list = new List<string>();
+
+	public override void Start()
+	{
+	}
+
+	private IEnumerator check_update()
+	{
+		WWW www = new WWW("http://jsi.xd.com/api/launcherversionnew?platform=" + platform_name);
+		yield return www;
+		if (www.text != null)
+		{
+			read_cdn_str(www.text);
+		}
+	}
+
+	private void read_cdn_str(string str)
+	{
+		string text = string.Empty;
+		string text2 = string.Empty;
+		cdn_url = string.Empty;
+		cdn_path = string.Empty;
+		string[] array = str.Split('|');
+		if (array.Length == 4)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				string[] array2 = array[i].Split('=');
+				if (array2.Length == 2)
+				{
+					switch (array2[0])
+					{
+					case "cdn_url":
+						cdn_url = array2[1];
+						break;
+					case "cdn_path":
+						cdn_path = "launcher/" + array2[1];
+						break;
+					case "cdn_index":
+						text = array2[1];
+						break;
+					case "cdn_diff_index":
+						text2 = array2[1];
+						break;
+					}
+				}
+			}
+		}
+		Logger.Log("cdn_url=" + cdn_url + ";cdn_path=" + cdn_path + ";tree_index=" + text + ";diff_index=" + text2);
+		if (cdn_url.Length > 0 && text.Length > 0)
+		{
+			StartCoroutine(load_git_index(cdn_url, text, text2));
+		}
+	}
+
+	private IEnumerator load_git_index(string cdn, string tree_tag, string diff_tag)
+	{
+		tree_index_map = null;
+		diff_index_map = null;
+		Logger.Log("load tree index from " + cdn + "index/" + tree_tag);
+		WWW www = new WWW(cdn + "index/" + tree_tag);
+		yield return www;
+		if (www.bytes == null)
+		{
+			yield break;
+		}
+		tree_index_map = new Dictionary<string, string>();
+		read_index_data(www.bytes, tree_index_map);
+		Logger.Log("Load tree index data success");
+		if (diff_tag.Length > 0)
+		{
+			Logger.Log(cdn + "diff/" + tree_tag + ".." + diff_tag);
+			WWW diff_www = new WWW(cdn + "diff/" + tree_tag + ".." + diff_tag);
+			yield return diff_www;
+			if (diff_www.bytes == null)
+			{
+				yield break;
+			}
+			diff_index_map = new Dictionary<string, string>();
+			read_index_data(diff_www.bytes, diff_index_map);
+			Logger.Log("Load diff index data success");
+		}
+		string md5url = getDataUrl(cdn_path + "launcher.md5");
+		Logger.Log("load " + cdn_path + "launcher.md5 from " + md5url);
+		WWW md5_www = new WWW(md5url);
+		yield return md5_www;
+		if (md5_www.bytes == null)
+		{
+			yield break;
+		}
+		Logger.Log("received data " + md5_www.bytes.Length + " bytes");
+		read_file_md5(md5_www.bytes);
+		check_file_version();
+		if (need_update_list.Count <= 0)
+		{
+			yield break;
+		}
+		Logger.Log("download http://js.xd.com/game_statics/js/js_setup.exe?ver=20121229");
+		WWW file_www = new WWW("http://js.xd.com/game_statics/js/js_setup.exe?ver=20121229");
+		yield return file_www;
+		if (file_www.bytes == null)
+		{
+			yield break;
+		}
+		new_setup_name = Application.dataPath + "\\..\\js_setup.exe";
+		new_setup_name = new_setup_name.Replace("/", "\\");
+		Logger.Log(new_setup_name);
+		using FileStream new_file_stream = File.Create(new_setup_name);
+		new_file_stream.Write(file_www.bytes, 0, file_www.bytes.Length);
+		new_file_stream.Close();
+		RootUI root_ui = null;
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			root_ui = GameObject.Find("Root/RootUI").GetComponent<RootUI>();
+			if (root_ui != null)
+			{
+				root_ui.new_setup_needed(new_setup_name);
+			}
+		}
+	}
+
+	private void read_file_md5(byte[] bytes)
+	{
+		using StreamReader streamReader = new StreamReader(new MemoryStream(bytes));
+		int length = "launcher/".Length;
+		while (streamReader.Peek() >= 0)
+		{
+			string text = streamReader.ReadLine();
+			if (streamReader.Peek() == 0)
+			{
+				break;
+			}
+			int l = int.Parse(streamReader.ReadLine());
+			if (streamReader.Peek() == 0)
+			{
+				break;
+			}
+			string m = streamReader.ReadLine();
+			file_version_info[text.Substring(length)] = new FileVersionInfo(l, m);
+		}
+	}
+
+	private void check_file_version()
+	{
+		launcher_path = Global.launcher_exe;
+		int num = launcher_path.LastIndexOf("\\");
+		if (num != -1)
+		{
+			launcher_path = launcher_path.Substring(0, num + 1);
+		}
+		need_update_list.Clear();
+		foreach (KeyValuePair<string, FileVersionInfo> item in file_version_info)
+		{
+			string filesMD5Hash = getFilesMD5Hash(launcher_path + item.Key.Replace("/", "\\"));
+			if (filesMD5Hash != item.Value.md5)
+			{
+				need_update_list.Add(item.Key);
+				Logger.Log("need update " + item.Key);
+			}
+		}
+	}
+
+	private void read_index_data(byte[] bytes, Dictionary<string, string> index_map)
+	{
+		string text = string.Empty;
+		foreach (byte b in bytes)
+		{
+			text += LoadIndexScript._bin2hex[b >> 4];
+			text += LoadIndexScript._bin2hex[b & 0xF];
+		}
+		for (int j = 0; j < text.Length; j += 50)
+		{
+			index_map.Add(text.Substring(j, 10), text.Substring(j + 10, 40));
+		}
+	}
+
+	private string getDataUrl(string path)
+	{
+		int num = path.LastIndexOf("/");
+		if (diff_index_map != null)
+		{
+			string key = LoadIndexScript.SHA1_Encrypt(path).Substring(0, 10);
+			if (diff_index_map.ContainsKey(key))
+			{
+				return cdn_url + "file/" + diff_index_map[key] + "/" + path.Substring(num + 1, path.Length - num - 1);
+			}
+		}
+		string source_String = ".";
+		if (num != -1)
+		{
+			source_String = path.Substring(0, num);
+		}
+		string key2 = LoadIndexScript.SHA1_Encrypt(source_String).Substring(0, 10);
+		if (tree_index_map.ContainsKey(key2))
+		{
+			return cdn_url + "tree/" + tree_index_map[key2] + "/" + path.Substring(num + 1, path.Length - num - 1);
+		}
+		return string.Empty;
+	}
+
+	private string getFilesMD5Hash(string file)
+	{
+		using FileStream fileStream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read);
+		string text = BitConverter.ToString(md5_crypto.ComputeHash(fileStream), 4, 8);
+		fileStream.Close();
+		text = text.Replace("-", string.Empty);
+		return text.ToLower();
+	}
+}

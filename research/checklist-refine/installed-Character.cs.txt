@@ -1,0 +1,4163 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class Character : _character
+{
+	public Texture2D texIcon;
+
+	public Texture2D texIcon2;
+
+	public bool isFromOldSrv;
+
+	public int server_open_time;
+
+	public int server_hequ_time;
+
+	public _vip_template my_vip_template;
+
+	private Dictionary<string, int> uis_ = new Dictionary<string, int>();
+
+	public List<string> newuis_ = new List<string>();
+
+	private Hashtable consume_tips_ = new Hashtable();
+
+	public List<uint> scenarios_ = new List<uint>();
+
+	public Dictionary<ushort, Campaign> campaigns_ = new Dictionary<ushort, Campaign>();
+
+	public List<NewbieQuest> newbiequests = new List<NewbieQuest>();
+
+	public _character_newbie newbieinfo = new _character_newbie();
+
+	public TrialInfo trialinfo = new TrialInfo();
+
+	public Dictionary<ushort, Artifact> artifacts = new Dictionary<ushort, Artifact>();
+
+	public Dictionary<ushort, ushort> arti_gens = new Dictionary<ushort, ushort>();
+
+	public Dictionary<ushort, ushort> armystars = new Dictionary<ushort, ushort>();
+
+	public Dictionary<ushort, FormGeneral> form_generals_ = new Dictionary<ushort, FormGeneral>();
+
+	public GraveInfo grave = new GraveInfo();
+
+	public Dictionary<ushort, _character_grave> graves = new Dictionary<ushort, _character_grave>();
+
+	public List<GravePocketItem> gravepocketitem = new List<GravePocketItem>();
+
+	public List<patrolSlotInfo> patrolSlot = new List<patrolSlotInfo>();
+
+	public uint patrolSlotBought;
+
+	public uint patrolRefreshTime;
+
+	public Dictionary<byte, Rune> runes = new Dictionary<byte, Rune>();
+
+	public uint city_days;
+
+	public uint city_level;
+
+	public exchangeInfo exchange = new exchangeInfo();
+
+	public Dictionary<int, Formation> formations_ = new Dictionary<int, Formation>();
+
+	public int cur_form;
+
+	public uint craft_match;
+
+	public int generalbookcount;
+
+	public List<GeneralsSimple> GeneralsOutSquad = new List<GeneralsSimple>();
+
+	public Convoy convoy = new Convoy();
+
+	public List<BatchForge> forginglist = new List<BatchForge>();
+
+	public CampaignAuto auto_;
+
+	public PuzzleShop puzzleshop = new PuzzleShop();
+
+	public Dictionary<byte, Puzzle> puzzles = new Dictionary<byte, Puzzle>();
+
+	public Dictionary<byte, Equipment> equipments = new Dictionary<byte, Equipment>();
+
+	public Dictionary<byte, Amulet> amulets = new Dictionary<byte, Amulet>();
+
+	public List<EventTimeline> Events = new List<EventTimeline>();
+
+	public List<EventTimeline> FlowerEvents = new List<EventTimeline>();
+
+	public Dictionary<ushort, Gem> gems = new Dictionary<ushort, Gem>();
+
+	public Dictionary<ushort, Quest> quests = new Dictionary<ushort, Quest>();
+
+	public Dictionary<ushort, Quest> trace_finished = new Dictionary<ushort, Quest>();
+
+	public Dictionary<ushort, Quest> trace_main = new Dictionary<ushort, Quest>();
+
+	public Dictionary<ushort, Quest> trace_sub = new Dictionary<ushort, Quest>();
+
+	public Dictionary<ushort, Quest> trace_daily = new Dictionary<ushort, Quest>();
+
+	public OnlineInfo OnlineGift = new OnlineInfo();
+
+	public SealMonsterInfo sealmonsterinfo = new SealMonsterInfo();
+
+	public Dictionary<uint, Activity> acts = new Dictionary<uint, Activity>();
+
+	public Dictionary<uint, Activity_Reward> act_rewards = new Dictionary<uint, Activity_Reward>();
+
+	public Dictionary<ushort, GeneralBook> generalbooks = new Dictionary<ushort, GeneralBook>();
+
+	public Dictionary<uint, Sevenday> sevendays = new Dictionary<uint, Sevenday>();
+
+	public List<bool> sevendaysopen = new List<bool>();
+
+	public Dictionary<byte, Cooldown> cooldowns = new Dictionary<byte, Cooldown>();
+
+	public Dictionary<uint, Cooldown> campaign_cooldowns = new Dictionary<uint, Cooldown>();
+
+	public Dictionary<ushort, AnecdoteReward> anecdoterewards = new Dictionary<ushort, AnecdoteReward>();
+
+	public Dictionary<ushort, Material> materials = new Dictionary<ushort, Material>();
+
+	public ulong idguild;
+
+	public Dictionary<ulong, Guild> guilds = new Dictionary<ulong, Guild>();
+
+	public int active_guilds;
+
+	public Dictionary<ulong, GuildRecruitList> recruits = new Dictionary<ulong, GuildRecruitList>();
+
+	public Dictionary<ulong, GuildMember> members = new Dictionary<ulong, GuildMember>();
+
+	public List<GuildMessage> msgs = new List<GuildMessage>();
+
+	public List<Guild> guilds_sort = new List<Guild>();
+
+	public List<GuildMember> members_sort = new List<GuildMember>();
+
+	public string member_sort_by = "class";
+
+	public Dictionary<ulong, _recruit_list> apply_list = new Dictionary<ulong, _recruit_list>();
+
+	public List<GuildRecruitList> request_sorted = new List<GuildRecruitList>();
+
+	public List<GuildMember> member_sorted = new List<GuildMember>();
+
+	private bool member_sort_asc;
+
+	public List<Guild> guilds_sorted = new List<Guild>();
+
+	private string guild_sort_by = "level";
+
+	private bool guild_sort_asc;
+
+	public Dictionary<ushort, List<TalentArmy>> campaignTalentArmys = new Dictionary<ushort, List<TalentArmy>>();
+
+	public List<uint> sd_campaign = new List<uint>();
+
+	public Dictionary<ulong, SealDevilGroup> sealdevilgroups = new Dictionary<ulong, SealDevilGroup>();
+
+	public SealDevilGroupDetail sd_detail;
+
+	public List<uint> viprewards = new List<uint>();
+
+	public Dictionary<ushort, Skill> skills = new Dictionary<ushort, Skill>();
+
+	public Dictionary<ushort, ArmyType> army_types = new Dictionary<ushort, ArmyType>();
+
+	public GatherSoul gather_souls;
+
+	public RechargeActivity recharge_activity = new RechargeActivity();
+
+	public bool[] recharge_activity_open = new bool[4];
+
+	public int recharge_activity_haveReward;
+
+	public Dictionary<int, bool> new_recharge_activity_open = new Dictionary<int, bool>();
+
+	public ushort id_forging;
+
+	public ushort today_is_forged;
+
+	public Dictionary<byte, ushort> mMultiParams = new Dictionary<byte, ushort>();
+
+	public int return_gift_red_count;
+
+	public SortedList<byte, int> return_gifts = new SortedList<byte, int>();
+
+	public Arena arena = new Arena();
+
+	public Pointrace pointrace = new Pointrace();
+
+	public Spirit spirit = new Spirit();
+
+	public Quiz quiz = new Quiz();
+
+	public int capacityMax;
+
+	public uint woodYield;
+
+	public uint mineYield;
+
+	public uint manaYield;
+
+	public Building capital;
+
+	public Dictionary<byte, Building> buildings = new Dictionary<byte, Building>();
+
+	public Dictionary<byte, byte> building_counts = new Dictionary<byte, byte>();
+
+	public Dictionary<byte, BuildingArea> building_areas = new Dictionary<byte, BuildingArea>();
+
+	public BuildingArea curArea;
+
+	public Dictionary<byte, BuildingQuest> building_quests = new Dictionary<byte, BuildingQuest>();
+
+	public Dictionary<byte, BuildingMonster> building_monsters = new Dictionary<byte, BuildingMonster>();
+
+	public List<_character_building_interact> building_interacts = new List<_character_building_interact>();
+
+	public Brawl brawl = new Brawl();
+
+	public BrawlInfo brawlinfo = new BrawlInfo();
+
+	private uint unread_mail_num;
+
+	public List<_Treasure> treasures_ = new List<_Treasure>();
+
+	public List<uint> unavailable_army_type = new List<uint>();
+
+	public List<uint> unavailable_skill = new List<uint>();
+
+	public GodTroop[] god_troops = new GodTroop[5];
+
+	public TrialCampaign trial_campaign;
+
+	public GraveCampaign grave_campaign;
+
+	public List<uint> newgenid = new List<uint>();
+
+	public List<uint> newformid = new List<uint>();
+
+	public List<uint> newarmyid = new List<uint>();
+
+	public List<uint> newskillid = new List<uint>();
+
+	public List<uint> newspecgenid = new List<uint>();
+
+	public List<uint> newpageid_blue = new List<uint>();
+
+	public List<uint> newpageid_purple = new List<uint>();
+
+	public Demon m_demon;
+
+	public List<Treasure> shop_buyback = new List<Treasure>();
+
+	public MysteryShop mystery_shop;
+
+	public List<CharacterBattleReport> recent_battle_report = new List<CharacterBattleReport>();
+
+	public List<CharacterBattleReport> saved_battle_report = new List<CharacterBattleReport>();
+
+	public List<uint> gen_quests = new List<uint>();
+
+	public Dictionary<uint, bool> quest_gens = new Dictionary<uint, bool>();
+
+	public DummyChallengeStatus dummy_challenge_status;
+
+	public Dictionary<int, FestivalConsume> festivalconsumes = new Dictionary<int, FestivalConsume>();
+
+	public Dictionary<ushort, DivineGeneralStar> divinegeneralstars = new Dictionary<ushort, DivineGeneralStar>();
+
+	public Battle_Value battle_value = new Battle_Value();
+
+	public uint battlescore_form;
+
+	public static int cur_bv_value;
+
+	public static int target_bv_value;
+
+	public static float bvanim_time;
+
+	public static bool bvanim_start;
+
+	private bool bvchange_state = true;
+
+	public Dictionary<ushort, _character_hero_treasure> herotreasures = new Dictionary<ushort, _character_hero_treasure>();
+
+	public ushort active_achievement;
+
+	public Dictionary<uint, NationRankItem> nationrankitems = new Dictionary<uint, NationRankItem>();
+
+	public Dictionary<byte, NationRankItemTemp> nationrankitemtemps = new Dictionary<byte, NationRankItemTemp>();
+
+	public SkyTower skytower = new SkyTower();
+
+	public FestivalLottery festival_lottery = new FestivalLottery();
+
+	public uint SID;
+
+	public List<_character_bonus> character_bonuses = new List<_character_bonus>();
+
+	public Dictionary<byte, ServerOpenTrialAward> trialawards = new Dictionary<byte, ServerOpenTrialAward>();
+
+	public bool is_zhounianfanli_open;
+
+	public List<uint> daily_ranking_types = new List<uint>();
+
+	public uint daily_ranking_next_refresh_time;
+
+	public bool isordered;
+
+	public Dictionary<uint, GrouponAward> grouponawards = new Dictionary<uint, GrouponAward>();
+
+	public bool isGrouponOpen;
+
+	public EarthPavilion earthpavilion = new EarthPavilion();
+
+	public GeneralStar generalstar = new GeneralStar();
+
+	public OnlineLottery onlinelottery = new OnlineLottery();
+
+	public TechTree techtree = new TechTree();
+
+	public Dictionary<ulong, Dictionary<string, Param_Mod>> tech_tree_mods = new Dictionary<ulong, Dictionary<string, Param_Mod>>();
+
+	public Dictionary<byte, BuildingDrawing> buildingdrawings = new Dictionary<byte, BuildingDrawing>();
+
+	public Dictionary<uint, ShopLimitItem> shoplimititems = new Dictionary<uint, ShopLimitItem>();
+
+	public List<TeamFightShopItem> teamfightshopitems = new List<TeamFightShopItem>();
+
+	public FriendLottery friendlottery = new FriendLottery();
+
+	public Dictionary<uint, FriendLotteryItem> friendlotteryitems = new Dictionary<uint, FriendLotteryItem>();
+
+	public SevenDaysLogin sevendayslogin = new SevenDaysLogin();
+
+	public bool isSevenDaysLoginOpen;
+
+	public Dictionary<uint, AssaultShopItem> assaultShopPurchasedItems = new Dictionary<uint, AssaultShopItem>();
+
+	public AssaultStronghold assaultstronghold = new AssaultStronghold();
+
+	public Dictionary<byte, VipDailyShopItem> vipdailyshopitems = new Dictionary<byte, VipDailyShopItem>();
+
+	public Dictionary<ushort, Fund> funds = new Dictionary<ushort, Fund>();
+
+	public ActivityQuestManager activity_quest_mgr = new ActivityQuestManager();
+
+	public Dictionary<int, NewbieEnchantRecord> newbieenchantrecords = new Dictionary<int, NewbieEnchantRecord>();
+
+	public Dictionary<uint, NewbieEnchantAward> newbieenchantawards = new Dictionary<uint, NewbieEnchantAward>();
+
+	public Dictionary<uint, NewbieExchangeAward> newbieexchangeawards = new Dictionary<uint, NewbieExchangeAward>();
+
+	public Dictionary<uint, NewbieGeneralAward> newbiegeneralawards = new Dictionary<uint, NewbieGeneralAward>();
+
+	public Dictionary<uint, GiftBag> giftbags = new Dictionary<uint, GiftBag>();
+
+	public uint herostatue;
+
+	public Dictionary<uint, SpecialItemShop> specialitemshops = new Dictionary<uint, SpecialItemShop>();
+
+	public Dictionary<uint, ExchangeShop> exchangeshops = new Dictionary<uint, ExchangeShop>();
+
+	public List<ExchangeShopTemp> exchangeshoptemp = new List<ExchangeShopTemp>();
+
+	public Dictionary<uint, EveryDayLogin> everydaylogins = new Dictionary<uint, EveryDayLogin>();
+
+	public List<EveryDayLoginTemp> everydaylogintemp = new List<EveryDayLoginTemp>();
+
+	public Dictionary<uint, CostTimesRecord> costtimesrecords = new Dictionary<uint, CostTimesRecord>();
+
+	public Dictionary<uint, CostTimesAward> costtimesawards = new Dictionary<uint, CostTimesAward>();
+
+	public Dictionary<uint, ChristmasShop> ChristmasShops = new Dictionary<uint, ChristmasShop>();
+
+	public ChristmasShopTemp ChristmasShoptemp = new ChristmasShopTemp();
+
+	public ChristmasEvent christmasEvent = new ChristmasEvent();
+
+	public ShengJieLottery shengjieLottery = new ShengJieLottery();
+
+	public Dictionary<uint, ShengJieCard> m_ShengjieCards = new Dictionary<uint, ShengJieCard>();
+
+	public Dictionary<uint, ZhenYaoTaArmy> zhenyaota_armys = new Dictionary<uint, ZhenYaoTaArmy>();
+
+	public ChineseNewYearLottery chineseNewYearLottery = new ChineseNewYearLottery();
+
+	public SpiritAscend spiritascend = new SpiritAscend();
+
+	public Dictionary<uint, Treasury> treasuryItems = new Dictionary<uint, Treasury>();
+
+	public Dictionary<uint, CraftWorldBet> craftworldbets = new Dictionary<uint, CraftWorldBet>();
+
+	public CraftWorldBetRank craftworldbetrank = new CraftWorldBetRank();
+
+	public Rescue rescue = new Rescue();
+
+	public LakeTemple laketemple = new LakeTemple();
+
+	public GodList godlist = new GodList();
+
+	public Dictionary<uint, GodListElement> m_godListElements = new Dictionary<uint, GodListElement>();
+
+	public Dictionary<int, FormationSet> m_formationsets = new Dictionary<int, FormationSet>();
+
+	public Dictionary<uint, List<_Treasure>> m_newYearCheckinAwards = new Dictionary<uint, List<_Treasure>>();
+
+	public Dictionary<uint, uint> puzzle_sale_rate = new Dictionary<uint, uint>();
+
+	public Dictionary<int, Icon> icons = new Dictionary<int, Icon>();
+
+	public byte VIPLEVEL => (byte)((gold >= 0) ? vip_level : 0);
+
+	public uint UnreadMailNum
+	{
+		get
+		{
+			return unread_mail_num;
+		}
+		set
+		{
+			unread_mail_num = value;
+		}
+	}
+
+	public int NextStarTechPractice => (Global.getTemplate("star_tech", (uint)(base.star_tech + 1)) is _star_tech star_tech) ? ((int)star_tech.require_practice) : (-1);
+
+	public new long money
+	{
+		get
+		{
+			return base.money + money64;
+		}
+		set
+		{
+			base.money = 0;
+			money64 = value;
+		}
+	}
+
+	public void init()
+	{
+		campaigns_.Clear();
+		Hashtable templates = Global.getTemplates("campaign");
+		foreach (DictionaryEntry item in templates)
+		{
+			_campaign campaign = item.Value as _campaign;
+			if (Global.getTemplate("campaign_type", campaign.idcampaign_type) is _campaign_type)
+			{
+				Campaign campaign2 = new Campaign(campaign);
+				campaigns_[campaign2.id] = campaign2;
+			}
+		}
+		my_vip_template = Global.getTemplate("vip_template", VIPLEVEL) as _vip_template;
+		Hashtable templates2 = Global.getTemplates("building_area");
+		foreach (DictionaryEntry item2 in templates2)
+		{
+			_building_area building_area = item2.Value as _building_area;
+			building_areas[building_area.id] = new BuildingArea(building_area);
+		}
+		curArea = building_areas[1];
+		templates2 = Global.getTemplates("building");
+		foreach (DictionaryEntry item3 in templates2)
+		{
+			_building building = item3.Value as _building;
+			building_counts[building.id] = 0;
+		}
+		Global.craft_.loadCraftText();
+		Global.craft_world.loadCraftText();
+		Global.craft_tactic.loadCraftText();
+	}
+
+	public void post_init()
+	{
+		foreach (Amulet value in amulets.Values)
+		{
+			value.recalulate(bGenUpdate: false);
+		}
+	}
+
+	public float getExpRequire()
+	{
+		return Global.get_exp_require_character(level + 1);
+	}
+
+	public void setVipLevel(byte vl)
+	{
+		vip_level = vl;
+		my_vip_template = Global.getTemplate("vip_template", VIPLEVEL) as _vip_template;
+	}
+
+	public void addUI(uint id)
+	{
+		if (Global.getTemplate("ui_button", id) is _ui_button ui_button)
+		{
+			uis_[ui_button.name] = 1;
+		}
+	}
+
+	public void addUI(string name)
+	{
+		uis_[name] = 1;
+	}
+
+	public bool checkUI(string name)
+	{
+		if (name == null || name == string.Empty)
+		{
+			return true;
+		}
+		return uis_.ContainsKey(name);
+	}
+
+	public bool checkUI(uint id)
+	{
+		if (id == 0)
+		{
+			return true;
+		}
+		if (Global.getTemplate("ui_button", id) is _ui_button ui_button)
+		{
+			return uis_.ContainsKey(ui_button.name);
+		}
+		return false;
+	}
+
+	public void removeUI(uint id)
+	{
+		if (Global.getTemplate("ui_button", id) is _ui_button ui_button && checkUI(id))
+		{
+			uis_.Remove(ui_button.name);
+		}
+	}
+
+	public void removeUI(string name)
+	{
+		if (checkUI(name))
+		{
+			uis_.Remove(name);
+		}
+	}
+
+	public void addConsumeTip(uint id)
+	{
+		consume_tips_[id] = 1;
+	}
+
+	public void remConsumeTip(uint id)
+	{
+		consume_tips_.Remove(id);
+	}
+
+	public bool checkConsumeTip(uint id)
+	{
+		return consume_tips_.Contains(id);
+	}
+
+	public Dictionary<uint, bool> getConsumTip()
+	{
+		Dictionary<uint, bool> dictionary = new Dictionary<uint, bool>();
+		foreach (object key in consume_tips_.Keys)
+		{
+			dictionary[(uint)key] = true;
+		}
+		return dictionary;
+	}
+
+	public void addScenario(uint id)
+	{
+		scenarios_.Add(id);
+	}
+
+	public void addCampaign(game.net.data.StoC.Campaign c)
+	{
+		if (!campaigns_.ContainsKey((ushort)c.campaign.idcampaign))
+		{
+			return;
+		}
+		Campaign campaign = campaigns_[(ushort)c.campaign.idcampaign];
+		foreach (db_character_campaign_chest chest in c.chests)
+		{
+			if (campaign.chests_.ContainsKey((byte)chest.idchest))
+			{
+				campaign.chests_[(byte)chest.idchest].make(chest, campaign);
+			}
+		}
+		foreach (db_character_campaign_troop troop in c.troops)
+		{
+			if (campaign.troops_.ContainsKey((byte)troop.idtroop))
+			{
+				campaign.troops_[(byte)troop.idtroop].make(troop, campaign, campaign.anecdote);
+			}
+		}
+		campaign.make(c.campaign);
+	}
+
+	public Campaign getCampaign(ushort id)
+	{
+		if (campaigns_.ContainsKey(id))
+		{
+			return campaigns_[id];
+		}
+		return null;
+	}
+
+	public Artifact addArtifacts(game.net.data.StoC.Artifact a)
+	{
+		Artifact artifact = new Artifact(a);
+		artifacts[artifact.idartifact_template] = artifact;
+		if (artifact.idgeneral_template != ushort.MaxValue)
+		{
+			if (Global.character_.form_generals_.ContainsKey(artifact.idgeneral_template))
+			{
+				FormGeneral formGeneral = Global.character_.form_generals_[artifact.idgeneral_template];
+				if (formGeneral != null)
+				{
+					formGeneral.artifact = artifact;
+					formGeneral.CalcAllParam();
+				}
+			}
+			else
+			{
+				ushort idgeneral_template = artifact.idgeneral_template;
+				for (int i = 0; i < Global.character_.GeneralsOutSquad.Count; i++)
+				{
+					if (Global.character_.GeneralsOutSquad[i].id == idgeneral_template)
+					{
+						Global.character_.GeneralsOutSquad[i].artifact = artifact;
+						break;
+					}
+				}
+			}
+		}
+		if (artifact.template.isspecial > 0 && !arti_gens.ContainsKey(artifact.idartifact_template))
+		{
+			int num = -1;
+			Hashtable templates = Global.getTemplates("general_origin");
+			foreach (DictionaryEntry item in templates)
+			{
+				_general_origin general_origin = item.Value as _general_origin;
+				if (general_origin.origin == artifact.template.origin && (num == -1 || num > general_origin.form))
+				{
+					arti_gens[artifact.idartifact_template] = general_origin.idgeneral_template;
+					num = general_origin.form;
+				}
+			}
+		}
+		return artifact;
+	}
+
+	private bool check_gen_slot()
+	{
+		return Global.character_.form_generals_.Count < Global.CalcLevelSlot() + Global.character_.general_carry_slot_bought;
+	}
+
+	public void addGenerals(GeneralData gen)
+	{
+		FormGeneral formGeneral = new FormGeneral(gen);
+		if (check_gen_slot())
+		{
+			form_generals_[formGeneral.idgeneral_template] = formGeneral;
+		}
+		else
+		{
+			addGeneralsOutSquad(formGeneral.idgeneral_template, formGeneral.level, formGeneral.upgrade_lv, formGeneral.upgrade_exp);
+		}
+	}
+
+	public FormGeneral getFormGeneral(ushort id)
+	{
+		if (form_generals_.ContainsKey(id))
+		{
+			return form_generals_[id];
+		}
+		return null;
+	}
+
+	public void RemoveGeneral(ushort id)
+	{
+		if (form_generals_.ContainsKey(id))
+		{
+			form_generals_.Remove(id);
+			return;
+		}
+		GeneralsSimple item = null;
+		foreach (GeneralsSimple item2 in GeneralsOutSquad)
+		{
+			if (item2.id == id)
+			{
+				item = item2;
+				break;
+			}
+		}
+		GeneralsOutSquad.Remove(item);
+	}
+
+	public void handle_genswitch(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCSwitchGen_0x182 sCSwitchGen_0x = JSProtoBuf.Serializer.Deserialize<SCSwitchGen_0x182>(stream);
+		addGeneral((ushort)sCSwitchGen_0x.newid, sCSwitchGen_0x.insquad, sCSwitchGen_0x.weaponid, sCSwitchGen_0x.armorid, sCSwitchGen_0x.artifactid, sCSwitchGen_0x.amuletid);
+		foreach (Formation value in formations_.Values)
+		{
+			for (int i = 0; i < value.spotgen.Count; i++)
+			{
+				if (value.spotgen[i] == (int)sCSwitchGen_0x.oldid)
+				{
+					value.spotgen[i] = (int)sCSwitchGen_0x.newid;
+				}
+			}
+		}
+	}
+
+	public void addGrave(db_character_grave g)
+	{
+		_character_grave character_grave = new _character_grave();
+		character_grave.Set(g);
+		graves.Add(character_grave.idgrave, character_grave);
+	}
+
+	public void addGravePocketItem(db_character_grave_pocket g)
+	{
+		GravePocketItem item = new GravePocketItem(g);
+		gravepocketitem.Add(item);
+	}
+
+	public int get_GenCount()
+	{
+		return form_generals_.Count + GeneralsOutSquad.Count;
+	}
+
+	public int get_GenLevel()
+	{
+		int num = 0;
+		foreach (KeyValuePair<ushort, FormGeneral> item in form_generals_)
+		{
+			num += item.Value.get_level();
+		}
+		foreach (GeneralsSimple item2 in GeneralsOutSquad)
+		{
+			num += (int)item2.level;
+		}
+		return num;
+	}
+
+	public void handlePatrol(CharPatrol pkt)
+	{
+		patrolSlotBought = pkt.slot_bought;
+		patrolRefreshTime = pkt.refresh_time;
+		patrolSlot.Clear();
+		for (int i = 0; i < 5; i++)
+		{
+			patrolSlotInfo patrolSlotInfo2 = new patrolSlotInfo();
+			patrolSlotInfo2.level = pkt.slot_level[i];
+			patrolSlotInfo2.cd = DateTime.Now.AddSeconds(pkt.slot_cd[i]);
+			patrolSlotInfo2.cd_times = pkt.cdtimes[i];
+			patrolSlotInfo2.genid = pkt.slot_gen[i];
+			patrolSlotInfo2.refresh_times = pkt.reftimes[i];
+			patrolSlotInfo2.old_level = pkt.slot_oldlevel[i];
+			patrolSlotInfo2.old_mode = pkt.slot_oldmode[i];
+			patrolSlotInfo2.lastgot = pkt.lastgot[i];
+			patrolSlot.Add(patrolSlotInfo2);
+		}
+	}
+
+	public void handleCity(City pkt)
+	{
+		city_days = pkt.days;
+		city_level = pkt.level;
+	}
+
+	public void handleExchange(Exchange pkt)
+	{
+		exchange.is_auto = pkt.is_auto == 1;
+		exchange.refresh_time = pkt.refresh_time;
+		exchange.auto_money = pkt.auto_money;
+		exchange.today_times = pkt.today_times;
+	}
+
+	public void addFormations(FormMap formdata)
+	{
+		Formation value = new Formation(formdata);
+		formations_[formdata.id] = value;
+	}
+
+	public Formation getFormation(int id)
+	{
+		if (formations_.ContainsKey(id))
+		{
+			return formations_[id];
+		}
+		return null;
+	}
+
+	public void set_cur_form(int id)
+	{
+		cur_form = id;
+	}
+
+	public void handelFormUnlock(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCFormationUnlock_0x135 sCFormationUnlock_0x = JSProtoBuf.Serializer.Deserialize<SCFormationUnlock_0x135>(stream);
+		if (!formations_[(int)sCFormationUnlock_0x.id].availability)
+		{
+			formations_[(int)sCFormationUnlock_0x.id].availability = true;
+			if (formations_[(int)sCFormationUnlock_0x.id].spotgen.Count == 0)
+			{
+				formations_[(int)sCFormationUnlock_0x.id].spotgen.Add(0);
+			}
+			else
+			{
+				formations_[(int)sCFormationUnlock_0x.id].spotgen[0] = 0;
+			}
+			newformid.Add(sCFormationUnlock_0x.id);
+		}
+		formations_[(int)sCFormationUnlock_0x.id].spotnum = (int)sCFormationUnlock_0x.spot;
+	}
+
+	public bool AddOneGenToCurForm(uint id)
+	{
+		if (!form_generals_.ContainsKey((ushort)id))
+		{
+			return false;
+		}
+		bool flag = false;
+		int index = -1;
+		Formation formation = formations_[cur_form];
+		CSFormationUpdate_0x12a cSFormationUpdate_0x12a = new CSFormationUpdate_0x12a();
+		cSFormationUpdate_0x12a.cur_formation = true;
+		cSFormationUpdate_0x12a.formid = (uint)formation.id;
+		for (int i = 0; i < 8; i++)
+		{
+			if (formation.spotgen[i] == id)
+			{
+				return true;
+			}
+			if (!flag && formation.spotgen[i] == -1 && i < formation.spotnum)
+			{
+				cSFormationUpdate_0x12a.genid.Add((int)id);
+				index = i;
+				flag = true;
+			}
+			else
+			{
+				cSFormationUpdate_0x12a.genid.Add(formation.spotgen[i]);
+			}
+		}
+		if (flag)
+		{
+			formation.spotgen[index] = (int)id;
+			Global.m_client.Send(298, cSFormationUpdate_0x12a, null);
+		}
+		return flag;
+	}
+
+	public void ChangeGen_OutUI(int genid, int spot)
+	{
+		if (!form_generals_.ContainsKey((ushort)genid))
+		{
+			return;
+		}
+		Formation formation = formations_[cur_form];
+		if (spot > formation.spotnum)
+		{
+			return;
+		}
+		int num = -1;
+		if (formation.spotgen.Contains(genid))
+		{
+			num = formation.spotgen.IndexOf(genid);
+		}
+		if (num != -1 || formation.spotgen[spot - 1] != 0)
+		{
+			int value = formation.spotgen[spot - 1];
+			if (num != -1)
+			{
+				formation.spotgen[num] = value;
+			}
+			formation.spotgen[spot - 1] = genid;
+			CSFormationUpdate_0x12a cSFormationUpdate_0x12a = new CSFormationUpdate_0x12a();
+			cSFormationUpdate_0x12a.cur_formation = true;
+			cSFormationUpdate_0x12a.formid = (uint)formation.id;
+			for (int i = 0; i < 8; i++)
+			{
+				cSFormationUpdate_0x12a.genid.Add(formation.spotgen[i]);
+			}
+			Global.m_client.Send(298, cSFormationUpdate_0x12a, null);
+		}
+	}
+
+	public void handle_formforceupdate(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCFormForceUpdate_0x181 sCFormForceUpdate_0x = JSProtoBuf.Serializer.Deserialize<SCFormForceUpdate_0x181>(stream);
+		foreach (FormMap item in sCFormForceUpdate_0x.form)
+		{
+			addFormations(item);
+		}
+	}
+
+	public void addGeneralsOutSquad(uint id, uint level, byte upgrade_lv, uint upgrade_exp)
+	{
+		GeneralsSimple item = new GeneralsSimple(id, id, level, upgrade_lv, upgrade_exp);
+		GeneralsOutSquad.Add(item);
+	}
+
+	public void remParam(string name, int param1)
+	{
+		remParam(name, 0, param1);
+	}
+
+	public void remParam(string name, int param0, int param1)
+	{
+		addParam(name, param0, -param1);
+	}
+
+	public void remParam(Treasure t)
+	{
+		remParam(t.idtreasure_type, t.param0, t.param1);
+	}
+
+	public void remParam(uint _treasuretype, int _param0, int _param1)
+	{
+		if (Global.getTemplate("treasure_type", _treasuretype) is _treasure_type treasure_type)
+		{
+			addParam(treasure_type.name, _param0, -_param1);
+		}
+	}
+
+	public void addParam(_Treasure t)
+	{
+		if (t.add_to_treasury)
+		{
+			Global.character_.addParamToTreasury(t.type, t.param[0], t.param[1]);
+		}
+		else
+		{
+			Global.character_.addParam(t.type, t.param[0], t.param[1]);
+		}
+	}
+
+	public void addParam(uint treasuretype, int param0, int param1)
+	{
+		if (Global.getTemplate("treasure_type", treasuretype) is _treasure_type treasure_type)
+		{
+			addParam(treasure_type.name, param0, param1);
+		}
+	}
+
+	public void addParam(string name, int param0, int param1)
+	{
+		switch (name)
+		{
+		case "gold":
+			if (gold >= 0)
+			{
+				gold += param1;
+			}
+			break;
+		case "money":
+			money += param1;
+			break;
+		case "stamina":
+			stamina += (short)param1;
+			break;
+		case "practice":
+			practice += param1;
+			break;
+		case "experience":
+			addExp(param1, (param0 != 0) ? true : false);
+			break;
+		case "material":
+		{
+			if (materials.ContainsKey((ushort)param0))
+			{
+				materials[(ushort)param0].count += (ushort)param1;
+				materials[(ushort)param0].isnew = true;
+				break;
+			}
+			db_character_material db_character_material = new db_character_material();
+			db_character_material.idtreasure_type = (byte)(param0 >> 8);
+			db_character_material.level = (byte)(param0 & 0xFF);
+			db_character_material.count = (uint)param1;
+			db_character_material.isnew = true;
+			Material value = new Material(db_character_material);
+			materials.Add((ushort)param0, value);
+			break;
+		}
+		case "spirit_food":
+			spirit_food += param1;
+			break;
+		case "enchant_stone":
+			enchant_stone += param1;
+			break;
+		case "mana":
+			mana += param1;
+			break;
+		case "enchant_pick":
+			sliver_pick += param1;
+			break;
+		case "stone":
+			stone += param1;
+			break;
+		case "reputation":
+		{
+			uint num = CheckRepLevel();
+			reputation += (uint)param1;
+			uint num2 = CheckRepLevel();
+			if (num2 > num)
+			{
+				artifact_remind = 1;
+			}
+			break;
+		}
+		case "generalsoul_blue":
+			generalsoul_blue += param1;
+			break;
+		case "generalsoul_purple":
+			generalsoul_purple += param1;
+			break;
+		case "generalsoul_orange":
+			generalsoul_orange += param1;
+			break;
+		case "generalsoul_red":
+			generalsoul_red += param1;
+			break;
+		case "gem_shard":
+			gem_shard += param1;
+			break;
+		case "gem_essence":
+			gem_essence += param1;
+			break;
+		case "skill_point":
+			skill_point += param1;
+			break;
+		case "fruit1":
+			fruit1 += param1;
+			break;
+		case "fruit2":
+			fruit2 += param1;
+			break;
+		case "fruit3":
+			fruit3 += param1;
+			break;
+		case "fruit4":
+			fruit4 += param1;
+			break;
+		case "fruit5":
+			fruit5 += param1;
+			break;
+		case "artifact":
+		{
+			Artifact artifact = new Artifact((ushort)param0);
+			if (!Global.character_.artifacts.ContainsKey(artifact.idartifact_template))
+			{
+				Global.character_.artifacts.Add(artifact.idartifact_template, artifact);
+			}
+			break;
+		}
+		case "nation_contribution":
+			nation_contribution += param1;
+			break;
+		case "nation_reputation":
+			nation_reputation += (uint)param1;
+			break;
+		case "hero_token":
+			Global.character_.hero_token += (uint)param1;
+			Global.character_.hero_token_time = Global.character_.craft_match;
+			break;
+		case "spirit_skill_money":
+			spirit.skill_money += (uint)param1;
+			break;
+		case "dark_iron":
+			dark_iron += param1;
+			break;
+		case "skytower_challenge":
+			Global.character_.skytower.challenge_times += param1;
+			break;
+		case "generalbookcount":
+			Global.character_.generalbookcount += param1;
+			break;
+		case "nation_resource":
+			Global.nation_.me.resource += (uint)param1;
+			break;
+		case "rune":
+			if (Global.character_.runes.ContainsKey((byte)param0))
+			{
+				if (param1 > 0)
+				{
+					Global.character_.runes[(byte)param0].num += (uint)param1;
+				}
+				else if ((int)Global.character_.runes[(byte)param0].num + param1 >= 0)
+				{
+					Global.character_.runes[(byte)param0].num = Global.character_.runes[(byte)param0].num + (uint)param1;
+					if (Global.character_.runes[(byte)param0].num == 0)
+					{
+						Global.character_.runes.Remove((byte)param0);
+					}
+				}
+			}
+			else if (param1 > 0)
+			{
+				Rune rune = new Rune();
+				rune.id_rune = (byte)param0;
+				rune.num = (uint)param1;
+				Global.character_.runes.Add(rune.id_rune, rune);
+			}
+			break;
+		case "diamond":
+			diamond += param1;
+			break;
+		case "high_stone":
+			high_stone += param1;
+			break;
+		case "building_drawing":
+		{
+			byte b = (byte)param0;
+			bool flag = false;
+			foreach (object value2 in Global.getTemplates("building_unique_drawing").Values)
+			{
+				_building_unique_drawing building_unique_drawing = (_building_unique_drawing)value2;
+				if (building_unique_drawing.idbuilding == b)
+				{
+					flag = true;
+				}
+			}
+			if (!flag || !buildingdrawings.ContainsKey(b))
+			{
+				setBuildingDrawing((byte)param0, getBuildingDrawing((byte)param0) + param1);
+			}
+			break;
+		}
+		case "building_material":
+			building_material += param1;
+			break;
+		case "friend_point":
+			friend_point += param1;
+			break;
+		case "friend_exp":
+			break;
+		case "honor_point":
+			honor_point += param1;
+			break;
+		case "tech_book":
+			tech_book += param1;
+			break;
+		case "assault_score":
+			assault_score += param1;
+			break;
+		case "coupon":
+			if (Global.character_.christmasEvent != null)
+			{
+				Global.character_.christmasEvent.coupon += param1;
+			}
+			break;
+		case "lottery_ticket":
+			if (Global.character_.christmasEvent != null)
+			{
+				Global.character_.christmasEvent.lottery_ticket += param1;
+			}
+			break;
+		case "dragon_soul":
+			dragon_soul += param1;
+			break;
+		case "spirit_essence_blue":
+			spirit_skill_essence_blue += param1;
+			break;
+		case "spirit_essence_purple":
+			spirit_skill_essence_purple += param1;
+			break;
+		case "spirit_essence_orange":
+			spirit_skill_essence_orange += param1;
+			break;
+		case "craft_point":
+			craft_point += param1;
+			break;
+		case "craft_bet_point":
+			craft_bet_point += param1;
+			break;
+		case "rescue_token_green":
+			rescue_token_green += param1;
+			break;
+		case "rescue_token_blue":
+			rescue_token_blue += param1;
+			break;
+		case "rescue_token_purple":
+			rescue_token_purple += param1;
+			break;
+		case "rescue_token_orange":
+			rescue_token_orange += param1;
+			break;
+		case "spirit_skill":
+			Global.character_.spirit.upgradeSkill((uint)param1);
+			break;
+		case "spirit_exp":
+			if (Global.character_.spirit != null)
+			{
+				Global.character_.spirit.addExp((uint)param1);
+			}
+			break;
+		case "amulet_forge_tool":
+			Global.character_.amulet_forge_tool += param1;
+			break;
+		case "laketemple_point":
+			Global.character_.laketemple_point += param1;
+			break;
+		case "god_list_element":
+			if (!m_godListElements.ContainsKey((uint)param0))
+			{
+				if (param1 > 0)
+				{
+					GodListElement godListElement = new GodListElement();
+					godListElement.idelement = (uint)param0;
+					godListElement.num = param1;
+					m_godListElements.Add(godListElement.idelement, godListElement);
+				}
+			}
+			else if (param1 > 0)
+			{
+				m_godListElements[(uint)param0].num += param1;
+			}
+			else if (m_godListElements[(uint)param0].num + param1 >= 0)
+			{
+				m_godListElements[(uint)param0].num += param1;
+				if (m_godListElements[(uint)param0].num == 0)
+				{
+					m_godListElements.Remove((uint)param0);
+				}
+			}
+			break;
+		case "god_list_slot":
+			if (!godlist.m_slots.ContainsKey((uint)param0) && param1 > 0)
+			{
+				addGodListSlot((uint)param0);
+			}
+			break;
+		case "general_public_exp":
+			Global.character_.general_public_exp += (uint)param1;
+			break;
+		case "formation_set":
+			Global.character_.formation_set += param1;
+			break;
+		case "divine_soul":
+			Global.character_.divine_soul += param1;
+			break;
+		case "general_card":
+			if (!m_ShengjieCards.ContainsKey((uint)param0))
+			{
+				if (param1 > 0)
+				{
+					ShengJieCard shengJieCard = new ShengJieCard();
+					shengJieCard.count = param1;
+					shengJieCard.shengjie_level = 0u;
+					shengJieCard.origin_id = (uint)param0;
+					if (Global.getTemplate("general_shengjie_template", (uint)param0) is _general_shengjie_template general_shengjie_template)
+					{
+						shengJieCard.cardrank = general_shengjie_template.card_rank;
+					}
+					Global.character_.m_ShengjieCards.Add(shengJieCard.origin_id, shengJieCard);
+				}
+			}
+			else if (param1 > 0)
+			{
+				m_ShengjieCards[(uint)param0].count += param1;
+			}
+			else if (m_ShengjieCards[(uint)param0].count - param1 >= 0)
+			{
+				m_ShengjieCards[(uint)param0].count += param1;
+			}
+			break;
+		case "general_seal":
+			Global.character_.general_seal += param1;
+			break;
+		case "card_lottery_ticket":
+			Global.character_.card_lottery_ticket += param1;
+			break;
+		case "ladder_gift":
+			Global.character_.ladder_gift += param1;
+			break;
+		case "icon":
+			if (!Global.character_.icons.ContainsKey(param0) && Global.getTemplate("icon_template", (uint)param0) is _icon_template icon_template)
+			{
+				Icon icon = new Icon();
+				icon.icon = param0;
+				icon.expire_time = icon_template.validity;
+				Global.character_.icons.Add(param0, icon);
+			}
+			break;
+		default:
+			Logger.Log("Wrong AddParam! Check the function.");
+			break;
+		}
+	}
+
+	public bool checkBonus(byte type, int param0, int param1)
+	{
+		return type switch
+		{
+			4 => param1 <= money, 
+			6 => param1 <= practice, 
+			7 => param1 <= gold, 
+			9 => param1 <= spirit_food, 
+			10 => param1 <= enchant_stone, 
+			30 => param1 <= stone, 
+			38 => param1 <= generalsoul_blue, 
+			39 => param1 <= generalsoul_purple, 
+			40 => param1 <= generalsoul_orange, 
+			48 => param1 <= fruit1, 
+			49 => param1 <= fruit2, 
+			50 => param1 <= fruit3, 
+			51 => param1 <= fruit4, 
+			52 => param1 <= fruit5, 
+			60 => param1 <= getRune(param0), 
+			63 => param1 <= high_stone, 
+			64 => param1 <= getBuildingDrawing((byte)param0), 
+			65 => param1 <= building_material, 
+			66 => param1 <= friend_point, 
+			68 => param1 <= honor_point, 
+			69 => param1 <= tech_book, 
+			5 => param1 <= mana, 
+			57 => param1 <= dark_iron, 
+			70 => param1 <= assault_score, 
+			74 => param1 <= dragon_soul, 
+			75 => param1 <= spirit_skill_essence_blue, 
+			76 => param1 <= spirit_skill_essence_purple, 
+			77 => param1 <= spirit_skill_essence_orange, 
+			80 => param1 <= rescue_token_green, 
+			81 => param1 <= rescue_token_blue, 
+			82 => param1 <= rescue_token_purple, 
+			83 => param1 <= rescue_token_orange, 
+			91 => param1 <= getGodListElement((uint)param0), 
+			92 => param1 <= general_public_exp, 
+			93 => param1 <= formation_set, 
+			94 => param1 <= divine_soul, 
+			95 => param1 <= getShengjieCardscount((uint)param0), 
+			99 => param1 <= ladder_gift, 
+			_ => false, 
+		};
+	}
+
+	public int getRune(int param0)
+	{
+		if (Global.character_.runes.ContainsKey((byte)param0) && Global.character_.runes[(byte)param0].num != 0)
+		{
+			return (int)Global.character_.runes[(byte)param0].num;
+		}
+		return 0;
+	}
+
+	public bool addGeneral(ushort genid, bool isInSquad, uint weaponid, uint armorid, uint artifactid, uint amuletid)
+	{
+		ushort num = genid;
+		byte b = 0;
+		if (Global.getTemplate("general_origin", genid) is _general_origin general_origin)
+		{
+			num = general_origin.origin;
+			b = general_origin.form;
+		}
+		FormGeneral formGeneral = null;
+		GeneralsSimple generalsSimple = null;
+		byte upgrade_lv = 0;
+		uint upgrade_exp = 0u;
+		foreach (FormGeneral value in Global.character_.form_generals_.Values)
+		{
+			if (value.origin != null && value.origin.origin == num)
+			{
+				formGeneral = value;
+				upgrade_exp = value.upgrade_exp;
+				upgrade_lv = value.upgrade_lv;
+				Global.character_.form_generals_.Remove(formGeneral.idgeneral_template);
+				break;
+			}
+		}
+		foreach (GeneralsSimple item2 in Global.character_.GeneralsOutSquad)
+		{
+			if (item2.origin != null && item2.origin.origin == num)
+			{
+				generalsSimple = item2;
+				upgrade_exp = item2.upgrade_exp;
+				upgrade_lv = item2.upgrade_lv;
+				Global.character_.GeneralsOutSquad.Remove(item2);
+				break;
+			}
+		}
+		if (isInSquad)
+		{
+			FormGeneral formGeneral2 = new FormGeneral(genid, weaponid, armorid, artifactid, amuletid);
+			Global.character_.form_generals_[genid] = formGeneral2;
+			formGeneral2.upgrade_lv = upgrade_lv;
+			formGeneral2.upgrade_exp = upgrade_exp;
+			formGeneral2.CalcAllParam();
+			return true;
+		}
+		GeneralsSimple item = new GeneralsSimple(genid, genid, 1u, formGeneral.upgrade_lv, formGeneral.upgrade_exp);
+		Global.character_.GeneralsOutSquad.Add(item);
+		return true;
+	}
+
+	private uint CheckRepLevel()
+	{
+		List<_artifact_template> list = new List<_artifact_template>();
+		list.Clear();
+		Hashtable templates = Global.getTemplates("artifact_template");
+		foreach (DictionaryEntry item in templates)
+		{
+			_artifact_template artifact_template = (_artifact_template)item.Value;
+			if (artifact_template.canbuy == 1)
+			{
+				list.Add(item.Value as _artifact_template);
+			}
+		}
+		list.Sort((_artifact_template _a, _artifact_template _b) => _a.reputation.CompareTo(_b.reputation));
+		for (int num = 0; num < list.Count; num++)
+		{
+			if (Global.character_.reputation < list[num].reputation)
+			{
+				uint result = 0u;
+				if (num >= 1)
+				{
+					result = list[num - 1].idartifact_template;
+				}
+				return result;
+			}
+		}
+		return 0u;
+	}
+
+	public void addExp(int _exp, bool bGeneral)
+	{
+		int num = experience + _exp;
+		short num2 = level;
+		bool flag = false;
+		while (true)
+		{
+			if (num2 >= Global.PLAYER_LEVEL_MAX)
+			{
+				if (!(Global.getTemplate("exp_require_character", (uint)(num2 + 1)) is _exp_require_character exp_require_character))
+				{
+					return;
+				}
+				if (num >= exp_require_character.exp)
+				{
+					num = (int)(exp_require_character.exp - 1);
+				}
+			}
+			if (!(Global.getTemplate("exp_require_character", (uint)(num2 + 1)) is _exp_require_character exp_require_character2) || num < exp_require_character2.exp)
+			{
+				break;
+			}
+			num2++;
+			flag = true;
+			num -= (int)exp_require_character2.exp;
+		}
+		if (level < 10 && num2 >= 10)
+		{
+			Global.Level10Http();
+			__BaseUI.GetMessageBox().HDTAdvert("http://map.ra.icast.cn/event?id=MjQ1X2Y3MTZlY2Yw");
+		}
+		if (level < 30 && num2 >= 30)
+		{
+			__BaseUI.GetMessageBox().HDTAdvert("http://map.ra.icast.cn/event?id=MjQ1XzMyMzE1NWU0");
+		}
+		for (short num3 = (short)(level + 1); num3 <= num2; num3++)
+		{
+			Global.ExternalCall("LevelUpTo", num3);
+		}
+		level = num2;
+		experience = num;
+		if (flag)
+		{
+			int num4 = 0;
+			foreach (uint item in newgenid)
+			{
+				_general_template generalTemplate = Global.getGeneralTemplate(item);
+				if (generalTemplate.unlock_level <= level)
+				{
+					num4++;
+				}
+			}
+			if (num4 > 0)
+			{
+				Global.newgen_reset(num4);
+			}
+			Global.character_.change_bvscore();
+			Logger.Log("Levelup");
+			if (Global.game_data["channel"].ToString() == "51")
+			{
+				__BaseUI.GetMessageBox().LevelUPTo51(level);
+			}
+			calcReturnGiftRedCount();
+			if (Global.getTemplate("buddy_list_level", (uint)Global.character_.level) is _buddy_list_level buddy_list_level)
+			{
+				Global.character_.show_buddy_list += (byte)buddy_list_level.show;
+			}
+		}
+		if (!bGeneral)
+		{
+			return;
+		}
+		foreach (FormGeneral value in form_generals_.Values)
+		{
+			value.addExp(_exp, (ushort)level);
+		}
+	}
+
+	public Equipment addEquipment(db_character_equipment d)
+	{
+		Equipment equipment = new Equipment(d);
+		equipments[equipment.id] = equipment;
+		if (equipment.idgeneral_template != ushort.MaxValue)
+		{
+			FormGeneral formGeneral = getFormGeneral(equipment.idgeneral_template);
+			if (formGeneral != null)
+			{
+				_equipment_main equipment_main = Global.getTemplate("equipment_main", equipment.idequipment_main) as _equipment_main;
+				if (equipment_main.idequipment_type == 1)
+				{
+					formGeneral.equipments[0] = equipment;
+				}
+				else
+				{
+					formGeneral.equipments[1] = equipment;
+				}
+			}
+		}
+		return equipment;
+	}
+
+	public void remEquipment(byte id)
+	{
+		Equipment equipment = getEquipment(id);
+		if (equipment != null)
+		{
+			equipments.Remove(id);
+		}
+	}
+
+	public Equipment getEquipment(byte id)
+	{
+		if (equipments.ContainsKey(id))
+		{
+			return equipments[id];
+		}
+		return null;
+	}
+
+	public Amulet addAmulet(db_character_amulet d)
+	{
+		Amulet amulet = new Amulet(d);
+		amulets[amulet.id] = amulet;
+		if (amulet.idgeneral_template != ushort.MaxValue && form_generals_.ContainsKey(amulet.idgeneral_template))
+		{
+			FormGeneral formGeneral = form_generals_[amulet.idgeneral_template];
+			if (formGeneral != null)
+			{
+				formGeneral.amulet = amulet;
+				formGeneral.CalcAllParam();
+			}
+		}
+		return amulet;
+	}
+
+	public void remAmulet(byte id)
+	{
+		Amulet amulet = getAmulet(id);
+		if (amulet != null)
+		{
+			amulets.Remove(id);
+		}
+	}
+
+	public Amulet getAmulet(byte id)
+	{
+		if (amulets.ContainsKey(id))
+		{
+			return amulets[id];
+		}
+		return null;
+	}
+
+	public Gem addGem(db_character_gem d)
+	{
+		Gem gem = new Gem(d);
+		gems[gem.id] = gem;
+		return gem;
+	}
+
+	public void remGem(ushort id)
+	{
+		Gem gem = getGem(id);
+		if (gem != null)
+		{
+			gems.Remove(id);
+		}
+	}
+
+	public Gem getGem(ushort id)
+	{
+		if (gems.ContainsKey(id))
+		{
+			return gems[id];
+		}
+		return null;
+	}
+
+	public int gem_slot_count()
+	{
+		int num = 0;
+		foreach (Gem value in gems.Values)
+		{
+			if (value.idamulet == 0 && value.slot < gem_slot_max())
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	public int amulet_slot_count()
+	{
+		int num = 0;
+		foreach (Amulet value in amulets.Values)
+		{
+			if (value.idgeneral_template == ushort.MaxValue && value.slot < amulet_slot_max())
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	public void addQuests(db_character_quest quest)
+	{
+		Quest quest2 = new Quest(quest);
+		quests[quest2.idquest] = quest2;
+		if (quest2.condition_flag)
+		{
+			trace_finished[quest2.idquest] = quest2;
+			return;
+		}
+		switch ((Global.getTemplate("quest", quest2.idquest) as _quest).idquest_type)
+		{
+		case 1:
+			trace_main[quest2.idquest] = quest2;
+			break;
+		case 2:
+			trace_daily[quest2.idquest] = quest2;
+			break;
+		case 8:
+			trace_sub[quest2.idquest] = quest2;
+			break;
+		}
+	}
+
+	public Quest getQuest(ushort id)
+	{
+		if (quests.ContainsKey(id))
+		{
+			return quests[id];
+		}
+		return null;
+	}
+
+	public Quest getFirstQuest()
+	{
+		Quest quest = null;
+		if (trace_finished.Count > 0)
+		{
+			foreach (KeyValuePair<ushort, Quest> item in trace_finished)
+			{
+				if (quest == null || quest.refresh_time > item.Value.refresh_time)
+				{
+					quest = item.Value;
+				}
+			}
+		}
+		else if (trace_main.Count > 0)
+		{
+			foreach (KeyValuePair<ushort, Quest> item2 in trace_main)
+			{
+				if (quest == null || quest.refresh_time > item2.Value.refresh_time)
+				{
+					quest = item2.Value;
+				}
+			}
+		}
+		return quest;
+	}
+
+	public void handleQuests(MemoryStream stream, object arg)
+	{
+		SCQuest_0x106 sCQuest_0x = JSProtoBuf.Serializer.Deserialize<SCQuest_0x106>(stream);
+		foreach (SCQuestOne quest in sCQuest_0x.quests)
+		{
+			updateQuest(quest);
+		}
+		foreach (db_character_activity act in sCQuest_0x.acts)
+		{
+			updateActivity(act);
+		}
+	}
+
+	public void addDivineGeneralStar(ushort origin, byte treeid)
+	{
+		if (divinegeneralstars.ContainsKey(origin))
+		{
+			divinegeneralstars[origin].setTreeStar(treeid, (ushort)(divinegeneralstars[origin].getTreeStar(treeid) + 1));
+			return;
+		}
+		DivineGeneralStar divineGeneralStar = new DivineGeneralStar();
+		divineGeneralStar.origin = origin;
+		divineGeneralStar.setTreeStar(treeid, 1);
+		divinegeneralstars.Add(origin, divineGeneralStar);
+	}
+
+	public bool isGeneralVisible(ushort genid)
+	{
+		if (Global.getTemplate("general_template", genid) is _general_template general_template)
+		{
+			switch (general_template.special_event)
+			{
+			case 0:
+				return false;
+			case 1:
+				switch (genid)
+				{
+				case 211:
+				{
+					bool flag = false;
+					foreach (GeneralsSimple item in GeneralsOutSquad)
+					{
+						if (item.id == 22)
+						{
+							flag = true;
+						}
+					}
+					if (form_generals_.ContainsKey(22) || flag)
+					{
+						return true;
+					}
+					return false;
+				}
+				case 234:
+					return true;
+				case 239:
+					if (Global.character_.campaigns_.ContainsKey(72))
+					{
+						if (Global.character_.campaigns_[72].finished)
+						{
+							return true;
+						}
+						return false;
+					}
+					return false;
+				case 37:
+					if (Global.character_.level >= 80)
+					{
+						if (Global.character_.campaigns_.ContainsKey(313))
+						{
+							if (Global.character_.campaigns_[313].finished)
+							{
+								return true;
+							}
+							return false;
+						}
+						return false;
+					}
+					return false;
+				default:
+					return false;
+				}
+			case 2:
+				return false;
+			}
+		}
+		return false;
+	}
+
+	public void updateQuest(SCQuestOne onequest)
+	{
+		ushort key = (ushort)onequest.info.idquest;
+		if (onequest.state == 0)
+		{
+			if (!quests.ContainsKey(key))
+			{
+				addQuests(onequest.info);
+			}
+		}
+		else if (onequest.state == 1)
+		{
+			if (!quests.ContainsKey(key))
+			{
+				return;
+			}
+			quests[key].condition_param = onequest.info.condition_param;
+			quests[key].condition_flag = onequest.info.condition_flag;
+			if (onequest.info.condition_flag)
+			{
+				if (!trace_finished.ContainsKey(key))
+				{
+					trace_finished[key] = quests[key];
+				}
+				if (trace_main.ContainsKey(key))
+				{
+					trace_main.Remove(key);
+				}
+				else if (trace_sub.ContainsKey(key))
+				{
+					trace_sub.Remove(key);
+				}
+				else if (trace_daily.ContainsKey(key))
+				{
+					trace_daily.Remove(key);
+				}
+			}
+		}
+		else if (onequest.state == 2 && quests.ContainsKey(key))
+		{
+			quests[key].state = true;
+			if (trace_finished.ContainsKey(key))
+			{
+				trace_finished.Remove(key);
+			}
+		}
+	}
+
+	public void addActs(db_character_activity d)
+	{
+		Activity activity = new Activity(d);
+		acts[activity.idactivity] = activity;
+	}
+
+	public void updateActivity(db_character_activity oneact)
+	{
+		addActs(oneact);
+	}
+
+	public void addActReward(db_character_activity_reward d)
+	{
+		if (act_rewards.ContainsKey(d.idact_reward))
+		{
+			act_rewards[d.idact_reward].Set(d);
+			return;
+		}
+		Activity_Reward activity_Reward = new Activity_Reward(d);
+		act_rewards[activity_Reward.idact_reward] = activity_Reward;
+	}
+
+	public byte getSevendaysGot(uint idx)
+	{
+		byte result = 0;
+		if (sevendays.ContainsKey(idx))
+		{
+			result = sevendays[idx].got;
+		}
+		return result;
+	}
+
+	public void handelActvity(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCActivity_0x163 sCActivity_0x = JSProtoBuf.Serializer.Deserialize<SCActivity_0x163>(stream);
+		foreach (db_character_activity_reward act_reward in sCActivity_0x.act_rewards)
+		{
+			Global.character_.addActReward(act_reward);
+		}
+		set_reward_num();
+		foreach (db_character_activity act in sCActivity_0x.acts)
+		{
+			Global.character_.addActs(act);
+			Activity activity = acts[act.idactivity];
+			act_rewards[activity.temp.idreward].update(activity);
+		}
+	}
+
+	public void set_reward_num()
+	{
+		Global._quest_act_num = 0;
+		foreach (Activity_Reward value in act_rewards.Values)
+		{
+			if (value.finished_flag && value.refresh <= TimeUtil.Now)
+			{
+				Global._quest_act_num++;
+			}
+		}
+	}
+
+	public Cooldown getCooldown(byte id)
+	{
+		if (cooldowns.ContainsKey(id))
+		{
+			return cooldowns[id];
+		}
+		return null;
+	}
+
+	public Cooldown getCampaignCooldown(uint id)
+	{
+		if (campaign_cooldowns.ContainsKey(id))
+		{
+			return campaign_cooldowns[id];
+		}
+		return null;
+	}
+
+	public Material getMaterial(ushort id)
+	{
+		if (id == 0)
+		{
+			return null;
+		}
+		if (materials.ContainsKey(id))
+		{
+			return materials[id];
+		}
+		db_character_material db_character_material = new db_character_material();
+		db_character_material.count = 0u;
+		db_character_material.idtreasure_type = (byte)(id >> 8);
+		db_character_material.level = (byte)(id & 0xFF);
+		materials[id] = new Material(db_character_material);
+		return materials[id];
+	}
+
+	public void addGuild(SCGuildOne ginfo)
+	{
+		Guild guild = new Guild();
+		guild.Set(ginfo.guild);
+		guild.master_name = ginfo.master_name;
+		guild.size = (int)ginfo.member_count;
+		if (guilds.ContainsKey(ginfo.guild.id))
+		{
+			Guild guild2 = guilds[ginfo.guild.id];
+			guilds_sort.Remove(guild2);
+			if (guild2.active)
+			{
+				active_guilds--;
+			}
+		}
+		guilds[ginfo.guild.id] = guild;
+		guilds_sort.Add(guild);
+		if (guild.active)
+		{
+			active_guilds++;
+		}
+	}
+
+	public Guild getGuild(ulong id)
+	{
+		if (guilds.ContainsKey(id))
+		{
+			return guilds[id];
+		}
+		return null;
+	}
+
+	public void addGuildRecruit(SCGuildRecruitListOne rinfo)
+	{
+		if (rinfo.todelete && recruits.ContainsKey(rinfo.data.iduser))
+		{
+			recruits.Remove(rinfo.data.iduser);
+		}
+		else
+		{
+			GuildRecruitList guildRecruitList = new GuildRecruitList();
+			guildRecruitList.Set(rinfo.data);
+			guildRecruitList.level = (int)rinfo.level;
+			guildRecruitList.name = rinfo.name;
+			guildRecruitList.arena_rank = (int)rinfo.arena_rank;
+			recruits[rinfo.data.iduser] = guildRecruitList;
+		}
+		make_request();
+	}
+
+	public void addGuildMember(SCGuildMemberOne minfo)
+	{
+		if (minfo.isleave)
+		{
+			if (Global.character_.id == minfo.id)
+			{
+				LoadScreen loadScreen = GameObject.Find("LoadUI").GetComponent("LoadScreen") as LoadScreen;
+				if (loadScreen != null)
+				{
+				}
+				idguild = 0uL;
+				guilds.Clear();
+				recruits.Clear();
+				members.Clear();
+				msgs.Clear();
+				guilds_sort.Clear();
+				members_sort.Clear();
+				member_sort_by = string.Empty;
+				Guild.kicked = true;
+			}
+			else if (members.ContainsKey(minfo.id))
+			{
+				GuildMember item = members[minfo.id];
+				members_sort.Remove(item);
+				members.Remove(minfo.id);
+			}
+		}
+		else
+		{
+			GuildMember guildMember = new GuildMember();
+			guildMember.Set(minfo.data);
+			guildMember.sid = minfo.sid;
+			guildMember.id = minfo.id;
+			guildMember.name = minfo.name;
+			if (guildMember.sid != Global.character_.SID)
+			{
+				guildMember.name = guildMember.name + ".s" + minfo.sid;
+			}
+			guildMember.icon = "face" + minfo.icon;
+			guildMember.last_login = minfo.last_login;
+			guildMember.level = (ushort)minfo.level;
+			guildMember.sex = minfo.sex;
+			guildMember.last_logout = minfo.last_logout;
+			guildMember.isonline = minfo.isonline;
+			guildMember.calc_today();
+			if (members.ContainsKey(minfo.id))
+			{
+				GuildMember guildMember2 = members[minfo.id];
+				members_sort.Remove(guildMember2);
+				guildMember.texIcon = guildMember2.texIcon;
+			}
+			members[minfo.id] = guildMember;
+		}
+		make_member();
+	}
+
+	public GuildMember getGuildMember(ulong id)
+	{
+		if (members.ContainsKey(id))
+		{
+			return members[id];
+		}
+		return null;
+	}
+
+	public void addGuildMessage(db_guild_message minfo)
+	{
+		GuildMessage guildMessage = new GuildMessage();
+		guildMessage.Set(minfo);
+		_guild_message_type guild_message_type = Global.getTemplate("guild_message_type", minfo.type) as _guild_message_type;
+		string text = guild_message_type.message.Replace(":str1:", minfo.msg_str1);
+		text = text.Replace(":str2:", minfo.msg_str2);
+		text = text.Replace(":str3:", minfo.msg_str3);
+		guildMessage.drawsect = new ScenarioSection();
+		guildMessage.drawsect.max_width = 400;
+		guildMessage.drawsect.start_color = __BaseUI._clrCyan;
+		guildMessage.drawsect.makes_string(text, __BaseUI._textNLeft);
+		msgs.Add(guildMessage);
+	}
+
+	public void handelGuilds(MemoryStream stream, object arg)
+	{
+		Logger.Log("handelGuilds");
+		SCGuildUpdates_0x116 sCGuildUpdates_0x = JSProtoBuf.Serializer.Deserialize<SCGuildUpdates_0x116>(stream);
+		if (sCGuildUpdates_0x.guild != null)
+		{
+			addGuild(sCGuildUpdates_0x.guild);
+		}
+		foreach (SCGuildMemberOne item in sCGuildUpdates_0x.member)
+		{
+			addGuildMember(item);
+		}
+		foreach (db_guild_message message in sCGuildUpdates_0x.messages)
+		{
+			addGuildMessage(message);
+		}
+		foreach (SCGuildRecruitListOne item2 in sCGuildUpdates_0x.recruit)
+		{
+			addGuildRecruit(item2);
+		}
+		make_member_sort();
+		msgs_sort();
+	}
+
+	public void make_member_sort()
+	{
+		members_sort.Clear();
+		foreach (GuildMember value in members.Values)
+		{
+			if (value.donate_refresh > TimeUtil.NextOClock(5) - 86400 && value.today_donate != 0)
+			{
+				members_sort.Add(value);
+			}
+		}
+		members_sort.Sort((GuildMember a, GuildMember b) => (b.today_donate != a.today_donate) ? b.today_donate.CompareTo(a.today_donate) : b.name.CompareTo(a.name));
+	}
+
+	public void pos_guildinfo(SCGuildInfo pkt)
+	{
+		Global.character_.idguild = pkt.myguild;
+		if (Global.character_.idguild != 0)
+		{
+			Global.character_.addGuild(pkt.guild);
+			foreach (SCGuildRecruitListOne recruit in pkt.recruits)
+			{
+				Global.character_.addGuildRecruit(recruit);
+			}
+			foreach (SCGuildMemberOne member in pkt.members)
+			{
+				Global.character_.addGuildMember(member);
+			}
+			foreach (db_guild_message msg in pkt.msgs)
+			{
+				Global.character_.addGuildMessage(msg);
+			}
+		}
+		msgs_sort();
+	}
+
+	public void add_apply_list(db_recruit_list d)
+	{
+		_recruit_list recruit_list = new _recruit_list();
+		recruit_list.Set(d);
+		apply_list[d.idguild] = recruit_list;
+	}
+
+	public void handelMyguild(MemoryStream stream, object arg)
+	{
+		Logger.Log("handelMyguild");
+		SCMyGuildInfo_0x12f sCMyGuildInfo_0x12f = JSProtoBuf.Serializer.Deserialize<SCMyGuildInfo_0x12f>(stream);
+		if (sCMyGuildInfo_0x12f.info != null)
+		{
+			pos_guildinfo(sCMyGuildInfo_0x12f.info);
+		}
+	}
+
+	public void handelApplyList(MemoryStream stream, object arg)
+	{
+		Logger.Log("handelMyApply");
+		SCApplyListDelete_0x130 sCApplyListDelete_0x = JSProtoBuf.Serializer.Deserialize<SCApplyListDelete_0x130>(stream);
+		if (sCApplyListDelete_0x.info != null)
+		{
+			pos_guildinfo(sCApplyListDelete_0x.info);
+			apply_list.Clear();
+		}
+	}
+
+	public void msgs_sort()
+	{
+		msgs.Sort((GuildMessage a, GuildMessage b) => (int)(b.time_tag - a.time_tag));
+	}
+
+	public void handelRecruitsClear(MemoryStream stream, object arg)
+	{
+		SCGuildRecruitClear_0x15e sCGuildRecruitClear_0x15e = JSProtoBuf.Serializer.Deserialize<SCGuildRecruitClear_0x15e>(stream);
+		if (sCGuildRecruitClear_0x15e.state)
+		{
+			recruits.Clear();
+			make_request();
+		}
+	}
+
+	private void make_request()
+	{
+		request_sorted.Clear();
+		foreach (GuildRecruitList value in recruits.Values)
+		{
+			request_sorted.Add(value);
+		}
+		tosort_request();
+	}
+
+	public void tosort_request()
+	{
+		request_sorted.Sort((GuildRecruitList a, GuildRecruitList b) => (int)(b.apply_time - a.apply_time));
+	}
+
+	public void change_member_sort(string sort_by)
+	{
+		if (member_sort_by == sort_by)
+		{
+			member_sort_asc = !member_sort_asc;
+		}
+		else
+		{
+			member_sort_asc = false;
+		}
+		member_sort_by = sort_by;
+		make_member();
+	}
+
+	private void make_member()
+	{
+		member_sorted.Clear();
+		foreach (GuildMember value in members.Values)
+		{
+			member_sorted.Add(value);
+		}
+		tosort_member(member_sort_by);
+	}
+
+	public void tosort_member(string sort_by)
+	{
+		member_sorted.Sort(delegate(GuildMember a, GuildMember b)
+		{
+			switch (sort_by)
+			{
+			case "today_contribution":
+				if (!member_sort_asc)
+				{
+					if (a.today_contribution != b.today_contribution)
+					{
+						return b.today_contribution.CompareTo(a.today_contribution);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.today_contribution != b.today_contribution)
+				{
+					return a.today_contribution.CompareTo(b.today_contribution);
+				}
+				return a.name.CompareTo(b.name);
+			case "total_contribution":
+				if (!member_sort_asc)
+				{
+					if (a.total_contribution != b.total_contribution)
+					{
+						return b.total_contribution.CompareTo(a.total_contribution);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.total_contribution != b.total_contribution)
+				{
+					return a.total_contribution.CompareTo(b.total_contribution);
+				}
+				return a.name.CompareTo(b.name);
+			case "level":
+				if (!member_sort_asc)
+				{
+					if (a.level != b.level)
+					{
+						return b.level.CompareTo(a.level);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.level != b.level)
+				{
+					return a.level.CompareTo(b.level);
+				}
+				return a.name.CompareTo(b.name);
+			case "class":
+				if (!member_sort_asc)
+				{
+					if (a.class_type != b.class_type)
+					{
+						return b.class_type.CompareTo(a.class_type);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.class_type != b.class_type)
+				{
+					return a.class_type.CompareTo(b.class_type);
+				}
+				return a.name.CompareTo(b.name);
+			case "logout":
+				if (!member_sort_asc)
+				{
+					if (a.isonline != b.isonline)
+					{
+						return b.isonline.CompareTo(a.isonline);
+					}
+					if (a.last_logout != b.last_logout)
+					{
+						return b.last_logout.CompareTo(a.last_logout);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.isonline != b.isonline)
+				{
+					return a.isonline.CompareTo(b.isonline);
+				}
+				if (a.last_logout != b.last_logout)
+				{
+					return a.last_logout.CompareTo(b.last_logout);
+				}
+				return a.name.CompareTo(b.name);
+			default:
+				if (!member_sort_asc)
+				{
+					return b.name.CompareTo(a.name);
+				}
+				return a.name.CompareTo(b.name);
+			}
+		});
+	}
+
+	public void change_guild_sort(string sort_by)
+	{
+		change_guild_sort(sort_by, force_order: false);
+	}
+
+	public void change_guild_sort(string sort_by, bool force_order)
+	{
+		if (guild_sort_by == sort_by && !force_order)
+		{
+			guild_sort_asc = !guild_sort_asc;
+		}
+		else
+		{
+			guild_sort_asc = false;
+			guild_sort_by = sort_by;
+		}
+		make_guild();
+	}
+
+	private void make_guild()
+	{
+		guilds_sorted.Clear();
+		foreach (Guild value in guilds.Values)
+		{
+			guilds_sorted.Add(value);
+		}
+		tosort_guilds(guild_sort_by);
+	}
+
+	private void tosort_guilds(string sort_by)
+	{
+		guilds_sorted.Sort(delegate(Guild a, Guild b)
+		{
+			switch (sort_by)
+			{
+			case "member":
+				if (!guild_sort_asc)
+				{
+					if (a.size != b.size)
+					{
+						return b.size.CompareTo(a.size);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.size != b.size)
+				{
+					return a.size.CompareTo(b.size);
+				}
+				return a.name.CompareTo(b.name);
+			case "level":
+				if (!guild_sort_asc)
+				{
+					if (a.level != b.level)
+					{
+						return b.level.CompareTo(a.level);
+					}
+					return b.name.CompareTo(a.name);
+				}
+				if (a.level != b.level)
+				{
+					return a.level.CompareTo(b.level);
+				}
+				return a.name.CompareTo(b.name);
+			default:
+				return b.name.CompareTo(a.name);
+			}
+		});
+	}
+
+	public void handleTalentArmy(List<db_character_talent_army> armys, ushort idcampaign)
+	{
+		if (campaignTalentArmys.ContainsKey(idcampaign))
+		{
+			campaignTalentArmys.Remove(idcampaign);
+		}
+		campaignTalentArmys.Add(idcampaign, new List<TalentArmy>());
+		foreach (db_character_talent_army army in armys)
+		{
+			TalentArmy talentArmy = new TalentArmy();
+			talentArmy.Set(army);
+			campaignTalentArmys[idcampaign].Add(talentArmy);
+		}
+	}
+
+	public void handleSealDevilUnlock(MemoryStream stream, object arg)
+	{
+		SCSealDevilUnlock_0x16b sCSealDevilUnlock_0x16b = JSProtoBuf.Serializer.Deserialize<SCSealDevilUnlock_0x16b>(stream);
+		if (!sd_campaign.Contains(sCSealDevilUnlock_0x16b.id))
+		{
+			sd_campaign.Add(sCSealDevilUnlock_0x16b.id);
+		}
+	}
+
+	public void handleSealDevilGroup(MemoryStream stream, object arg)
+	{
+		SCSealDevilGroups_0x169 sCSealDevilGroups_0x = JSProtoBuf.Serializer.Deserialize<SCSealDevilGroups_0x169>(stream);
+		foreach (SealDevilGroupOne group in sCSealDevilGroups_0x.groups)
+		{
+			if (group.disband)
+			{
+				sealdevilgroups.Remove(group.idleader);
+				continue;
+			}
+			SealDevilGroup sealDevilGroup = new SealDevilGroup();
+			sealDevilGroup.unpack(group);
+			sealdevilgroups[group.idleader] = sealDevilGroup;
+		}
+	}
+
+	public Skill addSkill(db_character_skill d)
+	{
+		ushort key = (ushort)d.idskill;
+		if (!skills.ContainsKey(key))
+		{
+			Skill value = new Skill(d);
+			skills[key] = value;
+			if (Global.getTemplate("skill", key) is _skill { former_skill: not 0 } skill)
+			{
+				skills.Remove(skill.former_skill);
+				if (Global.character_.form_generals_[0].activeskill == skill.former_skill)
+				{
+					Global.character_.form_generals_[0].activeskill = skill.id;
+					Global.character_.form_generals_[0].activeskillinfo = skill;
+				}
+			}
+		}
+		return skills[key];
+	}
+
+	public void remSkill(ushort id)
+	{
+		if (skills.ContainsKey(id))
+		{
+			skills.Remove(id);
+		}
+	}
+
+	public Skill getSkill(ushort id)
+	{
+		if (skills.ContainsKey(id))
+		{
+			return skills[id];
+		}
+		return null;
+	}
+
+	public ArmyType addArmyType(db_character_armytype d)
+	{
+		ushort key = (ushort)d.idarmy_template;
+		if (!army_types.ContainsKey(key))
+		{
+			ArmyType value = new ArmyType(d);
+			army_types[key] = value;
+		}
+		return army_types[key];
+	}
+
+	public void remArmyType(ushort id)
+	{
+		if (army_types.ContainsKey(id))
+		{
+			army_types.Remove(id);
+		}
+	}
+
+	public ArmyType getArmyType(ushort id)
+	{
+		if (army_types.ContainsKey(id))
+		{
+			return army_types[id];
+		}
+		return null;
+	}
+
+	public void refreshMultiParams()
+	{
+		mMultiParams.Clear();
+		foreach (KeyValuePair<ushort, FormGeneral> item in form_generals_)
+		{
+			if (!(Global.getTemplate("general_template", item.Key) is _general_template general_template))
+			{
+				continue;
+			}
+			foreach (DictionaryEntry upgrade in general_template.m_upgrades)
+			{
+				_general_upgrade general_upgrade = upgrade.Value as _general_upgrade;
+				if (general_upgrade.gen_lv <= item.Value.upgrade_lv)
+				{
+					if (mMultiParams.ContainsKey(general_upgrade.total_type))
+					{
+						Dictionary<byte, ushort> dictionary2;
+						Dictionary<byte, ushort> dictionary = (dictionary2 = mMultiParams);
+						byte total_type;
+						byte key = (total_type = general_upgrade.total_type);
+						ushort num = dictionary2[total_type];
+						dictionary[key] = (ushort)(num + general_upgrade.total_param);
+					}
+					else
+					{
+						mMultiParams.Add(general_upgrade.total_type, general_upgrade.total_param);
+					}
+					continue;
+				}
+				break;
+			}
+		}
+		foreach (GeneralsSimple item2 in GeneralsOutSquad)
+		{
+			if (!(Global.getTemplate("general_template", item2.id) is _general_template general_template2))
+			{
+				continue;
+			}
+			foreach (DictionaryEntry upgrade2 in general_template2.m_upgrades)
+			{
+				_general_upgrade general_upgrade2 = upgrade2.Value as _general_upgrade;
+				if (general_upgrade2.gen_lv <= item2.upgrade_lv)
+				{
+					if (mMultiParams.ContainsKey(general_upgrade2.total_type))
+					{
+						Dictionary<byte, ushort> dictionary4;
+						Dictionary<byte, ushort> dictionary3 = (dictionary4 = mMultiParams);
+						byte total_type;
+						byte key2 = (total_type = general_upgrade2.total_type);
+						ushort num = dictionary4[total_type];
+						dictionary3[key2] = (ushort)(num + general_upgrade2.total_param);
+					}
+					else
+					{
+						mMultiParams.Add(general_upgrade2.total_type, general_upgrade2.total_param);
+					}
+					continue;
+				}
+				break;
+			}
+		}
+	}
+
+	public bool addMultiParams(byte type, ushort param)
+	{
+		if (mMultiParams.ContainsKey(type))
+		{
+			Dictionary<byte, ushort> dictionary2;
+			Dictionary<byte, ushort> dictionary = (dictionary2 = mMultiParams);
+			byte key2;
+			byte key = (key2 = type);
+			ushort num = dictionary2[key2];
+			dictionary[key] = (ushort)(num + param);
+		}
+		else
+		{
+			mMultiParams.Add(type, param);
+		}
+		return true;
+	}
+
+	public void calcReturnGiftRedCount()
+	{
+		bool flag = true;
+		return_gift_red_count = 0;
+		return_gifts.Clear();
+		if (!flag)
+		{
+			return;
+		}
+		int num = 0;
+		Hashtable templates = Global.getTemplates("return_gift");
+		foreach (DictionaryEntry item in templates)
+		{
+			byte key = byte.Parse(item.Key.ToString());
+			return_gifts.Add(key, 0);
+		}
+		foreach (KeyValuePair<byte, int> return_gift in return_gifts)
+		{
+			if (((return_gift_status >> num++) & 1) == 1)
+			{
+				return_gifts[return_gift.Key] = 1;
+			}
+			else if (Global.character_.level >= return_gift.Key)
+			{
+				return_gifts[return_gift.Key] = 0;
+				return_gift_red_count++;
+			}
+			else
+			{
+				return_gifts[return_gift.Key] = -1;
+			}
+		}
+	}
+
+	public void change_fruit(uint id, int amount)
+	{
+		switch (id)
+		{
+		case 1u:
+			fruit1 += amount;
+			break;
+		case 2u:
+			fruit2 += amount;
+			break;
+		case 3u:
+			fruit3 += amount;
+			break;
+		case 4u:
+			fruit4 += amount;
+			break;
+		case 5u:
+			fruit5 += amount;
+			break;
+		}
+	}
+
+	public int checkArenaToday()
+	{
+		uint num = TimeUtil.ThisDay;
+		if (TimeUtil.Now <= TimeUtil.ThisDay + 72000)
+		{
+			num = TimeUtil.ThisDay - 86400;
+		}
+		for (int i = 0; i < arena.bonuses.Count; i++)
+		{
+			_character_arena_bonus character_arena_bonus = arena.bonuses[i];
+			if (character_arena_bonus.time >= num)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public int checkPointRaceToday()
+	{
+		uint num = TimeUtil.ThisDay;
+		if (TimeUtil.Now <= TimeUtil.ThisDay + 75600)
+		{
+			num = TimeUtil.ThisDay - 86400;
+		}
+		for (int i = 0; i < pointrace.bonuses.Count; i++)
+		{
+			_character_pointrace_bonus character_pointrace_bonus = pointrace.bonuses[i];
+			if (character_pointrace_bonus.time >= num)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public bool getDailyEventState()
+	{
+		int num = (int)TimeUtil.ThisDay + (Global.getTemplate("event_timer", 1002u) as _event_timer).hour * 3600;
+		int num2 = (int)TimeUtil.ThisDay + (Global.getTemplate("event_timer", 1003u) as _event_timer).hour * 3600;
+		if (TimeUtil.Now > num && TimeUtil.Now < num2)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public void SetQuizInfo(game.net.data.StoC.Quiz d)
+	{
+		quiz.unpack(d);
+	}
+
+	public void handelQuiz(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCQuizRanking_0x13e sCQuizRanking_0x13e = JSProtoBuf.Serializer.Deserialize<SCQuizRanking_0x13e>(stream);
+			quiz.unpack(sCQuizRanking_0x13e.info);
+		}
+	}
+
+	public Building addBuilding(db_character_building d)
+	{
+		Building building = new Building(d, bFriend: false);
+		buildings[building.id] = building;
+		if (building.idbuilding == 1)
+		{
+			capital = building;
+		}
+		if (!building_counts.ContainsKey(building.idbuilding))
+		{
+			building_counts[building.idbuilding] = 0;
+		}
+		Dictionary<byte, byte> dictionary2;
+		Dictionary<byte, byte> dictionary = (dictionary2 = building_counts);
+		byte idbuilding;
+		byte key = (idbuilding = building.idbuilding);
+		idbuilding = dictionary2[idbuilding];
+		dictionary[key] = (byte)(idbuilding + 1);
+		capacityMax += (int)building.data.capacity;
+		if (building.product != null && building.gathering && building.automatic)
+		{
+			if (building.product.spirit_output != 0)
+			{
+				woodYield += building.product.spirit_output * 3600 / building.product.time;
+			}
+			if (building.product.enchant_output != 0)
+			{
+				mineYield += building.product.enchant_output * 3600 / building.product.time;
+			}
+			if (building.product.mana_output != 0)
+			{
+				manaYield += building.product.mana_output * 3600 / building.product.time;
+			}
+		}
+		foreach (BuildingQuest value in building_quests.Values)
+		{
+			if (value.progress == 0 && value.data.idbuilding == building.idbuilding)
+			{
+				value.progress = 1;
+				value.progressQuest();
+			}
+		}
+		return building;
+	}
+
+	public void remBuilding(byte id)
+	{
+		Building building = getBuilding(id);
+		if (building == null)
+		{
+			return;
+		}
+		Dictionary<byte, byte> dictionary2;
+		Dictionary<byte, byte> dictionary = (dictionary2 = building_counts);
+		byte idbuilding;
+		byte key = (idbuilding = building.idbuilding);
+		idbuilding = dictionary2[idbuilding];
+		dictionary[key] = (byte)(idbuilding - 1);
+		buildings.Remove(id);
+		capacityMax -= (int)building.data.capacity;
+		if (building.product != null && building.gathering && building.automatic)
+		{
+			if (building.product.spirit_output != 0)
+			{
+				woodYield -= building.product.spirit_output * 3600 / building.product.time;
+			}
+			if (building.product.enchant_output != 0)
+			{
+				mineYield -= building.product.enchant_output * 3600 / building.product.time;
+			}
+			if (building.product.mana_output != 0)
+			{
+				manaYield -= building.product.mana_output * 3600 / building.product.time;
+			}
+		}
+	}
+
+	public Building getBuilding(byte id)
+	{
+		if (buildings.ContainsKey(id))
+		{
+			return buildings[id];
+		}
+		return null;
+	}
+
+	public Building getBuildingByID(byte idbuilding)
+	{
+		if (idbuilding == 0)
+		{
+			return null;
+		}
+		foreach (Building value in buildings.Values)
+		{
+			if (value.idbuilding == idbuilding)
+			{
+				return value;
+			}
+		}
+		return null;
+	}
+
+	public bool hasBuilding(byte idbuilding)
+	{
+		if (idbuilding == 0)
+		{
+			return true;
+		}
+		foreach (Building value in buildings.Values)
+		{
+			if (value.idbuilding == idbuilding)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool hasAnyBuildingBuild()
+	{
+		bool result = false;
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.idbuilding == 16 || value.idbuilding == 20)
+			{
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
+	public Vector3 getFirstBuildingPos()
+	{
+		foreach (object value in Global.getTemplates("building_default").Values)
+		{
+			_building_default building_default = (_building_default)value;
+			if (building_default.idbuilding == 31)
+			{
+				Vector3 result = Camera.main.WorldToScreenPoint(building_areas[1].m_islands[building_default.idisland].pos);
+				result.y = (float)Screen.height - result.y;
+				return result;
+			}
+		}
+		return new Vector3(0f, 0f, 0f);
+	}
+
+	public bool limitBuildingCount(_building b)
+	{
+		if (b.limit <= 0)
+		{
+			return true;
+		}
+		if (building_counts.ContainsKey(b.id))
+		{
+			return building_counts[b.id] < b.limit;
+		}
+		return false;
+	}
+
+	public byte getBuildingCount(byte idbuilding)
+	{
+		if (building_counts.ContainsKey(idbuilding))
+		{
+			return building_counts[idbuilding];
+		}
+		return 0;
+	}
+
+	public void progressBuildingQuest(byte idproduct)
+	{
+		foreach (BuildingQuest value in building_quests.Values)
+		{
+			if (value.progress == 1)
+			{
+				_building_quest building_quest = Global.getTemplate("building_quest", value.id) as _building_quest;
+				if (building_quest.idproduct1 == idproduct && value.count1 < building_quest.idproduct1_count)
+				{
+					value.count1++;
+					value.progressQuest();
+				}
+				if (building_quest.idproduct2 == idproduct && value.count2 < building_quest.idproduct2_count)
+				{
+					value.count2++;
+					value.progressQuest();
+				}
+				if (building_quest.idproduct3 == idproduct && value.count3 < building_quest.idproduct3_count)
+				{
+					value.count3++;
+					value.progressQuest();
+				}
+			}
+		}
+	}
+
+	public void handelBrawlEnd(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBrawlEnd_0x140 sCBrawlEnd_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlEnd_0x140>(stream);
+		brawl.unpackBrawl(sCBrawlEnd_0x.brawl);
+		brawl.rank = sCBrawlEnd_0x.rank;
+		brawl.money = sCBrawlEnd_0x.money;
+		brawl.fame = sCBrawlEnd_0x.fame;
+		brawl.breaker_count = sCBrawlEnd_0x.breaker_count;
+		brawl.breaker_fame = sCBrawlEnd_0x.breaker_fame;
+		brawl.breaker_money = sCBrawlEnd_0x.breaker_money;
+		addParam("reputation", 0, (int)sCBrawlEnd_0x.fame);
+		addParam("money", 0, (int)sCBrawlEnd_0x.money);
+		brawl.top.Clear();
+		foreach (SCBrawlEnd_0x140.ResultRank item2 in sCBrawlEnd_0x.ranker)
+		{
+			Brawl.RankTop item = new Brawl.RankTop(item2);
+			brawl.top.Add(item);
+		}
+	}
+
+	public void scanStarTech()
+	{
+		unavailable_army_type.Clear();
+		unavailable_skill.Clear();
+		Hashtable templates = Global.getTemplates("star_tech");
+		foreach (DictionaryEntry item in templates)
+		{
+			_star_tech star_tech = item.Value as _star_tech;
+			if (base.star_tech >= star_tech.id)
+			{
+				continue;
+			}
+			string[] array = new string[4] { star_tech.bonus1_type, star_tech.bonus2_type, star_tech.bonus3_type, star_tech.bonus3_type };
+			uint[] array2 = new uint[4] { star_tech.bonus1_param, star_tech.bonus2_param, star_tech.bonus3_param, star_tech.bonus4_param };
+			for (int i = 0; i < 4; i++)
+			{
+				if (array[i] == "army_type")
+				{
+					unavailable_army_type.Add(array2[i]);
+				}
+				else if (array[i] == "skill")
+				{
+					unavailable_skill.Add(array2[i]);
+				}
+			}
+		}
+	}
+
+	public void makeGodTroops(GodTroops troops)
+	{
+		if (troops == null)
+		{
+			return;
+		}
+		foreach (game.net.data.StoC.GodTroop troop in troops.troops)
+		{
+			god_troops[troop.troop.idtroop] = new GodTroop(troop);
+		}
+		bool canattack = true;
+		for (int i = 0; i < 5; i++)
+		{
+			god_troops[i].canattack = canattack;
+			if (!god_troops[i].killed)
+			{
+				canattack = false;
+			}
+		}
+	}
+
+	public void makeTrialCampaign(SCTrialLoadCampaign_0x331 troops)
+	{
+		if (troops != null)
+		{
+			trial_campaign = new TrialCampaign(troops);
+		}
+	}
+
+	public void makeGraveCampaign(SCGraveLoadCampaign_0x341 troops)
+	{
+		if (troops != null)
+		{
+			grave_campaign = new GraveCampaign(troops);
+		}
+	}
+
+	public bool check_hint(uint type, uint id)
+	{
+		switch (type)
+		{
+		case 1u:
+			if (newformid.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 2u:
+			if (newarmyid.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 3u:
+			if (newskillid.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 4u:
+			if (newgenid.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 5u:
+			if (newspecgenid.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 6u:
+			if (newpageid_blue.Contains(id))
+			{
+				return true;
+			}
+			break;
+		case 7u:
+			if (newpageid_purple.Contains(id))
+			{
+				return true;
+			}
+			break;
+		}
+		return false;
+	}
+
+	public void removehint(uint type, uint id)
+	{
+		bool flag = false;
+		switch (type)
+		{
+		case 1u:
+			flag = newformid.Remove(id);
+			break;
+		case 2u:
+			flag = newarmyid.Remove(id);
+			break;
+		case 3u:
+			flag = newskillid.Remove(id);
+			break;
+		case 4u:
+			flag = newgenid.Remove(id);
+			Global.newgen_remove();
+			break;
+		case 5u:
+			flag = newspecgenid.Remove(id);
+			break;
+		case 6u:
+			flag = newpageid_blue.Remove(id);
+			break;
+		case 7u:
+			flag = newpageid_purple.Remove(id);
+			break;
+		}
+		if (flag)
+		{
+			CSOldgen_0x156 cSOldgen_0x = new CSOldgen_0x156();
+			cSOldgen_0x.type = type;
+			cSOldgen_0x.newid = id;
+			Global.m_client.Send(342, cSOldgen_0x, null);
+		}
+	}
+
+	public void makeAnecdoteUnlock()
+	{
+		List<Campaign> list = new List<Campaign>();
+		Hashtable templates = Global.getTemplates("campaign");
+		_campaign campaign = null;
+		foreach (DictionaryEntry item in templates)
+		{
+			_campaign campaign2 = item.Value as _campaign;
+			if (Global.getTemplate("campaign_type", campaign2.idcampaign_type) is _campaign_type { chapter: not false } && campaign2.start)
+			{
+				campaign = campaign2;
+				break;
+			}
+		}
+		list.Add(Global.character_.getCampaign(campaign.id));
+		for (int i = 0; i < list.Count; i++)
+		{
+			Campaign campaign3 = list[i];
+			foreach (ushort next_campaign in campaign3.m_next_campaigns)
+			{
+				Campaign campaign4 = Global.character_.getCampaign(next_campaign);
+				if (campaign4 != null && !list.Contains(campaign4))
+				{
+					list.Add(campaign4);
+				}
+			}
+		}
+		Campaign campaign5 = null;
+		foreach (Campaign item2 in list)
+		{
+			if (item2.idcampaign_type == 2 && item2.unlocked)
+			{
+				item2.real_unlocked = true;
+				if (campaign5 != null && !campaign5.finished)
+				{
+					item2.real_unlocked = false;
+					break;
+				}
+				campaign5 = item2;
+			}
+		}
+	}
+
+	public bool has_buyback_artifact(int aid)
+	{
+		for (int i = 0; i < shop_buyback.Count; i++)
+		{
+			if (shop_buyback[i].idtreasure_type == 36 && shop_buyback[i].param0 == aid)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void handleErrorMsg(MemoryStream stream, object arg)
+	{
+		SCErrorMsg_0x1ff sCErrorMsg_0x1ff = JSProtoBuf.Serializer.Deserialize<SCErrorMsg_0x1ff>(stream);
+		Logger.Log(sCErrorMsg_0x1ff.errormsg);
+		switch (sCErrorMsg_0x1ff.errormsg)
+		{
+		case "not in group":
+			if (sd_detail != null)
+			{
+				sd_detail.disband = true;
+			}
+			break;
+		}
+	}
+
+	public void unpack_recent_battle_record(List<BattleReportRecord> records)
+	{
+		unpack_battle_record(recent_battle_report, records);
+	}
+
+	public void unpack_saved_battle_record(List<BattleReportRecord> records)
+	{
+		unpack_battle_record(saved_battle_report, records);
+	}
+
+	private void unpack_battle_record(List<CharacterBattleReport> dest, List<BattleReportRecord> records)
+	{
+		dest.Clear();
+		for (int i = 0; i < records.Count; i++)
+		{
+			dest.Add(new CharacterBattleReport(records[i]));
+		}
+	}
+
+	public void recalc_all_gen()
+	{
+		foreach (FormGeneral value in form_generals_.Values)
+		{
+			value.CalcAllParam();
+		}
+	}
+
+	public float get_battle_init()
+	{
+		float num = 0f;
+		foreach (int item in formations_[cur_form].spotgen)
+		{
+			if (item >= 0)
+			{
+				num += form_generals_[(ushort)item].param.initiative;
+			}
+		}
+		return num;
+	}
+
+	public uint get_battle_score()
+	{
+		uint num = 0u;
+		foreach (int item in formations_[cur_form].spotgen)
+		{
+			if (item >= 0)
+			{
+				num += form_generals_[(ushort)item].battle_score;
+			}
+		}
+		return num;
+	}
+
+	public int isInAnniersary()
+	{
+		foreach (_calendar value in Global.getTemplates("calendar").Values)
+		{
+			if (isInFestival(value.anniversary))
+			{
+				return value.anniversary;
+			}
+			if (gm && isInFestival(value.test_day))
+			{
+				return value.test_day;
+			}
+		}
+		return 0;
+	}
+
+	public int isAfterAnniersary()
+	{
+		foreach (_calendar value in Global.getTemplates("calendar").Values)
+		{
+			if (isAfterFestival(value.anniversary))
+			{
+				return value.anniversary;
+			}
+			if (gm && isAfterFestival(value.test_day))
+			{
+				return value.test_day;
+			}
+		}
+		return 0;
+	}
+
+	private bool isInFestival(int time)
+	{
+		int num = time + 18000;
+		int num2 = num - 1296000;
+		int num3 = num;
+		int now = (int)TimeUtil.Now;
+		if (now >= num2 && now < num3)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public int isInFestival()
+	{
+		foreach (_calendar value in Global.getTemplates("calendar").Values)
+		{
+			if (isInFestival(value.money_god))
+			{
+				return value.money_god;
+			}
+			if (isInFestival(value.national_day))
+			{
+				return value.national_day;
+			}
+		}
+		return 0;
+	}
+
+	public int isAfterFestival()
+	{
+		foreach (_calendar value in Global.getTemplates("calendar").Values)
+		{
+			if (isAfterFestival(value.money_god))
+			{
+				return value.money_god;
+			}
+			if (isAfterFestival(value.national_day))
+			{
+				return value.national_day;
+			}
+		}
+		return 0;
+	}
+
+	private bool isAfterFestival(int time)
+	{
+		int num = time + 18000;
+		int num2 = num;
+		int num3 = num + 864000;
+		int now = (int)TimeUtil.Now;
+		if (now >= num2 && now < num3)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public ushort GetDivineGeneralLevel(ushort g_id, int k_id)
+	{
+		_general_origin general_origin = Global.getTemplate("general_origin", g_id) as _general_origin;
+		ushort num = g_id;
+		if (general_origin != null)
+		{
+			num = general_origin.origin;
+		}
+		_divine_general_star_start divine_general_star_start = null;
+		foreach (object value in Global.getTemplates("divine_general_star_start").Values)
+		{
+			_divine_general_star_start divine_general_star_start2 = (_divine_general_star_start)value;
+			if (num == divine_general_star_start2.origin && k_id == divine_general_star_start2.treeid)
+			{
+				divine_general_star_start = divine_general_star_start2;
+				break;
+			}
+		}
+		ushort result = 0;
+		if (Global.character_.divinegeneralstars.ContainsKey(num))
+		{
+			DivineGeneralStar divineGeneralStar = Global.character_.divinegeneralstars[num];
+			result = divineGeneralStar.getTreeStar((byte)k_id);
+		}
+		return result;
+	}
+
+	public _divine_general_star GetDivineGeneralTemplate(ushort g_id, int k_id)
+	{
+		_general_origin general_origin = Global.getTemplate("general_origin", g_id) as _general_origin;
+		ushort num = g_id;
+		if (general_origin != null)
+		{
+			num = general_origin.origin;
+		}
+		_divine_general_star_start divine_general_star_start = null;
+		foreach (object value in Global.getTemplates("divine_general_star_start").Values)
+		{
+			_divine_general_star_start divine_general_star_start2 = (_divine_general_star_start)value;
+			if (num == divine_general_star_start2.origin && k_id == divine_general_star_start2.treeid)
+			{
+				divine_general_star_start = divine_general_star_start2;
+				break;
+			}
+		}
+		ushort num2 = 0;
+		if (Global.character_.divinegeneralstars.ContainsKey(num))
+		{
+			DivineGeneralStar divineGeneralStar = Global.character_.divinegeneralstars[num];
+			num2 = divineGeneralStar.getTreeStar((byte)k_id);
+		}
+		if (divine_general_star_start != null && num2 > 0)
+		{
+			uint num3 = divine_general_star_start.start_id + num2 - 1;
+			return Global.getTemplate("divine_general_star", num3) as _divine_general_star;
+		}
+		return null;
+	}
+
+	public string GetDivineGeneralSkillName(uint id)
+	{
+		_general_template general_template = Global.getTemplate("general_template", id) as _general_template;
+		string empty = string.Empty;
+		if (general_template != null && Global.getTemplate("skill", general_template.first_skill1) is _skill skill)
+		{
+			empty = skill.name;
+		}
+		return empty;
+	}
+
+	public _army_star GetArmyStarTemplate(ushort armyid)
+	{
+		uint num = 0u;
+		if (armystars.ContainsKey(armyid))
+		{
+			num = armystars[armyid];
+		}
+		if (num == 0)
+		{
+			return null;
+		}
+		if (Global.getTemplate("army_star_start", armyid) is _army_star_start army_star_start)
+		{
+			uint num2 = (uint)(army_star_start.start_id + num - 1);
+			return Global.getTemplate("army_star", num2) as _army_star;
+		}
+		return null;
+	}
+
+	public void calc_battlescore_form()
+	{
+		battlescore_form = 0u;
+		foreach (int item in formations_[cur_form].spotgen)
+		{
+			if (form_generals_.ContainsKey((ushort)item))
+			{
+				form_generals_[(ushort)item].CalcAllParam();
+				battlescore_form += form_generals_[(ushort)item].battle_score;
+			}
+		}
+	}
+
+	public static void bvbar_change()
+	{
+		if (target_bv_value < Global.character_.battlescore_form)
+		{
+			target_bv_value = (int)Global.character_.battlescore_form;
+			bvanim_time = 1.8f;
+			bvanim_start = true;
+			Logger.Log("bvbar increase");
+		}
+		else if (target_bv_value > Global.character_.battlescore_form)
+		{
+			target_bv_value = (int)Global.character_.battlescore_form;
+			bvanim_time = 1f;
+		}
+	}
+
+	public void change_bvscore()
+	{
+		calc_battlescore_form();
+		if (bvchange_state)
+		{
+			bvbar_change();
+		}
+	}
+
+	public void pause_bvchange()
+	{
+		bvchange_state = false;
+	}
+
+	public void restart_bvchange()
+	{
+		bvchange_state = true;
+	}
+
+	public bool isGraveEnd()
+	{
+		foreach (_character_grave value in graves.Values)
+		{
+			if (value.isfinish)
+			{
+				if (Global.getTemplate("grave", value.idgrave) is _grave { nextid: 0 })
+				{
+					return true;
+				}
+			}
+			else if (Global.getTemplate("grave", value.idgrave) is _grave grave2 && grave2.min_level > level)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int Getdays(double seconds)
+	{
+		int num = 0;
+		DateTime dateTime = new DateTime(1970, 1, 1).AddSeconds(seconds);
+		num = ((dateTime.Month + 1 <= 12) ? (num + DateTime.DaysInMonth(dateTime.Year, dateTime.Month + 1)) : (num + DateTime.DaysInMonth(dateTime.Year + 1, 1)));
+		if (dateTime.Month + 2 > 12)
+		{
+			return num + DateTime.DaysInMonth(dateTime.Year + 1, 1);
+		}
+		return num + DateTime.DaysInMonth(dateTime.Year, dateTime.Month + 2);
+	}
+
+	public bool GetTreasureOpen()
+	{
+		Hashtable templates = Global.getTemplates("hero_shop");
+		float num = Global.CalcServerOpenDays();
+		foreach (DictionaryEntry item in templates)
+		{
+			if (item.Value is _hero_shop { id: 1 } hero_shop && Global.character_.craft_match >= hero_shop.open_time && num >= (float)Getdays(Global.character_.server_open_time))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int GetNationRank(int rep)
+	{
+		Hashtable templates = Global.getTemplates("nation_rank_chest");
+		int num = 0;
+		foreach (DictionaryEntry item in templates)
+		{
+			if (item.Value is _nation_rank_chest nation_rank_chest)
+			{
+				num = ((rep < nation_rank_chest.require_rank) ? num : (++num));
+			}
+		}
+		return num;
+	}
+
+	public int get_nation_rank_self()
+	{
+		return GetNationRank((int)Global.character_.nation_reputation);
+	}
+
+	private bool GetGroupSpecActive(int generalid)
+	{
+		int generalID = GetGeneralID(generalid);
+		if (Global.character_.generalbooks.ContainsKey((ushort)generalID) && Global.character_.generalbooks[(ushort)generalID].finish)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public int GetGeneralID(int generalid)
+	{
+		int num = -1;
+		if (Global.getTemplate("general_origin", (uint)generalid) is _general_origin general_origin)
+		{
+			return general_origin.origin;
+		}
+		return generalid;
+	}
+
+	public bool check_genshow(_general_template onetemp)
+	{
+		if (onetemp.unlock_level <= Global.character_.level)
+		{
+			return true;
+		}
+		if (Global.character_.arti_gens.ContainsValue(onetemp.id))
+		{
+			return true;
+		}
+		Campaign campaign = Global.character_.getCampaign(onetemp.idcampaign);
+		if (campaign == null)
+		{
+			return false;
+		}
+		CampaignTroop campaignTroop = campaign.troops_[onetemp.idtroop];
+		if (campaignTroop == null)
+		{
+			return false;
+		}
+		if (!campaignTroop.killed && campaignTroop.finish_count < campaignTroop.finish_max && !campaign.finished)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool check_special(ushort id)
+	{
+		if (Global.character_.form_generals_.ContainsKey(id))
+		{
+			return true;
+		}
+		foreach (GeneralsSimple item in Global.character_.GeneralsOutSquad)
+		{
+			if (item.id == id)
+			{
+				return true;
+			}
+		}
+		if (Global.character_.isGeneralVisible(id))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public string makeFullName(string name, uint sid)
+	{
+		return (sid != SID) ? (name + ".s" + sid) : name;
+	}
+
+	public int GetRuneNextMaxScore()
+	{
+		int num = GetRuneMaxScore() + 1;
+		if (Global.getTemplate("rune_score", (uint)num) is _rune_score rune_score)
+		{
+			return rune_score.rank;
+		}
+		return 0;
+	}
+
+	public int GetRuneMaxScore()
+	{
+		Hashtable templates = Global.getTemplates("rune_score");
+		for (int num = templates.Count; num > 0; num--)
+		{
+			if (Global.getTemplate("rune_score", (uint)num) is _rune_score rune_score && Global.character_.level >= rune_score.required_level)
+			{
+				return rune_score.rank;
+			}
+		}
+		return 0;
+	}
+
+	public _character_bonus getCharacterBonus(string type, string param1, string param2)
+	{
+		foreach (_character_bonus character_bonuse in character_bonuses)
+		{
+			if (!(character_bonuse.type == type))
+			{
+				continue;
+			}
+			if (param1.Length != 0)
+			{
+				if (character_bonuse.param1 == param1)
+				{
+					if (param2.Length == 0)
+					{
+						return character_bonuse;
+					}
+					if (character_bonuse.param2 == param2)
+					{
+						return character_bonuse;
+					}
+				}
+				continue;
+			}
+			return character_bonuse;
+		}
+		return null;
+	}
+
+	public long getBonusByIdTreasure(ushort idtreasure)
+	{
+		return (int)idtreasure switch
+		{
+			4 => money, 
+			5 => mana, 
+			6 => practice, 
+			7 => gold, 
+			8 => experience, 
+			9 => spirit_food, 
+			10 => enchant_stone, 
+			18 => (int)reputation, 
+			30 => stone, 
+			38 => generalsoul_blue, 
+			39 => generalsoul_purple, 
+			40 => generalsoul_orange, 
+			48 => fruit1, 
+			49 => fruit2, 
+			50 => fruit3, 
+			51 => fruit4, 
+			52 => fruit5, 
+			57 => dark_iron, 
+			61 => diamond, 
+			63 => high_stone, 
+			69 => tech_book, 
+			65 => building_material, 
+			_ => 0L, 
+		};
+	}
+
+	public bool getGroupOnGot(uint idx)
+	{
+		if (grouponawards.ContainsKey(idx))
+		{
+			return grouponawards[idx].got != 0;
+		}
+		return false;
+	}
+
+	public void addTechTreeMods(uint tech_type, int tech_param, string type, int param)
+	{
+		ulong key = (ulong)((long)tech_type * 100000L + tech_param);
+		if (!Global.character_.tech_tree_mods.ContainsKey(key))
+		{
+			Dictionary<string, Param_Mod> value = new Dictionary<string, Param_Mod>();
+			Global.character_.tech_tree_mods[key] = value;
+			Global.character_.tech_tree_mods[key][type] = new Param_Mod(type, param);
+		}
+		else if (!Global.character_.tech_tree_mods[key].ContainsKey(type))
+		{
+			Global.character_.tech_tree_mods[key][type] = new Param_Mod(type, param);
+		}
+		else
+		{
+			Global.character_.tech_tree_mods[key][type].value += param;
+		}
+	}
+
+	public int getBuildingDrawing(byte idbuilding)
+	{
+		if (buildingdrawings.ContainsKey(idbuilding))
+		{
+			return buildingdrawings[idbuilding].num;
+		}
+		return 0;
+	}
+
+	public void setBuildingDrawing(byte idbuilding, int num)
+	{
+		if (buildingdrawings.ContainsKey(idbuilding))
+		{
+			buildingdrawings[idbuilding].num = num;
+			return;
+		}
+		BuildingDrawing buildingDrawing = new BuildingDrawing();
+		buildingDrawing.idbuilding = idbuilding;
+		buildingDrawing.num = num;
+		buildingdrawings.Add(buildingDrawing.idbuilding, buildingDrawing);
+	}
+
+	public bool gotSalary()
+	{
+		if (patrol_last_time == 0)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public int gem_slot_max()
+	{
+		return (int)(16 + gem_slot * 4);
+	}
+
+	public int amulet_slot_max()
+	{
+		return (int)(16 + amulet_slot * 4);
+	}
+
+	public bool isGemFull()
+	{
+		return gem_slot_count() >= gem_slot_max();
+	}
+
+	public bool isAmuletFull()
+	{
+		return amulet_slot_count() >= amulet_slot_max();
+	}
+
+	public bool haveOneGeneral(uint genid)
+	{
+		_general_origin general_origin = Global.getTemplate("general_origin", genid) as _general_origin;
+		List<ushort> list = new List<ushort>();
+		if (general_origin != null)
+		{
+			Hashtable templates = Global.getTemplates("general_origin");
+			foreach (DictionaryEntry item in templates)
+			{
+				_general_origin general_origin2 = item.Value as _general_origin;
+				if (general_origin2.origin == general_origin.origin && general_origin2.form > general_origin.form)
+				{
+					list.Add(general_origin2.idgeneral_template);
+				}
+			}
+		}
+		list.Add((ushort)genid);
+		foreach (KeyValuePair<ushort, FormGeneral> item2 in Global.character_.form_generals_)
+		{
+			if (list.Contains(item2.Value.idgeneral_template))
+			{
+				return true;
+			}
+		}
+		foreach (GeneralsSimple item3 in Global.character_.GeneralsOutSquad)
+		{
+			if (list.Contains((ushort)item3.idtemplate))
+			{
+				return true;
+			}
+		}
+		foreach (ushort item4 in list)
+		{
+			if (treasuryItems.ContainsKey((uint)(item4 * 10000)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public NewbieEnchantAward getEnchantAward(int day, uint idx)
+	{
+		uint key = (uint)(day * 10) + idx;
+		if (newbieenchantawards.ContainsKey(key))
+		{
+			return newbieenchantawards[key];
+		}
+		return null;
+	}
+
+	public NewbieExchangeAward getExchangeAward(int day, uint idx)
+	{
+		uint key = (uint)(day * 10) + idx;
+		if (newbieexchangeawards.ContainsKey(key))
+		{
+			return newbieexchangeawards[key];
+		}
+		return null;
+	}
+
+	public NewbieGeneralAward getGeneralAward(int day, uint idx)
+	{
+		uint key = (uint)(day * 10) + idx;
+		if (newbiegeneralawards.ContainsKey(key))
+		{
+			return newbiegeneralawards[key];
+		}
+		return null;
+	}
+
+	public void clearChineseNewYearLotteryData()
+	{
+		chineseNewYearLottery.m_items.Clear();
+		chinese_new_year_lottery_times = 0;
+	}
+
+	public bool GetEverydayLoginAwardGet()
+	{
+		for (int i = 0; i < Global.character_.everydaylogintemp.Count; i++)
+		{
+			if (!Global.character_.everydaylogins.ContainsKey(Global.character_.everydaylogintemp[i].dayid) && Global.character_.everyday_login_days >= Global.character_.everydaylogintemp[i].dayid)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void addParamToTreasury(uint type, int param0, int param1)
+	{
+		uint key;
+		switch (type)
+		{
+		case 54u:
+			key = (uint)(type * 10000000 + param0 * 1000 + param1);
+			break;
+		case 53u:
+			key = (uint)(type * 100000 + param1);
+			break;
+		case 36u:
+		case 60u:
+		case 90u:
+		case 91u:
+			key = (uint)(type * 100000 + param0);
+			break;
+		case 0u:
+			key = (uint)(param0 * 10000);
+			break;
+		default:
+			key = type;
+			break;
+		}
+		if (type == 0 && !haveOneGeneral((uint)param0))
+		{
+			_general_origin general_origin = Global.getTemplate("general_origin", (uint)param0) as _general_origin;
+			List<uint> list = new List<uint>();
+			if (general_origin != null)
+			{
+				Hashtable templates = Global.getTemplates("general_origin");
+				foreach (DictionaryEntry item in templates)
+				{
+					_general_origin general_origin2 = item.Value as _general_origin;
+					if (general_origin2.origin == general_origin.origin && general_origin2.form < general_origin.form)
+					{
+						list.Add(general_origin2.idgeneral_template);
+					}
+				}
+			}
+			for (ushort num = 0; num < list.Count; num++)
+			{
+				uint key2 = list[num] * 10000;
+				if (treasuryItems.ContainsKey(key2))
+				{
+					treasuryItems.Remove(key2);
+				}
+			}
+		}
+		if (!treasuryItems.ContainsKey(key))
+		{
+			treasuryItems[key] = new Treasury();
+			treasuryItems[key].id = key;
+			treasuryItems[key].treasure_id = (byte)type;
+			treasuryItems[key].param0 = (uint)param0;
+			treasuryItems[key].param1 = (uint)param1;
+			treasuryItems[key].gem_num = 0;
+		}
+		else if (type == 54)
+		{
+			treasuryItems[key].gem_num++;
+		}
+		else
+		{
+			treasuryItems[key].param1 += (uint)param1;
+		}
+	}
+
+	public bool checkBonusAvilable(byte type)
+	{
+		switch (type)
+		{
+		case 30:
+			return checkUI(20u);
+		case 48:
+		case 49:
+		case 50:
+		case 51:
+		case 52:
+		case 55:
+			return spirit != null && spirit.level >= 41;
+		case 38:
+		case 39:
+		case 61:
+			return checkUI(16u);
+		case 40:
+			return checkUI(59u);
+		case 45:
+		case 46:
+		case 54:
+			return checkUI(50u);
+		case 57:
+			return checkUI(64u);
+		case 60:
+			return level >= 40;
+		case 63:
+			return god_challenge_level >= 195;
+		case 53:
+		case 74:
+		case 75:
+		case 76:
+		case 77:
+			return spirit != null && spirit.level >= 41 && checkUI(86u);
+		case 68:
+		case 69:
+			return checkUI(78u);
+		case 90:
+		case 91:
+			return checkUI(89u);
+		default:
+			return true;
+		}
+	}
+
+	public bool checkGeneralAvilable(int general_id)
+	{
+		if (Global.getTemplate("general_template", (uint)general_id) is _general_template general_template)
+		{
+			return level >= general_template.need_level;
+		}
+		return false;
+	}
+
+	public bool checkArtifactAvilable(int artifact_id)
+	{
+		if (Global.getTemplate("artifact_template", (uint)artifact_id) is _artifact_template artifact_template)
+		{
+			return level >= artifact_template.need_level;
+		}
+		return false;
+	}
+
+	public void Sortbigbet()
+	{
+		foreach (List<ServerCraftWorldBetStatistics> value in Global.servercraftworldbetstatistics.Values)
+		{
+			value.Sort((ServerCraftWorldBetStatistics a, ServerCraftWorldBetStatistics b) => b.count.CompareTo(a.count));
+		}
+	}
+
+	public void Sortsmallbet()
+	{
+		foreach (List<ServerCraftWorldBetStatistics> value in Global.servercraftworldbetstatistics.Values)
+		{
+			value.Sort((ServerCraftWorldBetStatistics a, ServerCraftWorldBetStatistics b) => a.count.CompareTo(b.count));
+		}
+	}
+
+	public uint getGodListSlotMinLvl(uint group)
+	{
+		Dictionary<ushort, uint> dictionary = new Dictionary<ushort, uint>();
+		Hashtable templates = Global.getTemplates("god_list_slot_template");
+		foreach (DictionaryEntry item in templates)
+		{
+			_god_list_slot_template god_list_slot_template = item.Value as _god_list_slot_template;
+			if (god_list_slot_template.sort_id / 100 == group)
+			{
+				if (godlist.m_slots.ContainsKey(god_list_slot_template.id))
+				{
+					dictionary[god_list_slot_template.slot_type] = godlist.m_slots[god_list_slot_template.id].level;
+				}
+				else if (!dictionary.ContainsKey(god_list_slot_template.slot_type))
+				{
+					dictionary[god_list_slot_template.slot_type] = 0u;
+				}
+			}
+		}
+		uint num = 1000u;
+		foreach (uint value in dictionary.Values)
+		{
+			if (value < num)
+			{
+				num = value;
+			}
+		}
+		return num;
+	}
+
+	public int getShengjieCardscount(uint originid)
+	{
+		int result = 0;
+		if (m_ShengjieCards.ContainsKey(originid))
+		{
+			result = m_ShengjieCards[originid].count;
+		}
+		return result;
+	}
+
+	public int getGodListElement(uint id)
+	{
+		if (!m_godListElements.ContainsKey(id))
+		{
+			return 0;
+		}
+		return m_godListElements[id].num;
+	}
+
+	public void addGodListSlot(uint id)
+	{
+		if (!(Global.getTemplate("god_list_slot_template", id) is _god_list_slot_template god_list_slot_template))
+		{
+			return;
+		}
+		GodListSlot godListSlot = null;
+		uint num = 0u;
+		foreach (GodListSlot value in Global.character_.godlist.m_slots.Values)
+		{
+			_god_list_slot_template god_list_slot_template2 = Global.getTemplate("god_list_slot_template", value.idslot) as _god_list_slot_template;
+			if (god_list_slot_template.slot_type == god_list_slot_template2.slot_type && god_list_slot_template.slot_rank > god_list_slot_template2.slot_rank)
+			{
+				num = value.idslot;
+				break;
+			}
+		}
+		if (num != 0)
+		{
+			uint general_id = godlist.m_slots[num].general_id;
+			uint l = godlist.m_slots[num].level;
+			godListSlot = new GodListSlot((ushort)id, l, general_id);
+			godlist.m_slots.Remove(num);
+		}
+		else
+		{
+			godListSlot = new GodListSlot((ushort)id);
+		}
+		godlist.m_slots.Add(godListSlot.idslot, godListSlot);
+	}
+
+	public bool isNewYearCheckinOpen()
+	{
+		if (TimeUtil.Now >= Global.newyear_checkin_setting.start_time && TimeUtil.Now <= Global.newyear_checkin_setting.end_time)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool isNewYearCheckinVisible()
+	{
+		if (TimeUtil.Now >= Global.newyear_checkin_setting.start_time - 1296000 && TimeUtil.Now <= Global.newyear_checkin_setting.end_time)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public uint getNewYearCheckinRank()
+	{
+		uint num = 0u;
+		Hashtable templates = Global.getTemplates("newyear_checkin");
+		foreach (DictionaryEntry item in templates)
+		{
+			_newyear_checkin newyear_checkin = (_newyear_checkin)item.Value;
+			if (pay >= newyear_checkin.pay && newyear_checkin.idrank > num)
+			{
+				num = newyear_checkin.idrank;
+			}
+		}
+		return num;
+	}
+
+	public uint getNewYearCheckinMaxRank()
+	{
+		uint num = 0u;
+		Hashtable templates = Global.getTemplates("newyear_checkin");
+		foreach (DictionaryEntry item in templates)
+		{
+			_newyear_checkin newyear_checkin = (_newyear_checkin)item.Value;
+			if (newyear_checkin.idrank > num)
+			{
+				num = newyear_checkin.idrank;
+			}
+		}
+		return num;
+	}
+
+	public string load_str(uint id)
+	{
+		if (Global.getTemplate("text", id) is _text text)
+		{
+			return text.text_chs;
+		}
+		return string.Empty;
+	}
+
+	public string GetParams(byte forge_level, ushort idx, Artifact a)
+	{
+		if (a == null)
+		{
+			return string.Empty;
+		}
+		string text = string.Empty;
+		switch (a.get_level_attrib(forge_level, idx))
+		{
+		case 1:
+			text = load_str(713u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 2:
+			text = load_str(715u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 3:
+			text = load_str(717u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 4:
+			text = load_str(20044u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 5:
+			text = load_str(20045u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 6:
+			text = load_str(20046u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 7:
+			text = load_str(700u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 8:
+			text = load_str(701u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 9:
+			text = load_str(702u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 10:
+			text = load_str(703u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 11:
+			text = load_str(706u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 12:
+			text = load_str(707u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 13:
+			text = load_str(20047u);
+			if (Global.getTemplate("skill", (uint)a.get_level_param(forge_level, idx)) is _skill skill)
+			{
+				text += skill.name;
+			}
+			break;
+		case 14:
+		case 15:
+		case 16:
+		case 19:
+		case 20:
+		case 21:
+			text = load_str(20048u);
+			if (Global.getTemplate("speciality", (uint)a.get_level_param(forge_level, idx)) is _speciality speciality)
+			{
+				text += speciality.name;
+			}
+			break;
+		case 17:
+			text = load_str(704u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 18:
+			text = load_str(705u) + "+" + a.get_level_param(forge_level, idx) + "%";
+			break;
+		case 22:
+			text = load_str(711u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 23:
+			text = load_str(719u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 24:
+			text = load_str(720u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		case 25:
+			text = load_str(721u) + "+" + a.get_level_param(forge_level, idx);
+			break;
+		}
+		return text;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

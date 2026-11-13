@@ -1,0 +1,498 @@
+using System.Collections;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+
+public class DelegateFuncUI : MonoBehaviour
+{
+	public void Start()
+	{
+		DelegateFunc.Building_makeMesh = Building_makeMesh;
+		DelegateFunc.Building_playAnim = Building_playAnim;
+		DelegateFunc.Demon_make = Demon_make;
+		DelegateFunc.BaseAsset_ResourceLoadFailed = BaseAsset_ResourceLoadFailed;
+		DelegateFunc.OnCoin = RootUI.Coin;
+		DelegateFunc.brawl_make_legion = brawl_make_legion;
+		DelegateFunc.MainUI_GetSubUI = MainUI.GetSubUI;
+		DelegateFunc.MainUI_SetSubUI = MainUI_SetSubUI;
+		DelegateFunc.BuddyUI_cs_buddy_add_buddy = BuddyUI_cs_buddy_add_buddy;
+		DelegateFunc.BuddyUI_cs_buddy_add_blacklist = BuddyUI_cs_buddy_add_blacklist;
+		DelegateFunc.MessengerUI_open = MessengerUI_open;
+		DelegateFunc.RootUI_DrawStateBubble = RootUI_drawStateBubble;
+		DelegateFunc.RootUI_sealdevil_enter = RootUI_sealdevil_enter;
+		DelegateFunc.RootUI_GodlistCheck_enter = RootUI_Godlistcheck_enter;
+		DelegateFunc.MainUI_resource_wealth_d = MainUI_resource_wealth_d;
+		DelegateFunc.BattleResult_set_open = BattleResult_set_open;
+		DelegateFunc.MainUI_army_star = MainUI_army_star;
+		DelegateFunc.MainUI_amulet = MainUI_amulet;
+		DelegateFunc.MainUI_genius_ui = MainUI_genius_ui;
+		DelegateFunc.MainUI_formation_ui = MainUI_formation_ui;
+		DelegateFunc.FormationUI_wantBattle = FormationUI_wantBattle;
+		DelegateFunc.BattleUI_SetReport = BattleUI_SetReport;
+		DelegateFunc.Exchange_Equipment = Exchange_Equipment_Check;
+		DelegateFunc.RootUI_load_spiritascend = RootUI_load_spiritascend;
+		DelegateFunc.RootUI_load_rescueformation = RootUI_load_rescueformation;
+		DelegateFunc.RootUI_BattleView = RootUI_load_BattleView;
+		DelegateFunc.RootUI_Godlist_setdrag = RootUI_SetGodListDrag;
+		DelegateFunc.MainUI_equipment_ui = MainUI_equipment_ui;
+		DelegateFunc.MainUI_spirit_ui = MainUI_spirit_ui;
+		DelegateFunc.SpiritUp_ui = MainUI_newspirit_ui;
+		DelegateFunc.SpiritBattleGet_ui = MainUI_Getnewspirit_ui;
+		DelegateFunc.SpiritUI_2_SetSubUI = SpiritUI_2_SetSubUI;
+		DelegateFunc.SpiritUI_3_SetSubUI = SpiritUI_3_SetSubUI;
+		DelegateFunc.MainUI_spirit2 = MainUI._spirit2;
+		DelegateFunc.RootUI_startGrave = RootUI_startGrave;
+		DelegateFunc.RootUI_startGraveChest = RootUI_startGraveChest;
+		DelegateFunc.RootUI_Coin = RootUI.Coin;
+		DelegateFunc.ShopUI_Open = ShopUI_Open;
+		DelegateFunc.ShopDiamondUI_Open = ShopDiamondUI_Open;
+		DelegateFunc.EquipmentReinforceUI_Myloading = EquipmentReinforceUI_Myloading;
+		DelegateFunc.Icon_Myloading = IconUI_Myloading;
+		DelegateFunc.SpiritUI_2_Myloading = SpiritUI_2_Myloading;
+		DelegateFunc.GeneralSwitchUI_Myloading = GeneralSwitchUI_Myloading;
+		DelegateFunc.RescueUI_Myloading = RescueUI_Myloading;
+		DelegateFunc.EightGraphicUI_Myloading = EightGraphicUI_Myloading;
+		DelegateFunc.BuddyFlowerUI_cs_buddy_flower_info = BuddyFlowerUI_cs_buddy_flower_info;
+		DelegateFunc.MainUI_resource_wealth_to_secrete_shop = MainUI_resource_wealth_to_secrete_shop;
+		DelegateFunc.MainUI_grave = MainUI._grave;
+		DelegateFunc.RootUI_brawl_enter = RootUI_brawl_enter;
+		DelegateFunc.MainUI_capital = MainUI._capital;
+		DelegateFunc.RootUI_skytower_enter = RootUI_skytower_enter;
+		DelegateFunc.RootUI_EarthPavilion_formation_enter = RootUI_EarthPavilion_formation_enter;
+		DelegateFunc.RootUI_LakeTemple_formation_enter = RootUI_LakeTemple_formation_enter;
+		DelegateFunc.RootUI_LoadLevel = RootUI_LoadLevel;
+		DelegateFunc.PremiumUI_EverydayLogin = PremiumUI_EverydayLogin;
+		DelegateFunc.m_ChristmasLotteryShopBuyUI = _ChristmasLotteryShopBuyUI;
+		DelegateFunc.BetUI_SetSubUI = BetUI_SetSubUI;
+		DelegateFunc.FairySelect = Fairy_SelectUI;
+		DelegateFunc.TeamFightShopUI_Open = TeamFightShopUI_Open;
+		DelegateFunc.TeamFight_Sign = TeamFight_Sign;
+		DelegateFunc.TeamFightUI_Open = TeamFightUI_Open;
+	}
+
+	private void Building_playAnim(GameObject mesh, Building d)
+	{
+		CutSceneManager component = mesh.GetComponent<CutSceneManager>();
+		if (component == null)
+		{
+			return;
+		}
+		if (d.product != null && d.build_time == 0 && d.gathering)
+		{
+			if (d.product.gold_consume != 0)
+			{
+				component.Play(2);
+			}
+			else
+			{
+				component.Play(1);
+			}
+		}
+		else
+		{
+			component.Play(0);
+		}
+	}
+
+	public void Building_makeMesh(GameObject mesh, Building d)
+	{
+		BuildingBehaviourScript buildingBehaviourScript = mesh.AddComponent<BuildingBehaviourScript>();
+		buildingBehaviourScript.setBuilding(d, bEdit: false, bFriend: false);
+		if (BuildingBehaviourScript.m_bEditVisible || BuildingBuildUI.building != null)
+		{
+			buildingBehaviourScript.detectMouseClick = false;
+			buildingBehaviourScript.HideMesh();
+		}
+	}
+
+	private void Demon_make(GameObject mesh, __BaseUI parentUI, Demon demon, bool bFriend)
+	{
+		mesh.AddComponent<DemonScript>().setDemon(parentUI, demon, bFriend);
+		if (demon.killed)
+		{
+			mesh.animation.Play("dead");
+		}
+	}
+
+	private void BaseAsset_ResourceLoadFailed(BaseAsset ui)
+	{
+		if (MainUI.IsSubUI(ui))
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void brawl_make_legion(uint pos, uint team, BrawlInfo.Legion army_info)
+	{
+		GameObject.Find("Brawl/BrawlUI").GetComponent<BrawlFightUI>().setWaitStatus(pos, team, army_info);
+	}
+
+	public static void MainUI_SetSubUI(__BaseUI ui)
+	{
+		MainUI.SetSubUI(ui);
+	}
+
+	public static void BuddyUI_cs_buddy_add_buddy(string name)
+	{
+		BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_buddy(name);
+	}
+
+	public static void BuddyUI_cs_buddy_add_blacklist(string name)
+	{
+		BaseUI.GetRootUI().GetComponent<BuddyUI>().cs_buddy_add_blacklist(name);
+	}
+
+	public static void MessengerUI_open(string name)
+	{
+		BaseUI.GetRootUI().GetComponent<MessengerUI>().Open(name);
+	}
+
+	public static void RootUI_drawStateBubble(string valuekind)
+	{
+		__BaseUI.drawStateBubble(valuekind);
+	}
+
+	public static void RootUI_sealdevil_enter()
+	{
+		BaseUI.GetRootUI().sealdevil_enter();
+	}
+
+	public static void RootUI_Godlistcheck_enter()
+	{
+		EightGraphicUI component = BaseUI.GetRootUI().GetComponent<EightGraphicUI>();
+		component.setlaketempenter(MainUI.checkUI("god_list"));
+	}
+
+	public static void MainUI_resource_wealth_d(__BaseUI.delegate_OnClose OnClose)
+	{
+		MainUI._resource_wealth(OnClose);
+	}
+
+	public static void BattleResult_set_open(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, __BaseUI.delegate_OnClose onClose)
+	{
+		__BaseUI.GetBattleResultUI().Set(prevUI, defenderName, msg, lvl, iTreasureCount, vctBonuses, onClose);
+		__BaseUI.GetBattleResultUI().MyLoading();
+	}
+
+	public static void MainUI_army_star()
+	{
+		MainUI._army_star();
+	}
+
+	public static void MainUI_amulet()
+	{
+		MainUI._amulet();
+	}
+
+	public static void MainUI_genius_ui()
+	{
+		MainUI._genius_ui();
+	}
+
+	public static void MainUI_formation_ui(bool showFormClose)
+	{
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		if (MainUI.handle_sub_ui(component, "Formation"))
+		{
+			component.FormSubLoading();
+			component.showCloseTip = showFormClose;
+		}
+	}
+
+	public static void FormationUI_wantBattle(string subui, ushort id_spirit_ascend_campaign, byte idtroop, DelegateFunc.delegate_OnAttack OnAttack, bool viewonly)
+	{
+		Hashtable hashtable = new Hashtable();
+		subui = "NPCBattle";
+		hashtable.Add("subui", subui);
+		hashtable.Add("campaignid", id_spirit_ascend_campaign);
+		hashtable.Add("troopid", idtroop);
+		hashtable.Add("substate", "spiritascend");
+		hashtable.Add("viewonly", viewonly);
+		hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack.Invoke));
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		component.SubLoading(hashtable);
+		MainUI.SetSubUI(component);
+	}
+
+	public static void BattleUI_SetReport(RootMessenger rmg, byte[] report, bool needyijian)
+	{
+		BattleUI component = GameObject.Find("Battle/BattleUI").GetComponent<BattleUI>();
+		component.setPrevUI(rmg);
+		component.setReport(report, wait_for_end: true, use_battle_end: false, use_battle_surrender: false, null, isopponent: false);
+		if (needyijian)
+		{
+			component.ViewType = enumBattleViewType.viewReport;
+		}
+		else
+		{
+			component.ViewType = enumBattleViewType.viewFull;
+		}
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+	}
+
+	public static void Exchange_Equipment_Check(int leaveid, int joinid)
+	{
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		if (leaveid != -1)
+		{
+			component.Exchange_Equipment_Check((ushort)leaveid, (ushort)joinid);
+		}
+		else
+		{
+			component.Join_Form_Equipment_Check((ushort)joinid);
+		}
+	}
+
+	public static void RootUI_load_spiritascend(ushort idcampaign, RootMessenger rmg)
+	{
+		BaseUI.GetRootUI().load_spiritascend(idcampaign, "SpiritAscend", rmg);
+	}
+
+	public static void RootUI_load_rescueformation(uint idcampaign)
+	{
+		BaseUI.GetRootUI().rescue_formation_enter(idcampaign);
+	}
+
+	public static void RootUI_load_BattleView(byte[] report, bool isreport)
+	{
+		BaseUI.GetRootUI().BattleView(report, isreport);
+	}
+
+	public static void RootUI_SetGodListDrag(bool pre_drag, int drag_id)
+	{
+		BaseUI.GetRootUI().GetComponent<GodListUI>().SetDrag(pre_drag, drag_id);
+	}
+
+	public static void MainUI_equipment_ui()
+	{
+		EquipmentUI component = BaseUI.GetRootUI().GetComponent<EquipmentUI>();
+		if (MainUI.handle_sub_ui(component, "equipment"))
+		{
+			component.MyLoading();
+			component.setShowZB(show: false);
+		}
+	}
+
+	public static void MainUI_newspirit_ui(int id)
+	{
+		SpiritSkillUpgradeUI component = BaseUI.GetRootUI().GetComponent<SpiritSkillUpgradeUI>();
+		component.Getleftskill(id);
+	}
+
+	public static void MainUI_Getnewspirit_ui(int id)
+	{
+		SpiritUI_3 component = BaseUI.GetRootUI().GetComponent<SpiritUI_3>();
+		component.MyLoading();
+		MainUI.SetSubUI(component);
+		component.SetNewSkill(id);
+	}
+
+	public static void MainUI_spirit_ui(bool newUI, int skills_id, bool upskill)
+	{
+		if (newUI)
+		{
+			SpiritUI_2 component = BaseUI.GetRootUI().GetComponent<SpiritUI_2>();
+			component.ReGetShowSkill(skills_id, upskill);
+			if (!component.IsVisible())
+			{
+				MainUI._spirit2();
+			}
+		}
+		else
+		{
+			MainUI._army_spirit();
+		}
+	}
+
+	public static void SpiritUI_2_SetSubUI(__BaseUI ui)
+	{
+		SpiritUI_2.SetSubUI(ui);
+	}
+
+	public static void SpiritUI_3_SetSubUI(__BaseUI ui)
+	{
+		SpiritUI_3.SetSubUI(ui);
+	}
+
+	public static void RootUI_startGrave(ushort id)
+	{
+		BaseUI.GetRootUI().GetComponent<RootUI>().startGrave(id);
+	}
+
+	public static void RootUI_startGraveChest(ushort id)
+	{
+		BaseUI.GetRootUI().GetComponent<RootUI>().startGraveChest(id);
+	}
+
+	public static void ShopUI_Open()
+	{
+		ShopUI component = BaseUI.GetRootUI().GetComponent<ShopUI>();
+		if (MainUI.handle_sub_ui(component, "shop"))
+		{
+			component.SubLoading();
+		}
+	}
+
+	public static void ShopDiamondUI_Open()
+	{
+		ShopDiamondUI component = BaseUI.GetRootUI().GetComponent<ShopDiamondUI>();
+		if (MainUI.handle_sub_ui(component, "diamond_shop"))
+		{
+			component.SubLoading();
+		}
+	}
+
+	public static void EquipmentReinforceUI_Myloading()
+	{
+		EquipmentReinforceUI component = BaseUI.GetRootUI().GetComponent<EquipmentReinforceUI>();
+		if (MainUI.handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void IconUI_Myloading()
+	{
+		IconUI component = BaseUI.GetRootUI().GetComponent<IconUI>();
+		if (MainUI.handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void SpiritUI_2_Myloading()
+	{
+		SpiritUI_2 component = BaseUI.GetRootUI().GetComponent<SpiritUI_2>();
+		if (MainUI.handle_sub_ui(component, "spirit2"))
+		{
+			component.MyLoading(SpiritUi3: true);
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	public static void EightGraphicUI_Myloading()
+	{
+		EightGraphicUI component = BaseUI.GetRootUI().GetComponent<EightGraphicUI>();
+		if (MainUI.handle_sub_ui(component, "eightgraphic"))
+		{
+			MainUI.SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public static void GeneralSwitchUI_Myloading(string uiname)
+	{
+		GeneralSwitchUI component = BaseUI.GetRootUI().GetComponent<GeneralSwitchUI>();
+		if (MainUI.handle_sub_ui(component, string.Empty))
+		{
+			component.needreturnui(uiname);
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	public static void RescueUI_Myloading()
+	{
+		RescueUI component = BaseUI.GetRootUI().GetComponent<RescueUI>();
+		if (MainUI.handle_sub_ui(component, "rescue"))
+		{
+			component.MyLoading();
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	public static void BuddyFlowerUI_cs_buddy_flower_info(string name)
+	{
+		BuddyFlowerUI component = BaseUI.GetRootUI().GetComponent<BuddyFlowerUI>();
+		if (MainUI.handle_sub_ui(component, "buddyflower"))
+		{
+			MainUI.SetSubUI(component);
+			component.cs_buddy_flower_info(name);
+		}
+	}
+
+	public static void MainUI_resource_wealth_to_secrete_shop()
+	{
+		MainUI._resource_wealth(MainUI._secret_shop);
+	}
+
+	public static void RootUI_brawl_enter()
+	{
+		BaseUI.GetRootUI().brawl_enter();
+	}
+
+	public static void RootUI_skytower_enter(uint arg)
+	{
+		BaseUI.GetRootUI().skytower_enter(arg);
+	}
+
+	public static void RootUI_EarthPavilion_formation_enter()
+	{
+		BaseUI.GetRootUI().EarthPavilion_formation_enter();
+	}
+
+	public static void RootUI_LakeTemple_formation_enter()
+	{
+		BaseUI.GetRootUI().cs_lake_temple_enter();
+	}
+
+	public static void RootUI_LoadLevel(string id, RootMessenger rmg)
+	{
+		BaseUI.GetRootUI().LoadLevel(id, rmg);
+	}
+
+	public static void BetUI_SetSubUI()
+	{
+		CraftWorldUI.SetSubUI(null);
+	}
+
+	public static void PremiumUI_EverydayLogin()
+	{
+		PremiumUI component = BaseUI.GetRootUI().GetComponent<PremiumUI>();
+		if (MainUI.handle_sub_ui(component, "premium"))
+		{
+			MainUI.SetSubUI(component);
+			component.MyLoading(48);
+		}
+	}
+
+	public static void _ChristmasLotteryShopBuyUI()
+	{
+		ChristmasLotteryShopBuyUI component = BaseUI.GetRootUI().GetComponent<ChristmasLotteryShopBuyUI>();
+		if (MainUI.handle_sub_ui(component, "christmasshopbuy"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void Fairy_SelectUI()
+	{
+		FairySelectUI component = GameObject.Find("Fairy/FairyUI").GetComponent<FairySelectUI>();
+		if (MainUI.handle_sub_ui(component, "Fairy"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void TeamFightShopUI_Open()
+	{
+		ShopUI component = BaseUI.GetRootUI().GetComponent<ShopUI>();
+		if (MainUI.handle_sub_ui(component, string.Empty))
+		{
+			component.SubLoading(ShopCategoryType.teamfight, MainUI._huodong);
+		}
+	}
+
+	public static void TeamFight_Sign()
+	{
+		CSCrossTeamFightSign_0x651 pkt = new CSCrossTeamFightSign_0x651();
+		Global.m_client.Send(1617, pkt, TeamFightUI.sc_crossteamsign_0x651);
+	}
+
+	public static void TeamFightUI_Open(RootMessenger rmg)
+	{
+		rmg.ToDisable();
+		CSCrossTeamFightEnter_0x641 pkt = new CSCrossTeamFightEnter_0x641();
+		RootUI.m_client.Send(1601, pkt, TeamFightUI.sc_crossteamfight_enter_0x641);
+	}
+}

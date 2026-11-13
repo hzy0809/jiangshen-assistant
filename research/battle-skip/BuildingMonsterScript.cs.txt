@@ -1,0 +1,555 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BuildingMonsterScript : MeshScript
+{
+	private BaseUI ParentUI;
+
+	private Database.BuildingMonster Monster;
+
+	private float m_fTime;
+
+	private float yheight;
+
+	private bool detectMouseClick = true;
+
+	private bool m_bFriend;
+
+	public override void Start()
+	{
+		m_fTime = Random.value;
+	}
+
+	private void Update()
+	{
+		m_fTime += Time.deltaTime;
+		float num = 0.5f;
+		float num2 = m_fTime - (float)(int)(m_fTime / num / 2f) * num * 2f;
+		yheight = ((!(num2 > num)) ? ((num - num2) / num * 10f) : ((num2 - num) / num * 10f));
+	}
+
+	public static bool calcTroopRect(string msg, ref Rect rc)
+	{
+		Vector2 vector = __BaseUI.CalcSize(msg, __BaseUI._textNLeft, 14);
+		bool result = true;
+		if (vector.x <= 200f)
+		{
+			rc.width = vector.x + 100f;
+		}
+		else
+		{
+			rc.width = vector.x / 2f + 100f;
+		}
+		if (rc.x + rc.width > (float)(Screen.width - 100))
+		{
+			rc.x -= rc.width;
+			result = false;
+		}
+		return result;
+	}
+
+	public static void drawTroopBubble(string msg, Texture2D tex, Vector2 pos, bool bHover, bool bRight, float yheight)
+	{
+		if (!bHover)
+		{
+			GUI.backgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+		}
+		Vector2 vector = __BaseUI.CalcSize(msg, __BaseUI._textNLeft, __BaseUI._fontSize);
+		if (vector.x <= 200f)
+		{
+			if (bRight)
+			{
+				GUI.Label(new Rect(pos.x + 40f, pos.y + yheight + 15f + 7f, vector.x + 60f, 56f), string.Empty, __BaseUI._bubbleStyle);
+				__BaseUI.Label(new Rect(pos.x + 80f, pos.y + yheight + 15f + 8f, vector.x + 20f, 56f), msg, __BaseUI._textNLeft, __BaseUI._clrBlack, __BaseUI._fontSize);
+			}
+			else
+			{
+				GUI.Label(new Rect(pos.x + 40f - vector.x - 60f, pos.y + yheight + 15f + 7f, vector.x + 60f, 56f), string.Empty, __BaseUI._bubbleStyle);
+				__BaseUI.Label(new Rect(pos.x + 40f - vector.x - 60f + 30f, pos.y + yheight + 15f + 8f, vector.x + 20f, 56f), msg, __BaseUI._textNLeft, __BaseUI._clrBlack, __BaseUI._fontSize);
+			}
+		}
+		else if (bRight)
+		{
+			vector = __BaseUI.CalcSize(msg, __BaseUI._textNLeft, __BaseUI._fontSize);
+			GUI.Label(new Rect(pos.x + 40f, pos.y + yheight + 15f + 7f, vector.x / 2f + 60f, 56f), string.Empty, __BaseUI._bubbleStyle);
+			__BaseUI._textNLeft.wordWrap = true;
+			__BaseUI.Label(new Rect(pos.x + 80f, pos.y + yheight + 15f + 8f, vector.x / 2f, 56f), msg, __BaseUI._textNLeft, __BaseUI._clrBlack, __BaseUI._fontSize);
+			__BaseUI._textNLeft.wordWrap = false;
+		}
+		else
+		{
+			vector = __BaseUI.CalcSize(msg, __BaseUI._textNLeft, __BaseUI._fontSize);
+			GUI.Label(new Rect(pos.x + 40f - vector.x / 2f - 60f, pos.y + yheight + 15f + 7f, vector.x / 2f + 60f, 56f), string.Empty, __BaseUI._bubbleStyle);
+			__BaseUI._textNLeft.wordWrap = true;
+			__BaseUI.Label(new Rect(pos.x + 40f - vector.x / 2f - 60f + 30f, pos.y + yheight + 15f + 8f, vector.x / 2f, 56f), msg, __BaseUI._textNLeft, __BaseUI._clrBlack, __BaseUI._fontSize);
+			__BaseUI._textNLeft.wordWrap = false;
+		}
+		if (tex != null)
+		{
+			__BaseUI.Box(new Rect(pos.x + 15f, pos.y + yheight + 20f, tex.width, tex.height), tex);
+		}
+		GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (Camera.main == null)
+		{
+			return;
+		}
+		__BaseUI.my_enabled = IsEnable();
+		GUI.depth = __BaseUI.UIDepth_Scene;
+		Vector3 position = Monster.mesh.transform.position;
+		position.y = Monster.mesh.collider.bounds.center.y + Monster.mesh.collider.bounds.extents.y;
+		position = Camera.main.WorldToScreenPoint(position);
+		position.y = (float)Screen.height - position.y;
+		position.x -= 20f;
+		position.y -= 90f;
+		if (Monster.idkiller != 0L)
+		{
+			string empty = string.Empty;
+			empty = ((!m_bFriend) ? __BaseUI.load_str(20180u, Monster.killer_name, Monster.type.name) : __BaseUI.load_str(20179u, Monster.type.name, Monster.killer_name));
+			Rect rc = new Rect(position.x, position.y + 20f, 79f, 72f);
+			bool bRight = calcTroopRect(empty, ref rc);
+			checkHover(rc, "BuildingMonsterScript");
+			drawTroopBubble(empty, CapitalUI.texAccept, position, m_bHover, bRight, yheight);
+			if (!m_bFriend)
+			{
+				if (!IsEnable())
+				{
+					return;
+				}
+				if (GUI.Button(rc, string.Empty, __BaseUI.normalStyle))
+				{
+					MonsterAction();
+				}
+			}
+		}
+		else
+		{
+			__BaseUI.BeginGroup(new Rect(position.x, position.y, 79f, 83f));
+			Rect rc2 = new Rect(0f, 20f, 79f, 63f);
+			checkHover(rc2, "BuildingMonsterScript");
+			if (!m_bHover)
+			{
+				GUI.backgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+			}
+			__BaseUI.Box(new Rect(16f, yheight + 15f, 48f, 52f), CapitalUI.texSword);
+			GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+			if (CapitalUI.btnMonster.Button(bBtn: true, rc2, string.Empty))
+			{
+				MonsterAction();
+			}
+			__BaseUI.EndGroup();
+		}
+		__BaseUI.my_enabled = true;
+	}
+
+	private void MonsterAction()
+	{
+		string empty = string.Empty;
+		if (!m_bFriend && Monster.idkiller != 0L)
+		{
+			MonsterClear(bOK: true, null);
+			return;
+		}
+		if (m_bFriend && !CapitalFriendUI.myfriend.isfans)
+		{
+			empty = __BaseUI.format(101u, new object[1] { CapitalFriendUI.myfriend.name });
+			__BaseUI.GetMessageBox().setMessage("好友", empty, null, EnableAll);
+			return;
+		}
+		Cooldown cooldown = Global.character_.getCooldown(4);
+		if (m_bFriend && cooldown != null && cooldown.time > TimeUtil.Now)
+		{
+			empty = __BaseUI.format("battle_cd", new object[3]
+			{
+				__BaseUI.load_str(20182u),
+				Global.character_.battle_fail_count,
+				Global.getFormatTime((int)(cooldown.time - TimeUtil.Now))
+			});
+			__BaseUI.GetMessageBox().setMessage(string.Empty, empty, null, EnableAll);
+		}
+		else if (!m_bFriend && Monster.cd_time > TimeUtil.Now)
+		{
+			empty = __BaseUI.format("battle_cd", new object[3]
+			{
+				Monster.name,
+				Monster.fail_count,
+				Global.getFormatTime((int)(Monster.cd_time - TimeUtil.Now))
+			});
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20183u), empty, null, EnableAll);
+		}
+		else
+		{
+			MonsterAttack(bOK: true, null);
+		}
+	}
+
+	private void MonsterClear(bool bOK, object[] objs)
+	{
+		cs_building_monster_clear_0x48E();
+	}
+
+	private void MonsterAttack(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			if (!m_bFriend)
+			{
+				Hashtable hashtable = new Hashtable();
+				__BaseUI.subui = "NPCBattle";
+				hashtable.Add("subui", __BaseUI.subui);
+				hashtable.Add("campaignid", Monster.id);
+				hashtable.Add("troopid", 0);
+				hashtable.Add("substate", "building_monster");
+				hashtable.Add("viewonly", false);
+				hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+				FormationUI formationUI = BaseUI.GetFormationUI();
+				formationUI.SubLoading(hashtable);
+				MainUI.SetSubUI(formationUI);
+			}
+			else
+			{
+				Hashtable hashtable2 = new Hashtable();
+				__BaseUI.subui = "NPCBattle";
+				hashtable2.Add("subui", __BaseUI.subui);
+				hashtable2.Add("campaignid", Monster.id);
+				hashtable2.Add("troopid", 0);
+				hashtable2.Add("substate", "friend_monster");
+				hashtable2.Add("viewonly", false);
+				hashtable2.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAssist));
+				FormationUI formationUI2 = BaseUI.GetFormationUI();
+				formationUI2.SubLoading(hashtable2);
+				MainUI.SetSubUI(formationUI2);
+			}
+		}
+	}
+
+	protected override void MyMouseEnter()
+	{
+		base.MyMouseEnter();
+		if (!ShowTooltip && ParentUI.IsEnable())
+		{
+			ShowTooltip = true;
+			TooltipUI.setTooltip(this, "BuildingMonster");
+		}
+	}
+
+	protected override void MyMouseExit()
+	{
+		if (!m_bHover)
+		{
+			base.MyMouseExit();
+			if (ShowTooltip)
+			{
+				ShowTooltip = false;
+				TooltipUI.setTooltip(this, string.Empty);
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "BuildingMonster")
+		{
+			string text = "#c=FFFF00" + Monster.name;
+			text += __BaseUI.load_str(20184u, Monster.level);
+			tooltipUI.ShowTooltipContent("BuildingMonster", text, 200, __BaseUI._fontSize);
+		}
+	}
+
+	protected override void MyMouseUp()
+	{
+		if (detectMouseClick && IsEnable() && (!m_bFriend || Monster.idkiller == 0L))
+		{
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+			if (Monster != null && !(Monster.mesh == null) && Monster.mesh.collider.Raycast(ray, out var _, 1000f))
+			{
+				MonsterAction();
+			}
+		}
+	}
+
+	protected override void MyMouseOver()
+	{
+		TooltipUI.setTooltip(this, "BuildingMonster");
+	}
+
+	public void setMonster(BaseUI ui, Database.BuildingMonster monster, bool bFriend)
+	{
+		ParentUI = ui;
+		Monster = monster;
+		m_bFriend = bFriend;
+	}
+
+	private void DisableMouseDown()
+	{
+		detectMouseClick = false;
+	}
+
+	private void EnableMouseDown()
+	{
+		detectMouseClick = true;
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		cs_building_monster_battle_0x48D();
+		MainUI.SetSubUI(null);
+		return true;
+	}
+
+	private bool OnAssist()
+	{
+		DisableAll();
+		cs_friend_monster_battle_0x4C1();
+		MainUI.SetSubUI(null);
+		return true;
+	}
+
+	private void cs_building_monster_battle_0x48D()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSBuildingMonsterBattle_0x48D cSBuildingMonsterBattle_0x48D = new CSBuildingMonsterBattle_0x48D();
+		cSBuildingMonsterBattle_0x48D.id = Monster.id;
+		RootUI.m_client.Send(1165, cSBuildingMonsterBattle_0x48D, sc_building_monster_battle_0x48D);
+	}
+
+	private void sc_building_monster_battle_0x48D(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCBuildingMonsterBattle_0x48D sCBuildingMonsterBattle_0x48D = JSProtoBuf.Serializer.Deserialize<SCBuildingMonsterBattle_0x48D>(stream);
+		Database.BuildingMonster buildingMonster = Global.character_.building_monsters[(byte)sCBuildingMonsterBattle_0x48D.id];
+		if (sCBuildingMonsterBattle_0x48D.result == 1)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			buildingMonster.idkiller = sCBuildingMonsterBattle_0x48D.idkiller;
+			buildingMonster.killer_name = sCBuildingMonsterBattle_0x48D.killer_name;
+			buildingMonster.mesh.animation.Play("dead");
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20180u, buildingMonster.killer_name, buildingMonster.type.name), null);
+			return;
+		}
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCBuildingMonsterBattle_0x48D.report, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewVipSkip;
+		if (buildingMonster.fail_count < 35)
+		{
+			buildingMonster.fail_count++;
+		}
+		buildingMonster.cd_time = sCBuildingMonsterBattle_0x48D.cooldown;
+		battleUI.setClose(FailedOpen);
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	private void cs_friend_monster_battle_0x4C1()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSFriendMonsterBattle_0x4C1 cSFriendMonsterBattle_0x4C = new CSFriendMonsterBattle_0x4C1();
+		cSFriendMonsterBattle_0x4C.idfriend = CapitalFriendUI.myfriend.id;
+		cSFriendMonsterBattle_0x4C.idmonster = Monster.id;
+		RootUI.m_client.Send(1217, cSFriendMonsterBattle_0x4C, sc_friend_monster_battle_0x4C1);
+	}
+
+	private void sc_friend_monster_battle_0x4C1(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCFriendMonsterBattle_0x4C1 sCFriendMonsterBattle_0x4C = JSProtoBuf.Serializer.Deserialize<SCFriendMonsterBattle_0x4C1>(stream);
+		Database.BuildingMonster buildingMonster = CapitalFriendUI.myfriend.building_monsters[(byte)sCFriendMonsterBattle_0x4C.idmonster];
+		if (sCFriendMonsterBattle_0x4C.result == 1)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20185u, buildingMonster.type.name), null);
+			if (buildingMonster.mesh != null)
+			{
+				Object.Destroy(buildingMonster.mesh);
+			}
+			CapitalFriendUI.myfriend.building_monsters.Remove((byte)sCFriendMonsterBattle_0x4C.idmonster);
+			return;
+		}
+		if (sCFriendMonsterBattle_0x4C.result == 2)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			buildingMonster.idkiller = sCFriendMonsterBattle_0x4C.idkiller;
+			buildingMonster.killer_name = sCFriendMonsterBattle_0x4C.killer_name;
+			if (buildingMonster.mesh != null)
+			{
+				buildingMonster.mesh.animation.Play("dead");
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20179u, buildingMonster.type.name, buildingMonster.killer_name), null);
+			return;
+		}
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCFriendMonsterBattle_0x4C.report, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewVipSkip;
+		if (Global.character_.battle_fail_count < 35)
+		{
+			Global.character_.battle_fail_count++;
+		}
+		if (sCFriendMonsterBattle_0x4C.cooldown != null)
+		{
+			Global.character_.cooldowns[(byte)sCFriendMonsterBattle_0x4C.cooldown.id] = new Cooldown(sCFriendMonsterBattle_0x4C.cooldown);
+		}
+		battleUI.setClose(FailedOpen);
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		if (!pkt.iswin)
+		{
+			return;
+		}
+		if (pkt.idfriend != 0L)
+		{
+			string msg = string.Empty;
+			List<_Treasure> list = new List<_Treasure>();
+			if (pkt.bonuses == null)
+			{
+				msg = __BaseUI.load_str(20186u);
+			}
+			else
+			{
+				foreach (Treasure bonuse in pkt.bonuses.bonuses)
+				{
+					_Treasure treasure = new _Treasure();
+					treasure.make(bonuse);
+					list.Add(treasure);
+				}
+			}
+			Database.BuildingMonster buildingMonster = CapitalFriendUI.myfriend.building_monsters[(byte)pkt.idmonster];
+			BattleUI battleUI = BaseUI.GetBattleUI();
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, battleUI.getDefenderName(), msg, battleUI.getBattleLevel(), 0, list, AssistClose);
+			battleUI.setClose(BonusOpen);
+			buildingMonster.killer_name = Global.character_.name;
+			buildingMonster.idkiller = Global.character_.id;
+			Global.character_.cooldowns.Remove(4);
+			if (Global.character_.battle_fail_count > 0)
+			{
+				Global.character_.battle_fail_count--;
+			}
+			if (Global.character_.monster_assist_count < byte.MaxValue)
+			{
+				Global.character_.monster_assist_count++;
+			}
+			return;
+		}
+		Database.BuildingMonster buildingMonster2 = Global.character_.building_monsters[(byte)pkt.idmonster];
+		Global.character_.next_monster_time = pkt.next_monster_time;
+		List<_Treasure> list2 = new List<_Treasure>();
+		foreach (Treasure bonuse2 in pkt.bonuses.bonuses)
+		{
+			_Treasure treasure2 = new _Treasure();
+			treasure2.make(bonuse2);
+			list2.Add(treasure2);
+		}
+		BattleUI battleUI2 = BaseUI.GetBattleUI();
+		BattleResultUI battleResultUI2 = __BaseUI.GetBattleResultUI();
+		string msg2 = string.Empty;
+		if (buildingMonster2.type.bonus_ratio > 100)
+		{
+			msg2 = __BaseUI.load_str(20187u, buildingMonster2.name, ((float)(int)buildingMonster2.type.bonus_ratio / 100f).ToString());
+		}
+		battleResultUI2.Set(rmg, battleUI2.getDefenderName(), msg2, battleUI2.getBattleLevel(), 0, list2, BonusClose);
+		battleUI2.setClose(BonusOpen);
+	}
+
+	private void cs_building_monster_clear_0x48E()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSBuildingMonsterClear_0x48E cSBuildingMonsterClear_0x48E = new CSBuildingMonsterClear_0x48E();
+		cSBuildingMonsterClear_0x48E.id = Monster.id;
+		RootUI.m_client.Send(1166, cSBuildingMonsterClear_0x48E, sc_building_monster_clear_0x48E);
+	}
+
+	private void sc_building_monster_clear_0x48E(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCBuildingMonsterClear_0x48E sCBuildingMonsterClear_0x48E = JSProtoBuf.Serializer.Deserialize<SCBuildingMonsterClear_0x48E>(stream);
+		Global.character_.next_monster_time = sCBuildingMonsterClear_0x48E.next_monster_time;
+		Database.BuildingMonster buildingMonster = Global.character_.building_monsters[(byte)sCBuildingMonsterClear_0x48E.id];
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse in sCBuildingMonsterClear_0x48E.bonuses.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse);
+			list.Add(treasure);
+		}
+		DisableAll();
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(null, string.Empty, string.Empty, 0, 0, list, BonusClose);
+		battleResultUI.MyLoading();
+		MainUI.SetSubUI(null);
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	private void FailedOpen()
+	{
+		MainUI.SetSubUI(BaseUI.GetBattleFailedUI());
+		BaseUI.GetBattleFailedUI().MyLoading();
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+		if (Monster != null)
+		{
+			if (Monster.mesh != null)
+			{
+				Object.Destroy(Monster.mesh);
+			}
+			Global.character_.building_monsters.Remove(Monster.id);
+		}
+	}
+
+	private void AssistClose()
+	{
+		EnableAll();
+		if (Monster != null && Monster.mesh != null)
+		{
+			Monster.mesh.animation.Play("dead");
+		}
+	}
+}

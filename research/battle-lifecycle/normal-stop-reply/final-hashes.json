@@ -1,0 +1,77 @@
+[
+  {
+    "path": "native/unity_bridge/managed/DailyArenaBattleModel.cs",
+    "sha256": "e8f7c399f49b3bb8b92386f3c6966c17db67428c498498a054f0b622a8e4de25",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyArenaBattleModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyPointRaceModel.cs",
+    "sha256": "aecaa64e897a600b161c53f4d192fc68175b45527b897bcd4f76964ee21808f7",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyMonsterModel.cs",
+    "sha256": "f186536d515679598d5b84ea69a6a6f1d3cb9cd91a7ea02b0dd87e90bda20097",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyMonsterModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyScriptAdapter.cs",
+    "sha256": "ac3790689d4a1d9149551ab7d3fc7eb49421ad1c8af2ebb1fc40736e94d953cc",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyScriptAdapter.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/BattleModeAdapterTestStubs.cs",
+    "sha256": "714d318494e6b62f77dfb448ae98dd41306d2becbe9120d171a922656dd38317",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\BattleModeAdapterTestStubs.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/BattleModeAdapterTests.cs",
+    "sha256": "32329dc0339536f597b175baf064cd5af8076c1650b93a1ca7f41e4f30ab152f",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\BattleModeAdapterTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/PointRaceBattleAdapterTests.cs",
+    "sha256": "73201ac7b8850cd8abc0bcf2dc8caabec1894bc6cf03aa0f8e8c486a0011ee1a",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\PointRaceBattleAdapterTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/DemonPreflightStubs.cs",
+    "sha256": "d33a4d34e42796e51e34126b5022a19f239270add3989f5a6d20b72602a51a72",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\DemonPreflightStubs.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/DemonPreflightTests.cs",
+    "sha256": "6c7ec1488a06a6d0c2283ba1856946f1c2c12f060d4120806e291bb163a8c405",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\DemonPreflightTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/NormalStopModeReplyTests.cs",
+    "sha256": "beb98417adf2a18d134c5f9ca9dcb1c0bebf3e76a56728d17798f1ab18338b7d",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\NormalStopModeReplyTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/NormalStopDemonReplyTests.cs",
+    "sha256": "ace4f8fa32dde86fea76cdeaa037b8351c1e9723c90c87db87a42dd9cf531702",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\NormalStopDemonReplyTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/run-normal-stop-reply.ps1",
+    "sha256": "a934247413c6a56b5de00e9b188fa58c52073a5ebd2df52a441756d31b8eb401",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\tests\\run-normal-stop-reply.ps1"
+  },
+  {
+    "path": "native/unity_bridge/managed/BattleLaunch.cs",
+    "sha256": "55fcf9feaaa317c474e0debbd115c99359e0a50d1227821143f5e6db43fde87d",
+    "ownership": "read-only dependency"
+  },
+  {
+    "path": "native/unity_bridge/managed/BattleReplyPreflight.cs",
+    "sha256": "b17db6c7ef58479a67d982b90395132c50dcfbae7605b073fd2ba745ce1e7cf4",
+    "ownership": "read-only dependency"
+  },
+  {
+    "path": "native/unity_bridge/managed/BattleSettlement.cs",
+    "sha256": "c5728411bf672f838e4128f7acce309279fcd9a0986db3d21dba29c365679c72",
+    "ownership": "read-only dependency"
+  }
+]

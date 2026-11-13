@@ -1,0 +1,78 @@
+[
+  {
+    "path": "jiangshen_assistant/battle_launch.py",
+    "sha256": "6d832b2485089682b72924f61ca105d17eecc03b0f44cf1f747b5c639a1d7b14"
+  },
+  {
+    "path": "jiangshen_assistant/bridge_client.py",
+    "sha256": "ac0723835edf59c303cebfb92cd57dc114a1a20c5a5087c2ab903f67cf114f2a"
+  },
+  {
+    "path": "jiangshen_assistant/objects.py",
+    "sha256": "ae407cb44553d5986007bc328b84f9ef033816efb2ecc14aa5c8b8afde8a02c5"
+  },
+  {
+    "path": "jiangshen_assistant/daily_coordinator.py",
+    "sha256": "5de6aa1ceb92ff916c21f2c0d47834cef12ddc1955ddd1679805592392a16622"
+  },
+  {
+    "path": "tests/test_objects.py",
+    "sha256": "7feff297f67eb93f811ab23e0a2b09af95869e2d5687ac1c2cbc52f4863f2980"
+  },
+  {
+    "path": "tests/test_battle_launch.py",
+    "sha256": "45e728359cb21e5b28ef0e11a19342d7460326fc132d50efa659698a43a56552"
+  },
+  {
+    "path": "native/unity_bridge/managed/BattleLaunch.cs",
+    "sha256": "64cf5d38c5820bfde030b6d8ba0408f1760d486019574d63170822d530128c78"
+  },
+  {
+    "path": "native/unity_bridge/managed/CampaignModel.cs",
+    "sha256": "8cb03c9d3d2028f0a79fd1f0c8e4b88e33be717786bbe58dfa2c0290b783b97f"
+  },
+  {
+    "path": "native/unity_bridge/managed/SharedDevelopmentContext.cs",
+    "sha256": "6a222aaf28b2e735aac7d5b26b496cf55c1c93ee55493d4996f56901cc83a5bc"
+  },
+  {
+    "path": "native/unity_bridge/managed/Protocol.cs",
+    "sha256": "33693d74ed54a4de6232afd23915f38521cb33598b732b5a7a5f743af3c9964d"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyArenaBattleModel.cs",
+    "sha256": "08ad0b97ab5288b92ab620eb8b887910d8035b106fa615ffe28ead72784a9d38"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyPointRaceModel.cs",
+    "sha256": "2a0eef55eb36375d99bf5c5ab66ad1c4e14869b334cfabd19bfc0ef81e83f2b1"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyGraveModel.cs",
+    "sha256": "f92e59e8572fe4793ee028e1bc7ba39bbbacacf4eb9741ddf1092c77768d3aa6"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyTrialModel.cs",
+    "sha256": "4df93114ce77a292daff375ed49deefae8c9cb6ddb693e1dbc9b5e2cb8966a48"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyMonsterModel.cs",
+    "sha256": "724f178659dfd5fefc348801b2634203a6db431baf6dde9cffb77e117b8279d4"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyDivinityBattleModel.cs",
+    "sha256": "bd39a9fd6227a24ff2e3efbd5e3aca1fe67fb84d049644ed2be9456a50dbc689"
+  },
+  {
+    "path": "native/unity_bridge/build.ps1",
+    "sha256": "06f270c53b579ece10c832addfed92c52275083b0bfa3caf2ab605367ab0edb4"
+  },
+  {
+    "path": "native/unity_bridge/tests/BattleLaunchRaceFixture.cs",
+    "sha256": "e7a9c27e076d0367a81e9324312b35902681ebc4564c56911b319ca4419df8a0"
+  },
+  {
+    "path": "native/unity_bridge/tests/run-battle-launch-race.ps1",
+    "sha256": "ab0fa4ccffcaa5b6ce654e910a3b5a462c8e67682ce695dc92ec28692bd85f9a"
+  }
+]

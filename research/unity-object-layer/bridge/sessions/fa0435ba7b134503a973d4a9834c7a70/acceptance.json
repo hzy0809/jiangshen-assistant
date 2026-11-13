@@ -1,0 +1,33 @@
+{
+  "status": "PASS",
+  "scope": "one direct existing MainUI Disable/Enable transaction",
+  "session": "fa0435ba7b134503a973d4a9834c7a70",
+  "pid": 12844,
+  "native_thread": 21756,
+  "managed_thread": 1,
+  "main_instance_id": 11752,
+  "initial_frame": 192361,
+  "action_frame": 193966,
+  "restored_frame": 194330,
+  "action_utc": "2026-10-30T17:53:17.2944486Z",
+  "restore_utc": "2026-10-30T17:53:23.3323953Z",
+  "ui_status": "PASS",
+  "resource_equality_status": "PASS",
+  "resource_field_count": 14,
+  "resource_observations": 368,
+  "visual_observation": {
+    "status": "PASS for observed main-menu icons",
+    "before_utc": "2026-10-30T17:52:18.461Z",
+    "disabled_utc": "2026-10-30T17:53:17.516Z",
+    "restored_utc": "2026-10-30T17:53:31.720Z",
+    "method": "Computer Use selected-window screenshots observed directly; no synthetic click",
+    "limits": "Not every raw GUI control was tested for clickability"
+  },
+  "hook_removed": true,
+  "callback_finished": true,
+  "component_destroyed": true,
+  "active_probe_cleanup": "PASS",
+  "complete_module_unload": "pending next normal game process exit",
+  "resource_consumption_causality": "UNVERIFIED beyond fixed method IL and observed field equality",
+  "global_network_effects": "UNVERIFIED"
+}

@@ -1,0 +1,7 @@
+LIBRARY bridge
+EXPORTS
+    JSB_Arm
+    JSB_Fire
+    JSB_Cancel
+    JSB_ReadStatus
+    JSB_Close

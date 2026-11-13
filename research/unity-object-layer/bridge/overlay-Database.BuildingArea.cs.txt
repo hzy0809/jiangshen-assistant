@@ -1,0 +1,24 @@
+using System.Collections.Generic;
+
+namespace Database;
+
+public class BuildingArea
+{
+	public _building_area data;
+
+	public byte id;
+
+	public bool unlocked;
+
+	public Dictionary<byte, BuildingIsland> m_islands = new Dictionary<byte, BuildingIsland>();
+
+	public BuildingArea(_building_area d)
+	{
+		data = d;
+		id = d.id;
+		foreach (_building_island island in d.m_islands)
+		{
+			m_islands[island.id] = new BuildingIsland(island);
+		}
+	}
+}

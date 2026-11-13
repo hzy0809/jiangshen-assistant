@@ -1,0 +1,320 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCBattleEnd_0x408")]
+public class SCBattleEnd_0x408 : IExtensible
+{
+	private uint _result;
+
+	private uint _type = 0u;
+
+	private ulong _idfriend = 0uL;
+
+	private uint _idcampaign = 0u;
+
+	private uint _idtroop = 0u;
+
+	private bool _iswin = false;
+
+	private uint _exp_get = 0u;
+
+	private uint _level = 0u;
+
+	private uint _experience = 0u;
+
+	private Treasures _bonuses = null;
+
+	private readonly List<db_character_treasure> _treasures = new List<db_character_treasure>();
+
+	private uint _stamina_consume = 0u;
+
+	private readonly List<uint> _newgenid = new List<uint>();
+
+	private uint _next_monster_time = 0u;
+
+	private uint _idmonster = 0u;
+
+	private bool _kill_all = false;
+
+	private ulong _idbattle_report = 0uL;
+
+	private uint _star_level = 0u;
+
+	private CharacterDummyChallenge _dummy_challenge_status = null;
+
+	private bool _dummy_challenge_level_finished = false;
+
+	private readonly List<db_character_talent_army> _nextarmys = new List<db_character_talent_army>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "type", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint type
+	{
+		get
+		{
+			return _type;
+		}
+		set
+		{
+			_type = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "idfriend", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idfriend
+	{
+		get
+		{
+			return _idfriend;
+		}
+		set
+		{
+			_idfriend = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "idcampaign", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idcampaign
+	{
+		get
+		{
+			return _idcampaign;
+		}
+		set
+		{
+			_idcampaign = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "idtroop", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idtroop
+	{
+		get
+		{
+			return _idtroop;
+		}
+		set
+		{
+			_idtroop = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "exp_get", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint exp_get
+	{
+		get
+		{
+			return _exp_get;
+		}
+		set
+		{
+			_exp_get = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint level
+	{
+		get
+		{
+			return _level;
+		}
+		set
+		{
+			_level = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = false, Name = "experience", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint experience
+	{
+		get
+		{
+			return _experience;
+		}
+		set
+		{
+			_experience = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = false, Name = "bonuses", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public Treasures bonuses
+	{
+		get
+		{
+			return _bonuses;
+		}
+		set
+		{
+			_bonuses = value;
+		}
+	}
+
+	[ProtoMember(11, Name = "treasures", DataFormat = DataFormat.Default)]
+	public List<db_character_treasure> treasures => _treasures;
+
+	[ProtoMember(12, IsRequired = false, Name = "stamina_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint stamina_consume
+	{
+		get
+		{
+			return _stamina_consume;
+		}
+		set
+		{
+			_stamina_consume = value;
+		}
+	}
+
+	[ProtoMember(13, Name = "newgenid", DataFormat = DataFormat.TwosComplement)]
+	public List<uint> newgenid => _newgenid;
+
+	[ProtoMember(14, IsRequired = false, Name = "next_monster_time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint next_monster_time
+	{
+		get
+		{
+			return _next_monster_time;
+		}
+		set
+		{
+			_next_monster_time = value;
+		}
+	}
+
+	[ProtoMember(15, IsRequired = false, Name = "idmonster", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idmonster
+	{
+		get
+		{
+			return _idmonster;
+		}
+		set
+		{
+			_idmonster = value;
+		}
+	}
+
+	[ProtoMember(16, IsRequired = false, Name = "kill_all", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool kill_all
+	{
+		get
+		{
+			return _kill_all;
+		}
+		set
+		{
+			_kill_all = value;
+		}
+	}
+
+	[ProtoMember(17, IsRequired = false, Name = "idbattle_report", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idbattle_report
+	{
+		get
+		{
+			return _idbattle_report;
+		}
+		set
+		{
+			_idbattle_report = value;
+		}
+	}
+
+	[ProtoMember(18, IsRequired = false, Name = "star_level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint star_level
+	{
+		get
+		{
+			return _star_level;
+		}
+		set
+		{
+			_star_level = value;
+		}
+	}
+
+	[ProtoMember(19, IsRequired = false, Name = "dummy_challenge_status", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public CharacterDummyChallenge dummy_challenge_status
+	{
+		get
+		{
+			return _dummy_challenge_status;
+		}
+		set
+		{
+			_dummy_challenge_status = value;
+		}
+	}
+
+	[ProtoMember(20, IsRequired = false, Name = "dummy_challenge_level_finished", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool dummy_challenge_level_finished
+	{
+		get
+		{
+			return _dummy_challenge_level_finished;
+		}
+		set
+		{
+			_dummy_challenge_level_finished = value;
+		}
+	}
+
+	[ProtoMember(21, Name = "nextarmys", DataFormat = DataFormat.Default)]
+	public List<db_character_talent_army> nextarmys => _nextarmys;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

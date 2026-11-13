@@ -1,0 +1,95 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "Treasure")]
+public class Treasure : IExtensible
+{
+	private uint _idtreasure_type;
+
+	private int _param0;
+
+	private int _param1;
+
+	private int _total_value;
+
+	private bool _add_to_treasury = false;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "idtreasure_type", DataFormat = DataFormat.TwosComplement)]
+	public uint idtreasure_type
+	{
+		get
+		{
+			return _idtreasure_type;
+		}
+		set
+		{
+			_idtreasure_type = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "param0", DataFormat = DataFormat.ZigZag)]
+	public int param0
+	{
+		get
+		{
+			return _param0;
+		}
+		set
+		{
+			_param0 = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "param1", DataFormat = DataFormat.ZigZag)]
+	public int param1
+	{
+		get
+		{
+			return _param1;
+		}
+		set
+		{
+			_param1 = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = true, Name = "total_value", DataFormat = DataFormat.ZigZag)]
+	public int total_value
+	{
+		get
+		{
+			return _total_value;
+		}
+		set
+		{
+			_total_value = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "add_to_treasury", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool add_to_treasury
+	{
+		get
+		{
+			return _add_to_treasury;
+		}
+		set
+		{
+			_add_to_treasury = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

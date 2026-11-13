@@ -1,0 +1,2134 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
+using System.Text;
+using Database;
+using MiniJSON;
+using UnityEngine;
+using game.net;
+using game.net.data.CtoS;
+using game.net.data.GtoC;
+using game.net.data.StoC;
+
+public class LoginUI : BaseUI
+{
+	private enum LoginState
+	{
+		LoginState_None = 1,
+		LoginState_Waiting,
+		LoginState_Failed,
+		LoginState_OK
+	}
+
+	private const string xdkey = "efxTMI5XoNuuom8lYyVa";
+
+	private string username = string.Empty;
+
+	private string password = string.Empty;
+
+	public int sid;
+
+	private LoginState login_state = LoginState.LoginState_None;
+
+	private bool bRemember;
+
+	private static uint idlogin;
+
+	private static uint timestamp;
+
+	private static uint randnum;
+
+	private static string hash = string.Empty;
+
+	private static bool gm_login;
+
+	private static bool m_bFontFirst = true;
+
+	private bool super_login;
+
+	private uint sl_channel_id;
+
+	private uint sl_zoneid;
+
+	private uint sl_serverid;
+
+	private ulong sl_userid;
+
+	private string sl_gamekey = "test";
+
+	private int sl_gateway;
+
+	private string[] sl_gateway_str = new string[4] { "gw.js.xd.com", "103.23.157.11", "11x005.xd.cn", "101.251.204.250" };
+
+	private uint id;
+
+	private bool isdemo;
+
+	public static string first_login = string.Empty;
+
+	public float ping_delay = 30f;
+
+	private uint _ping;
+
+	public static bool startflag_1;
+
+	public uint ping => _ping;
+
+	private void reset()
+	{
+		login_state = LoginState.LoginState_None;
+	}
+
+	public override void Start()
+	{
+		base.Start();
+		Reconnector reconnector = base.gameObject.AddComponent<Reconnector>();
+		if (reconnector != null)
+		{
+			reconnector.key = "f5";
+		}
+		if (Application.platform == RuntimePlatform.WindowsWebPlayer || Application.platform == RuntimePlatform.OSXWebPlayer)
+		{
+			Application.ExternalCall("SetURLBase");
+			Hide();
+		}
+		else if (Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			LoadIndexScript._TEST = false;
+			string[] commandLineArgs = Environment.GetCommandLineArgs();
+			Logger.Log(commandLineArgs.Length + " arguments");
+			string[] array = commandLineArgs;
+			foreach (string text in array)
+			{
+				for (int j = 0; j < text.Length; j += 100)
+				{
+					Logger.Log(text.Substring(j, (j + 100 >= text.Length) ? (text.Length - j) : 100));
+				}
+				Logger.Log("length:" + text.Length);
+			}
+			string text2 = commandLineArgs[0];
+			int num = commandLineArgs.Length;
+			if (commandLineArgs[commandLineArgs.Length - 1].Contains("jsnetcafe"))
+			{
+				num--;
+				Global.jsnetcafe = true;
+				if (BaseAsset.was != null)
+				{
+					BaseAsset.was.Localpath_netcafe();
+				}
+			}
+			if (num == 2)
+			{
+				Global.launcher_exe = commandLineArgs[num - 1];
+			}
+			if (num > 2)
+			{
+				Global.launcher_exe = commandLineArgs[num - 1];
+				string text3 = string.Empty;
+				for (int k = 1; k < num - 1; k++)
+				{
+					text3 += commandLineArgs[k];
+				}
+				IDictionary dictionary = (IDictionary)Json.Deserialize(text3);
+				switch (dictionary["result"].ToString())
+				{
+				case "ok":
+					Logger.Log("new mode ok");
+					Global.game_data = (IDictionary)dictionary["game_data"];
+					InitGame();
+					Hide();
+					login_state = LoginState.LoginState_OK;
+					SaveUserPassword();
+					break;
+				case "end":
+					username = dictionary["username"].ToString();
+					password = "1";
+					break;
+				default:
+					login_state = LoginState.LoginState_Failed;
+					break;
+				case "empty":
+					break;
+				}
+			}
+			else
+			{
+				if (Application.platform == RuntimePlatform.WindowsEditor)
+				{
+				}
+				int startIndex = text2.IndexOf("{");
+				text2 = text2.Substring(startIndex);
+				IDictionary dictionary2 = (IDictionary)Json.Deserialize(text2);
+				string text4 = dictionary2["result"].ToString();
+				if (text4 != "ok")
+				{
+					login_state = LoginState.LoginState_Failed;
+				}
+				else
+				{
+					string text5 = dictionary2["url"].ToString();
+					startIndex = text5.IndexOf("/", text5.IndexOf("//") + 2);
+					ServerSetting.url_qiantai = text5.Substring(0, startIndex + 1);
+					StartCoroutine("start_game", text5);
+				}
+			}
+		}
+		else
+		{
+			MyLoading();
+		}
+		GetComponent<TitleUI>().MyLoading();
+	}
+
+	private void Update()
+	{
+	}
+
+	private void Load()
+	{
+		if (Application.platform == RuntimePlatform.WindowsWebPlayer || Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			return;
+		}
+		Visible();
+		BaseAsset.lds.EndLoading(bDestroy: true);
+		GameObject.Find("Root").GetComponent<RootMessenger>().LevelStart(_bLoadScreen: false, _bLoadingVisible: false);
+		if (Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			try
+			{
+				FileStream fileStream = new FileStream("account", FileMode.Open, FileAccess.Read, FileShare.Read);
+				if (fileStream != null)
+				{
+					BinaryFormatter binaryFormatter = new BinaryFormatter();
+					Hashtable hashtable = (Hashtable)binaryFormatter.Deserialize(fileStream);
+					fileStream.Close();
+					if (hashtable.ContainsKey("remember"))
+					{
+						bRemember = (bool)hashtable["remember"];
+					}
+					if (hashtable.ContainsKey("username"))
+					{
+						username = (string)hashtable["username"];
+					}
+					if (hashtable.ContainsKey("password"))
+					{
+						password = (string)hashtable["password"];
+					}
+					if (hashtable.ContainsKey("sid"))
+					{
+						sid = (int)hashtable["sid"];
+					}
+					if (hashtable.ContainsKey("sl_channel_id"))
+					{
+						sl_channel_id = (uint)hashtable["sl_channel_id"];
+					}
+					if (hashtable.ContainsKey("sl_zoneid"))
+					{
+						sl_zoneid = (uint)hashtable["sl_zoneid"];
+					}
+					if (hashtable.ContainsKey("sl_serverid"))
+					{
+						sl_serverid = (uint)hashtable["sl_serverid"];
+					}
+					if (hashtable.ContainsKey("sl_userid"))
+					{
+						sl_userid = (ulong)hashtable["sl_userid"];
+					}
+					if (hashtable.ContainsKey("sl_gamekey"))
+					{
+						sl_gamekey = (string)hashtable["sl_gamekey"];
+					}
+				}
+			}
+			catch
+			{
+			}
+			ServerSetting.url_base = "http://172.26.176.7/js_qiantai/";
+		}
+		else if (Application.platform != RuntimePlatform.Android && (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.OSXEditor))
+		{
+			ServerSetting.url_base = "http://172.26.176.7/js_qiantai/";
+		}
+	}
+
+	private IEnumerator LoadMD5()
+	{
+		Logger.Log("LoadMD5");
+		string url = string.Empty;
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor)
+		{
+			url = "file://" + Application.dataPath + "/../Assets/asset_md5.txt";
+		}
+		else if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer || Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			url = LoadIndexScript.getDataUrl("WebAssets/asset_md5.txt");
+		}
+		else if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			url = ((!(Global.i18n == "zh-tw")) ? ("file://" + Application.dataPath + "/../IOSAssets/asset_md5.txt") : ("file://" + Application.dataPath + "/../IOSAssets_tw/asset_md5.txt"));
+		}
+		WWW asset_www = new WWW(url);
+		yield return asset_www;
+		AssetMD5.Make(asset_www.bytes);
+		WebAssetsManager.SetMd5(asset_www.bytes);
+		Show();
+	}
+
+	public void ShowLoginUI()
+	{
+		Show();
+	}
+
+	protected override void Show()
+	{
+		if (LoadIndexScript._TEST || Application.platform == RuntimePlatform.WindowsEditor)
+		{
+		}
+		Load();
+		if (Application.platform != RuntimePlatform.WindowsEditor && Application.platform != RuntimePlatform.OSXEditor && Application.platform != RuntimePlatform.IPhonePlayer && Application.platform != RuntimePlatform.Android)
+		{
+			startflag_1 = true;
+		}
+	}
+
+	public void MyLoading()
+	{
+		if (LoadIndexScript._TEST || Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			StartCoroutine(LoadMD5());
+		}
+		else
+		{
+			GetComponent<LoadIndexScript>().MyLoading(LoadAssetMd5);
+		}
+	}
+
+	private void LoadAssetMd5()
+	{
+		AddAsset("asset_md5");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	private void SaveUserPassword()
+	{
+		if (Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			FileStream fileStream = new FileStream("account", FileMode.Create, FileAccess.Write, FileShare.None);
+			BinaryFormatter binaryFormatter = new BinaryFormatter();
+			Hashtable hashtable = new Hashtable();
+			hashtable["remember"] = bRemember;
+			if (bRemember)
+			{
+				hashtable["username"] = username;
+				hashtable["password"] = password;
+				hashtable["sid"] = sid;
+				hashtable["sl_channel_id"] = sl_channel_id;
+				hashtable["sl_zoneid"] = sl_zoneid;
+				hashtable["sl_serverid"] = sl_serverid;
+				hashtable["sl_userid"] = sl_userid;
+				hashtable["sl_gamekey"] = sl_gamekey;
+			}
+			binaryFormatter.Serialize(fileStream, hashtable);
+			fileStream.Close();
+		}
+		else if (Application.platform != RuntimePlatform.Android && Application.platform != RuntimePlatform.WindowsPlayer && Application.platform != RuntimePlatform.IPhonePlayer && Application.platform != RuntimePlatform.OSXEditor)
+		{
+		}
+	}
+
+	public void AddTcp(string str)
+	{
+		Logger.Log("AddTcp:" + str);
+		string[] array = str.Split(':');
+		if (array.Length == 2)
+		{
+			Global.m_client.host_add(array[0], ushort.Parse(array[1]));
+		}
+	}
+
+	public void AddUrlAsset(string url)
+	{
+		ServerSetting.url_assets.Add(url);
+		Logger.Log(url);
+	}
+
+	public void SetUrlAsset(string url)
+	{
+		ServerSetting.url_asset = url;
+		Logger.Log(ServerSetting.url_asset);
+	}
+
+	public void SetAntiAddict(string str)
+	{
+		if (str != null)
+		{
+			int result = 0;
+			int.TryParse(str, out result);
+			Global.fcm = result;
+			Global.anti_addicted_on = Global.fcm != 0;
+		}
+	}
+
+	public void StartWeb(string str)
+	{
+		Logger.Log("StartWeb:" + str);
+		Global.game_data = (IDictionary)Json.Deserialize(str);
+		InitGame();
+	}
+
+	public static string getNewbieCode()
+	{
+		MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+		string text = Global.game_data["username"].ToString();
+		string text2 = text + "_";
+		text2 = ((!(Global.game_data["channel"].ToString() == "baidu")) ? (text2 + Global.game_data["domain"].ToString()) : (text2 + "s" + Global.game_data["sid"].ToString()));
+		string text3 = BitConverter.ToString(mD5CryptoServiceProvider.ComputeHash(Encoding.Default.GetBytes(text2)));
+		text3 = text3.Replace("-", string.Empty);
+		text3 = text3.ToLower();
+		Logger.Log(text2 + " " + text3);
+		return text3;
+	}
+
+	private void IEBlock(string type)
+	{
+		string message = __BaseUI.get_string(300u);
+		if (type == "congzi")
+		{
+			message = __BaseUI.get_string(125u);
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, message, null);
+	}
+
+	private void GAQ(string str)
+	{
+		Logger.Log("GAQ:" + str);
+	}
+
+	[DllImport("user32.dll", CharSet = CharSet.Auto)]
+	public static extern bool SetWindowText(IntPtr hwnd, string lpString);
+
+	[DllImport("user32.dll", CharSet = CharSet.Auto)]
+	public static extern IntPtr FindWindow(string className, string windowName);
+
+	private void InitGame()
+	{
+		ServerSetting.url_qiantai = "http://" + Global.game_data["domain"].ToString() + "/";
+		string text = Global.game_data["cdn_path"].ToString();
+		LoadIndexScript.cdn_index = Global.game_data["cdn_index"].ToString();
+		LoadIndexScript.cdn_diff_index = Global.game_data["cdn_diff_index"].ToString();
+		if (text != string.Empty)
+		{
+			ServerSetting.cdn_path = text + "/";
+		}
+		string[] array = Global.game_data["cdns"].ToString().Split('|');
+		if (array.Length > 0)
+		{
+			SetUrlAsset(array[0]);
+		}
+		for (int i = 1; i < array.Length; i++)
+		{
+			AddUrlAsset(array[i]);
+		}
+		bool flag = false;
+		if (Global.game_data["hosts"].ToString().Contains("gw.js.xd.com"))
+		{
+			flag = true;
+		}
+		string[] array4;
+		if (flag)
+		{
+			string[] array2 = Global.game_data["hosts"].ToString().Split('|');
+			List<string> list = new List<string>();
+			string[] array3 = array2;
+			foreach (string item in array3)
+			{
+				list.Add(item);
+			}
+			array4 = new string[array2.Length];
+			for (int k = 0; k < array4.Length; k++)
+			{
+				int num = (int)(UnityEngine.Random.value * 1000f) % list.Count;
+				array4[k] = list[num];
+				list.RemoveAt(num);
+				Logger.Log("host random idx" + num);
+			}
+		}
+		else
+		{
+			array4 = Global.game_data["hosts"].ToString().Split('|');
+		}
+		string[] array5 = array4;
+		foreach (string str in array5)
+		{
+			AddTcp(str);
+		}
+		if (flag)
+		{
+			Global.m_client.host_hardip();
+		}
+		SetAntiAddict(Global.game_data["fcm"].ToString());
+		if (Global.game_data.Contains("userid"))
+		{
+			Global.userid = ulong.Parse(Global.game_data["userid"].ToString());
+		}
+		Global.zoneid = uint.Parse(Global.game_data["server_id"].ToString());
+		if (Global.game_data.Contains("new_user"))
+		{
+			Global.is_new_user = true;
+			Global.ExternalCall("LoadStart");
+		}
+		if (Global.game_data.Contains("tempid"))
+		{
+			Global.tempid = Global.game_data["tempid"].ToString();
+		}
+		timestamp = uint.Parse(Global.game_data["timestamp"].ToString());
+		randnum = uint.Parse(Global.game_data["randomnum"].ToString());
+		if (Global.game_data.Contains("gm_login"))
+		{
+			gm_login = int.Parse(Global.game_data["gm_login"].ToString()) != 0;
+		}
+		hash = Global.game_data["data"].ToString();
+		if (Global.game_data.Contains("i18n"))
+		{
+			Global.i18n = Global.game_data["i18n"].ToString();
+		}
+		if (Global.game_data.Contains("zf") && Global.game_data["zf"].ToString() != "0")
+		{
+			Global.zhuan_fu = true;
+		}
+		if (Global.game_data.Contains("zf_url"))
+		{
+			Global.zf_url = Global.game_data["zf_url"].ToString();
+		}
+		if (Global.game_data.Contains("mobile_url") && Global.game_data["mobile_url"] != null)
+		{
+			Global.mobile_url = Global.game_data["mobile_url"].ToString();
+		}
+		string lpString = "双线" + Global.game_data["sid"].ToString() + "区-将神-" + Global.game_data["server_name"].ToString();
+		if (Global.i18n == "zh-tw")
+		{
+			lpString = "將神-" + Global.game_data["server_name"].ToString();
+		}
+		if (Global.game_data.Contains("game_title"))
+		{
+			lpString = Global.game_data["game_title"].ToString();
+		}
+		IntPtr hwnd = FindWindow(null, "将神");
+		SetWindowText(hwnd, lpString);
+		base.gameObject.AddComponent<CheckLauncherVersion>();
+		InitGameEnd();
+	}
+
+	private void InitGameEnd()
+	{
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			startflag_1 = true;
+			BaseAsset.was.GetComponent<WebAssetBGLoader>().BgLoadPrep(0);
+		}
+		else
+		{
+			MyLoading();
+		}
+	}
+
+	public static void initFont()
+	{
+	}
+
+	public void NextLevel()
+	{
+		if (Global.character_.sd_detail != null)
+		{
+			BaseUI.GetRootUI().LoadLevel("SealDevil", rmg);
+		}
+		else if (Global.character_.campaign_entity_multi != 0L)
+		{
+			BaseUI.GetRootUI().LoadLevel("CampaignEntityMulti", rmg);
+		}
+		else if (Global.character_.idcampaign_group != 0)
+		{
+			BaseUI.GetRootUI().LoadLevel("Campaign", rmg);
+		}
+		else if (!Global.character_.checkUI("Capital"))
+		{
+			BaseUI.GetRootUI().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			BaseUI.GetRootUI().LoadLevel("Capital", rmg);
+		}
+		ChatBehaviour component = BaseUI.GetRootUI().GetComponent<ChatBehaviour>();
+		component.SubLoading();
+		MessengerUI component2 = BaseUI.GetRootUI().GetComponent<MessengerUI>();
+		component2.SubLoading();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = -201;
+		GUI.BeginGroup(new Rect(Screen.width / 2 - 150, Screen.height / 2 - 250, 500f, 500f));
+		GUI.Box(new Rect(0f, 0f, 400f, 250f), "登录");
+		GUI.Box(new Rect(20f, 50f, 60f, 24f), "用户名:");
+		GUI.Box(new Rect(20f, 90f, 60f, 24f), "密码:");
+		GUI.Box(new Rect(20f, 130f, 60f, 24f), "服务器:");
+		GUI.enabled = IsEnable();
+		if (login_state == LoginState.LoginState_Waiting || login_state == LoginState.LoginState_Failed)
+		{
+			GUI.enabled = false;
+		}
+		username = GUI.TextField(new Rect(90f, 50f, 100f, 24f), username, 16);
+		password = GUI.PasswordField(new Rect(90f, 90f, 100f, 24f), password, '*', 16);
+		string s = GUI.TextField(new Rect(90f, 130f, 100f, 24f), sid.ToString(), 6);
+		int.TryParse(s, out sid);
+		bRemember = GUI.Toggle(new Rect(20f, 170f, 60f, 24f), bRemember, "记住帐号");
+		if (GUI.Button(new Rect(90f, 170f, 100f, 50f), "登录"))
+		{
+			if (super_login)
+			{
+				Global.m_client.host_add(sl_gateway_str[sl_gateway], 443);
+			}
+			if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.WindowsEditor)
+			{
+				StartCoroutine("start_login");
+			}
+			else
+			{
+				StartCoroutine("start_login");
+			}
+			login_state = LoginState.LoginState_Waiting;
+			TitleUI.startflag_2 = true;
+		}
+		if (GUI.Button(new Rect(192f, 50f, 25f, 170f), (!super_login) ? ">>" : "<<"))
+		{
+			super_login = !super_login;
+		}
+		if (super_login)
+		{
+			GUI.Box(new Rect(225f, 50f, 70f, 24f), "平台ID:");
+			GUI.Box(new Rect(225f, 80f, 70f, 24f), "ZONEID:");
+			GUI.Box(new Rect(225f, 110f, 70f, 24f), "SERVERID:");
+			GUI.Box(new Rect(225f, 140f, 70f, 24f), "USERID:");
+			GUI.Box(new Rect(225f, 170f, 70f, 24f), "GAMEKEY:");
+			uint.TryParse(GUI.TextField(new Rect(295f, 50f, 100f, 24f), sl_channel_id.ToString(), 16), out sl_channel_id);
+			uint.TryParse(GUI.TextField(new Rect(295f, 80f, 100f, 24f), sl_zoneid.ToString(), 16), out sl_zoneid);
+			uint.TryParse(GUI.TextField(new Rect(295f, 110f, 100f, 24f), sl_serverid.ToString(), 16), out sl_serverid);
+			ulong.TryParse(GUI.TextField(new Rect(295f, 140f, 100f, 24f), sl_userid.ToString(), 16), out sl_userid);
+			sl_gamekey = GUI.TextField(new Rect(295f, 170f, 100f, 24f), sl_gamekey.ToString(), 16);
+			sl_gateway = GUI.SelectionGrid(new Rect(295f, 200f, 100f, 100f), sl_gateway, sl_gateway_str, 1);
+			if (GUI.Button(new Rect(0f, 0f, 20f, 24f), string.Empty))
+			{
+				id = (id + 1) % 2;
+				switch (id)
+				{
+				case 0u:
+					sl_channel_id = 20u;
+					sl_zoneid = 1u;
+					sl_serverid = 1u;
+					sl_userid = 20000037530uL;
+					sl_gamekey = "test";
+					break;
+				case 1u:
+					sl_channel_id = 20u;
+					sl_zoneid = 1u;
+					sl_serverid = 1u;
+					sl_userid = 20000000051uL;
+					sl_gamekey = "test";
+					break;
+				}
+			}
+		}
+		GUI.EndGroup();
+		if (login_state == LoginState.LoginState_Failed)
+		{
+			GUI.enabled = true;
+			GUI.BeginGroup(new Rect(Screen.width / 2 - 100, Screen.height / 2 - 150, 200f, 100f));
+			GUI.Box(new Rect(0f, 0f, 200f, 100f), "用户名或密码错误");
+			GUI.enabled = IsEnable();
+			if (GUI.Button(new Rect(50f, 50f, 100f, 30f), "确定"))
+			{
+				login_state = LoginState.LoginState_None;
+			}
+			GUI.EndGroup();
+		}
+		GUI.enabled = true;
+	}
+
+	public static bool isdebug_platform()
+	{
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private IEnumerator Http(string url)
+	{
+		yield return new WWW(url);
+	}
+
+	private IEnumerator start_login()
+	{
+		WWWForm form = new WWWForm();
+		if (Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			form.AddField("XDEBUG_SESSION_START", "netbeans-xdebug");
+		}
+		form.AddField("username", username);
+		form.AddField("password", password);
+		form.AddField("sid", sid);
+		Logger.Log("base " + ServerSetting.url_base);
+		WWW www = new WWW(ServerSetting.url_base + "login_editor.php", form);
+		yield return www;
+		Logger.Log(www.text);
+		string str = www.text;
+		int idx = str.IndexOf("{");
+		str = str.Substring(idx);
+		IDictionary jdata = (IDictionary)Json.Deserialize(str);
+		string result = jdata["result"].ToString();
+		if (result != "ok")
+		{
+			login_state = LoginState.LoginState_Failed;
+			yield break;
+		}
+		string url = jdata["url"].ToString();
+		idx = url.IndexOf("/", url.IndexOf("//") + 2);
+		ServerSetting.url_qiantai = url.Substring(0, idx + 1);
+		StartCoroutine(start_game(url));
+	}
+
+	private IEnumerator start_game(string url)
+	{
+		if (first_login != url)
+		{
+			first_login = url;
+		}
+		WWWForm form = new WWWForm();
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor || Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			form.AddField("XDEBUG_SESSION_START", "netbeans-xdebug");
+		}
+		WWW www = new WWW(url, form);
+		yield return www;
+		Logger.Log(www.text);
+		IDictionary jdata = (IDictionary)Json.Deserialize(www.text);
+		switch (jdata["result"].ToString())
+		{
+		case "ok":
+			Global.game_data = (IDictionary)jdata["game_data"];
+			InitGame();
+			Hide();
+			login_state = LoginState.LoginState_OK;
+			SaveUserPassword();
+			break;
+		case "empty":
+			Logger.Log("Enter Empty");
+			break;
+		case "end":
+			username = jdata["username"].ToString();
+			password = "1";
+			break;
+		default:
+			login_state = LoginState.LoginState_Failed;
+			break;
+		}
+	}
+
+	private IEnumerator placard()
+	{
+		string url = "http://jsi.xd.com/announce?type=pc&name=xd";
+		WWW www = new WWW(url);
+		yield return www;
+		string xx = www.text;
+		string ss = Encoding.Unicode.GetString(Encoding.Unicode.GetBytes(xx));
+		Debug.Log("xx :  " + xx);
+		Debug.Log("ss :  " + ss);
+	}
+
+	public void cs_user_login()
+	{
+		if (Global.fcm == 1)
+		{
+			return;
+		}
+		if (Global.fcm == 2 && !isHoliday())
+		{
+			__BaseUI.GetMessageBox().setMessage("登陆失败", "未成年人禁止登陆时间", null);
+			__BaseUI.GetMessageBox().setDepth(-201);
+			return;
+		}
+		if (Global.is_new_user)
+		{
+			CSPlayerClickStart_0xF007 cSPlayerClickStart_0xF = new CSPlayerClickStart_0xF007();
+			cSPlayerClickStart_0xF.userid = Global.userid;
+			cSPlayerClickStart_0xF.zoneid = Global.zoneid;
+			if (Global.game_data.Contains("rserver_id") && Global.game_data["rserver_id"] != null)
+			{
+				cSPlayerClickStart_0xF.serverid = uint.Parse(Global.game_data["rserver_id"].ToString());
+			}
+			else
+			{
+				cSPlayerClickStart_0xF.serverid = Global.zoneid;
+			}
+			Global.m_client.Send(61447, cSPlayerClickStart_0xF, null);
+		}
+		CSUserLogin_0xF002 cSUserLogin_0xF = new CSUserLogin_0xF002();
+		cSUserLogin_0xF.userid = Global.userid;
+		cSUserLogin_0xF.zoneid = Global.zoneid;
+		cSUserLogin_0xF.tempid = Global.tempid;
+		cSUserLogin_0xF.channel_id = uint.Parse(Global.game_data["channel_id"].ToString());
+		if (Global.game_data.Contains("rserver_id") && Global.game_data["rserver_id"] != null)
+		{
+			cSUserLogin_0xF.serverid = uint.Parse(Global.game_data["rserver_id"].ToString());
+		}
+		else
+		{
+			cSUserLogin_0xF.serverid = Global.zoneid;
+		}
+		cSUserLogin_0xF.timestamp = timestamp;
+		cSUserLogin_0xF.randnum = randnum;
+		cSUserLogin_0xF.hash = hash;
+		cSUserLogin_0xF.client_type = Global.game_data["login_type"].ToString();
+		cSUserLogin_0xF.client_version = 3u;
+		cSUserLogin_0xF.gm_login = gm_login;
+		if (super_login)
+		{
+			cSUserLogin_0xF.channel_id = sl_channel_id;
+			cSUserLogin_0xF.zoneid = sl_zoneid;
+			cSUserLogin_0xF.serverid = sl_serverid;
+			cSUserLogin_0xF.userid = sl_userid;
+			uint num = randnum ^ timestamp;
+			string s = sl_userid + $"{num:x8}" + sl_gamekey;
+			MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+			string text = BitConverter.ToString(mD5CryptoServiceProvider.ComputeHash(Encoding.Default.GetBytes(s)));
+			text = text.Replace("-", string.Empty);
+			text = text.ToLower();
+			cSUserLogin_0xF.hash = text + $"{randnum:x8}" + $"{num:x8}";
+		}
+		RootUI.m_client.Send(61442, cSUserLogin_0xF, sc_user_login);
+		Logger.Log("cs_user_login user:" + Global.userid + " channel:" + cSUserLogin_0xF.channel_id + " zone:" + cSUserLogin_0xF.zoneid, bTime: true);
+		if (Global.relogin)
+		{
+			Global.relogin = false;
+		}
+		if (RetryConnectUI.phase != 0)
+		{
+			RetryConnectUI.phase = 0;
+		}
+	}
+
+	private bool isHoliday()
+	{
+		int[,] array = new int[10, 3]
+		{
+			{ 2021, 9, 19 },
+			{ 2021, 9, 20 },
+			{ 2021, 9, 21 },
+			{ 2021, 10, 1 },
+			{ 2021, 10, 2 },
+			{ 2021, 10, 3 },
+			{ 2021, 10, 4 },
+			{ 2021, 10, 5 },
+			{ 2021, 10, 6 },
+			{ 2021, 10, 7 }
+		};
+		int[,] array2 = new int[3, 3]
+		{
+			{ 2021, 9, 18 },
+			{ 2021, 9, 26 },
+			{ 2021, 10, 9 }
+		};
+		DateTime now = DateTime.Now;
+		for (int i = 0; i < array.Length / 3; i++)
+		{
+			if (array[i, 0] == now.Year && array[i, 1] == now.Month && array[i, 2] == now.Day)
+			{
+				return true;
+			}
+		}
+		if (now.DayOfWeek == DayOfWeek.Sunday || now.DayOfWeek == DayOfWeek.Saturday)
+		{
+			for (int j = 0; j < array2.Length / 3; j++)
+			{
+				if (array2[j, 0] == now.Year && array2[j, 1] == now.Month && array2[j, 2] == now.Day)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private void sc_user_login(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		GCUserLogin_0xF002 gCUserLogin_0xF = JSProtoBuf.Serializer.Deserialize<GCUserLogin_0xF002>(stream);
+		Logger.Log("sc_user_login:" + gCUserLogin_0xF.result, bTime: true);
+		if (gCUserLogin_0xF.result == 5)
+		{
+			__BaseUI.GetMessageBox().setMessage("登陆失败", "被封禁", null);
+			__BaseUI.GetMessageBox().setDepth(-201);
+		}
+		else if (gCUserLogin_0xF.result == 4)
+		{
+			__BaseUI.GetMessageBox().setMessage("登陆失败", "请求的参数已超时失效", null);
+			__BaseUI.GetMessageBox().setDepth(-201);
+		}
+		else if (gCUserLogin_0xF.result == 3)
+		{
+			__BaseUI.GetMessageBox().setMessage("登陆失败", "参数验证失败", null);
+			__BaseUI.GetMessageBox().setDepth(-201);
+		}
+		else
+		{
+			if (gCUserLogin_0xF.result == 2)
+			{
+				return;
+			}
+			if (gCUserLogin_0xF.result == 1)
+			{
+				CreateNewUI component = GetComponent<CreateNewUI>();
+				component.MyLoading();
+			}
+			else if (gCUserLogin_0xF.result == 0)
+			{
+				BaseAsset.lds.Visible();
+				if (TitleUI.waitanim)
+				{
+					TitleUI.todestroy = true;
+				}
+				else
+				{
+					GetComponent<TitleUI>().EndTitle();
+				}
+				Global.ExternalCall("InitGame");
+				GameObject.Find("Share").GetComponent<RootMessenger>().LevelStart(_bLoadScreen: false, _bLoadingVisible: false);
+			}
+			else if (gCUserLogin_0xF.result == 6)
+			{
+				__BaseUI.GetMessageBox().setMessage("登陆失败", "服务器未上线", null);
+				__BaseUI.GetMessageBox().setDepth(-201);
+			}
+			else if (gCUserLogin_0xF.result == 7)
+			{
+				__BaseUI.GetMessageBox().setMessage("登陆失败", "客户端版本不匹配，请关闭客户端重新登陆。", null);
+				__BaseUI.GetMessageBox().setDepth(-201);
+			}
+		}
+	}
+
+	public void cs_playerinfo()
+	{
+		CSPlayerInfo_0x10 cSPlayerInfo_0x = new CSPlayerInfo_0x10();
+		cSPlayerInfo_0x.ver = 1u;
+		RootUI.m_client.Send(16, cSPlayerInfo_0x, sc_playerinfo);
+		Logger.Log("cs_playerinfo", bTime: true);
+	}
+
+	private void sc_playerinfo(MemoryStream stream, object arg)
+	{
+		BaseUI.GetRootUI().GetComponent<FPS_Script>().StartFPS();
+		if (stream == null)
+		{
+			return;
+		}
+		Logger.Log("sc_playerinfo start stream length:" + stream.Length, bTime: true);
+		SCPlayerInfo_0x10 sCPlayerInfo_0x = JSProtoBuf.Serializer.Deserialize<SCPlayerInfo_0x10>(stream);
+		Global.character_ = new Character();
+		Global.character_.Set(sCPlayerInfo_0x.playerInfo);
+		Global.character_.SID = sCPlayerInfo_0x.sid;
+		Global.character_.isFromOldSrv = false;
+		Global.PLAYER_LEVEL_MAX = (int)sCPlayerInfo_0x.character_level_max;
+		Global.character_.init();
+		foreach (uint ui in sCPlayerInfo_0x.uis)
+		{
+			Global.character_.addUI(ui);
+		}
+		foreach (uint consume_tip in sCPlayerInfo_0x.consume_tips)
+		{
+			Global.character_.addConsumeTip(consume_tip);
+		}
+		foreach (uint scenario in sCPlayerInfo_0x.scenarios)
+		{
+			Global.character_.addScenario(scenario);
+		}
+		foreach (game.net.data.StoC.Campaign campaign in sCPlayerInfo_0x.campaigns)
+		{
+			Global.character_.addCampaign(campaign);
+		}
+		foreach (db_character_material material in sCPlayerInfo_0x.materials)
+		{
+			ushort num = (ushort)material.idtreasure_type;
+			num = (ushort)((num << 8) | (ushort)material.level);
+			Global.character_.materials[num] = new Database.Material(material);
+		}
+		foreach (GeneralData general in sCPlayerInfo_0x.generals)
+		{
+			Global.character_.addGenerals(general);
+		}
+		foreach (SCPlayerInfo_0x10.SCGeneralOutSquad item2 in sCPlayerInfo_0x.generalsout)
+		{
+			Global.character_.addGeneralsOutSquad(item2.id, item2.level, (byte)item2.upgrade_lv, item2.upgrade_exp);
+		}
+		foreach (FormMap formation in sCPlayerInfo_0x.formations)
+		{
+			Global.character_.addFormations(formation);
+		}
+		foreach (db_character_quest quest in sCPlayerInfo_0x.quests)
+		{
+			Global.character_.addQuests(quest);
+		}
+		foreach (db_character_equipment equipment in sCPlayerInfo_0x.equipments)
+		{
+			Global.character_.addEquipment(equipment);
+		}
+		foreach (db_character_amulet amulet in sCPlayerInfo_0x.amulets)
+		{
+			Global.character_.addAmulet(amulet);
+		}
+		foreach (db_character_gem gem in sCPlayerInfo_0x.gems)
+		{
+			Global.character_.addGem(gem);
+		}
+		foreach (db_character_activity_reward act_reward in sCPlayerInfo_0x.act_rewards)
+		{
+			Global.character_.addActReward(act_reward);
+		}
+		foreach (db_character_activity act in sCPlayerInfo_0x.acts)
+		{
+			Global.character_.addActs(act);
+			Activity activity = Global.character_.acts[act.idactivity];
+			Global.character_.act_rewards[activity.temp.idreward].update(activity);
+		}
+		Global.character_.set_cur_form((int)sCPlayerInfo_0x.cur_form);
+		Global.character_.set_reward_num();
+		if (sCPlayerInfo_0x.campaign_auto != null)
+		{
+			Global.character_.auto_ = new Database.CampaignAuto(sCPlayerInfo_0x.campaign_auto.campaign_auto);
+			foreach (db_character_campaign_auto_treasure treasure4 in sCPlayerInfo_0x.campaign_auto.treasures)
+			{
+				_character_campaign_auto_treasure character_campaign_auto_treasure = new _character_campaign_auto_treasure();
+				character_campaign_auto_treasure.Set(treasure4);
+				Global.character_.auto_.treasures_.Add(character_campaign_auto_treasure);
+			}
+		}
+		foreach (db_character_cooldown cooldown in sCPlayerInfo_0x.cooldowns)
+		{
+			Global.character_.cooldowns[(byte)cooldown.id] = new Cooldown(cooldown);
+		}
+		foreach (db_character_cooldown campaign_cooldown in sCPlayerInfo_0x.campaign_cooldowns)
+		{
+			Global.character_.campaign_cooldowns[campaign_cooldown.sub_id] = new Cooldown(campaign_cooldown);
+		}
+		Global.character_.pos_guildinfo(sCPlayerInfo_0x.guild);
+		foreach (db_recruit_list item3 in sCPlayerInfo_0x.apply_list)
+		{
+			Global.character_.add_apply_list(item3);
+		}
+		Global.character_.handleExchange(sCPlayerInfo_0x.exchange);
+		Global.character_.OnlineGift.got = sCPlayerInfo_0x.newbie.online_awards_got;
+		Global.character_.OnlineGift.setNextTime();
+		foreach (db_character_skill skill in sCPlayerInfo_0x.skills)
+		{
+			Global.character_.addSkill(skill);
+		}
+		foreach (db_character_armytype army in sCPlayerInfo_0x.armys)
+		{
+			Global.character_.addArmyType(army);
+		}
+		foreach (game.net.data.StoC.Artifact artifact in sCPlayerInfo_0x.artifacts)
+		{
+			Global.character_.addArtifacts(artifact);
+		}
+		foreach (db_character_general_book generalbook in sCPlayerInfo_0x.generalbooks)
+		{
+			GeneralBook generalBook = new GeneralBook();
+			generalBook.Set(generalbook);
+			Global.character_.generalbooks.Add(generalBook.idgen, generalBook);
+		}
+		foreach (db_character_sevenday sevenday2 in sCPlayerInfo_0x.sevendays)
+		{
+			Sevenday sevenday = new Sevenday();
+			sevenday.Set(sevenday2);
+			Global.character_.sevendays.Add(sevenday.id, sevenday);
+		}
+		Global.character_.sevendaysopen.Clear();
+		foreach (bool item4 in sCPlayerInfo_0x.sevendayopening)
+		{
+			Global.character_.sevendaysopen.Add(item4);
+		}
+		Global.character_.gather_souls = new GatherSoul(sCPlayerInfo_0x.gather_soul);
+		for (int i = 0; i < sCPlayerInfo_0x.recharge_activity_open.Count; i++)
+		{
+			Global.character_.recharge_activity_open[i] = sCPlayerInfo_0x.recharge_activity_open[i];
+		}
+		Global.character_.recharge_activity_haveReward = sCPlayerInfo_0x.recharge_activity_haveReward;
+		for (int j = 0; j < sCPlayerInfo_0x.new_recharge_activity_open.Count; j++)
+		{
+			int key = j + 4;
+			Global.character_.new_recharge_activity_open[key] = sCPlayerInfo_0x.new_recharge_activity_open[j];
+		}
+		Global.character_.recharge_activity.consumeBonuses.Clear();
+		foreach (ConsumeActivityBonus consume_activity_bonuse in sCPlayerInfo_0x.consume_activity_bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make((byte)consume_activity_bonuse.treasure_type, consume_activity_bonuse.param0, consume_activity_bonuse.param1);
+			if (!Global.character_.recharge_activity.consumeBonuses.ContainsKey(consume_activity_bonuse.consume_rank))
+			{
+				Global.character_.recharge_activity.consumeBonuses[consume_activity_bonuse.consume_rank] = new List<_Treasure>();
+			}
+			Global.character_.recharge_activity.consumeBonuses[consume_activity_bonuse.consume_rank].Add(treasure);
+		}
+		Global.character_.id_forging = (ushort)sCPlayerInfo_0x.id_forging;
+		Global.character_.today_is_forged = (ushort)sCPlayerInfo_0x.today_is_forged;
+		Global.character_.refreshMultiParams();
+		Global.character_.calcReturnGiftRedCount();
+		if (sCPlayerInfo_0x.arena != null)
+		{
+			Global.character_.arena.make(sCPlayerInfo_0x.arena);
+		}
+		if (sCPlayerInfo_0x.spirit != null)
+		{
+			Global.character_.spirit.make(sCPlayerInfo_0x.spirit);
+		}
+		if (sCPlayerInfo_0x.quiz != null)
+		{
+			Global.character_.quiz.unpack(sCPlayerInfo_0x.quiz);
+		}
+		foreach (db_character_building building in sCPlayerInfo_0x.buildings)
+		{
+			Global.character_.addBuilding(building);
+		}
+		Global.character_.craft_match = sCPlayerInfo_0x.craft_match;
+		foreach (uint building_area in sCPlayerInfo_0x.building_areas)
+		{
+			Global.character_.building_areas[(byte)building_area].unlocked = true;
+		}
+		foreach (db_character_building_quest building_quest in sCPlayerInfo_0x.building_quests)
+		{
+			Global.character_.building_quests[(byte)building_quest.id] = new BuildingQuest(building_quest);
+		}
+		foreach (game.net.data.StoC.BuildingMonster building_monster in sCPlayerInfo_0x.building_monsters)
+		{
+			Global.character_.building_monsters[(byte)building_monster.monster.id] = new Database.BuildingMonster(building_monster);
+		}
+		foreach (db_character_building_interact building_interact in sCPlayerInfo_0x.building_interacts)
+		{
+			_character_building_interact character_building_interact = new _character_building_interact();
+			character_building_interact.Set(building_interact);
+			Global.character_.building_interacts.Add(character_building_interact);
+		}
+		foreach (db_character_treasure treasure5 in sCPlayerInfo_0x.treasures)
+		{
+			_Treasure treasure2 = new _Treasure();
+			treasure2.make((byte)treasure5.idtreasure_type, treasure5.param0, treasure5.param1);
+			treasure2.location = (byte)treasure5.location;
+			Global.character_.treasures_.Add(treasure2);
+		}
+		Global.character_.newbiequests.Clear();
+		foreach (NewbieQuestParam newbiequest in sCPlayerInfo_0x.newbiequests)
+		{
+			NewbieQuest item = new NewbieQuest(newbiequest);
+			Global.character_.newbiequests.Add(item);
+		}
+		Global.character_.herotreasures.Clear();
+		foreach (db_character_hero_treasure herotreasure in sCPlayerInfo_0x.herotreasures)
+		{
+			_character_hero_treasure character_hero_treasure = new _character_hero_treasure();
+			character_hero_treasure.Set(herotreasure);
+			Global.character_.herotreasures.Add(character_hero_treasure.idheroshop, character_hero_treasure);
+		}
+		foreach (db_weekendlottery_message weekendlotterymsg in sCPlayerInfo_0x.weekendlotterymsgs)
+		{
+			WeekendLotteryUI component = BaseUI.GetRootUI().GetComponent<WeekendLotteryUI>();
+			WeekendLotteryMessage weekendLotteryMessage = new WeekendLotteryMessage();
+			weekendLotteryMessage.Set(weekendlotterymsg);
+			component.m_msgs.Add(weekendLotteryMessage);
+		}
+		Global.character_.newbieinfo.Set(sCPlayerInfo_0x.newbie);
+		foreach (db_character_newhint hint in sCPlayerInfo_0x.hints)
+		{
+			switch (hint.type)
+			{
+			case 1u:
+				Global.character_.newformid.Add((uint)hint.newid);
+				break;
+			case 2u:
+				Global.character_.newarmyid.Add((uint)hint.newid);
+				break;
+			case 3u:
+				Global.character_.newskillid.Add((uint)hint.newid);
+				break;
+			case 4u:
+				Global.character_.newgenid.Add((uint)hint.newid);
+				break;
+			case 5u:
+				Global.character_.newspecgenid.Add((uint)hint.newid);
+				break;
+			case 6u:
+				Global.character_.newpageid_blue.Add((uint)hint.newid);
+				break;
+			case 7u:
+				Global.character_.newpageid_purple.Add((uint)hint.newid);
+				break;
+			}
+		}
+		if (Global.character_.checkUI(50u))
+		{
+			Global.character_.graves.Clear();
+			foreach (db_character_grave grafe in sCPlayerInfo_0x.graves)
+			{
+				Global.character_.addGrave(grafe);
+			}
+			foreach (db_character_grave_pocket pocketitem in sCPlayerInfo_0x.pocketitems)
+			{
+				Global.character_.addGravePocketItem(pocketitem);
+			}
+			Global.character_.grave.Set(sCPlayerInfo_0x.graveinfo);
+		}
+		foreach (uint sd_campaign in sCPlayerInfo_0x.sd_campaigns)
+		{
+			Global.character_.sd_campaign.Add(sd_campaign);
+		}
+		Global.character_.armystars.Clear();
+		foreach (ArmyStar armystar in sCPlayerInfo_0x.armystars)
+		{
+			Global.character_.armystars.Add((ushort)armystar.armyid, (ushort)armystar.star);
+		}
+		foreach (db_character_divine_general_star item5 in sCPlayerInfo_0x.dgss)
+		{
+			DivineGeneralStar divineGeneralStar = new DivineGeneralStar();
+			divineGeneralStar.Set(item5);
+			Global.character_.divinegeneralstars.Add(divineGeneralStar.origin, divineGeneralStar);
+		}
+		foreach (db_character_anecdote_reward anecdotereward in sCPlayerInfo_0x.anecdoterewards)
+		{
+			AnecdoteReward anecdoteReward = new AnecdoteReward();
+			anecdoteReward.Set(anecdotereward);
+			Global.character_.anecdoterewards.Add(anecdoteReward.idcampaign, anecdoteReward);
+		}
+		foreach (db_character_rune rune2 in sCPlayerInfo_0x.runes)
+		{
+			Rune rune = new Rune();
+			rune.Set(rune2);
+			Global.character_.runes.Add(rune.id_rune, rune);
+		}
+		if (sCPlayerInfo_0x.sd_detail != null)
+		{
+			Global.character_.sd_detail = new SealDevilGroupDetail();
+			Global.character_.sd_detail.unpack(sCPlayerInfo_0x.sd_detail);
+		}
+		foreach (uint vipreward in sCPlayerInfo_0x.viprewards)
+		{
+			Global.character_.viprewards.Add(vipreward);
+		}
+		Global.character_.festivalconsumes.Clear();
+		foreach (db_character_festival_consume fc in sCPlayerInfo_0x.fcs)
+		{
+			FestivalConsume festivalConsume = new FestivalConsume();
+			festivalConsume.Set(fc);
+			Global.character_.festivalconsumes.Add(festivalConsume.day, festivalConsume);
+		}
+		Global.character_.scanStarTech();
+		Global.character_.server_open_time = sCPlayerInfo_0x.server_open_time;
+		Global.character_.server_hequ_time = sCPlayerInfo_0x.server_hequ_time;
+		if (sCPlayerInfo_0x.brawl != null)
+		{
+			Global.character_.brawl.unpackBrawl(sCPlayerInfo_0x.brawl);
+		}
+		Global.character_.brawlinfo.phase = sCPlayerInfo_0x.brawl_phase;
+		Global.makeLuckyProducts(sCPlayerInfo_0x.lucky_products.lucky_products);
+		Global.character_.makeGodTroops(sCPlayerInfo_0x.god_troops);
+		Global.character_.trialinfo.setParam(sCPlayerInfo_0x.trialinfo);
+		PremiumUI.isFKserver = sCPlayerInfo_0x.is_fk_bonus;
+		if (sCPlayerInfo_0x.demon != null)
+		{
+			Global.character_.m_demon = new Database.Demon(sCPlayerInfo_0x.demon);
+		}
+		Global.character_.Events.Clear();
+		Global.character_.FlowerEvents.Clear();
+		for (int k = 0; k < sCPlayerInfo_0x.events.Count; k++)
+		{
+			EventTimeline eventTimeline = new EventTimeline(sCPlayerInfo_0x.events[k]);
+			if (eventTimeline.eventid != 4)
+			{
+				Global.character_.Events.Add(eventTimeline);
+			}
+			else
+			{
+				Global.character_.FlowerEvents.Add(eventTimeline);
+			}
+		}
+		Global.character_.Events.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+		Global.character_.FlowerEvents.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+		Global.character_.convoy.convoyReports.Clear();
+		foreach (ConvoyReport item6 in sCPlayerInfo_0x.convoy_report)
+		{
+			Global.character_.convoy.convoyReports.Add(item6);
+		}
+		if (sCPlayerInfo_0x.mystery_shop != null)
+		{
+			Global.character_.mystery_shop = new Database.MysteryShop();
+			Global.character_.mystery_shop.make(sCPlayerInfo_0x.mystery_shop);
+		}
+		Global.character_.unpack_recent_battle_record(sCPlayerInfo_0x.recent_battle_report);
+		Global.character_.unpack_saved_battle_record(sCPlayerInfo_0x.saved_battle_report);
+		Global.character_.sealmonsterinfo.Set(sCPlayerInfo_0x.sealmonsterinfo);
+		for (byte b = 0; b < Global.character_.sealmonsterinfo.m_troops.Length; b++)
+		{
+			Global.character_.sealmonsterinfo.m_troops[b] = new SealMonsterTroop();
+			Global.character_.sealmonsterinfo.m_troops[b].idtroop = (byte)(b + 1);
+		}
+		foreach (db_character_sealmonster_army item7 in sCPlayerInfo_0x.sealmonsterarmy)
+		{
+			SealMonsterArmy sealMonsterArmy = new SealMonsterArmy();
+			sealMonsterArmy.Set(item7);
+			Global.character_.sealmonsterinfo.m_troops[sealMonsterArmy.idtroop - 1].m_armys.Add(sealMonsterArmy);
+		}
+		if (sCPlayerInfo_0x.dummy_challenge != null)
+		{
+			Global.character_.dummy_challenge_status = new DummyChallengeStatus();
+			Global.character_.dummy_challenge_status.player = sCPlayerInfo_0x.dummy_challenge;
+		}
+		Global.character_.shop_buyback.Clear();
+		foreach (Treasure buyback in sCPlayerInfo_0x.buybacks)
+		{
+			Global.character_.shop_buyback.Add(buyback);
+		}
+		if (sCPlayerInfo_0x.convoy != null)
+		{
+			Global.character_.convoy.Set(sCPlayerInfo_0x.convoy);
+		}
+		Global.character_.convoy.autotype = (byte)sCPlayerInfo_0x.convoy_auto_type;
+		Global.character_.active_achievement = (ushort)sCPlayerInfo_0x.active_achievement;
+		foreach (uint item8 in sCPlayerInfo_0x.gen_quests_end)
+		{
+			Global.character_.gen_quests.Add(item8);
+		}
+		foreach (uint item9 in sCPlayerInfo_0x.gens_finished)
+		{
+			Global.character_.quest_gens[item9] = true;
+		}
+		foreach (uint item10 in sCPlayerInfo_0x.gens_notfinished)
+		{
+			Global.character_.quest_gens[item10] = false;
+		}
+		BuddyUI component2 = BaseUI.GetRootUI().GetComponent<BuddyUI>();
+		component2.setCount((int)sCPlayerInfo_0x.newfans, (int)sCPlayerInfo_0x.newevents);
+		Global.character_.nationrankitems.Clear();
+		foreach (db_character_nationrank_item item11 in sCPlayerInfo_0x.nationrankitem)
+		{
+			NationRankItem nationRankItem = new NationRankItem();
+			nationRankItem.Set(item11);
+			Global.character_.nationrankitems.Add(item11.iditem, nationRankItem);
+		}
+		Global.character_.nationrankitemtemps.Clear();
+		foreach (db_character_nationrank_item_temp item12 in sCPlayerInfo_0x.nationrankitemtemp)
+		{
+			NationRankItemTemp nationRankItemTemp = new NationRankItemTemp();
+			nationRankItemTemp.Set(item12);
+			Global.character_.nationrankitemtemps.Add((byte)item12.id, nationRankItemTemp);
+		}
+		if (sCPlayerInfo_0x.puzzleshop != null)
+		{
+			Global.character_.puzzleshop.Set(sCPlayerInfo_0x.puzzleshop);
+			if (sCPlayerInfo_0x.puzzleSetting != null)
+			{
+				Global.character_.puzzleshop.m_specialoffer.set(sCPlayerInfo_0x.puzzleSetting);
+			}
+		}
+		Global.character_.puzzles.Clear();
+		foreach (db_character_puzzle puzzle2 in sCPlayerInfo_0x.puzzles)
+		{
+			Puzzle puzzle = new Puzzle();
+			puzzle.Set(puzzle2);
+			puzzle.loadParam();
+			Global.character_.puzzles.Add((byte)puzzle2.idpuzzle, puzzle);
+		}
+		if (sCPlayerInfo_0x.skytower_basic != null)
+		{
+			Global.character_.skytower.Set(sCPlayerInfo_0x.skytower_basic);
+			Global.character_.skytower.lottery_chest = sCPlayerInfo_0x.skytower_lottery_temp;
+			Global.character_.skytower.tower_list = sCPlayerInfo_0x.skytower_list;
+		}
+		if (sCPlayerInfo_0x.festival_lottery_states != null)
+		{
+			Global.character_.festival_lottery.Set(sCPlayerInfo_0x.festival_lottery_states);
+		}
+		List<BatchForge> list = new List<BatchForge>();
+		Global.character_.forginglist.Clear();
+		for (int num2 = 0; num2 < sCPlayerInfo_0x.batchforges.Count; num2++)
+		{
+			BatchForge batchForge = new BatchForge();
+			batchForge.Set(sCPlayerInfo_0x.batchforges[num2]);
+			list.Add(batchForge);
+		}
+		for (int num3 = 0; num3 < list.Count; num3++)
+		{
+			foreach (BatchForge item13 in list)
+			{
+				if (item13.id == num3 + 1)
+				{
+					Global.character_.forginglist.Add(item13);
+					break;
+				}
+			}
+		}
+		Global.character_.character_bonuses.Clear();
+		foreach (db_character_bonus character_bonuse in sCPlayerInfo_0x.character_bonuses)
+		{
+			_character_bonus character_bonus = new _character_bonus();
+			character_bonus.Set(character_bonuse);
+			Global.character_.character_bonuses.Add(character_bonus);
+		}
+		Global.character_.trialawards.Clear();
+		foreach (db_character_server_trial_award trialaward in sCPlayerInfo_0x.trialawards)
+		{
+			ServerOpenTrialAward serverOpenTrialAward = new ServerOpenTrialAward();
+			serverOpenTrialAward.Set(trialaward);
+			Global.character_.trialawards.Add(serverOpenTrialAward.day, serverOpenTrialAward);
+		}
+		Global.login_messages.Clear();
+		foreach (game.net.data.StoC.LoginMessage login_message in sCPlayerInfo_0x.login_messages)
+		{
+			Global.add_login_message(login_message);
+		}
+		Global.clearTimeLimitMessages();
+		foreach (game.net.data.StoC.TimeLimitMessage timelimit_message in sCPlayerInfo_0x.timelimit_messages)
+		{
+			Global.add_timelimit_message(timelimit_message);
+		}
+		Global.character_.is_zhounianfanli_open = sCPlayerInfo_0x.is_zhounianfanli_open;
+		Global.character_.grouponawards.Clear();
+		foreach (db_character_groupon_award groupon_award in sCPlayerInfo_0x.groupon_awards)
+		{
+			GrouponAward grouponAward = new GrouponAward();
+			grouponAward.Set(groupon_award);
+			Global.character_.grouponawards.Add(grouponAward.idgroupon, grouponAward);
+		}
+		Global.character_.isGrouponOpen = sCPlayerInfo_0x.isGrouponOpen;
+		ClubUI component3 = BaseUI.GetRootUI().GetComponent<ClubUI>();
+		Global.isNewNewbieActivity = sCPlayerInfo_0x.newnewbieactivity;
+		Global.isNewerZhaoYunQuest = sCPlayerInfo_0x.isNewerZhaoYunQuest;
+		if (component3 != null && sCPlayerInfo_0x.grouponnums.Count >= 4)
+		{
+			component3.m_serverVipNum = sCPlayerInfo_0x.grouponnums[0];
+			component3.m_serverMingyueNum = sCPlayerInfo_0x.grouponnums[1];
+			component3.m_serverPurpleAmulet = sCPlayerInfo_0x.grouponnums[2];
+			component3.m_serverPurpleGem = sCPlayerInfo_0x.grouponnums[3];
+			if (Global.isNewNewbieActivity && sCPlayerInfo_0x.grouponnums.Count >= 9)
+			{
+				component3.m_serverSpirit3 = sCPlayerInfo_0x.grouponnums[4];
+				component3.m_serverSpirit4 = sCPlayerInfo_0x.grouponnums[5];
+				component3.m_serverSpirit5 = sCPlayerInfo_0x.grouponnums[6];
+				component3.m_serverGoldTree = sCPlayerInfo_0x.grouponnums[7];
+				component3.m_serverGoldShop = sCPlayerInfo_0x.grouponnums[8];
+			}
+		}
+		if (sCPlayerInfo_0x.earthpavilion != null)
+		{
+			Global.character_.earthpavilion.Set(sCPlayerInfo_0x.earthpavilion);
+		}
+		Global.character_.buildingdrawings.Clear();
+		foreach (db_character_building_drawing buildingdrawing in sCPlayerInfo_0x.buildingdrawings)
+		{
+			BuildingDrawing buildingDrawing = new BuildingDrawing();
+			buildingDrawing.Set(buildingdrawing);
+			Global.character_.buildingdrawings.Add(buildingDrawing.idbuilding, buildingDrawing);
+		}
+		if (sCPlayerInfo_0x.general_star != null)
+		{
+			Global.character_.generalstar.Set(sCPlayerInfo_0x.general_star);
+			Global.character_.generalstar.m_selectedGens.Clear();
+			foreach (db_character_general_star_selected_gen general_star_selected_gen in sCPlayerInfo_0x.general_star_selected_gens)
+			{
+				GeneralStarSelectedGen generalStarSelectedGen = new GeneralStarSelectedGen();
+				generalStarSelectedGen.Set(general_star_selected_gen);
+				Global.character_.generalstar.m_selectedGens.Add(generalStarSelectedGen);
+			}
+			Global.character_.generalstar.m_armys.Clear();
+			foreach (db_character_general_star_army general_star_army in sCPlayerInfo_0x.general_star_armys)
+			{
+				GeneralStarArmy generalStarArmy = new GeneralStarArmy();
+				generalStarArmy.Set(general_star_army);
+				Global.character_.generalstar.m_armys.Add(generalStarArmy);
+			}
+		}
+		Global.character_.treasuryItems.Clear();
+		foreach (db_character_treasury treasuryitem in sCPlayerInfo_0x.treasuryitems)
+		{
+			Treasury treasury = new Treasury();
+			treasury.Set(treasuryitem);
+			Global.character_.treasuryItems.Add(treasury.id, treasury);
+		}
+		if (sCPlayerInfo_0x.friendlottery != null)
+		{
+			Global.character_.friendlottery.Set(sCPlayerInfo_0x.friendlottery);
+		}
+		foreach (db_character_friend_lottery_item friendlotteryitem in sCPlayerInfo_0x.friendlotteryitems)
+		{
+			FriendLotteryItem friendLotteryItem = new FriendLotteryItem();
+			friendLotteryItem.Set(friendlotteryitem);
+			Global.character_.friendlotteryitems.Add(friendLotteryItem.id, friendLotteryItem);
+		}
+		if (sCPlayerInfo_0x.tech_tree != null)
+		{
+			Global.character_.techtree.Set(sCPlayerInfo_0x.tech_tree);
+			Global.character_.techtree.m_techTreeNodes.Clear();
+			foreach (db_character_tech_tree_node tech_tree_node in sCPlayerInfo_0x.tech_tree_nodes)
+			{
+				TechTreeNode techTreeNode = new TechTreeNode();
+				techTreeNode.Set(tech_tree_node);
+				Global.character_.techtree.m_techTreeNodes.Add(techTreeNode.idnode, techTreeNode);
+			}
+			Global.character_.techtree.m_techTreeQueues.Clear();
+			foreach (db_character_tech_tree_queue tech_tree_queue in sCPlayerInfo_0x.tech_tree_queues)
+			{
+				TechTreeQueue techTreeQueue = new TechTreeQueue();
+				techTreeQueue.Set(tech_tree_queue);
+				Global.character_.techtree.m_techTreeQueues.Add(techTreeQueue.idqueue, techTreeQueue);
+			}
+		}
+		if (sCPlayerInfo_0x.rescue != null)
+		{
+			Global.character_.rescue.Set(sCPlayerInfo_0x.rescue);
+			Global.character_.rescue.m_quests.Clear();
+			foreach (db_character_rescue_quest rescuequest in sCPlayerInfo_0x.rescuequests)
+			{
+				RescueQuest rescueQuest = new RescueQuest();
+				rescueQuest.Set(rescuequest);
+				Global.character_.rescue.m_quests.Add(rescueQuest.id, rescueQuest);
+			}
+			foreach (db_character_rescue_quest_army rescuequestarmy in sCPlayerInfo_0x.rescuequestarmys)
+			{
+				if (Global.character_.rescue.m_quests.ContainsKey(rescuequestarmy.idmyquest))
+				{
+					RescueQuestArmy rescueQuestArmy = new RescueQuestArmy();
+					rescueQuestArmy.Set(rescuequestarmy);
+					Global.character_.rescue.m_quests[rescuequestarmy.idmyquest].m_armys.Add(rescueQuestArmy.location, rescueQuestArmy);
+				}
+			}
+			Global.character_.rescue.m_shopItems.Clear();
+			foreach (db_character_rescue_shop_item rescueshopitem in sCPlayerInfo_0x.rescueshopitems)
+			{
+				Database.RescueShopItem rescueShopItem = new Database.RescueShopItem();
+				rescueShopItem.Set(rescueshopitem);
+				Global.character_.rescue.m_shopItems.Add(rescueShopItem.iditem, rescueShopItem);
+			}
+			Global.character_.rescue.m_shopItemTemplates.Clear();
+			foreach (game.net.data.StoC.RescueShopItem rescueshopitemtemplate in sCPlayerInfo_0x.rescueshopitemtemplates)
+			{
+				RescueShopItemTemplate rescueShopItemTemplate = new RescueShopItemTemplate(rescueshopitemtemplate);
+				Global.character_.rescue.m_shopItemTemplates.Add(rescueShopItemTemplate.id, rescueShopItemTemplate);
+			}
+			Global.character_.rescue.m_dailyBonus = new _Treasure();
+			if (sCPlayerInfo_0x.rescuedailybonus != null)
+			{
+				Global.character_.rescue.m_dailyBonus.make((byte)sCPlayerInfo_0x.rescuedailybonus.idtreasure_type, sCPlayerInfo_0x.rescuedailybonus.param0, sCPlayerInfo_0x.rescuedailybonus.param1);
+			}
+		}
+		if (sCPlayerInfo_0x.newyearcheckinawards.Count > 0)
+		{
+			Global.character_.m_newYearCheckinAwards.Clear();
+			foreach (NewYearCheckinAward newyearcheckinaward in sCPlayerInfo_0x.newyearcheckinawards)
+			{
+				NewYearCheckinAwardTemplate newYearCheckinAwardTemplate = new NewYearCheckinAwardTemplate(newyearcheckinaward);
+				if (!Global.character_.m_newYearCheckinAwards.ContainsKey(newYearCheckinAwardTemplate.idrank))
+				{
+					Global.character_.m_newYearCheckinAwards[newYearCheckinAwardTemplate.idrank] = new List<_Treasure>();
+				}
+				Global.character_.m_newYearCheckinAwards[newYearCheckinAwardTemplate.idrank].Add(newYearCheckinAwardTemplate.treasure);
+			}
+		}
+		if (sCPlayerInfo_0x.god_list_slots.Count > 0)
+		{
+			Global.character_.godlist.m_slots.Clear();
+			foreach (db_character_god_list_slot god_list_slot in sCPlayerInfo_0x.god_list_slots)
+			{
+				GodListSlot godListSlot = new GodListSlot();
+				godListSlot.Set(god_list_slot);
+				Global.character_.godlist.m_slots.Add(godListSlot.idslot, godListSlot);
+			}
+			Global.character_.godlist.m_chengjius.Clear();
+			foreach (db_character_god_list_slot_chengjiu god_list_chengjiu in sCPlayerInfo_0x.god_list_chengjius)
+			{
+				GodListChengJiu godListChengJiu = new GodListChengJiu();
+				godListChengJiu.Set(god_list_chengjiu);
+				Global.character_.godlist.m_chengjius.Add(godListChengJiu.idgroup, godListChengJiu);
+			}
+		}
+		Global.character_.m_godListElements.Clear();
+		foreach (db_character_god_list_element god_list_element in sCPlayerInfo_0x.god_list_elements)
+		{
+			GodListElement godListElement = new GodListElement();
+			godListElement.Set(god_list_element);
+			Global.character_.m_godListElements.Add(godListElement.idelement, godListElement);
+		}
+		if (sCPlayerInfo_0x.laketemple != null)
+		{
+			Global.character_.laketemple.Set(sCPlayerInfo_0x.laketemple);
+			Global.character_.laketemple.m_armys.Clear();
+			foreach (db_character_lake_temple_army laketemple_army in sCPlayerInfo_0x.laketemple_armys)
+			{
+				LakeTempleArmy lakeTempleArmy = new LakeTempleArmy();
+				lakeTempleArmy.Set(laketemple_army);
+				Global.character_.laketemple.m_armys.Add(lakeTempleArmy.location, lakeTempleArmy);
+			}
+			Global.character_.laketemple.m_bonuses.Clear();
+			foreach (db_character_lake_temple_bonus laketemple_bonuse in sCPlayerInfo_0x.laketemple_bonuses)
+			{
+				_Treasure treasure3 = new _Treasure();
+				treasure3.make(91, laketemple_bonuse.element_id, laketemple_bonuse.element_count);
+				Global.character_.laketemple.m_bonuses.Add(treasure3);
+			}
+		}
+		Global.character_.m_formationsets.Clear();
+		foreach (db_character_formation_set formation_set in sCPlayerInfo_0x.formation_sets)
+		{
+			FormationSet formationSet = new FormationSet();
+			formationSet.Set(formation_set);
+			Global.character_.m_formationsets.Add(formationSet.idset, formationSet);
+		}
+		foreach (db_character_formation_set_general formation_set_general in sCPlayerInfo_0x.formation_set_generals)
+		{
+			if (Global.character_.m_formationsets.ContainsKey(formation_set_general.idset))
+			{
+				FormationSetGeneral formationSetGeneral = new FormationSetGeneral();
+				formationSetGeneral.Set(formation_set_general);
+				Global.character_.m_formationsets[formation_set_general.idset].m_gens.Add(formationSetGeneral.idgeneral, formationSetGeneral);
+			}
+		}
+		foreach (db_character_formation_set_general_location formation_set_spot in sCPlayerInfo_0x.formation_set_spots)
+		{
+			if (Global.character_.m_formationsets.ContainsKey(formation_set_spot.idformation_set))
+			{
+				FormationSetGeneralLocation formationSetGeneralLocation = new FormationSetGeneralLocation();
+				formationSetGeneralLocation.Set(formation_set_spot);
+				Global.character_.m_formationsets[formation_set_spot.idformation_set].m_spots.Add(formationSetGeneralLocation);
+			}
+		}
+		if (sCPlayerInfo_0x.onlinelottery != null)
+		{
+			Global.character_.onlinelottery.Set(sCPlayerInfo_0x.onlinelottery);
+			Global.character_.onlinelottery.m_onlineLotteryItems.Clear();
+			foreach (db_character_online_lottery_item onlinelotteryitem in sCPlayerInfo_0x.onlinelotteryitems)
+			{
+				OnlineLotteryItem onlineLotteryItem = new OnlineLotteryItem();
+				onlineLotteryItem.Set(onlinelotteryitem);
+				Global.character_.onlinelottery.m_onlineLotteryItems.Add(onlineLotteryItem.iditem, onlineLotteryItem);
+			}
+		}
+		Global.character_.activity_quest_mgr.m_activityquests.Clear();
+		foreach (db_character_activity_quest activityquest in sCPlayerInfo_0x.activityquests)
+		{
+			ActivityQuest activityQuest = new ActivityQuest();
+			activityQuest.Set(activityquest);
+			Global.character_.activity_quest_mgr.m_activityquests.Add(activityQuest.idquest, activityQuest);
+		}
+		if (sCPlayerInfo_0x.sevendays_login != null)
+		{
+			Global.character_.sevendayslogin.Set(sCPlayerInfo_0x.sevendays_login);
+		}
+		Global.character_.isSevenDaysLoginOpen = sCPlayerInfo_0x.isSevenDaysLoginOpen;
+		if (sCPlayerInfo_0x.shoplimit != null)
+		{
+			Global.shoplimit = new Database.ShopLimit(sCPlayerInfo_0x.shoplimit);
+		}
+		Global.character_.shoplimititems.Clear();
+		foreach (db_character_shop_limit_item charshoplimititem in sCPlayerInfo_0x.charshoplimititems)
+		{
+			Database.ShopLimitItem shopLimitItem = new Database.ShopLimitItem();
+			shopLimitItem.Set(charshoplimititem);
+			Global.character_.shoplimititems.Add(shopLimitItem.id, shopLimitItem);
+		}
+		Global.character_.teamfightshopitems.Clear();
+		foreach (TeamFightShopItem teamfightshopitem in sCPlayerInfo_0x.teamfightshopitems)
+		{
+			Global.character_.teamfightshopitems.Add(teamfightshopitem);
+		}
+		if (sCPlayerInfo_0x.assaultshop != null)
+		{
+			Global.assaultshop = new Database.AssaultShop(sCPlayerInfo_0x.assaultshop);
+		}
+		Global.character_.assaultShopPurchasedItems.Clear();
+		foreach (db_character_assault_shop_item assault_shop_item in sCPlayerInfo_0x.assault_shop_items)
+		{
+			Database.AssaultShopItem assaultShopItem = new Database.AssaultShopItem();
+			assaultShopItem.Set(assault_shop_item);
+			Global.character_.assaultShopPurchasedItems.Add(assaultShopItem.idassault_shop_item, assaultShopItem);
+		}
+		Global.character_.funds.Clear();
+		foreach (db_character_fund fund2 in sCPlayerInfo_0x.funds)
+		{
+			Fund fund = new Fund();
+			fund.Set(fund2);
+			Global.character_.funds.Add(fund.idfund, fund);
+		}
+		Global.character_.chineseNewYearLottery.m_items.Clear();
+		foreach (db_character_chinese_new_year_lottery_item chineseNewYearLotteryItem2 in sCPlayerInfo_0x.chineseNewYearLotteryItems)
+		{
+			Database.ChineseNewYearLotteryItem chineseNewYearLotteryItem = new Database.ChineseNewYearLotteryItem();
+			chineseNewYearLotteryItem.Set(chineseNewYearLotteryItem2);
+			Global.character_.chineseNewYearLottery.m_items.Add(chineseNewYearLotteryItem.iditem, chineseNewYearLotteryItem);
+		}
+		foreach (db_character_chinese_new_year_lottery_spitem chineseNewYearLotterySpItem2 in sCPlayerInfo_0x.chineseNewYearLotterySpItems)
+		{
+			ChineseNewYearLotterySpItem chineseNewYearLotterySpItem = new ChineseNewYearLotterySpItem();
+			chineseNewYearLotterySpItem.Set(chineseNewYearLotterySpItem2);
+			Global.character_.chineseNewYearLottery.m_spitems.Add(chineseNewYearLotterySpItem.iditem, chineseNewYearLotterySpItem);
+		}
+		Global.character_.chineseNewYearLottery.m_itemTemplates.Clear();
+		foreach (game.net.data.StoC.ChineseNewYearLotteryItem chineseNewYearLotteryItemTemplate3 in sCPlayerInfo_0x.chineseNewYearLotteryItemTemplates)
+		{
+			ChineseNewYearLotteryItemTemplate chineseNewYearLotteryItemTemplate = new ChineseNewYearLotteryItemTemplate(chineseNewYearLotteryItemTemplate3);
+			Global.character_.chineseNewYearLottery.m_itemTemplates.Add(chineseNewYearLotteryItemTemplate.id, chineseNewYearLotteryItemTemplate);
+		}
+		foreach (game.net.data.StoC.ChineseNewYearLotteryItem chineseNewYearLotterySpItemTemplate in sCPlayerInfo_0x.chineseNewYearLotterySpItemTemplates)
+		{
+			ChineseNewYearLotteryItemTemplate chineseNewYearLotteryItemTemplate2 = new ChineseNewYearLotteryItemTemplate(chineseNewYearLotterySpItemTemplate);
+			Global.character_.chineseNewYearLottery.m_spitemTemplates.Add(chineseNewYearLotteryItemTemplate2.id, chineseNewYearLotteryItemTemplate2);
+		}
+		Global.character_.vipdailyshopitems.Clear();
+		foreach (db_character_vip_daily_shop_item vipdailyshopitem in sCPlayerInfo_0x.vipdailyshopitems)
+		{
+			VipDailyShopItem vipDailyShopItem = new VipDailyShopItem();
+			vipDailyShopItem.Set(vipdailyshopitem);
+			Global.character_.vipdailyshopitems.Add(vipDailyShopItem.iditem, vipDailyShopItem);
+		}
+		Global.isNewFirstRecharge = sCPlayerInfo_0x.isNewFirstRecharge;
+		Global.character_.newbieenchantrecords.Clear();
+		foreach (db_character_newbie_enchant enchantrecord in sCPlayerInfo_0x.enchantrecords)
+		{
+			NewbieEnchantRecord newbieEnchantRecord = new NewbieEnchantRecord();
+			newbieEnchantRecord.Set(enchantrecord);
+			Global.character_.newbieenchantrecords.Add(newbieEnchantRecord.day, newbieEnchantRecord);
+		}
+		Global.character_.newbieenchantawards.Clear();
+		foreach (db_character_newbie_enchant_award enchantaward in sCPlayerInfo_0x.enchantawards)
+		{
+			NewbieEnchantAward newbieEnchantAward = new NewbieEnchantAward();
+			newbieEnchantAward.Set(enchantaward);
+			Global.character_.newbieenchantawards.Add(newbieEnchantAward.id, newbieEnchantAward);
+		}
+		Global.character_.newbieexchangeawards.Clear();
+		foreach (db_character_newbie_exchange_award exchangeaward in sCPlayerInfo_0x.exchangeawards)
+		{
+			NewbieExchangeAward newbieExchangeAward = new NewbieExchangeAward();
+			newbieExchangeAward.Set(exchangeaward);
+			Global.character_.newbieexchangeawards.Add(newbieExchangeAward.id, newbieExchangeAward);
+		}
+		Global.character_.newbiegeneralawards.Clear();
+		foreach (db_character_newbie_general_award generalaward in sCPlayerInfo_0x.generalawards)
+		{
+			NewbieGeneralAward newbieGeneralAward = new NewbieGeneralAward();
+			newbieGeneralAward.Set(generalaward);
+			Global.character_.newbiegeneralawards.Add(newbieGeneralAward.id, newbieGeneralAward);
+		}
+		Global.character_.giftbags.Clear();
+		foreach (db_character_gift_bag giftbag in sCPlayerInfo_0x.giftbags)
+		{
+			GiftBag giftBag = new GiftBag();
+			giftBag.Set(giftbag);
+			Global.character_.giftbags.Add(giftBag.idgift_bag, giftBag);
+		}
+		Global.isRuneActivityOpen = sCPlayerInfo_0x.isRuneActivityOpen;
+		Global.isGiftbagOpen = sCPlayerInfo_0x.isGiftbagOpen;
+		Global.character_.herostatue = sCPlayerInfo_0x.herostatue;
+		if (sCPlayerInfo_0x.specialitemshop != null)
+		{
+			Global.specialitemshoptemp.make(sCPlayerInfo_0x.specialitemshop);
+		}
+		Global.character_.specialitemshops.Clear();
+		foreach (db_character_special_item_shop specialitemshop in sCPlayerInfo_0x.specialitemshops)
+		{
+			Database.SpecialItemShop specialItemShop = new Database.SpecialItemShop();
+			specialItemShop.Set(specialitemshop);
+			Global.character_.specialitemshops.Add(specialItemShop.idspecial_item_shop, specialItemShop);
+		}
+		if (sCPlayerInfo_0x.shengjielotterys != null)
+		{
+			Global.character_.shengjieLottery.Set(sCPlayerInfo_0x.shengjielotterys);
+		}
+		Global.character_.m_ShengjieCards.Clear();
+		foreach (db_character_shengjie_card shengjiecard in sCPlayerInfo_0x.shengjiecards)
+		{
+			ShengJieCard shengJieCard = new ShengJieCard();
+			shengJieCard.Set(shengjiecard);
+			Global.character_.m_ShengjieCards.Add(shengJieCard.origin_id, shengJieCard);
+		}
+		if (sCPlayerInfo_0x.christmasshoptemp != null)
+		{
+			Global.character_.ChristmasShoptemp.make(sCPlayerInfo_0x.christmasshoptemp);
+		}
+		Global.character_.ChristmasShops.Clear();
+		foreach (db_character_christmas_shop item14 in sCPlayerInfo_0x.character_christmasshop)
+		{
+			Database.ChristmasShop christmasShop = new Database.ChristmasShop();
+			christmasShop.Set(item14);
+			Global.character_.ChristmasShops.Add(christmasShop.idchristmas_shop, christmasShop);
+		}
+		if (sCPlayerInfo_0x.christmasEventTemplate != null)
+		{
+			Global.christmaseventtemplate = new ChristmasEventTemplate(sCPlayerInfo_0x.christmasEventTemplate);
+		}
+		if (sCPlayerInfo_0x.characterChristmasEvent != null)
+		{
+			Global.character_.christmasEvent.Set(sCPlayerInfo_0x.characterChristmasEvent);
+			Global.character_.christmasEvent.m_rechargeChests.Clear();
+			foreach (db_character_christmas_recharge christmasRechargeChest in sCPlayerInfo_0x.christmasRechargeChests)
+			{
+				Database.ChristmasRecharge christmasRecharge = new Database.ChristmasRecharge();
+				christmasRecharge.Set(christmasRechargeChest);
+				Global.character_.christmasEvent.m_rechargeChests.Add(christmasRecharge.chest_rank, christmasRecharge);
+			}
+			Global.character_.christmasEvent.spItems.Clear();
+			foreach (db_character_christmas_lottery_spitem christmaslotteryspitem in sCPlayerInfo_0x.christmaslotteryspitems)
+			{
+				ChristmasLotterySpItem christmasLotterySpItem = new ChristmasLotterySpItem();
+				christmasLotterySpItem.Set(christmaslotteryspitem);
+				Global.character_.christmasEvent.spItems.Add(christmasLotterySpItem.iditem, christmasLotterySpItem);
+			}
+		}
+		if (sCPlayerInfo_0x.exchangeshops != null)
+		{
+			foreach (game.net.data.StoC.ExchangeShop exchangeshop in sCPlayerInfo_0x.exchangeshops)
+			{
+				ExchangeShopTemp exchangeShopTemp = new ExchangeShopTemp();
+				exchangeShopTemp.make(exchangeshop);
+				Global.character_.exchangeshoptemp.Add(exchangeShopTemp);
+			}
+		}
+		Global.character_.exchangeshops.Clear();
+		foreach (db_character_exchangeshop item15 in sCPlayerInfo_0x.character_exchangeshop)
+		{
+			Database.ExchangeShop exchangeShop = new Database.ExchangeShop();
+			exchangeShop.Set(item15);
+			Global.character_.exchangeshops.Add(exchangeShop.idexchangeshop, exchangeShop);
+		}
+		if (sCPlayerInfo_0x.everydaylogintemp != null)
+		{
+			foreach (EverydayLogin item16 in sCPlayerInfo_0x.everydaylogintemp)
+			{
+				EveryDayLoginTemp everyDayLoginTemp = new EveryDayLoginTemp();
+				everyDayLoginTemp.make(item16);
+				Global.character_.everydaylogintemp.Add(everyDayLoginTemp);
+			}
+		}
+		Global.character_.everydaylogins.Clear();
+		if (sCPlayerInfo_0x.character_everydaylogin != null)
+		{
+			foreach (db_character_everyday_login item17 in sCPlayerInfo_0x.character_everydaylogin)
+			{
+				EveryDayLogin everyDayLogin = new EveryDayLogin();
+				everyDayLogin.Set(item17);
+				Global.character_.everydaylogins.Add(everyDayLogin.day, everyDayLogin);
+			}
+		}
+		if (sCPlayerInfo_0x.costtimeswave != null)
+		{
+			Global.costtimeswave.make(sCPlayerInfo_0x.costtimeswave);
+		}
+		Global.character_.costtimesawards.Clear();
+		foreach (db_character_cost_times costtimesaward in sCPlayerInfo_0x.costtimesawards)
+		{
+			CostTimesAward costTimesAward = new CostTimesAward();
+			costTimesAward.Set(costtimesaward);
+			Global.character_.costtimesawards.Add(costTimesAward.idcost_times, costTimesAward);
+		}
+		Global.character_.costtimesrecords.Clear();
+		foreach (db_character_cost_times_record costtimesrecord in sCPlayerInfo_0x.costtimesrecords)
+		{
+			CostTimesRecord costTimesRecord = new CostTimesRecord();
+			costTimesRecord.Set(costtimesrecord);
+			Global.character_.costtimesrecords.Add(costTimesRecord.cost_times_type, costTimesRecord);
+		}
+		if (sCPlayerInfo_0x.spiritascend != null)
+		{
+			Global.character_.spiritascend = new SpiritAscend();
+			Global.character_.spiritascend.Set(sCPlayerInfo_0x.spiritascend);
+		}
+		Global.craftshopitems.Clear();
+		foreach (game.net.data.StoC.CraftShopItem craftshopitem in sCPlayerInfo_0x.craftshopitems)
+		{
+			Database.CraftShopItem craftShopItem = new Database.CraftShopItem(craftshopitem);
+			Global.craftshopitems.Add(craftShopItem.id, craftShopItem);
+		}
+		Global.simpleShops.Clear();
+		foreach (game.net.data.StoC.SimpleShopItem simpleShopItem2 in sCPlayerInfo_0x.simpleShopItems)
+		{
+			Database.SimpleShopItem simpleShopItem = new Database.SimpleShopItem(simpleShopItem2);
+			if (!Global.simpleShops.ContainsKey(simpleShopItem.shop_type))
+			{
+				Global.simpleShops.Add(simpleShopItem.shop_type, new SimpleShop());
+			}
+			Global.simpleShops[simpleShopItem.shop_type].items.Add(simpleShopItem.id, simpleShopItem);
+		}
+		Global.serverCraftWorldBets.Clear();
+		foreach (CraftWorldBetTemplate servercraftworldbet in sCPlayerInfo_0x.servercraftworldbets)
+		{
+			ServerCraftWorldBet serverCraftWorldBet = new ServerCraftWorldBet(servercraftworldbet);
+			Global.serverCraftWorldBets.Add(serverCraftWorldBet.id, serverCraftWorldBet);
+		}
+		foreach (db_server_craftworld_bet_choice servercraftworldbetchoice in sCPlayerInfo_0x.servercraftworldbetchoices)
+		{
+			ServerCraftWorldBetChoice serverCraftWorldBetChoice = new ServerCraftWorldBetChoice();
+			serverCraftWorldBetChoice.Set(servercraftworldbetchoice);
+			if (Global.serverCraftWorldBets.ContainsKey(serverCraftWorldBetChoice.idcraftworld_bet))
+			{
+				Global.serverCraftWorldBets[serverCraftWorldBetChoice.idcraftworld_bet].choices.Add(serverCraftWorldBetChoice);
+			}
+		}
+		Global.character_.craftworldbets.Clear();
+		foreach (db_character_craftworld_bet item18 in sCPlayerInfo_0x.craftworldbet)
+		{
+			CraftWorldBet craftWorldBet = new CraftWorldBet();
+			craftWorldBet.Set(item18);
+			Global.character_.craftworldbets.Add(craftWorldBet.id_craftworld_bet, craftWorldBet);
+		}
+		Global.character_.puzzle_sale_rate.Clear();
+		foreach (PuzzleSaleRate puzzle_sale_rate in sCPlayerInfo_0x.puzzle_sale_rates)
+		{
+			Global.character_.puzzle_sale_rate[puzzle_sale_rate.id] = puzzle_sale_rate.sale_rate;
+		}
+		MazeWorshipUI.m_holiday = (MazeWorshipUI.jieritype)sCPlayerInfo_0x.maze_worship_type;
+		foreach (db_character_icon icon2 in sCPlayerInfo_0x.icons)
+		{
+			Icon icon = new Icon();
+			icon.Set(icon2);
+			Global.character_.icons.Add(icon.icon, icon);
+		}
+		if (Global.login_messages.Count > 0)
+		{
+			LoginMessageUI.need_show = true;
+		}
+		NextLevel();
+		Global.m_bInit = true;
+		AntiAddictedUI component4 = GameObject.Find("/Root/RootUI").GetComponent<AntiAddictedUI>();
+		if (component4 != null)
+		{
+			component4.Initialize();
+		}
+		Global.character_.makeAnecdoteUnlock();
+		Global.character_.post_init();
+		EmoteContainer.InitCodeMap();
+		ChatBehaviour.InitNationWarBroadcastCost();
+		Reconnector component5 = GetComponent<Reconnector>();
+		if (component5 != null)
+		{
+			component5.enabled = true;
+		}
+		cs_ping();
+		if (TimeUtil.Now < Global.character_.register_time + 86400)
+		{
+			Application.ExternalCall("HideClientDownload");
+		}
+		Global.character_.daily_ranking_types.Clear();
+		foreach (uint item19 in sCPlayerInfo_0x.daily_ranking_type)
+		{
+			Global.character_.daily_ranking_types.Add(item19);
+		}
+		Global.character_.daily_ranking_next_refresh_time = sCPlayerInfo_0x.daily_ranking_next_refresh_time;
+		Global.isTestServer = sCPlayerInfo_0x.isTestServer;
+		Global.serverOpenTimeTest = sCPlayerInfo_0x.server_open_time_test;
+		Global.character_.isordered = sCPlayerInfo_0x.is_ordered;
+		if (!Global.character_.return_gift && Global.game_data.Contains("extra_gift"))
+		{
+			Logger.Log("extra_gift type is" + Global.game_data["extra_gift"].GetType().ToString());
+			string text = Global.game_data["extra_gift"].ToString().Replace("&quot;", "\"");
+			Logger.Log(text);
+			IDictionary dictionary = (IDictionary)Json.Deserialize(text);
+			if (dictionary.Contains("old_player"))
+			{
+				CSOldPlayerBonus_0x36 cSOldPlayerBonus_0x = new CSOldPlayerBonus_0x36();
+				cSOldPlayerBonus_0x.ACCNAME = Global.game_data["username"].ToString();
+				cSOldPlayerBonus_0x.hash = dictionary["old_player"].ToString();
+				Logger.Log("pktOPB.ACCNAME=" + cSOldPlayerBonus_0x.ACCNAME + "pktOPB.hash=" + cSOldPlayerBonus_0x.hash);
+				RootUI.m_client.Send(54, cSOldPlayerBonus_0x, sc_oldplayer_bonus_0x36);
+			}
+		}
+		Logger.Log("sc_playerinfo end", bTime: true);
+	}
+
+	private static void sc_oldplayer_bonus_0x36(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCOldPlayerBonus_0x36 sCOldPlayerBonus_0x = JSProtoBuf.Serializer.Deserialize<SCOldPlayerBonus_0x36>(stream);
+			if (sCOldPlayerBonus_0x.result == 1)
+			{
+				Global.character_.return_gift = true;
+			}
+			else if (sCOldPlayerBonus_0x.result == 2)
+			{
+				Logger.Log("old player return hash failed");
+			}
+		}
+	}
+
+	private IEnumerator store_user_id(ulong id)
+	{
+		WWWForm form = new WWWForm();
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			form.AddField("XDEBUG_SESSION_START", "netbeans-xdebug");
+		}
+		form.AddField("uid", id.ToString());
+		string url = ServerSetting.url_base + "account/store_uid.php";
+		if (Application.platform != RuntimePlatform.WindowsWebPlayer && Application.platform != RuntimePlatform.OSXWebPlayer)
+		{
+			url = url + "?PHPSESSID=" + ServerSetting.session_id;
+		}
+		WWW www = new WWW(url, form);
+		yield return www;
+		Logger.Log(www.text);
+	}
+
+	public bool Refresh()
+	{
+		if (BaseAsset.lds.IsBattling())
+		{
+			return false;
+		}
+		CleanLevel();
+		CSPlayerInfo_0x10 cSPlayerInfo_0x = new CSPlayerInfo_0x10();
+		cSPlayerInfo_0x.is_refresh = true;
+		RootUI.m_client.Send(16, cSPlayerInfo_0x, sc_playerinfo);
+		Logger.Log("cs_playerinfo", bTime: true);
+		return true;
+	}
+
+	private void CleanLevel()
+	{
+		BaseAsset.was.Clear();
+		MainUI.SetSubUI(null);
+		if (BaseAsset.lds.IsBattling())
+		{
+			GameObject gameObject = GameObject.Find("/Battle");
+			if (gameObject != null)
+			{
+				GameObject gameObject2 = GameObject.Find("/Battle/BattleUI");
+				if (gameObject2 != null)
+				{
+					gameObject2.SendMessage("ResetPrevUI", SendMessageOptions.DontRequireReceiver);
+				}
+				gameObject.SendMessage("ToDestroy", SendMessageOptions.DontRequireReceiver);
+			}
+			BaseAsset.lds.SetBattling(bBattling: false);
+		}
+		if (BaseAsset.lds.GetCurUI() != null)
+		{
+			BaseAsset.lds.GetCurUI().ToDestroy();
+		}
+		RootBase.clear_UIFunc();
+		MailUI component = BaseUI.GetRootUI().GetComponent<MailUI>();
+		if (component != null)
+		{
+			component.ResetMailList();
+		}
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		if (battleResultUI != null && battleResultUI.IsVisible())
+		{
+			battleResultUI.Hide();
+		}
+		MessageBox messageBox = __BaseUI.GetMessageBox();
+		if (messageBox != null && messageBox.IsVisible())
+		{
+			messageBox.Hide();
+		}
+		ConsumeUI consumeUI = __BaseUI.GetConsumeUI();
+		if (consumeUI != null && consumeUI.IsVisible())
+		{
+			consumeUI.Hide();
+		}
+		MeditationUI component2 = BaseUI.GetRootUI().GetComponent<MeditationUI>();
+		component2.Hide();
+		MeditationUI.waitflag = true;
+	}
+
+	public static void cs_user_reconnect()
+	{
+		tcp_base.connection_state = tcp_base.CONNECTION_STATE.RECONNECTING;
+		CSPlayerAutoReconnect_0xF006 cSPlayerAutoReconnect_0xF = new CSPlayerAutoReconnect_0xF006();
+		cSPlayerAutoReconnect_0xF.userid = Global.userid;
+		cSPlayerAutoReconnect_0xF.zoneid = Global.zoneid;
+		cSPlayerAutoReconnect_0xF.tempid = Global.tempid;
+		cSPlayerAutoReconnect_0xF.channel_id = uint.Parse(Global.game_data["channel_id"].ToString());
+		if (Global.game_data.Contains("rserver_id") && Global.game_data["rserver_id"] != null)
+		{
+			cSPlayerAutoReconnect_0xF.serverid = uint.Parse(Global.game_data["rserver_id"].ToString());
+		}
+		else
+		{
+			cSPlayerAutoReconnect_0xF.serverid = Global.zoneid;
+		}
+		cSPlayerAutoReconnect_0xF.timestamp = timestamp;
+		cSPlayerAutoReconnect_0xF.randnum = randnum;
+		cSPlayerAutoReconnect_0xF.hash = hash;
+		cSPlayerAutoReconnect_0xF.client_type = Global.game_data["login_type"].ToString();
+		cSPlayerAutoReconnect_0xF.client_version = 2u;
+		RootUI.m_client.Send(61446, cSPlayerAutoReconnect_0xF, sc_user_reconnect);
+		Logger.Log("cs_user_reconnect user:" + Global.userid + " channel:" + cSPlayerAutoReconnect_0xF.channel_id + " zone:" + cSPlayerAutoReconnect_0xF.zoneid, bTime: true);
+	}
+
+	private static void sc_user_reconnect(MemoryStream stream, object arg)
+	{
+		if (BaseAsset.lds.GetCurUI() != null)
+		{
+			BaseAsset.lds.GetCurUI().ToEnable();
+		}
+		if (stream != null)
+		{
+			GCPlayerAutoReconnect_0xF006 gCPlayerAutoReconnect_0xF = JSProtoBuf.Serializer.Deserialize<GCPlayerAutoReconnect_0xF006>(stream);
+			Logger.Log("sc_user_reconnect:" + gCPlayerAutoReconnect_0xF.result, bTime: true);
+			if (gCPlayerAutoReconnect_0xF.result == 0)
+			{
+				BaseUI.GetRootUI().GetComponent<RetryConnectUI>().Hide();
+				RetryConnectUI.phase = 0;
+				tcp_base.connection_state = tcp_base.CONNECTION_STATE.OK;
+			}
+		}
+	}
+
+	private void cs_ping()
+	{
+		CSPing_0x00 cSPing_0x = new CSPing_0x00();
+		cSPing_0x.timestamp = TimeUtil.Now;
+		RootUI.m_client.Send(0, cSPing_0x, sc_ping);
+	}
+
+	private void sc_ping(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCPing_0x00 sCPing_0x = JSProtoBuf.Serializer.Deserialize<SCPing_0x00>(stream);
+			if (sCPing_0x != null)
+			{
+				_ping = TimeUtil.Now - sCPing_0x.timestamp;
+			}
+		}
+		StartCoroutine(wait_ping(ping_delay));
+	}
+
+	private IEnumerator wait_ping(float d)
+	{
+		yield return new WaitForSeconds(d);
+		cs_ping();
+	}
+
+	public void StartGameLevel()
+	{
+		GameObject.Find("Root").GetComponent<RootMessenger>().LevelStart(_bLoadScreen: false, _bLoadingVisible: false);
+		RootUI.InitTcp(cs_user_login);
+	}
+}

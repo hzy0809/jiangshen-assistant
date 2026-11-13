@@ -1,0 +1,493 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class DivinityUI : BaseUI
+{
+	public static Texture2D texStone;
+
+	public static Texture2D texGold;
+
+	public static Texture2D texAttack;
+
+	private Database.GodTroop m_troop;
+
+	private bool m_bClear;
+
+	public static GameObject mesh;
+
+	public static GameObject stone_mesh;
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private Texture2D texTitle;
+
+	private Texture2D texLevel;
+
+	private _ButtonStyle btnHarvest = new _ButtonStyle();
+
+	private _ButtonStyle btnChallenge = new _ButtonStyle();
+
+	private _ButtonStyle btnTalisman = new _ButtonStyle();
+
+	private ScenarioSection ssLevel = new ScenarioSection();
+
+	private ScenarioSection ssStone = new ScenarioSection();
+
+	private ScenarioSection ssGold = new ScenarioSection();
+
+	private ScenarioSection ssGod = new ScenarioSection();
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = false;
+	}
+
+	public void setOnclose(delegate_OnClose _onClose)
+	{
+		OnClose = _onClose;
+	}
+
+	private void Update()
+	{
+		if (stone_mesh != null)
+		{
+			Vector3 eulerAngles = stone_mesh.transform.eulerAngles;
+			eulerAngles.y += Time.deltaTime * 5f;
+			stone_mesh.transform.eulerAngles = eulerAngles;
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_divinity");
+		AddAsset("divinity/divinity");
+		AddAsset("divinity/divinity_stone");
+		AddAsset("campaign/arrow_red");
+		for (int i = 0; i < 5; i++)
+		{
+			Database.GodTroop godTroop = Global.character_.god_troops[i];
+			string text = (Global.getTemplate("troop_animation", godTroop.idmodel) as _troop_animation).name;
+			AddAsset("battle/" + text, bForce: false);
+		}
+		CollectingStart();
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_divinity");
+		texStone = asset.Load("ui_icon4") as Texture2D;
+		texAttack = asset.Load("ui_icon5") as Texture2D;
+		texGold = asset.Load("ui_jinbibar") as Texture2D;
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		texTitle = asset.Load("ui_bar") as Texture2D;
+		texLevel = asset.Load("ui_zi1") as Texture2D;
+		btnHarvest.make(asset, "button_shouhuo", unable: false);
+		btnChallenge.make(asset, "button_tiaozhan", unable: false);
+		btnTalisman.make(asset, "button_qwqhfb", unable: false);
+		if (mesh == null)
+		{
+			AssetBundle asset2 = BaseAsset.was.GetAsset("divinity/divinity");
+			if (asset2 != null)
+			{
+				mesh = Object.Instantiate(asset2.mainAsset) as GameObject;
+				mesh.transform.parent = base.gameObject.transform;
+			}
+			asset2 = BaseAsset.was.GetAsset("divinity/divinity_stone");
+			if (asset2 != null)
+			{
+				stone_mesh = Object.Instantiate(asset2.mainAsset) as GameObject;
+				stone_mesh.transform.parent = mesh.transform;
+				stone_mesh.AddComponent<DivinityStoneScript>();
+			}
+			for (int i = 0; i < 5; i++)
+			{
+				Database.GodTroop godTroop = Global.character_.god_troops[i];
+				string text = (Global.getTemplate("troop_animation", godTroop.idmodel) as _troop_animation).name;
+				asset2 = BaseAsset.was.GetAsset("battle/" + text);
+				if (asset2 != null)
+				{
+					godTroop.mesh = Object.Instantiate(asset2.mainAsset) as GameObject;
+					BaseAsset.SetLayerRecursively(godTroop.mesh, 9);
+					godTroop.mesh.transform.position = godTroop.pos;
+					godTroop.mesh.transform.eulerAngles = godTroop.rot;
+					godTroop.mesh.transform.parent = mesh.transform;
+					godTroop.mesh.AddComponent<DivinityTroopScript>().setTroop(this, godTroop);
+					if (godTroop.killed && godTroop.mesh.animation["dead"] != null)
+					{
+						godTroop.mesh.animation.Play("dead");
+					}
+				}
+			}
+		}
+		for (int j = 0; j < 5; j++)
+		{
+			Database.GodTroop godTroop2 = Global.character_.god_troops[j];
+			if (godTroop2.mesh != null && godTroop2.killed && godTroop2.mesh.animation["dead"] != null)
+			{
+				godTroop2.mesh.animation.Play("dead");
+			}
+		}
+		EnableAll();
+	}
+
+	public void makeArrow(Database.GodTroop t, int layer)
+	{
+		t.arrow_mesh = (GameObject)Object.Instantiate(BaseAsset.was.GetAsset("campaign/arrow_red").mainAsset);
+		if (!(t.arrow_mesh != null))
+		{
+			return;
+		}
+		float y = 18f;
+		if (t.mesh != null)
+		{
+			BoxCollider boxCollider = t.mesh.collider as BoxCollider;
+			if (boxCollider != null)
+			{
+				y = boxCollider.extents.y * 2f * 2f + 0.5f;
+			}
+		}
+		t.arrow_mesh.transform.position = t.pos + new Vector3(0f, y, 0f);
+		float num = 3f;
+		t.arrow_mesh.transform.localScale = new Vector3(num, num, num);
+		t.arrow_mesh.transform.parent = mesh.transform;
+		BaseAsset.SetLayerRecursively(t.arrow_mesh, layer);
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (mesh != null)
+		{
+			Object.Destroy(mesh);
+			mesh = null;
+		}
+		stone_mesh = null;
+		for (int i = 0; i < 5; i++)
+		{
+			Database.GodTroop godTroop = Global.character_.god_troops[i];
+			godTroop.mesh = null;
+			godTroop.arrow_mesh = null;
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		__BaseUI.my_enabled = IsEnable();
+		int num = Global.character_.god_challenge_level - 5;
+		_god_yield god_yield = Global.getTemplate("god_yield", (uint)num) as _god_yield;
+		Rect rc = __BaseUI._rect(Screen.width / 2 - 212, 10f, 700f, 86f);
+		if (rc.x < 280f)
+		{
+			rc.x = 280f;
+		}
+		__BaseUI.BeginGroup(rc);
+		GUI.DrawTexture(__BaseUI._rect(0f, 0f, 425f, 66f), texTitle);
+		string data = "#c=ffffff" + num + "#b=1" + __BaseUI.load_str(231u);
+		ssLevel.make_arial(data, __BaseUI._textLeft, 200, 13);
+		ssLevel.draw_right(__BaseUI._rect(140f, 42f, 80f, 20f), __BaseUI._textLeft);
+		__BaseUI.Label(__BaseUI._rect(310f, 39f, 100f, 20f), Global.character_.stone.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite, 13);
+		if (btnTalisman.Button(bBtn: true, __BaseUI._rect(450f, 5f, 69f, 58f), string.Empty))
+		{
+			MainUI._general_person();
+		}
+		__BaseUI.EndGroup();
+		bool flag = false;
+		if (Global.getTemplate("vip_template", Global.character_.VIPLEVEL) is _vip_template vip_template && vip_template.godharvest_times > Global.character_.god_bonus_today)
+		{
+			flag = true;
+		}
+		__BaseUI.BeginGroup(__BaseUI._rectB(Screen.width / 2 - 300, 140f, 300f, 100f));
+		GUI.Label(__BaseUI._rect(50f, 15f, 230f, 40f), string.Empty, __BaseUI._tooltipStyle);
+		if (!flag)
+		{
+			__BaseUI.Label(__BaseUI._rect(80f, 25f, 180f, 20f), __BaseUI.load_str(20221u), __BaseUI._textLeft, __BaseUI._clrRed, 16);
+		}
+		else if (Global.character_.god_bonus_today == 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(80f, 25f, 180f, 20f), __BaseUI.load_str(20232u), __BaseUI._textLeft, __BaseUI._clrCyan, 16);
+			ssStone.make_arial("#c=ffffcc#b=1" + __BaseUI.load_str(20222u, god_yield.stone), __BaseUI._textLeft, 200, 16);
+			ssStone.draw(__BaseUI._rect(180f, 27f, 100f, 20f), __BaseUI._textLeft);
+		}
+		else
+		{
+			_buy_template buyTemplate = Global.getBuyTemplate(_buy_template.TYPE.STONE, Global.character_.god_bonus_today + 1);
+			int num2 = 0;
+			if (buyTemplate != null)
+			{
+				num2 = buyTemplate.gold;
+			}
+			ssGold.make_arial("#c=ccffff#b=1" + __BaseUI.load_str(20233u, num2), __BaseUI._textLeft, 200, 16);
+			ssGold.draw(__BaseUI._rect(80f, 27f, 180f, 20f), __BaseUI._textLeft);
+			ssStone.make_arial("#c=ffffcc#b=1" + __BaseUI.load_str(20222u, god_yield.stone), __BaseUI._textLeft, 200, 16);
+			ssStone.draw(__BaseUI._rect(195f, 27f, 100f, 20f), __BaseUI._textLeft);
+		}
+		if (btnHarvest.Button(flag, __BaseUI._rect(0f, 0f, 70f, 70f), string.Empty))
+		{
+			wantHarvest();
+		}
+		__BaseUI.EndGroup();
+		int num3 = 0;
+		for (int i = 0; i < 5; i++)
+		{
+			if (!Global.character_.god_troops[i].killed)
+			{
+				num3++;
+			}
+		}
+		__BaseUI.BeginGroup(__BaseUI._rectB(Screen.width / 2 + 20, 140f, 300f, 100f));
+		GUI.Label(__BaseUI._rect(50f, 15f, 230f, 40f), string.Empty, __BaseUI._tooltipStyle);
+		ssGod.make_arial(__BaseUI.load_str(20234u, num3), __BaseUI._textLeft, 200, 16);
+		ssGod.draw(__BaseUI._rect(80f, 27f, 200f, 40f), __BaseUI._textLeft);
+		if (btnChallenge.Button(num3 > 0, __BaseUI._rect(0f, 0f, 70f, 70f), string.Empty))
+		{
+			for (int j = 0; j < 5; j++)
+			{
+				if (!Global.character_.god_troops[j].killed)
+				{
+					wantCombat(Global.character_.god_troops[j]);
+					break;
+				}
+			}
+		}
+		__BaseUI.EndGroup();
+		draw_right_bar();
+		__BaseUI.my_enabled = true;
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void _return()
+	{
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+	}
+
+	public void wantHarvest()
+	{
+		_buy_template buyTemplate = Global.getBuyTemplate(_buy_template.TYPE.STONE, Global.character_.god_bonus_today + 1);
+		int num = 0;
+		if (buyTemplate != null)
+		{
+			num = buyTemplate.gold;
+		}
+		if (num > 0)
+		{
+			DisableAll();
+			__BaseUI.GetConsumeUI().setConsume(num, 25, GoldStoneOK);
+		}
+		else
+		{
+			cs_god_harvest_0x4B2();
+		}
+	}
+
+	public void wantCombat(Database.GodTroop troop)
+	{
+		m_troop = troop;
+		Hashtable hashtable = new Hashtable();
+		__BaseUI.subui = "NPCBattle";
+		hashtable.Add("subui", __BaseUI.subui);
+		hashtable.Add("campaignid", troop.idtroop);
+		hashtable.Add("troopid", 0);
+		hashtable.Add("substate", "divinity_troop");
+		hashtable.Add("viewonly", false);
+		hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+		SendMessage("SubLoading", hashtable, SendMessageOptions.DontRequireReceiver);
+		FormationUI component = GetComponent<FormationUI>();
+		MainUI.SetSubUI(component);
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		if (m_troop.data_.cd_time > TimeUtil.Now)
+		{
+			string message = __BaseUI.format("battle_cd", new object[3]
+			{
+				m_troop.name,
+				m_troop.data_.fail_count,
+				Global.getFormatTime((int)(m_troop.data_.cd_time - TimeUtil.Now))
+			});
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20183u), message, null, EnableAll);
+			return false;
+		}
+		cs_god_battle_0x4B1();
+		return true;
+	}
+
+	private void cs_god_battle_0x4B1()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSGodBattle_0x4B1 cSGodBattle_0x4B = new CSGodBattle_0x4B1();
+		cSGodBattle_0x4B.idtroop = m_troop.idtroop;
+		RootUI.m_client.Send(1201, cSGodBattle_0x4B, sc_god_battle_0x4B1);
+	}
+
+	private void sc_god_battle_0x4B1(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCGodBattle_0x4B1 sCGodBattle_0x4B = JSProtoBuf.Serializer.Deserialize<SCGodBattle_0x4B1>(stream);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCGodBattle_0x4B.report, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+		if (Global.character_.god_challenge_level >= 200)
+		{
+			battleUI.ViewType = enumBattleViewType.viewDefault;
+		}
+		else
+		{
+			battleUI.ViewType = enumBattleViewType.viewFull;
+		}
+		if (m_troop.data_.fail_count < 35)
+		{
+			m_troop.data_.fail_count++;
+		}
+		m_troop.data_.cd_time = sCGodBattle_0x4B.cooldown;
+		battleUI.setClose(FailedOpen);
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		if (!pkt.iswin)
+		{
+			return;
+		}
+		m_troop.killed = true;
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse in pkt.bonuses.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse);
+			list.Add(treasure);
+		}
+		if (pkt.kill_all && Global.character_.god_challenge_level <= 195)
+		{
+			Global.character_.god_challenge_level += 5;
+			m_bClear = true;
+		}
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+		battleUI.setClose(BonusOpen);
+		if (m_troop.data_.fail_count > 0)
+		{
+			m_troop.data_.fail_count--;
+		}
+		m_troop.data_.cd_time = 0u;
+	}
+
+	private void cs_god_harvest_0x4B2()
+	{
+		CSGodHarvest_0x4B2 cSGodHarvest_0x4B = new CSGodHarvest_0x4B2();
+		cSGodHarvest_0x4B.harvest_times = Global.character_.god_bonus_today;
+		RootUI.m_client.Send(1202, cSGodHarvest_0x4B, sc_god_harvest_0x4B2);
+	}
+
+	private void sc_god_harvest_0x4B2(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCGodHarvest_0x4B2 sCGodHarvest_0x4B = JSProtoBuf.Serializer.Deserialize<SCGodHarvest_0x4B2>(stream);
+		if (sCGodHarvest_0x4B.result == 0)
+		{
+			if (sCGodHarvest_0x4B.gold_consume != 0)
+			{
+				__BaseUI.drawStateBubble("gold-" + sCGodHarvest_0x4B.gold_consume);
+				Global.character_.gold -= (int)sCGodHarvest_0x4B.gold_consume;
+			}
+			Global.character_.stone += (int)sCGodHarvest_0x4B.stone_output;
+			Global.character_.god_bonus_today = (byte)sCGodHarvest_0x4B.harvest_times;
+			RootBase._drawBubble((int)sCGodHarvest_0x4B.stone_output, __BaseUI._rect(Screen.width / 2, Screen.height / 2 - 50, 200f, 50f), __BaseUI._iconStone, 1f, -5f, -20f);
+			GameObject gameObject = stone_mesh;
+			Vector3 position = gameObject.transform.position;
+			position.y = gameObject.collider.bounds.center.y + gameObject.collider.bounds.extents.y;
+			position = Camera.main.WorldToScreenPoint(position);
+			position.y = (float)Screen.height - position.y;
+			position.x -= 30f;
+			position.y -= 50f;
+			RootBase._drawBubble((int)sCGodHarvest_0x4B.stone_output, __BaseUI._rect(position.x, position.y, 200f, 30f), __BaseUI._iconStone, 1f, -5f, -20f);
+		}
+		else if (sCGodHarvest_0x4B.result == 1)
+		{
+			Global.character_.god_bonus_today = (byte)sCGodHarvest_0x4B.harvest_times;
+		}
+	}
+
+	private void GoldStoneOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_god_harvest_0x4B2();
+		}
+		EnableAll();
+	}
+
+	private void FailedOpen()
+	{
+		MainUI.SetSubUI(BaseUI.GetBattleFailedUI());
+		BaseUI.GetBattleFailedUI().MyLoading();
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	private void BonusClose()
+	{
+		if (m_bClear)
+		{
+			GetComponent<DivinityClearUI>().MyLoading();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+}

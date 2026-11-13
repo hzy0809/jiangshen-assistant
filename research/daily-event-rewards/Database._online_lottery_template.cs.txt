@@ -1,0 +1,30 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _online_lottery_template
+{
+	public int id;
+
+	public uint time;
+
+	public void Set(_online_lottery_template d)
+	{
+		id = d.id;
+		time = d.time;
+	}
+
+	public void Set(db_online_lottery_template d)
+	{
+		id = d.id;
+		time = d.time;
+	}
+
+	public void Get(ref db_online_lottery_template d)
+	{
+		d.id = id;
+		d.time = time;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

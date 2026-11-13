@@ -1,0 +1,6 @@
+{"event":"synthetic_one_shot","protocol":1,"pid":55860,"tid":33320,"callback_tid":33320,"state":3,"calls":1,"mono_main_match":0,"callback_finished":1,"hook_removed":0,"retained_until_restart":1,"win32_error":0,"result_code":0,"detail":"synthetic_callback_only_no_mono"}
+{"event":"synthetic_cancelled","protocol":1,"pid":55860,"tid":33320,"callback_tid":0,"state":4,"calls":0,"mono_main_match":0,"callback_finished":0,"hook_removed":1,"retained_until_restart":0,"win32_error":0,"result_code":0,"detail":""}
+{"event":"synthetic_fire","protocol":1,"pid":55860,"tid":33320,"callback_tid":33320,"state":3,"calls":1,"mono_main_match":0,"callback_finished":1,"hook_removed":1,"retained_until_restart":1,"win32_error":0,"result_code":0,"detail":"synthetic_callback_only_no_mono"}
+{"event":"synthetic_timeout_pending","protocol":1,"pid":55860,"tid":33320,"callback_tid":33320,"state":2,"calls":1,"mono_main_match":0,"callback_finished":0,"hook_removed":1,"retained_until_restart":1,"win32_error":1460,"result_code":0,"detail":""}
+{"event":"synthetic_timeout_finished","protocol":1,"pid":55860,"tid":33320,"callback_tid":33320,"state":3,"calls":1,"mono_main_match":0,"callback_finished":1,"hook_removed":1,"retained_until_restart":1,"win32_error":1460,"result_code":0,"detail":"synthetic_callback_only_no_mono"}
+{"event":"synthetic_summary","pass":true,"elapsed_ms":297}

@@ -1,0 +1,470 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class DemonScript : MeshScript
+{
+	private __BaseUI ParentUI;
+
+	private Database.Demon m_demon;
+
+	private float m_fTime;
+
+	private float yheight;
+
+	private bool detectMouseClick = true;
+
+	private bool m_bFriend;
+
+	public override void Start()
+	{
+		m_fTime = Random.value;
+	}
+
+	private void Update()
+	{
+		m_fTime += Time.deltaTime;
+		float num = 0.5f;
+		float num2 = m_fTime - (float)(int)(m_fTime / num / 2f) * num * 2f;
+		yheight = ((!(num2 > num)) ? ((num - num2) / num * 10f) : ((num2 - num) / num * 10f));
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (Camera.main == null)
+		{
+			return;
+		}
+		__BaseUI.my_enabled = IsEnable();
+		GUI.depth = __BaseUI.UIDepth_Scene;
+		Vector3 position = m_demon.mesh.transform.position;
+		position.y = m_demon.mesh.collider.bounds.center.y + m_demon.mesh.collider.bounds.extents.y;
+		position = Camera.main.WorldToScreenPoint(position);
+		position.y = (float)Screen.height - position.y;
+		position.x -= 20f;
+		position.y -= 90f;
+		if (!m_demon.killed)
+		{
+			__BaseUI.BeginGroup(new Rect(position.x, position.y, 79f, 83f));
+			Rect rc = new Rect(0f, 20f, 79f, 63f);
+			checkHover(rc, "BuildingMonsterScript");
+			if (!m_bHover)
+			{
+				GUI.backgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+			}
+			__BaseUI.Box(new Rect(16f, yheight + 15f, 44f, 44f), CapitalUI.texSword);
+			GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+			if (CapitalUI.btnMonster.Button(bBtn: true, rc, string.Empty))
+			{
+				DemonAction();
+			}
+			__BaseUI.EndGroup();
+		}
+		__BaseUI.my_enabled = true;
+	}
+
+	private void DemonAction()
+	{
+		string empty = string.Empty;
+		if (!m_bFriend && m_demon.killed)
+		{
+			empty = __BaseUI.format(87u, new object[2]
+			{
+				string.Empty,
+				m_demon.name
+			});
+			__BaseUI.GetMessageBox().setMessage(string.Empty, empty, null, DemonClear, _bCancel: false);
+			__BaseUI.GetMessageBox().bNoButton = false;
+			return;
+		}
+		if (m_bFriend && !CapitalFriendUI.myfriend.isfans)
+		{
+			empty = __BaseUI.format(101u, new object[1] { CapitalFriendUI.myfriend.name });
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20181u), empty, null, EnableAll);
+			return;
+		}
+		Cooldown cooldown = Global.character_.getCooldown(5);
+		if (cooldown != null && cooldown.time > TimeUtil.Now)
+		{
+			empty = __BaseUI.format("demon_cd", new object[1] { Global.getFormatTime((int)(cooldown.time - TimeUtil.Now)) });
+			__BaseUI.GetMessageBox().setMessage(string.Empty, empty, null, EnableAll);
+		}
+		else if (Global.character_.level >= 25)
+		{
+			empty = ((!m_bFriend) ? __BaseUI.format(85u, new object[1] { m_demon.name }) : __BaseUI.format(86u, new object[2]
+			{
+				CapitalFriendUI.myfriend.name,
+				m_demon.name
+			}));
+			DisableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, empty, null, DemonAttack, _bCancel: true);
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21562u), rmg);
+		}
+	}
+
+	private void DemonClear(bool bOK, object[] objs)
+	{
+		cs_demon_clear_0x493();
+	}
+
+	private void DemonAttack(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			if (!m_bFriend)
+			{
+				Hashtable hashtable = new Hashtable();
+				__BaseUI.subui = "NPCBattle";
+				hashtable.Add("subui", __BaseUI.subui);
+				hashtable.Add("campaignid", 0);
+				hashtable.Add("troopid", 0);
+				hashtable.Add("substate", "demon");
+				hashtable.Add("viewonly", false);
+				hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+				FormationUI formationUI = BaseUI.GetFormationUI();
+				formationUI.SubLoading(hashtable);
+				MainUI.SetSubUI(formationUI);
+			}
+			else
+			{
+				Hashtable hashtable2 = new Hashtable();
+				__BaseUI.subui = "NPCBattle";
+				hashtable2.Add("subui", __BaseUI.subui);
+				hashtable2.Add("campaignid", 0);
+				hashtable2.Add("troopid", 0);
+				hashtable2.Add("substate", "friend_demon");
+				hashtable2.Add("viewonly", false);
+				hashtable2.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAssist));
+				FormationUI formationUI2 = BaseUI.GetFormationUI();
+				formationUI2.SubLoading(hashtable2);
+				MainUI.SetSubUI(formationUI2);
+			}
+		}
+	}
+
+	protected override void MyMouseEnter()
+	{
+		base.MyMouseEnter();
+		if (!ShowTooltip && ParentUI.IsEnable())
+		{
+			ShowTooltip = true;
+			TooltipUI.setTooltip(this, "Demon");
+		}
+	}
+
+	protected override void MyMouseExit()
+	{
+		if (!m_bHover)
+		{
+			base.MyMouseExit();
+			if (ShowTooltip)
+			{
+				ShowTooltip = false;
+				TooltipUI.setTooltip(this, string.Empty);
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "Demon")
+		{
+			string empty = string.Empty;
+			empty = ((!m_bFriend) ? __BaseUI.format("demon_tt", new object[0]) : __BaseUI.format("demon_ftt", new object[1] { CapitalFriendUI.myfriend.name }));
+			tooltipUI.ShowTooltipContent("Demon", empty, 200, __BaseUI._fontSize);
+		}
+	}
+
+	protected override void MyMouseUp()
+	{
+		if (detectMouseClick && IsEnable() && (!m_bFriend || !m_demon.killed))
+		{
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+			if (m_demon != null && !(m_demon.mesh == null) && m_demon.mesh.collider.Raycast(ray, out var _, 1000f))
+			{
+				DemonAction();
+			}
+		}
+	}
+
+	protected override void MyMouseOver()
+	{
+		TooltipUI.setTooltip(this, "Demon");
+	}
+
+	public void setDemon(__BaseUI ui, Database.Demon d, bool bFriend)
+	{
+		ParentUI = ui;
+		m_demon = d;
+		m_bFriend = bFriend;
+	}
+
+	private void DisableMouseDown()
+	{
+		detectMouseClick = false;
+	}
+
+	private void EnableMouseDown()
+	{
+		detectMouseClick = true;
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		cs_demon_battle_0x492();
+		MainUI.SetSubUI(null);
+		return true;
+	}
+
+	private bool OnAssist()
+	{
+		DisableAll();
+		cs_friend_demon_battle_0x4C2();
+		MainUI.SetSubUI(null);
+		return true;
+	}
+
+	private void cs_demon_battle_0x492()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSDemonBattle_0x492 pkt = new CSDemonBattle_0x492();
+		RootUI.m_client.Send(1170, pkt, sc_demon_battle_0x492);
+	}
+
+	private void sc_demon_battle_0x492(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCDemonBattle_0x492 sCDemonBattle_0x = JSProtoBuf.Serializer.Deserialize<SCDemonBattle_0x492>(stream);
+		Database.Demon demon = Global.character_.m_demon;
+		if (sCDemonBattle_0x.result == 1)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			Object.Destroy(demon.mesh);
+			Global.character_.m_demon = null;
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20212u), null);
+		}
+		if (sCDemonBattle_0x.result == 2)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			demon.mesh.animation.Play("dead");
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20213u), null);
+			return;
+		}
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCDemonBattle_0x.report, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewReport;
+		Global.character_.cooldowns[5] = new Cooldown(sCDemonBattle_0x.cooldown);
+		if (sCDemonBattle_0x.iswin)
+		{
+			List<_Treasure> list = new List<_Treasure>();
+			foreach (Treasure bonuse in sCDemonBattle_0x.bonuses.bonuses)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make(bonuse);
+				list.Add(treasure);
+			}
+			demon.killed = true;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			string empty = string.Empty;
+			empty = __BaseUI.load_str(20214u);
+			battleResultUI.Set(rmg, battleUI.getDefenderName(), empty, battleUI.getBattleLevel(), 0, list, BonusClose);
+			battleUI.setClose(BonusOpen);
+		}
+		else
+		{
+			demon.updateArmys(sCDemonBattle_0x.soldiers);
+		}
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	private void cs_friend_demon_battle_0x4C2()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSFriendDemonBattle_0x4C2 cSFriendDemonBattle_0x4C = new CSFriendDemonBattle_0x4C2();
+		cSFriendDemonBattle_0x4C.idfriend = CapitalFriendUI.myfriend.id;
+		RootUI.m_client.Send(1218, cSFriendDemonBattle_0x4C, sc_friend_demon_battle_0x4C2);
+	}
+
+	private void sc_friend_demon_battle_0x4C2(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCFriendDemonBattle_0x4C2 sCFriendDemonBattle_0x4C = JSProtoBuf.Serializer.Deserialize<SCFriendDemonBattle_0x4C2>(stream);
+		Database.Demon demon = CapitalFriendUI.myfriend.m_demon;
+		if (sCFriendDemonBattle_0x4C.result == 1)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20215u), null);
+			return;
+		}
+		if (sCFriendDemonBattle_0x4C.result == 2)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20216u), null);
+			demon.mesh.animation.Play("dead");
+			return;
+		}
+		if (sCFriendDemonBattle_0x4C.result == 3)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20217u), null);
+			Object.Destroy(demon.mesh);
+			demon.mesh = null;
+			return;
+		}
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCFriendDemonBattle_0x4C.report, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewReport;
+		Global.character_.cooldowns[(byte)sCFriendDemonBattle_0x4C.cooldown.id] = new Cooldown(sCFriendDemonBattle_0x4C.cooldown);
+		if (sCFriendDemonBattle_0x4C.iswin)
+		{
+			string msg = __BaseUI.load_str(20218u);
+			demon.killed = true;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, battleUI.getDefenderName(), msg, battleUI.getBattleLevel(), 0, null, AssistClose);
+			battleUI.setClose(BonusOpen);
+		}
+		else
+		{
+			battleUI.setClose(FailedOpen);
+			demon.updateArmys(sCFriendDemonBattle_0x4C.soldiers);
+		}
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		if (!pkt.iswin)
+		{
+			return;
+		}
+		if (pkt.idfriend != 0L)
+		{
+			string empty = string.Empty;
+			Database.Demon demon = CapitalFriendUI.myfriend.m_demon;
+			demon.killed = true;
+			BattleUI battleUI = BaseUI.GetBattleUI();
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, battleUI.getDefenderName(), empty, battleUI.getBattleLevel(), 0, null, AssistClose);
+			battleUI.setClose(BonusOpen);
+			Global.character_.cooldowns.Remove(5);
+			return;
+		}
+		Database.Demon demon2 = Global.character_.m_demon;
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse in pkt.bonuses.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse);
+			list.Add(treasure);
+		}
+		demon2.killed = true;
+		BattleUI battleUI2 = BaseUI.GetBattleUI();
+		BattleResultUI battleResultUI2 = __BaseUI.GetBattleResultUI();
+		string empty2 = string.Empty;
+		empty2 = __BaseUI.load_str(20218u);
+		battleResultUI2.Set(rmg, battleUI2.getDefenderName(), empty2, battleUI2.getBattleLevel(), 0, list, BonusClose);
+		battleUI2.setClose(BonusOpen);
+	}
+
+	private void cs_demon_clear_0x493()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSDemonClear_0x493 pkt = new CSDemonClear_0x493();
+		RootUI.m_client.Send(1171, pkt, sc_demon_clear_0x493);
+	}
+
+	private void sc_demon_clear_0x493(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCDemonClear_0x493 sCDemonClear_0x = JSProtoBuf.Serializer.Deserialize<SCDemonClear_0x493>(stream);
+		Database.Demon demon = Global.character_.m_demon;
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse in sCDemonClear_0x.bonuses.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse);
+			list.Add(treasure);
+		}
+		DisableAll();
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+		battleResultUI.MyLoading();
+		MainUI.SetSubUI(null);
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	private void FailedOpen()
+	{
+		DisableAll();
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(124u), null, EnableAll);
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+		Database.Demon demon = Global.character_.m_demon;
+		if (demon != null)
+		{
+			if (demon.mesh != null)
+			{
+				Object.Destroy(demon.mesh);
+			}
+			Global.character_.m_demon = null;
+		}
+	}
+
+	private void AssistClose()
+	{
+		EnableAll();
+		Database.Demon demon = CapitalFriendUI.myfriend.m_demon;
+		if (demon != null && demon.mesh != null)
+		{
+			demon.mesh.animation.Play("dead");
+		}
+	}
+}

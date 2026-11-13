@@ -1,0 +1,85 @@
+using UnityEngine;
+
+public class PopupUI : __BaseUI
+{
+	public delegate bool Draw();
+
+	public delegate void DrawEnd();
+
+	public static bool popup;
+
+	private static Draw drawpopup;
+
+	private static DrawEnd closepopup_cb;
+
+	private static __BaseUI _ownerUI;
+
+	public static string _owner;
+
+	public static void Register(Draw del_draw, string owner, __BaseUI ownerUI)
+	{
+		popup = true;
+		drawpopup = del_draw;
+		_owner = owner;
+		_ownerUI = ownerUI;
+		closepopup_cb = null;
+	}
+
+	public static void Register(Draw del_draw, DrawEnd end_draw, string owner, __BaseUI ownerUI)
+	{
+		popup = true;
+		drawpopup = del_draw;
+		_owner = owner;
+		_ownerUI = ownerUI;
+		closepopup_cb = end_draw;
+	}
+
+	public static void EndPopup(string owner)
+	{
+		if (!(_owner != owner))
+		{
+			popup = false;
+			_owner = string.Empty;
+			_ownerUI = null;
+			if (closepopup_cb != null)
+			{
+				closepopup_cb();
+			}
+		}
+	}
+
+	public override void Start()
+	{
+	}
+
+	private void Update()
+	{
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Message + 1;
+		if (popup)
+		{
+			bool flag = false;
+			if (Event.current.type == EventType.MouseUp)
+			{
+				flag = true;
+			}
+			bool flag2 = drawpopup();
+			TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+			if (Input.GetMouseButton(0))
+			{
+				GUI.tooltip = string.Empty;
+			}
+			if (Event.current.type == EventType.Repaint && GUI.tooltip != string.Empty)
+			{
+				TooltipUI.setTooltip(_ownerUI, GUI.tooltip, bClear: true);
+			}
+			if (flag && !flag2)
+			{
+				EndPopup(_owner);
+			}
+		}
+	}
+}

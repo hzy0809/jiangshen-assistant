@@ -1,0 +1,287 @@
+using UnityEngine;
+
+public class BattleNormalResultUI : BaseUI
+{
+	private BattleUI battle_ui;
+
+	private GUIStyle resultBGStyle = new GUIStyle();
+
+	private GUIStyle resultLvlStyle = new GUIStyle();
+
+	private Texture2D resultAttackTex;
+
+	private Texture2D resultDefenseTex;
+
+	private Texture2D resultLoseTex;
+
+	private Texture2D jiao1Tex;
+
+	private Texture2D jiao2Tex;
+
+	private GUIStyle blankStyle = new GUIStyle();
+
+	private GUIStyle loseNumStyle = new GUIStyle();
+
+	private Texture2D[] texResults = new Texture2D[11];
+
+	private _ButtonStyle reportBtn = new _ButtonStyle();
+
+	private _ButtonStyle replayBtn = new _ButtonStyle();
+
+	private _ButtonStyle copyBtn = new _ButtonStyle();
+
+	private _ButtonStyle displayBtn = new _ButtonStyle();
+
+	private _ButtonStyle saveBtn = new _ButtonStyle();
+
+	private GUIStyle styleBox = new GUIStyle();
+
+	private int m_battleLevel;
+
+	private string attacker_name = string.Empty;
+
+	private string attacker_lose_num = string.Empty;
+
+	private string defender_name = string.Empty;
+
+	private string defender_lose_num = string.Empty;
+
+	private bool bBattle_surrended;
+
+	private ulong m_reportid;
+
+	private enumBattleViewType m_viewType = enumBattleViewType.viewDefault;
+
+	private bool m_is_cross;
+
+	private bool m_use_crossid;
+
+	private uint m_crossid;
+
+	private bool draw_popup;
+
+	private string report_url;
+
+	private bool draw_url_box;
+
+	private bool m_battle_view_ui;
+
+	public override void Start()
+	{
+		base.Start();
+		battle_ui = GetComponent<BattleUI>();
+		Texture2D texture2D = new Texture2D(1, 1);
+		texture2D.SetPixels(new Color[1]
+		{
+			new Color(0f, 0f, 0f, 0.5f)
+		});
+		texture2D.Apply();
+		GUIStyleState normal = resultBGStyle.normal;
+		Texture2D background = texture2D;
+		resultBGStyle.hover.background = background;
+		normal.background = background;
+	}
+
+	public void PrepareOpen()
+	{
+		AddAsset("ui_battle");
+		AddAsset("ui_share2");
+		CollectingStart(bCollecting: false);
+		BaseAsset.lds.Visible_sub();
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_battle");
+		resultAttackTex = asset.Load("ui_zi1") as Texture2D;
+		resultDefenseTex = asset.Load("ui_zi2") as Texture2D;
+		resultLoseTex = asset.Load("ui_zi3") as Texture2D;
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_share2");
+		jiao1Tex = asset2.Load("ui_jiao1") as Texture2D;
+		jiao2Tex = asset2.Load("ui_jiao2") as Texture2D;
+		loseNumStyle.font = __BaseUI.GetFontCache().NumFont;
+		loseNumStyle.fontSize = 25;
+		loseNumStyle.alignment = TextAnchor.LowerCenter;
+		for (int i = 0; i < 11; i++)
+		{
+			texResults[i] = asset.Load(BattleResultUI.battle_lvl_names[i]) as Texture2D;
+		}
+		replayBtn.make(asset, "button_chongbo");
+		reportBtn.make(asset, "button_zhanbao");
+		copyBtn.make(asset, "button_fuzhi");
+		displayBtn.make(asset, "button_zhanshi");
+		saveBtn.make(asset, "button_baocun");
+		styleBox.normal.background = asset.Load("ui_kuang_informationbox") as Texture2D;
+		InitData();
+		BaseAsset.lds.Hide();
+		Visible();
+	}
+
+	private void InitData()
+	{
+		m_battleLevel = battle_ui.BattleResultLevel;
+		attacker_name = battle_ui.getArmyInfo(0).name;
+		defender_name = battle_ui.getArmyInfo(1).name;
+		attacker_lose_num = battle_ui.getArmyLoseNum(0).ToString();
+		defender_lose_num = battle_ui.getArmyLoseNum(1).ToString();
+		bBattle_surrended = battle_ui.IsSurrended;
+		m_reportid = battle_ui.ReportID;
+		m_viewType = battle_ui.ViewType;
+		m_is_cross = battle_ui.IsCrossServer;
+		m_use_crossid = battle_ui.UseCrossServerID;
+		m_crossid = battle_ui.CrossServerID;
+	}
+
+	public void setBattleViewUI(bool b)
+	{
+		m_battle_view_ui = b;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		float num = 0f;
+		GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, resultBGStyle);
+		__BaseUI.my_enabled = IsEnable();
+		GUI.BeginGroup(__BaseUI._rectC(211f, 122f, 422f, 244f));
+		GUI.Box(__BaseUI._rect(0f, 0f, 422f, 244f), string.Empty, __BaseUI._boxmsgStyle);
+		blankStyle.normal.background = jiao1Tex;
+		GUI.Box(__BaseUI._rect(9f, 9f, 44f, 41f), string.Empty, blankStyle);
+		blankStyle.normal.background = jiao2Tex;
+		GUI.Box(__BaseUI._rect(369f, 9f, 44f, 41f), string.Empty, blankStyle);
+		resultLvlStyle.normal.background = texResults[m_battleLevel];
+		GUI.Box(__BaseUI._rect(30f, 50f, 105f, 105f), string.Empty, resultLvlStyle);
+		GUI.Box(__BaseUI._rect(155f, 32f, 235f, 62f), string.Empty, __BaseUI._infoStyle);
+		GUI.Box(__BaseUI._rect(155f, 103f, 235f, 62f), string.Empty, __BaseUI._infoStyle);
+		blankStyle.normal.background = resultAttackTex;
+		GUI.Box(__BaseUI._rect(168f, 39f, 52f, 15f), string.Empty, blankStyle);
+		blankStyle.normal.background = resultDefenseTex;
+		GUI.Box(__BaseUI._rect(168f, 110f, 52f, 15f), string.Empty, blankStyle);
+		blankStyle.normal.background = resultLoseTex;
+		GUI.Box(__BaseUI._rect(166f, 68f, 58f, 17f), string.Empty, blankStyle);
+		GUI.Box(__BaseUI._rect(166f, 140f, 58f, 17f), string.Empty, blankStyle);
+		__BaseUI.Label(__BaseUI._rect(235f, 40f, 140f, 18f + num), attacker_name, __BaseUI._textCenter, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(235f, 58f, 140f, 34f), attacker_lose_num, loseNumStyle, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(235f, 108f, 140f, 18f), defender_name, __BaseUI._textCenter, __BaseUI._clrCyanDark);
+		__BaseUI.Label(__BaseUI._rect(235f, 126f, 140f, 34f), defender_lose_num, loseNumStyle, __BaseUI._clrCyanDark);
+		if (!bBattle_surrended)
+		{
+			if (m_reportid != 0)
+			{
+				if ((m_viewType != enumBattleViewType.viewReport || m_is_cross) && reportBtn.Button(!draw_popup, __BaseUI._rect(30f, 166f, 39f, 43f), new GUIContent(string.Empty, "reportBtn")))
+				{
+					draw_popup = true;
+				}
+				if (replayBtn.Button(bBtn: true, __BaseUI._rect((m_viewType == enumBattleViewType.viewReport) ? 64 : 84, 166f, 39f, 43f), new GUIContent(string.Empty, "replayBtn")))
+				{
+					Hide();
+					battle_ui.Replay();
+				}
+			}
+			else if (replayBtn.Button(bBtn: true, __BaseUI._rect(64f, 166f, 39f, 43f), new GUIContent(string.Empty, "replayBtn")))
+			{
+				Hide();
+				battle_ui.Replay();
+			}
+			if (draw_popup)
+			{
+				Rect position = __BaseUI._rect(10f, 150f, 70f, 88 - (m_is_cross ? 52 : 0));
+				Vector2 point = new Vector2(Input.mousePosition.x - (float)(Screen.width / 2) + 211f, (float)(Screen.height / 2) - Input.mousePosition.y + 122f);
+				if (Input.GetMouseButtonDown(0) && !position.Contains(point))
+				{
+					draw_popup = false;
+				}
+				GUI.Label(position, string.Empty, styleBox);
+				if (copyBtn.Button(bBtn: true, __BaseUI._rect(19f, 160f, 52f, 16f), new GUIContent(string.Empty, "copy")))
+				{
+					if (!m_is_cross)
+					{
+						BattleReportMgrUI.cs_show_public(m_reportid);
+					}
+					report_url = "http://" + Global.game_data["domain"].ToString() + "/battle/" + m_reportid;
+					if (m_is_cross && m_use_crossid)
+					{
+						report_url = report_url + "?crossid=" + m_crossid;
+					}
+					__BaseUI.CopyToClipboard(report_url);
+					draw_url_box = true;
+				}
+				if (!m_is_cross)
+				{
+					if (displayBtn.Button(bBtn: true, __BaseUI._rect(19f, 186f, 52f, 16f), new GUIContent(string.Empty, "display")))
+					{
+						BattleReportMgrUI.cs_show_public(m_reportid);
+						BattleReportMgrUI.cs_show_battlereport_chat(m_reportid);
+					}
+					if (saveBtn.Button(bBtn: true, __BaseUI._rect(19f, 212f, 52f, 16f), new GUIContent(string.Empty, "save")))
+					{
+						if (Global.character_.saved_battle_report.Count == 5)
+						{
+							__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string("saved_full2"), null);
+						}
+						else
+						{
+							battle_ui.cs_save_report(m_reportid, save: true);
+						}
+					}
+				}
+			}
+		}
+		if (!m_battle_view_ui && __BaseUI._btnOK.Button(bBtn: true, __BaseUI._rect(284f, 185f, 98f, 30f), string.Empty))
+		{
+			Hide();
+			battle_ui.battle_exit();
+		}
+		GUI.EndGroup();
+		drawTooltips();
+		if (draw_url_box)
+		{
+			drawBattleReportURL();
+		}
+		__BaseUI.my_enabled = true;
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		switch (tip)
+		{
+		case "replayBtn":
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.get_string(311u), 250, 14);
+			break;
+		case "reportBtn":
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.get_string(312u), 250, 14);
+			break;
+		case "copy":
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.get_string(314u), 250, 14);
+			break;
+		case "display":
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.get_string(315u), 250, 14);
+			break;
+		case "save":
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.get_string(316u), 250, 14);
+			break;
+		default:
+			tooltipUI.ShowTooltipContent(string.Empty, tip, 500, 14);
+			break;
+		case null:
+			break;
+		}
+	}
+
+	private void drawBattleReportURL()
+	{
+		GUI.BeginGroup(__BaseUI._rectC(200f, 100f, 400f, 150f));
+		GUI.Box(__BaseUI._rect(0f, 0f, 400f, 150f), string.Empty, __BaseUI._boxmsgStyle);
+		__BaseUI.Label(__BaseUI._rect(20f, 20f, 380f, 20f), __BaseUI.get_string("copy_br_link"), __BaseUI._textLeft, Color.white);
+		GUI.SetNextControlName("battle url field");
+		GUI.TextField(__BaseUI._rect(20f, 50f, 360f, 20f), report_url);
+		GUI.FocusControl("battle url field");
+		if (__BaseUI._btnnewOK.Button(bBtn: true, __BaseUI._rect(151f, 100f, 98f, 30f), string.Empty))
+		{
+			draw_url_box = false;
+		}
+		GUI.EndGroup();
+	}
+}

@@ -1,0 +1,39 @@
+using System.IO;
+using UnityEngine;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class PointraceChallenger : game.net.data.StoC.PointraceChallenger
+{
+	public Texture2D texIcon;
+
+	public byte[] legion;
+
+	public BattleLegion m_legion;
+
+	public PointraceChallenger(game.net.data.StoC.PointraceChallenger d)
+	{
+		base.id = d.id;
+		base.pos = d.pos;
+		base.level = d.level;
+		base.battle_score = d.battle_score;
+		base.battle_initiative = d.battle_initiative;
+		base.server_sid = d.server_sid;
+		base.killed = d.killed;
+		base.isview = d.isview;
+		base.name = ((base.server_sid != 0 && base.server_sid != Global.character_.SID) ? (d.name + ".s" + base.server_sid) : d.name);
+		base.sex = d.sex;
+		base.point = d.point;
+	}
+
+	public void SetLegion(byte[] _legion)
+	{
+		legion = _legion;
+		if (legion != null)
+		{
+			MemoryStream inputStream = new MemoryStream(legion);
+			m_legion = JSProtoBuf.Serializer.Deserialize<BattleLegion>(inputStream);
+		}
+	}
+}

@@ -1,0 +1,4 @@
+version=1
+nonce=64731d2da0864727a8d6cf0ce6eecd0c
+sequence=1
+command=stop

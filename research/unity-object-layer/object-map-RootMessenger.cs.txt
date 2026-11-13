@@ -1,0 +1,152 @@
+using System;
+using System.Collections;
+using UnityEngine;
+
+public class RootMessenger : MonoBehaviour
+{
+	public delegate void delegate_NewbieQuest(string id);
+
+	private bool bLoadScreen = true;
+
+	private bool bLoadingVisible = true;
+
+	private bool bLoading;
+
+	private int ExpectingCount;
+
+	private LoadScreen lds;
+
+	public string LevelID;
+
+	public static delegate_NewbieQuest delegate_newbieQuest;
+
+	private void Awake()
+	{
+	}
+
+	private void Start()
+	{
+		lds = GameObject.Find("/LoadUI").GetComponent("LoadScreen") as LoadScreen;
+	}
+
+	private void Update()
+	{
+		if (bLoading && ExpectingCount == 0)
+		{
+			EndLoading();
+		}
+	}
+
+	public void ToEnable()
+	{
+		Global.extern_enabled = true;
+		BroadcastMessage("Enable", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void ToDisable()
+	{
+		Global.extern_enabled = false;
+		BroadcastMessage("Disable", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void ToHide()
+	{
+		BroadcastMessage("Hide", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void ToVisible()
+	{
+		BroadcastMessage("Visible", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void ToResume()
+	{
+		BroadcastMessage("Resume", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void ToDestroy()
+	{
+		BroadcastMessage("Destroy", SendMessageOptions.DontRequireReceiver);
+	}
+
+	public void LevelStart()
+	{
+		LevelStart(_bLoadScreen: true);
+	}
+
+	public void LevelStart(bool _bLoadScreen)
+	{
+		LevelStart(_bLoadScreen, _bLoadingVisible: true);
+	}
+
+	public void LevelStart(bool _bLoadScreen, bool _bLoadingVisible)
+	{
+		Logger.Log("LevelStart Start bLoadScreen:" + _bLoadScreen + " bLoadingVisible:" + _bLoadingVisible);
+		bLoadScreen = _bLoadScreen;
+		bLoadingVisible = _bLoadingVisible;
+		ExpectingCount = 0;
+		if (bLoadScreen)
+		{
+			lds.StartLoading();
+		}
+		bLoading = true;
+		TooltipUI.setTooltip(null, string.Empty, bClear: true);
+		if (delegate_newbieQuest != null)
+		{
+			delegate_newbieQuest(LevelID);
+		}
+		BroadcastMessage("PrepareLoading", LevelID, SendMessageOptions.DontRequireReceiver);
+		BroadcastMessage("StartLoading", SendMessageOptions.DontRequireReceiver);
+		Logger.Log("LevelStart End " + ToString());
+	}
+
+	private void CollectLoading()
+	{
+		ExpectingCount++;
+	}
+
+	private void EndLoading()
+	{
+		Logger.Log("EndLoading Start");
+		bLoading = false;
+		if (bLoadScreen)
+		{
+			lds.EndLoading(this != lds.GetOldUI());
+		}
+		else if (bLoadingVisible)
+		{
+			lds.Hide();
+		}
+		EndLoadingWaitEnd();
+	}
+
+	private IEnumerator EndLoadingWait()
+	{
+		yield return new WaitForFixedUpdate();
+		EndLoadingWaitEnd();
+	}
+
+	private void EndLoadingWaitEnd()
+	{
+		ToResume();
+		BroadcastMessage("PostInit", SendMessageOptions.DontRequireReceiver);
+		BroadcastMessage("StartLoadingSub", SendMessageOptions.DontRequireReceiver);
+		Global.extern_enabled = true;
+		GC.Collect();
+	}
+
+	private void CollectFinish()
+	{
+		ExpectingCount--;
+		if (bLoading && ExpectingCount == 0)
+		{
+			EndLoading();
+		}
+	}
+
+	public void Clear()
+	{
+		ExpectingCount = 0;
+		bLoading = false;
+	}
+}

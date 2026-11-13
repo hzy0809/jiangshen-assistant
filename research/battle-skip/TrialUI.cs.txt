@@ -1,0 +1,612 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class TrialUI : BaseUI
+{
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_tili = new GUIStyle();
+
+	private GUIStyle[] uinum = new GUIStyle[5];
+
+	private GUIStyle ui_bar1 = new GUIStyle();
+
+	private GUIStyle ui_bar2 = new GUIStyle();
+
+	private GUIStyle ui_bar3 = new GUIStyle();
+
+	private GUIStyle ui_bar4 = new GUIStyle();
+
+	private GUIStyle ui_tonguan = new GUIStyle();
+
+	private GUIStyle ui_tiaozhan = new GUIStyle();
+
+	private GUIStyle ui_baoxiang1 = new GUIStyle();
+
+	private GUIStyle ui_baoxiang2 = new GUIStyle();
+
+	private GUIStyle ui_zi1 = new GUIStyle();
+
+	private _ButtonStyle button_zhijie = new _ButtonStyle();
+
+	private GUIStyle ui_di = new GUIStyle();
+
+	private GUIStyle ui_di2 = new GUIStyle();
+
+	private GUIStyle ui_zi2 = new GUIStyle();
+
+	private GUIStyle ui_di3 = new GUIStyle();
+
+	private GUIStyle ui_zi3 = new GUIStyle();
+
+	private _ButtonStyle button_tiaozhan = new _ButtonStyle();
+
+	public uint tempcd;
+
+	private bool sending;
+
+	private string stamina_tip = __BaseUI.load_str(5u);
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_trial");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_trial");
+		titleStyle.normal.background = asset.Load("ui_biaoti") as Texture2D;
+		ui_tili.normal.background = asset.Load("ui_tili") as Texture2D;
+		ui_bar1.normal.background = asset.Load("ui_bar1") as Texture2D;
+		ui_bar2.normal.background = asset.Load("ui_bar2") as Texture2D;
+		ui_bar2.active.background = asset.Load("ui_bar3") as Texture2D;
+		ui_bar2.hover.background = asset.Load("ui_bar3") as Texture2D;
+		ui_bar4.normal.background = asset.Load("ui_bar4") as Texture2D;
+		ui_tonguan.normal.background = asset.Load("ui_tonguan") as Texture2D;
+		ui_tiaozhan.normal.background = asset.Load("ui_tiaozhan") as Texture2D;
+		ui_baoxiang1.normal.background = asset.Load("ui_baoxiang1") as Texture2D;
+		ui_baoxiang2.normal.background = asset.Load("ui_baoxiang2") as Texture2D;
+		ui_zi1.normal.background = asset.Load("ui_zi1") as Texture2D;
+		button_zhijie.make(asset, "button_zhijie");
+		ui_di.normal.background = asset.Load("ui_di") as Texture2D;
+		ui_di.border = new RectOffset(0, 0, 23, 23);
+		ui_di2.normal.background = asset.Load("ui_di2") as Texture2D;
+		ui_zi2.normal.background = asset.Load("ui_zi2") as Texture2D;
+		ui_di3.normal.background = asset.Load("ui_di3") as Texture2D;
+		ui_zi3.normal.background = asset.Load("ui_zi3") as Texture2D;
+		button_tiaozhan.make(asset, "button_tiaozhan");
+		for (int i = 0; i < uinum.Length; i++)
+		{
+			uinum[i] = new GUIStyle();
+			uinum[i].normal.background = asset.Load("ui_" + (i + 1)) as Texture2D;
+		}
+		Visible();
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(800f, 480f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, titleStyle);
+			GUI.Label(_CalcRect(__BaseUI._rect(257f, 12f, 161f, 36f), new Vector2(383f, 12f)), new GUIContent(string.Empty, "stamina"), __BaseUI._box15Style);
+			__BaseUI.Label(__BaseUI._rect(384f, 22f, 14f, 14f), string.Empty, __BaseUI._energyIcon);
+			__BaseUI.Label(__BaseUI._rect(399f, 21f, 31f, 17f), Global.character_.stamina.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(327f, 24f, 37f, 14f), string.Empty, ui_tili);
+			if (__BaseUI._btnBuy.Button(IsEnable(), __BaseUI._rect(464f, 22f, 52f, 16f), string.Empty))
+			{
+				BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>()._stamina(__BaseUI.load_str(20003u));
+			}
+			for (int i = 0; i < 5; i++)
+			{
+				if (Global.character_.trialinfo.texIcon[i] != null)
+				{
+					GUI.DrawTexture(__BaseUI._rect(39 + 147 * i + 18, 99f, 96f, 96f), Global.character_.trialinfo.texIcon[i]);
+				}
+				else
+				{
+					AddAssetSub("face" + Global.character_.trialinfo.icon[i]);
+					StartLoadingSub();
+				}
+				if (i < Global.character_.trialinfo.cur_level - 1)
+				{
+					__BaseUI.Label(__BaseUI._rect(39 + 147 * i, 56f, 132f, 338f), string.Empty, ui_bar1);
+					__BaseUI.Label(__BaseUI._rect(47 + 147 * i, 191f, 114f, 34f), string.Empty, ui_tonguan);
+				}
+				else if (i == Global.character_.trialinfo.cur_level - 1)
+				{
+					if (GUI.Button(__BaseUI._rect(39 + 147 * i, 56f, 132f, 338f), string.Empty, ui_bar2))
+					{
+						cs_trial_load_campaign();
+					}
+					__BaseUI.Label(__BaseUI._rect(47 + 147 * i, 191f, 114f, 34f), string.Empty, ui_tiaozhan);
+					if (Global.character_.VIPLEVEL >= 4)
+					{
+						string tooltip = string.Format(__BaseUI.load_str(432u), Global.character_.trialinfo.stamina);
+						if (Global.character_.VIPLEVEL >= 5)
+						{
+							tooltip = string.Format(__BaseUI.load_str(20642u), Global.character_.trialinfo.stamina);
+						}
+						if (button_zhijie.Button(IsEnable(), __BaseUI._rect(65 + 147 * i, 397f, 80f, 22f), new GUIContent(string.Empty, tooltip)))
+						{
+							if (Global.character_.VIPLEVEL < 5)
+							{
+								__BaseUI.GetConsumeUI().setConsume(40, 32, OnRapid, string.Empty, string.Empty, __BaseUI.load_str(20562u, Global.character_.trialinfo.stamina), null);
+							}
+							else
+							{
+								OnRapid(bOK: true, null);
+							}
+						}
+					}
+				}
+				else if (i > Global.character_.trialinfo.cur_level - 1)
+				{
+					__BaseUI.Label(__BaseUI._rect(39 + 147 * i, 56f, 132f, 338f), string.Empty, ui_bar1);
+				}
+				__BaseUI.Label(__BaseUI._rect(74 + 147 * i, 76f, 62f, 16f), string.Empty, uinum[i]);
+				__BaseUI.Label(__BaseUI._rect(60 + 147 * i, 248f, 90f, 20f), Global.character_.trialinfo.name[i], __BaseUI._textCenter, __BaseUI._clrGreen);
+				__BaseUI.Label(__BaseUI._rect(60 + 147 * i, 270f, 90f, 20f), __BaseUI.load_str(400u) + __BaseUI.load_str(426u) + (Global.character_.trialinfo.trial_rank + i * 2) + __BaseUI.load_str(427u), __BaseUI._textCenter, __BaseUI._clrWhite);
+				if (i + 1 <= Global.character_.trialinfo.chest_got)
+				{
+					__BaseUI.Label(__BaseUI._rect(63 + 147 * i, 305f, 84f, 72f), string.Empty, ui_baoxiang2);
+				}
+				else
+				{
+					_trial_battle_bonus trial_battle_bonus = Global.getTemplate("trial_battle_bonus", (uint)(i + 1)) as _trial_battle_bonus;
+					string text = __BaseUI.load_str(20563u, Global.character_.trialinfo.exp[i].ToString());
+					if (trial_battle_bonus != null)
+					{
+						if (trial_battle_bonus.enchant > 0)
+						{
+							text += __BaseUI.load_str(20564u);
+						}
+						if (trial_battle_bonus.fruit > 0)
+						{
+							text += __BaseUI.load_str(20565u);
+						}
+						if (trial_battle_bonus.money > 0)
+						{
+							text += __BaseUI.load_str(20566u);
+						}
+						if (trial_battle_bonus.stone > 0)
+						{
+							text += __BaseUI.load_str(20567u);
+						}
+					}
+					text = text.Substring(0, text.Length - 1);
+					text += __BaseUI.load_str(20568u);
+					GUI.Label(__BaseUI._rect(63 + 147 * i, 305f, 84f, 72f), new GUIContent(string.Empty, text), ui_baoxiang1);
+					uint num2 = Global.character_.trialinfo.exp[i];
+					__BaseUI.OutlinedLabel(__BaseUI._rect(214 + 147 * (i - 1), 347f, 77f, 16f), "+" + num2, __BaseUI._numCenter, __BaseUI._clrYellow);
+				}
+				if (i > Global.character_.trialinfo.cur_level - 1)
+				{
+					__BaseUI.Label(__BaseUI._rect(39 + 147 * i, 56f, 132f, 338f), string.Empty, ui_bar4);
+				}
+			}
+			__BaseUI.Label(__BaseUI._rect(188f, 429f, 413f, 27f), string.Empty, ui_zi1);
+			if (Global.character_.trialinfo.cur_level > 5)
+			{
+				__BaseUI.Label(__BaseUI._rect(47f, 49f, 702f, 369f), string.Empty, ui_di);
+				__BaseUI.Label(_CalcRect(134, 116, 78, 78, 561, 165), string.Empty, __BaseUI._boxnewStyle);
+				__BaseUI.Label(__BaseUI._rect(178f, 132f, 420f, 104f), string.Empty, ui_di2);
+				__BaseUI.Label(__BaseUI._rect(299f, 100f, 158f, 34f), string.Empty, ui_zi2);
+				int num3 = (int)(Global.character_.trialinfo.bosscd - TimeUtil.Now);
+				if (num3 > 0)
+				{
+					string formatTime = Global.getFormatTime(num3);
+					__BaseUI.Label(__BaseUI._rect(276f, 345f, 78f, 19f), formatTime, __BaseUI._numCenter, __BaseUI._clrRed);
+					__BaseUI.Label(__BaseUI._rect(360f, 348f, 120f, 14f), string.Empty, ui_zi3);
+				}
+				else
+				{
+					__BaseUI.Label(__BaseUI._rect(290f, 263f, 170f, 60f), string.Empty, ui_di3);
+					if (button_tiaozhan.Button(IsEnable(), __BaseUI._rect(302f, 275f, 146f, 36f), string.Empty))
+					{
+						if (Global.character_.trialinfo.trial_rank > Global.character_.level + 5)
+						{
+							__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(437u), rmg);
+						}
+						else
+						{
+							callBoss();
+						}
+					}
+				}
+			}
+		}
+		if (EndGUI(hasClose: true, hasBlock: false))
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void OnRapid(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_trial_rapid();
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "stamina")
+		{
+			tooltipUI.ShowTooltipCommon2(stamina_bar(__BaseUI.load_str(5u)), string.Empty, 200);
+		}
+		else if (tip != string.Empty)
+		{
+			tooltipUI.ShowTooltipCommon2(tip, string.Empty, 200);
+		}
+		else
+		{
+			tooltipUI.HideTooltip(string.Empty);
+		}
+	}
+
+	private void callBoss()
+	{
+		Hashtable hashtable = new Hashtable();
+		__BaseUI.subui = "NPCBattle";
+		hashtable.Add("subui", __BaseUI.subui);
+		hashtable.Add("campaignid", Global.character_.trialinfo.bossid);
+		hashtable.Add("troopid", 0);
+		hashtable.Add("substate", "trial_boss");
+		hashtable.Add("viewonly", false);
+		hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+		FormationUI component = GameObject.Find("Trial/TrialUI").GetComponent<FormationUI>();
+		component.SubLoading(hashtable);
+		MainUI.SetSubUI(component);
+	}
+
+	private bool OnAttack()
+	{
+		int num = (int)(Global.character_.trialinfo.bosscd - TimeUtil.Now);
+		if (num > 0)
+		{
+			return false;
+		}
+		DisableAll();
+		cs_trial_battle_boss();
+		return true;
+	}
+
+	private void cs_trial_battle_boss()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSTrialBossBattle_0x336 pkt = new CSTrialBossBattle_0x336();
+		RootUI.m_client.Send(822, pkt, sc_trial_battle_boss);
+	}
+
+	private void sc_trial_battle_boss(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCTrialBossBattle_0x336 sCTrialBossBattle_0x = JSProtoBuf.Serializer.Deserialize<SCTrialBossBattle_0x336>(stream);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(BaseAsset.lds.GetCurUI());
+		battleUI.setReport(sCTrialBossBattle_0x.report, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewFull;
+		if (sCTrialBossBattle_0x.iswin)
+		{
+		}
+		Global.character_.trialinfo.bosscd = sCTrialBossBattle_0x.cooldown;
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(bool bWin)
+	{
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		if (bWin)
+		{
+			Global.character_.trialinfo.bosskilled = 1;
+			Global.character_.trialinfo.bosscd = TimeUtil.Now;
+			battleUI.setClose(BonusClose);
+		}
+		else
+		{
+			battleUI.setClose(FailedOpen);
+		}
+	}
+
+	private void FailedOpen()
+	{
+		MainUI.SetSubUI(BaseUI.GetBattleFailedUI());
+		BaseUI.GetBattleFailedUI().MyLoading();
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20569u), rmg);
+	}
+
+	public void cs_trial_load_all()
+	{
+		CSTrialLoadAll_0x330 pkt = new CSTrialLoadAll_0x330();
+		RootUI.m_client.Send(816, pkt, sc_trial_load_all);
+	}
+
+	public void sc_trial_load_all(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCTrialLoadAll_0x330 sCTrialLoadAll_0x = JSProtoBuf.Serializer.Deserialize<SCTrialLoadAll_0x330>(stream);
+		Global.character_.trialinfo.setParam(sCTrialLoadAll_0x.trialinfo);
+		for (int i = 0; i < 5; i++)
+		{
+			if (Global.character_.trialinfo.icon[i] != 0)
+			{
+				AddAssetSub("face" + Global.character_.trialinfo.icon[i]);
+				StartLoadingSub();
+			}
+		}
+		if (Global.character_.trialinfo.chest_got < Global.character_.trialinfo.cur_level - 1)
+		{
+			cs_trial_chest();
+		}
+		if (Global.character_.trialinfo.bosskilled == 0)
+		{
+			MyLoading();
+			return;
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20570u), rmg);
+		MainUI.SetSubUI(null);
+		Hide();
+	}
+
+	public void cs_trial_load_campaign()
+	{
+		CSTrialLoadCampaign_0x331 pkt = new CSTrialLoadCampaign_0x331();
+		RootUI.m_client.Send(817, pkt, sc_trial_load_campaign);
+	}
+
+	public void sc_trial_load_campaign(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCTrialLoadCampaign_0x331 d = JSProtoBuf.Serializer.Deserialize<SCTrialLoadCampaign_0x331>(stream);
+			Global.character_.trial_campaign = new TrialCampaign(d);
+			BaseUI.GetRootUI().GetComponent<RootUI>().startTrial();
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (!AssetName.Contains("face"))
+		{
+			return;
+		}
+		for (int i = 0; i < 5; i++)
+		{
+			if (AssetName == "face" + Global.character_.trialinfo.icon[i])
+			{
+				Global.character_.trialinfo.texIcon[i] = BaseAsset.LoadTexture(AssetName);
+			}
+		}
+	}
+
+	public void cs_trial_chest()
+	{
+		CSTrialChest_0x335 pkt = new CSTrialChest_0x335();
+		RootUI.m_client.Send(821, pkt, sc_trial_chest);
+	}
+
+	public void sc_trial_chest(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCTrialChest_0x335 sCTrialChest_0x = JSProtoBuf.Serializer.Deserialize<SCTrialChest_0x335>(stream);
+		if (sCTrialChest_0x.operate == SCTrialChest_0x335.Operate.OK)
+		{
+			List<_Treasure> list = new List<_Treasure>();
+			_Treasure treasure = new _Treasure();
+			treasure.make(8, 0, (int)sCTrialChest_0x.exp);
+			list.Add(treasure);
+			if (sCTrialChest_0x.stone != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(30, 0, (int)sCTrialChest_0x.stone);
+				list.Add(treasure);
+			}
+			if (sCTrialChest_0x.enchantpick != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(37, 0, (int)sCTrialChest_0x.enchantpick);
+				list.Add(treasure);
+			}
+			if (sCTrialChest_0x.money != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(4, 0, (int)sCTrialChest_0x.money);
+				list.Add(treasure);
+			}
+			if (sCTrialChest_0x.gold != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(7, 0, (int)sCTrialChest_0x.gold);
+				list.Add(treasure);
+			}
+			Global.character_.trialinfo.chest_got++;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			string empty = string.Empty;
+			battleResultUI.Set(rmg, string.Empty, empty, 0, 0, list, EnableAll);
+			__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+			__BaseUI.GetBattleResultUI().StartLoading();
+			if (Global.character_.trialinfo.chest_got == 5)
+			{
+				ServerOpenTrialAward serverOpenTrialAward = new ServerOpenTrialAward();
+				int num = (byte)MainUI.CalcServerOpenRefreshDays();
+				if (Global.getTemplate("server_open_trial_award", (uint)num) is _server_open_trial_award)
+				{
+					serverOpenTrialAward.finished = 1;
+					serverOpenTrialAward.day = (byte)num;
+					if (!Global.character_.trialawards.ContainsKey(serverOpenTrialAward.day))
+					{
+						Global.character_.trialawards.Add(serverOpenTrialAward.day, serverOpenTrialAward);
+					}
+				}
+			}
+		}
+		if (Global.character_.trialinfo.bosskilled == 0)
+		{
+			MyLoading();
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20571u), rmg);
+		}
+	}
+
+	public void cs_trial_rapid()
+	{
+		if (!sending)
+		{
+			sending = true;
+			CSTrialRapid_0x337 pkt = new CSTrialRapid_0x337();
+			RootUI.m_client.Send(823, pkt, sc_trial_rapid);
+		}
+	}
+
+	public void sc_trial_rapid(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCTrialRapid_0x337 sCTrialRapid_0x = JSProtoBuf.Serializer.Deserialize<SCTrialRapid_0x337>(stream);
+		if (sCTrialRapid_0x.operate == SCTrialRapid_0x337.Operate.OK)
+		{
+			List<_Treasure> list = new List<_Treasure>();
+			_Treasure treasure = new _Treasure();
+			treasure.make(8, 0, (int)sCTrialRapid_0x.exp);
+			list.Add(treasure);
+			if (sCTrialRapid_0x.stone != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(30, 0, (int)sCTrialRapid_0x.stone);
+				list.Add(treasure);
+			}
+			if (sCTrialRapid_0x.enchantpick != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(37, 0, (int)sCTrialRapid_0x.enchantpick);
+				list.Add(treasure);
+			}
+			if (sCTrialRapid_0x.money != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(4, 0, (int)sCTrialRapid_0x.money);
+				list.Add(treasure);
+			}
+			if (sCTrialRapid_0x.gold != 0)
+			{
+				treasure = new _Treasure();
+				treasure.make(7, 0, (int)sCTrialRapid_0x.gold);
+				list.Add(treasure);
+			}
+			short num = (short)sCTrialRapid_0x.stamina;
+			if (Global.character_.VIPLEVEL < 5)
+			{
+				Global.character_.gold -= 40;
+				__BaseUI.drawStateBubble("gold" + -40);
+			}
+			Global.character_.stamina -= num;
+			Global.character_.trialinfo.chest_got++;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			string empty = string.Empty;
+			battleResultUI.Set(rmg, string.Empty, empty, 0, 0, list, EnableAll);
+			__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+			__BaseUI.GetBattleResultUI().StartLoading();
+			Global.character_.trialinfo.stamina = 4u;
+			Global.character_.trialinfo.cur_level++;
+			if (Global.character_.trial_campaign != null)
+			{
+				Global.character_.trial_campaign.finish = 3;
+				for (int i = 0; i < Global.character_.trial_campaign.troops.Length; i++)
+				{
+					if (Global.character_.trial_campaign.troops[i] != null)
+					{
+						Global.character_.trial_campaign.troops[i].killed = true;
+					}
+				}
+			}
+			if (Global.character_.trialinfo.chest_got == 5)
+			{
+				ServerOpenTrialAward serverOpenTrialAward = new ServerOpenTrialAward();
+				int num2 = (byte)MainUI.CalcServerOpenRefreshDays();
+				if (Global.getTemplate("server_open_trial_award", (uint)num2) is _server_open_trial_award)
+				{
+					serverOpenTrialAward.finished = 1;
+					serverOpenTrialAward.day = (byte)num2;
+					if (!Global.character_.trialawards.ContainsKey(serverOpenTrialAward.day))
+					{
+						Global.character_.trialawards.Add(serverOpenTrialAward.day, serverOpenTrialAward);
+					}
+				}
+			}
+		}
+		else if (sCTrialRapid_0x.operate == SCTrialRapid_0x337.Operate.Nostamina)
+		{
+			MainUI componentInChildren = BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+			componentInChildren._stamina();
+		}
+		sending = false;
+	}
+
+	private string stamina_bar(string key)
+	{
+		_buy_template buy_template = Global.get_buy_template(_buy_template.TYPE.STAMINA, Global.character_.stamina_buy_count + 1);
+		return string.Format(key, Global.character_.stamina, 20, Global.character_.stamina_buy_count, buy_template.gold);
+	}
+}

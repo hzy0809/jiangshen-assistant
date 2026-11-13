@@ -1,0 +1,777 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class SealMonsterUI : BaseUI
+{
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private List<_ButtonMain> btnBottom = new List<_ButtonMain>();
+
+	public static Texture2D texAttack;
+
+	private GUIStyle fengyinyaomo = new GUIStyle();
+
+	private _ButtonStyle btn_zhaohuan = new _ButtonStyle();
+
+	private _ButtonStyle btn_miaosha = new _ButtonStyle();
+
+	private GUIStyle bar2 = new GUIStyle();
+
+	private GUIStyle bar1 = new GUIStyle();
+
+	private GUIStyle jinbi = new GUIStyle();
+
+	private GUIStyle mianfei = new GUIStyle();
+
+	private GUIStyle vipicon = new GUIStyle();
+
+	private GUIStyle ExpFrame = new GUIStyle();
+
+	private GUIStyle ExpRen = new GUIStyle();
+
+	private GUIStyle ExpMan = new GUIStyle();
+
+	private GUIStyle ExpLight = new GUIStyle();
+
+	private _ButtonStyle bangzhu = new _ButtonStyle();
+
+	private Texture2D uilight;
+
+	private int vipiconwidth;
+
+	private string[] VipExplains = new string[4];
+
+	private string VE = string.Empty;
+
+	private string title = string.Empty;
+
+	public static GameObject mesh;
+
+	private PositionContainer pos_container;
+
+	public SealMonsterTroop m_troop;
+
+	private uint m_exp;
+
+	private uint m_buff;
+
+	private uint m_cd;
+
+	private float n;
+
+	private float speed = 100f;
+
+	private ScenarioSection ss = new ScenarioSection();
+
+	private float cdtime;
+
+	private bool lightok;
+
+	private bool ok1;
+
+	private bool ok2;
+
+	private bool ok3;
+
+	private bool refreshok;
+
+	private float clicktime;
+
+	private bool clickok;
+
+	private bool needload;
+
+	private bool needloadeffect;
+
+	private DateTime loadtimer = default(DateTime);
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_sealmonster");
+		btnBottom.Clear();
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		if (mesh == null)
+		{
+			AssetBundle asset2 = BaseAsset.was.GetAsset("campaign/chapter_liangongzhaohuanzhen");
+			if (asset2 != null)
+			{
+				mesh = UnityEngine.Object.Instantiate(asset2.mainAsset) as GameObject;
+				mesh.transform.parent = base.gameObject.transform;
+			}
+			pos_container = mesh.GetComponent<PositionContainer>();
+			for (byte b = 1; b <= 6; b++)
+			{
+				byte troopid = Global.character_.sealmonsterinfo.getTroopid(b);
+				if (troopid != 0)
+				{
+					_campaign campaign = Global.getTemplate("campaign", 268u) as _campaign;
+					_campaign_troop campaign_troop = (_campaign_troop)campaign.m_troops[troopid];
+					string text = (Global.getTemplate("troop_animation", campaign_troop.idmodel) as _troop_animation).name;
+					AssetBundle asset3 = BaseAsset.was.GetAsset("battle/" + text);
+					if (asset3 != null)
+					{
+						SealMonsterTroop sealMonsterTroop = Global.character_.sealmonsterinfo.m_troops[b - 1];
+						sealMonsterTroop.mesh = UnityEngine.Object.Instantiate(asset3.mainAsset) as GameObject;
+						sealMonsterTroop.mesh.transform.parent = base.gameObject.transform;
+						BaseAsset.SetLayerRecursively(sealMonsterTroop.mesh, 9);
+						sealMonsterTroop.mesh.transform.position = pos_container.Positions[b - 1].position;
+						sealMonsterTroop.mesh.transform.rotation = pos_container.Positions[b - 1].rotation;
+						sealMonsterTroop.mesh.transform.parent = mesh.transform;
+						sealMonsterTroop.mesh.AddComponent<SealMonsterTroopScript>().setTroop(this, sealMonsterTroop);
+						if (sealMonsterTroop.finish())
+						{
+							sealMonsterTroop.mesh.animation.Play("dead");
+						}
+					}
+				}
+			}
+		}
+		__BaseUI.init_lable(asset, "ui_zi_fyym", ref fengyinyaomo);
+		__BaseUI.init_lable(asset, "ui_bar2", ref bar2);
+		__BaseUI.init_lable(asset, "ui_bar1", ref bar1);
+		__BaseUI.init_lable(asset, "ui_zi_jbzh", ref jinbi);
+		__BaseUI.init_lable(asset, "ui_zi_mfzh", ref mianfei);
+		__BaseUI.init_lable(asset, "ui_vip_" + Global.character_.VIPLEVEL, ref vipicon);
+		__BaseUI.init_lable(asset, "ui_icon_jy", ref ExpRen);
+		__BaseUI.init_lable(asset, "ui_light2", ref ExpLight);
+		__BaseUI.init_lable(asset, "ui_bar3", ref ExpFrame);
+		__BaseUI.init_lable(asset, "ui_zi_man", ref ExpMan);
+		uilight = asset.Load("ui_light") as Texture2D;
+		for (int i = 0; i < 4; i++)
+		{
+			VipExplains[i] = __BaseUI.load_str((uint)(20649 + i));
+		}
+		if (Global.character_.VIPLEVEL < 2)
+		{
+			VE = VipExplains[0];
+			title = string.Format(__BaseUI.load_str(20648u), 2);
+		}
+		else if (Global.character_.VIPLEVEL >= 2 && Global.character_.VIPLEVEL < 4)
+		{
+			VE = VipExplains[1];
+			title = string.Format(__BaseUI.load_str(20648u), 4);
+		}
+		else if (Global.character_.VIPLEVEL >= 4 && Global.character_.VIPLEVEL < 5)
+		{
+			VE = VipExplains[2];
+			title = string.Format(__BaseUI.load_str(20648u), 5);
+		}
+		else if (Global.character_.VIPLEVEL >= 5 && Global.character_.VIPLEVEL < 7)
+		{
+			VE = VipExplains[3];
+			title = string.Format(__BaseUI.load_str(20648u), 7);
+		}
+		if (Global.character_.VIPLEVEL < 10)
+		{
+			vipiconwidth = 30;
+		}
+		else
+		{
+			vipiconwidth = 55;
+		}
+		btn_zhaohuan.make(asset, "button_zhaohuan");
+		btn_miaosha.make(asset, "button_miaosha");
+		bangzhu.make(asset, "button_bangzhu");
+		texAttack = asset.Load("ui_icon5") as Texture2D;
+		EnableAll();
+		base.Show();
+		needload = false;
+		Visible();
+		BaseAsset.lds.Hide();
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void draw_bottom_bar()
+	{
+		int num = 1;
+		foreach (_ButtonMain item in btnBottom)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(92 + num * 62, 92f, 92f, 84f));
+			if (item.Button(__BaseUI._rect(12f, 15f, 54f, 66f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void _return()
+	{
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_sealmonster");
+		AddAsset("campaign/chapter_liangongzhaohuanzhen");
+		AddAsset("battle/wuliehongding");
+		AddAsset("campaign/born_effect0");
+		for (byte b = 1; b <= 6; b++)
+		{
+			byte troopid = Global.character_.sealmonsterinfo.getTroopid(b);
+			if (troopid != 0)
+			{
+				_campaign campaign = Global.getTemplate("campaign", 268u) as _campaign;
+				_campaign_troop campaign_troop = (_campaign_troop)campaign.m_troops[troopid];
+				string text = (Global.getTemplate("troop_animation", campaign_troop.idmodel) as _troop_animation).name;
+				AddAsset("battle/" + text, bForce: false);
+			}
+		}
+		CollectingStart();
+	}
+
+	public void wantCombat(SealMonsterTroop troop)
+	{
+		if (!troop.finish())
+		{
+			m_troop = troop;
+			Hashtable hashtable = new Hashtable();
+			__BaseUI.subui = "NPCBattle";
+			hashtable.Add("subui", __BaseUI.subui);
+			hashtable.Add("campaignid", troop.idtroop);
+			hashtable.Add("troopid", 0);
+			hashtable.Add("substate", "sealmonster_troop");
+			hashtable.Add("viewonly", false);
+			hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+			SendMessage("SubLoading", hashtable, SendMessageOptions.DontRequireReceiver);
+			FormationUI component = GetComponent<FormationUI>();
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		if (m_troop.getCD() > TimeUtil.Now)
+		{
+			string message = __BaseUI.format("battle_cd", new object[3]
+			{
+				m_troop.getName(),
+				m_troop.getTimes(),
+				Global.getFormatTime((int)(m_troop.getCD() - TimeUtil.Now))
+			});
+			__BaseUI.GetMessageBox().setMessage("鎴樻枟鍐峰嵈", message, null, EnableAll);
+			return false;
+		}
+		cs_sealmonster_battle_0x368();
+		return true;
+	}
+
+	private void cs_sealmonster_battle_0x368()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSSealMonsterBattle_0x368 cSSealMonsterBattle_0x = new CSSealMonsterBattle_0x368();
+		cSSealMonsterBattle_0x.idtroop = m_troop.idtroop;
+		RootUI.m_client.Send(872, cSSealMonsterBattle_0x, sc_sealmonster_battle_0x368);
+	}
+
+	private void sc_sealmonster_battle_0x368(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCSealMonsterBattle_0x368 sCSealMonsterBattle_0x = JSProtoBuf.Serializer.Deserialize<SCSealMonsterBattle_0x368>(stream);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCSealMonsterBattle_0x.report, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewFull;
+		if (sCSealMonsterBattle_0x.iswin)
+		{
+			m_exp = sCSealMonsterBattle_0x.exp;
+			m_buff = sCSealMonsterBattle_0x.buff;
+		}
+		else
+		{
+			m_cd = sCSealMonsterBattle_0x.cd;
+		}
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "bangzhu")
+		{
+			tooltipUI.ShowTooltipContent(null, __BaseUI.load_str(20653u), 600, 14);
+		}
+		else if (tip == "bufftooltip")
+		{
+			tooltipUI.ShowTooltipContent(null, __BaseUI.load_str(20662u), 300, 14);
+		}
+		else if (tip.Contains("jinbi"))
+		{
+			uint id = uint.Parse(tip.Replace("jinbi", string.Empty));
+			if (Global.getTemplate("sealmonster_refresh_gold", id) is _sealmonster_refresh_gold { gold: not 0 } sealmonster_refresh_gold)
+			{
+				tooltipUI.ShowTooltipContent(null, string.Format(__BaseUI.load_str(20663u), sealmonster_refresh_gold.gold), 300, __BaseUI._fontSize);
+			}
+		}
+	}
+
+	private void Update()
+	{
+		n += speed * Time.deltaTime;
+	}
+
+	private void OnConsumeOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_sealmonster_refresh();
+		}
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		__BaseUI.my_enabled = IsEnable();
+		__BaseUI.Label(__BaseUI._rectCT(178f, 10f, 356f, 54f), string.Empty, fengyinyaomo);
+		_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+		bool flag = true;
+		for (byte b = 1; b <= 6; b++)
+		{
+			if (!Global.character_.sealmonsterinfo.getFinish(b))
+			{
+				flag = false;
+				break;
+			}
+		}
+		if (vip_template != null)
+		{
+			if (!flag && vip_template.sealmonster_killall)
+			{
+				__BaseUI.Label(__BaseUI._rectCB(118f, 200f, 236f, 132f), string.Empty, bar1);
+				if (btn_miaosha.Button(IsEnable(), __BaseUI._rectCB(49f, 210f, 97f, 97f), string.Empty))
+				{
+					cs_sealmonster_killall();
+				}
+				__BaseUI.Label(__BaseUI._rectCB(51f, 116f, 103f, 17f), __BaseUI.load_str(20660u), __BaseUI._textCenter, __BaseUI._clrCyan);
+			}
+			else
+			{
+				int num = 10;
+				if (vip_template != null)
+				{
+					num = vip_template.sealmonster_refresh_times - Global.character_.sealmonsterinfo.times;
+				}
+				int num2 = 0;
+				int num3 = 0;
+				foreach (object value in Global.getTemplates("sealmonster_refresh_gold").Values)
+				{
+					_sealmonster_refresh_gold sealmonster_refresh_gold = (_sealmonster_refresh_gold)value;
+					if (num2 < sealmonster_refresh_gold.times && sealmonster_refresh_gold.gold == 0)
+					{
+						num2 = sealmonster_refresh_gold.times;
+					}
+					if (num3 < sealmonster_refresh_gold.times)
+					{
+						num3 = sealmonster_refresh_gold.times;
+					}
+				}
+				if (lightok)
+				{
+					cdtime += Time.deltaTime;
+					if (cdtime > 0.1f && ok1)
+					{
+						RootBase._drawBubble(__BaseUI._rectCB(39f, 195f, 77f, 77f), uilight, 0.8f, starScaleFunc);
+						ok1 = false;
+					}
+					if (cdtime > 0.7f && ok2)
+					{
+						RootBase._drawBubble(__BaseUI._rectCB(39f, 195f, 77f, 77f), uilight, 0.8f, starScaleFunc);
+						ok2 = false;
+					}
+					if (cdtime > 1.3f && ok3)
+					{
+						RootBase._drawBubble(__BaseUI._rectCB(39f, 195f, 77f, 77f), uilight, 0.8f, starScaleFunc);
+						ok3 = false;
+						lightok = false;
+					}
+				}
+				if (clickok)
+				{
+					clicktime += Time.deltaTime;
+					if (clicktime > 2f)
+					{
+						clickok = false;
+					}
+				}
+				if (num > 0)
+				{
+					__BaseUI.Label(__BaseUI._rectCB(118f, 200f, 236f, 132f), string.Empty, bar1);
+					if (btn_zhaohuan.Button(!clickok, __BaseUI._rectCB(49f, 210f, 97f, 97f), new GUIContent(string.Empty, "jinbi" + (Global.character_.sealmonsterinfo.times + 1))))
+					{
+						lightok = true;
+						cdtime = 0f;
+						ok1 = true;
+						ok2 = true;
+						ok3 = true;
+						clicktime = 0f;
+						clickok = true;
+						if (!flag)
+						{
+							DisableAll();
+							__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20664u), rmg, ReCall, _bCancel: true);
+						}
+						else
+						{
+							refreshok = true;
+						}
+					}
+					if (refreshok && Global.getTemplate("sealmonster_refresh_gold", (uint)(Global.character_.sealmonsterinfo.times + 1)) is _sealmonster_refresh_gold sealmonster_refresh_gold2)
+					{
+						if (sealmonster_refresh_gold2.gold > 0)
+						{
+							if (!lightok)
+							{
+								refreshok = false;
+								DisableAll();
+								__BaseUI.GetConsumeUI().setConsume(sealmonster_refresh_gold2.gold, 48, OnConsumeOK);
+							}
+						}
+						else if (!lightok)
+						{
+							refreshok = false;
+							cs_sealmonster_refresh();
+						}
+					}
+					if (Global.character_.sealmonsterinfo.times < num2)
+					{
+						__BaseUI.Label(__BaseUI._rectCB(49f, 113f, 103f, 17f), string.Empty, mianfei);
+						__BaseUI.Label(__BaseUI._rectCB(-1f, 116f, 33f, 20f), Math.Min(num2 - Global.character_.sealmonsterinfo.times, num).ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+					}
+					else if (Global.character_.sealmonsterinfo.times < num3)
+					{
+						__BaseUI.Label(__BaseUI._rectCB(51f, 116f, 103f, 17f), string.Empty, jinbi);
+						__BaseUI.Label(__BaseUI._rectCB(-9f, 118f, 33f, 20f), (num3 - Global.character_.sealmonsterinfo.times).ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+					}
+				}
+			}
+		}
+		if (Global.character_.VIPLEVEL >= 7)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectR(200f, 25f, 163f, 43f));
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 163f, 96f), string.Empty, bar2);
+			__BaseUI.EndGroup();
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rectR(200f, 25f, 163f, 96f), string.Empty, bar2);
+		}
+		__BaseUI.Label(__BaseUI._rectR(100f, 28f, vipiconwidth, 36f), string.Empty, vipicon);
+		ss.font_size = 14;
+		ss.arial_bold = true;
+		ss.makes_string("#o=1" + title, __BaseUI._textLeft);
+		ss.draw(__BaseUI._rectR(150f, 80f, 200f, 20f), __BaseUI._textLeft);
+		ss.makes_string("#o=1" + VE, __BaseUI._textLeft);
+		ss.draw(__BaseUI._rectR(180f, 100f, 200f, 20f), __BaseUI._textLeft);
+		bangzhu.Button(IsEnable(), __BaseUI._rectR(250f, 30f, 38f, 57f), new GUIContent(string.Empty, "bangzhu"));
+		GUI.Label(__BaseUI._rect(70f, 140f, 122f, 29f), new GUIContent(string.Empty, "bufftooltip"), ExpFrame);
+		Rect rect = __BaseUI._rect(35f, 115f, 70f, 70f);
+		Matrix4x4 matrix = GUI.matrix;
+		GUIUtility.RotateAroundPivot(n, new Vector2(rect.x + rect.width / 2f, rect.y + rect.height / 2f));
+		__BaseUI.Label(__BaseUI._rect(rect.x, rect.y, rect.width, rect.height), string.Empty, ExpLight);
+		GUI.matrix = matrix;
+		__BaseUI.Label(__BaseUI._rect(40f, 120f, 58f, 58f), string.Empty, ExpRen);
+		int num4 = 0;
+		if (Global.getTemplate("sealmonster_buff", (uint)Global.character_.sealmonsterinfo.buff) is _sealmonster_buff sealmonster_buff)
+		{
+			num4 = sealmonster_buff.exp;
+		}
+		__BaseUI.Label(__BaseUI._rect(145f, 145f, 100f, 20f), num4 + "%", __BaseUI._numLeft);
+		if (Global.character_.sealmonsterinfo.buff == 10)
+		{
+			__BaseUI.Label(__BaseUI._rect(177f, 143f, 15f, 15f), string.Empty, ExpMan);
+		}
+		draw_right_bar();
+		drawTooltips();
+		if (needloadeffect && loadtimer < DateTime.Now)
+		{
+			needloadeffect = false;
+			needload = true;
+			loadtimer = DateTime.Now.AddSeconds(0.5);
+			RefreshMonsterEffect();
+		}
+		if (needload && loadtimer < DateTime.Now)
+		{
+			needload = false;
+			RefreshMonster();
+		}
+		__BaseUI.my_enabled = true;
+	}
+
+	private void starScaleFunc(float ts, ref float scale)
+	{
+		if (ts < 1f)
+		{
+			scale = 1f + ts * 0.7f;
+		}
+		else
+		{
+			scale = 0f;
+		}
+	}
+
+	private void ReCall(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			refreshok = true;
+			Enable();
+		}
+		else
+		{
+			Enable();
+		}
+		EnableAll();
+	}
+
+	public void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		if (pkt.iswin)
+		{
+			m_troop.setFinish(bfinish: true);
+			Global.character_.sealmonsterinfo.buff = (int)m_buff;
+			List<_Treasure> list = new List<_Treasure>();
+			_Treasure treasure = new _Treasure();
+			treasure.make(8, 0, (int)m_exp);
+			list.Add(treasure);
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			BattleUI battleUI = BaseUI.GetBattleUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+			battleUI.setClose(BonusOpen);
+		}
+		else
+		{
+			m_troop.setCD(m_cd);
+			m_troop.addTimes();
+			BonusClose();
+		}
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	public void cs_sealmonster_refresh()
+	{
+		CSSealMonsterRefresh_0x369 cSSealMonsterRefresh_0x = new CSSealMonsterRefresh_0x369();
+		for (byte b = 1; b <= 6; b++)
+		{
+			cSSealMonsterRefresh_0x.finished.Add(Global.character_.sealmonsterinfo.getFinish(b));
+		}
+		RootUI.m_client.Send(873, cSSealMonsterRefresh_0x, sc_sealmonster_refresh);
+	}
+
+	public void sc_sealmonster_refresh(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCSealMonsterRefresh_0x369 sCSealMonsterRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCSealMonsterRefresh_0x369>(stream);
+		Global.character_.sealmonsterinfo.Set(sCSealMonsterRefresh_0x.sealmonsterinfo);
+		for (byte b = 0; b < Global.character_.sealmonsterinfo.m_troops.Length; b++)
+		{
+			if (Global.character_.sealmonsterinfo.m_troops[b].mesh != null)
+			{
+				UnityEngine.Object.Destroy(Global.character_.sealmonsterinfo.m_troops[b].mesh);
+			}
+			Global.character_.sealmonsterinfo.m_troops[b] = new SealMonsterTroop();
+			Global.character_.sealmonsterinfo.m_troops[b].idtroop = (byte)(b + 1);
+			Global.character_.sealmonsterinfo.m_troops[b].m_armys.Clear();
+			Global.character_.sealmonsterinfo.m_troops[b].setCD(0u);
+			Global.character_.sealmonsterinfo.m_troops[b].setTimes(0);
+		}
+		foreach (db_character_sealmonster_army item in sCSealMonsterRefresh_0x.sealmonsterarmy)
+		{
+			SealMonsterArmy sealMonsterArmy = new SealMonsterArmy();
+			sealMonsterArmy.Set(item);
+			Global.character_.sealmonsterinfo.m_troops[sealMonsterArmy.idtroop - 1].m_armys.Add(sealMonsterArmy);
+		}
+		needloadeffect = true;
+		loadtimer = DateTime.Now.AddSeconds(0.5);
+		if (sCSealMonsterRefresh_0x.gold != 0)
+		{
+			Global.character_.gold -= (int)sCSealMonsterRefresh_0x.gold;
+			__BaseUI.drawStateBubble("gold-" + sCSealMonsterRefresh_0x.gold);
+		}
+	}
+
+	public void cs_sealmonster_killall()
+	{
+		CSSealMonsterKillall_0x370 pkt = new CSSealMonsterKillall_0x370();
+		RootUI.m_client.Send(880, pkt, sc_sealmonster_killall);
+	}
+
+	public void sc_sealmonster_killall(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCSealMonsterKillall_0x370 sCSealMonsterKillall_0x = JSProtoBuf.Serializer.Deserialize<SCSealMonsterKillall_0x370>(stream);
+		if (sCSealMonsterKillall_0x.exp == 0)
+		{
+			return;
+		}
+		for (byte b = 1; b <= 6; b++)
+		{
+			Global.character_.sealmonsterinfo.setFinish(b, isfinish: true);
+			AssetBundle asset = BaseAsset.was.GetAsset("battle/wuliehongding");
+			if (asset != null && Global.character_.sealmonsterinfo.m_troops[b - 1].mesh != null)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(asset.mainAsset) as GameObject;
+				gameObject.transform.parent = Global.character_.sealmonsterinfo.m_troops[b - 1].mesh.transform;
+				gameObject.transform.position = Global.character_.sealmonsterinfo.m_troops[b - 1].mesh.transform.position;
+				Animation[] componentsInChildren = gameObject.GetComponentsInChildren<Animation>();
+				for (int i = 0; i < componentsInChildren.Length; i++)
+				{
+					foreach (AnimationState item in componentsInChildren[i])
+					{
+						item.speed = 2f;
+					}
+				}
+				UnityEngine.Object.Destroy(gameObject, 2f);
+			}
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		_Treasure treasure = new _Treasure();
+		treasure.make(8, 0, (int)sCSealMonsterKillall_0x.exp);
+		list.Add(treasure);
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+		battleResultUI.MyLoading();
+		EnableAll();
+		Global.character_.sealmonsterinfo.buff = (int)sCSealMonsterKillall_0x.buff;
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		for (byte b = 1; b <= 6; b++)
+		{
+			byte troopid = Global.character_.sealmonsterinfo.getTroopid(b);
+			if (troopid != 0)
+			{
+				_campaign campaign = Global.getTemplate("campaign", 268u) as _campaign;
+				_campaign_troop campaign_troop = (_campaign_troop)campaign.m_troops[troopid];
+				string text = (Global.getTemplate("troop_animation", campaign_troop.idmodel) as _troop_animation).name;
+				if (AssetName == "battle/" + text)
+				{
+					AssetBundle asset = BaseAsset.was.GetAsset("battle/" + text);
+					if (asset != null)
+					{
+						SealMonsterTroop sealMonsterTroop = Global.character_.sealmonsterinfo.m_troops[b - 1];
+						sealMonsterTroop.mesh = UnityEngine.Object.Instantiate(asset.mainAsset) as GameObject;
+						sealMonsterTroop.mesh.transform.parent = base.gameObject.transform;
+						BaseAsset.SetLayerRecursively(sealMonsterTroop.mesh, 9);
+						sealMonsterTroop.mesh.transform.position = pos_container.Positions[b - 1].position;
+						sealMonsterTroop.mesh.transform.rotation = pos_container.Positions[b - 1].rotation;
+						sealMonsterTroop.mesh.transform.parent = mesh.transform;
+						sealMonsterTroop.mesh.AddComponent<SealMonsterTroopScript>().setTroop(this, sealMonsterTroop);
+						if (sealMonsterTroop.finish())
+						{
+							sealMonsterTroop.mesh.animation.Play("dead");
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public void RefreshMonster()
+	{
+		for (byte b = 1; b <= 6; b++)
+		{
+			byte troopid = Global.character_.sealmonsterinfo.getTroopid(b);
+			if (troopid != 0)
+			{
+				_campaign campaign = Global.getTemplate("campaign", 268u) as _campaign;
+				_campaign_troop campaign_troop = (_campaign_troop)campaign.m_troops[troopid];
+				UnityEngine.Object.Destroy(Global.character_.sealmonsterinfo.m_troops[b - 1].mesh);
+				string text = (Global.getTemplate("troop_animation", campaign_troop.idmodel) as _troop_animation).name;
+				AddAssetSub("battle/" + text);
+			}
+		}
+		StartLoadingSub();
+	}
+
+	public void RefreshMonsterEffect()
+	{
+		for (byte b = 1; b <= 6; b++)
+		{
+			AssetBundle asset = BaseAsset.was.GetAsset("campaign/born_effect0");
+			if (asset != null)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(asset.mainAsset) as GameObject;
+				gameObject.transform.parent = base.gameObject.transform;
+				gameObject.transform.position = pos_container.Positions[b - 1].position;
+				UnityEngine.Object.Destroy(gameObject, 2f);
+			}
+		}
+		StartLoadingSub();
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (mesh != null)
+		{
+			UnityEngine.Object.Destroy(mesh);
+			mesh = null;
+		}
+	}
+}

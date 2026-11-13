@@ -1,0 +1,87 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCReputationSalary_0x333")]
+public class SCReputationSalary_0x333 : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error
+	}
+
+	private Operate _operate;
+
+	private uint _money;
+
+	private uint _time;
+
+	private long _money64 = 0L;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "money", DataFormat = DataFormat.TwosComplement)]
+	public uint money
+	{
+		get
+		{
+			return _money;
+		}
+		set
+		{
+			_money = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "time", DataFormat = DataFormat.TwosComplement)]
+	public uint time
+	{
+		get
+		{
+			return _time;
+		}
+		set
+		{
+			_time = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "money64", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0L)]
+	public long money64
+	{
+		get
+		{
+			return _money64;
+		}
+		set
+		{
+			_money64 = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

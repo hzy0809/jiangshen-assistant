@@ -1,0 +1,198 @@
+[
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleLaunch.cs",
+    "sha256": "55fcf9feaaa317c474e0debbd115c99359e0a50d1227821143f5e6db43fde87d"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleLifecycle.cs",
+    "sha256": "08b9890ba7cf5cf5c2ad10c76c2c32b2a7db6045c6e94ce8ca56709d7f204e3e"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleReplyPreflight.cs",
+    "sha256": "9ee98d0944318272488df68ab27b66e3390def402de0d9104b3f3c1b45017e42"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleSettlement.cs",
+    "sha256": "88ee234a3e733e0aac79eef95e74ca3c118f01325c634b80dffb0cc632e7daf6"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\CampaignModel.cs",
+    "sha256": "8cb03c9d3d2028f0a79fd1f0c8e4b88e33be717786bbe58dfa2c0290b783b97f"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\CampaignObserver.cs",
+    "sha256": "cd7bb67b1af38c81d2ace3f897212d7e616979e92204607caec8dc2a167215c5"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\ChallengeNavigation.cs",
+    "sha256": "68d0eeacef776157ae66e88b3fbfc2fe77248f183147c416f4b1b0bdc2392cc0"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyActivityModel.cs",
+    "sha256": "e9d18ff2ad135156c6ac9918000659b289f12c72b980975fe5084c0e681b2de4"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyArenaBattleModel.cs",
+    "sha256": "a94ac78735157e1f1830de42b7f7724db5f4dc49718510d65fe9728d849055e4"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyArenaChestModel.cs",
+    "sha256": "89da30e75c9331c5f67cd75ca29978958bab2a663fba242f18b1e4a4ae2bb29a"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyDivinityBattleModel.cs",
+    "sha256": "bd39a9fd6227a24ff2e3efbd5e3aca1fe67fb84d049644ed2be9456a50dbc689"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyEventRewardsModel.cs",
+    "sha256": "0a54b016967e55492d6e6a614c3150c12bc234b667f8ac6ae6ad73d2ee0dd2fa"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyFlowerModel.cs",
+    "sha256": "d0f303f4c0aa2dbd4a30183f2342d972ddd3f23a652a26c533e225fb6bc2d92e"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyGraveModel.cs",
+    "sha256": "f92e59e8572fe4793ee028e1bc7ba39bbbacacf4eb9741ddf1092c77768d3aa6"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyGuildModel.cs",
+    "sha256": "e2b7e2148e669c3d46260afa51e6e6580461bb1dd9d2fa87bd34722e192a5809"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyMingshiModel.cs",
+    "sha256": "cfde5b094eda9e63a30caaf5b8fe0bc4476e00a2c137d79b6806303b9e15414a"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyMonsterModel.cs",
+    "sha256": "14a8f4416a1973d87d961b619d89c343a3b1e5d5aae9185b7e4db27d98fbf04f"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPlayerSnapshot.cs",
+    "sha256": "1a18e0bcf87d9454e1ee288290c5d878204007253c7c62da59dd66683004c20d"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs",
+    "sha256": "c1574dbcbd0192839703da0efed42232702077e16f4bd5d0db85a01e3e755390"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPopupModel.cs",
+    "sha256": "8582d1e30ef95720fa96c319b8ac724c537c64b6f8c60474a55f68177926c76d"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRefineModel.cs",
+    "sha256": "1306acf2a3bf26e52c3619aa80254d9612057deb45afaeedffb2e3cb0e65b136"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRefreshGate.cs",
+    "sha256": "348af803f6e9d9d11b8da95eaec7c9b3f48ef443be08a92e0ce5a199aae19a75"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRefreshProof.cs",
+    "sha256": "1c90636e096f2caa37747849588458833b4ee9be8dd38347e8689982df6a08aa"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRewardModel.cs",
+    "sha256": "c6f8aa52537d228f4a323b7d7ebe3e884b1481f12676b3611ce87eb15d8cc1f6"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyScriptAdapter.cs",
+    "sha256": "ba94a2b847421b6be2762276a7f9914c5e4d703d9fdfd4f3de09f2f49bbf6cc6"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailySignSalaryModel.cs",
+    "sha256": "26afc368c0aa05aaf05b87c509dc28c92519032f0d6e24375960c757ef725934"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailySoulModel.cs",
+    "sha256": "624886448f30595370b60d92b68146c0959a8fd188efb74885bffdf1fba41877"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyStoneModel.cs",
+    "sha256": "10df858dd3f297424f795ea3fab43f18572435281b50e840c693b89ff58c5231"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyTechBookCopyModel.cs",
+    "sha256": "179a6e65376dd290bce7021311b78ff1af6c3e5c15190c34fef4cb6f07843d24"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyTimedModel.cs",
+    "sha256": "162e8fac77e823c9e47240537805ed820ef4eed333a1ab055298fc1ede586b97"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyTrainingMonsterModel.cs",
+    "sha256": "e9b432e93cd6f2f811cd002b1499e4e62256558aa2f0d22376c945a6df341b7b"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyTrialModel.cs",
+    "sha256": "4df93114ce77a292daff375ed49deefae8c9cb6ddb693e1dbc9b5e2cb8966a48"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyWoodModel.cs",
+    "sha256": "63c7b69f15bfb4d08fc123bb4df01c2ee26370b557f95a4fe676687cdc31e31e"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DevelopmentContextReader.cs",
+    "sha256": "5b38596132e954435040d8723e9934d3f07a87c9b23fa9abc89ce212a71400f6"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DevelopmentModel.cs",
+    "sha256": "6b1f53f23dc86bf8186d709cc708c04669bf3ff571917d831eccede4d1d12ee5"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\EquipmentUpgradeModel.cs",
+    "sha256": "11c3e953f1e1a603007ab52792ebd91dee634dc04fbe15aba6e9527bd9b9b19a"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\GeneralTutorialModel.cs",
+    "sha256": "c7cbbe0cb68690abdee56cb0fba064dd819ce10cf60fd90e5406872971119384"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\GrowthTaskModel.cs",
+    "sha256": "25b3a794ac46fa7dbe2ad12f84a93a8446bf73e3fbe00a34da8511c71ddcbb63"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\GuildWire.cs",
+    "sha256": "c3deb6caa983a1a5b2910a7febe4a8c4d20174dedee518f3f3c9c5365f85aff9"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Lifecycle.cs",
+    "sha256": "0600923ed203bd4c117f71b131d458e7f76b6589d6233ab198c83d04057ba89b"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Model.cs",
+    "sha256": "91c39143c2f12e5ba9f8a2b288ab1a8da590298a6aaa3e8a38dd2f84773fbf45"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\PlayerStateRefreshModel.cs",
+    "sha256": "9b3bab0635c0dde4f6cf1d233109cf15a3fdfdaf4ab6448da9f055bd5c851e00"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Probe.cs",
+    "sha256": "9c4e03f3d54ce2b583512e3a2225db545520e45983e4bdda7a944f05e65f8bdb"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Protocol.cs",
+    "sha256": "33693d74ed54a4de6232afd23915f38521cb33598b732b5a7a5f743af3c9964d"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\ReceiptStore.cs",
+    "sha256": "95ffa326ca9c1e6bde02e731dbeba9d82db5b42fa317772ced7972ff9376f481"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\SharedDevelopmentContext.cs",
+    "sha256": "6a222aaf28b2e735aac7d5b26b496cf55c1c93ee55493d4996f56901cc83a5bc"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\SpiritBeastUpgradeModel.cs",
+    "sha256": "9e0515c95621c8f534c30a60eba835afcc0d044e405c21a8960c8e295fc9c33f"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\SpiritTributeModel.cs",
+    "sha256": "ac5d77fb24ebeac2c3a899a187af0b73bd0bff548253ae04ca9bd516047018db"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\StarActivationModel.cs",
+    "sha256": "22bb5adb4a5865fa182f7c653b74fd2815d4861faabf27f57b3425857fb660a2"
+  }
+]

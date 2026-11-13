@@ -1,0 +1,54 @@
+[
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\jiangshen_assistant\\bridge_client.py",
+    "sha256": "9959cd3de33d0587477592fbc82cfa87a47c52f2896e3701e57bd2e87c3ea3cc"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\jiangshen_assistant\\objects.py",
+    "sha256": "4b2cdc0ae020dde2a0ea92c0fe1285a750bdb9c4f50e24c40510217814338e1f"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\jiangshen_assistant\\campaign_task.py",
+    "sha256": "20346e7c69bbe57fd01570a4db9a55788b2be78596b73addd20b301f6c9cf003"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\jiangshen_assistant\\daily_coordinator.py",
+    "sha256": "ab02e66b0f1d1fa2be5c029d8192a3e339a12a4acbe9c981fe180d02142e2986"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\CampaignModel.cs",
+    "sha256": "b000b9cf35ad898b56280e56400c0623c59a18450ab74f6131e7ff1b2b5dc5bf"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyArenaBattleModel.cs",
+    "sha256": "1fc94e3116fbb063a7bc39a2811bfc9a8779c9d018ccae677c45df8d6f8ada52"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyDivinityBattleModel.cs",
+    "sha256": "a897a68fcd77bfbc8e11d37241b15ac974ecfea78f3c6eb6fb7441966cb3b733"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyGraveModel.cs",
+    "sha256": "1f3e36322e768a167d6c79d07f385f30f1d09202b6a2c025a33228cf1970db30"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyMonsterModel.cs",
+    "sha256": "e0238d18518d4e7b47607d032e5d8e1376a8ac4c1cfe5dbf4e42c64b8d7f75c7"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs",
+    "sha256": "6b6846558e72bd238cb0d83253aa1015b9a596bc9815b44fbaadfccf137e1537"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyTrialModel.cs",
+    "sha256": "607d4f1be2ded0b0f3da02ea86ff25ac55efc01860cc318ea2122db7314be190"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Probe.cs",
+    "sha256": "075b9d59a8f74bb2c9f766ddc64d41b7675c411b20f2bd095a0f276ed04b5d96"
+  },
+  {
+    "path": "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Protocol.cs",
+    "sha256": "6485b8c88ad689128d38b0d421d4cea8c540d445491000744ccfd9b5f67ebf9a"
+  }
+]

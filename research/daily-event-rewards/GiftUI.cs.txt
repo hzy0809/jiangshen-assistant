@@ -1,0 +1,243 @@
+using System.IO;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class GiftUI : BaseUI
+{
+	private Texture2D texTitle;
+
+	private GUIStyle styleCodeField = new GUIStyle();
+
+	private GUIStyle styleOtherNameField = new GUIStyle();
+
+	private GUIStyle[] stylePage = new GUIStyle[2];
+
+	private int cashForFriend;
+
+	private string strCode = string.Empty;
+
+	private string friendName = string.Empty;
+
+	private string strResult = string.Empty;
+
+	private bool enable_button = true;
+
+	private GUIStyle styleResult = new GUIStyle();
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(447f, 247f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		GUI.Box(__BaseUI._rect(34f, 68f, 379f, 122f), string.Empty, __BaseUI._boxnew6Style);
+		strCode = GUI.TextField(new Rect(91f, 109f, 265f, 13f), strCode, 256, styleCodeField);
+		strCode = strCode.Trim().Replace("\n", string.Empty);
+		if (strResult.Length > 0)
+		{
+			GUI.Label(new Rect(91f, 140f, 265f, 14f), strResult, styleResult);
+		}
+		for (int i = 0; i < 1; i++)
+		{
+			if (GUI.Toggle(new Rect(34 + i * 130, 43f, 120f, 25f), i == cashForFriend, string.Empty, stylePage[i]))
+			{
+				cashForFriend = i;
+			}
+		}
+		if (cashForFriend == 1)
+		{
+			friendName = GUI.TextField(new Rect(168f, 155f, 177f, 13f), friendName, styleOtherNameField);
+			friendName = friendName.Trim().Replace("\n", string.Empty);
+		}
+		if (__BaseUI._btnOK.Button(bBtn: true, __BaseUI._rectCT(118f, 198f, 98f, 30f), string.Empty) && enable_button)
+		{
+			if (strCode.Length == 0)
+			{
+				strResult = "请输入礼品码";
+			}
+			else if (cashForFriend == 1 && friendName.Length == 0)
+			{
+				strResult = "请输入接收礼品的用户昵称";
+			}
+			else
+			{
+				rmg.ToDisable();
+				enable_button = false;
+				strCode = strCode.Trim();
+				bool flag = false;
+				bool flag2 = true;
+				if (cashForFriend == 0)
+				{
+					if (!Global.character_.newbie_gift)
+					{
+						flag = true;
+					}
+					else
+					{
+						flag2 = false;
+						strCode = string.Empty;
+						styleResult.normal.textColor = Color.green;
+						strResult = __BaseUI.load_str(495u);
+						rmg.ToEnable();
+						enable_button = true;
+					}
+				}
+				if (flag2)
+				{
+					if (flag)
+					{
+						CSNewbieGift_0x32 pkt = new CSNewbieGift_0x32();
+						RootUI.m_client.Send(50, pkt, sc_newbie_gift);
+					}
+					else
+					{
+						CSCashGift_0x230 cSCashGift_0x = new CSCashGift_0x230();
+						cSCashGift_0x.code = strCode;
+						if (cashForFriend == 1)
+						{
+							cSCashGift_0x.friend_name = friendName;
+						}
+						RootUI.m_client.Send(560, cSCashGift_0x, sc_cash_gift);
+					}
+				}
+			}
+		}
+		bool flag3 = __BaseUI._btnCancel3.Button(bBtn: true, __BaseUI._rectCT(-20f, 198f, 98f, 30f), string.Empty);
+		if (enable_button && flag3)
+		{
+			Hide();
+			MainUI.SetSubUI(null);
+		}
+		if (EndGUI())
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void sc_cash_gift(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCCashGiftResult_0x230 sCCashGiftResult_0x = JSProtoBuf.Serializer.Deserialize<SCCashGiftResult_0x230>(stream);
+			switch (sCCashGiftResult_0x.result)
+			{
+			case SCCashGiftResult_0x230.ResultType.SUCCESS:
+				strCode = string.Empty;
+				styleResult.normal.textColor = Color.green;
+				strResult = "成功领取【" + sCCashGiftResult_0x.gift_name + "】，请去邮箱查收";
+				break;
+			case SCCashGiftResult_0x230.ResultType.ERR_CODE:
+				styleResult.normal.textColor = Color.red;
+				strResult = "没有这个礼品码";
+				break;
+			case SCCashGiftResult_0x230.ResultType.ERR_NAME:
+				styleResult.normal.textColor = Color.red;
+				strResult = "指定用户不存在";
+				break;
+			case SCCashGiftResult_0x230.ResultType.USED_CODE:
+				styleResult.normal.textColor = Color.red;
+				strResult = "礼品码已被使用";
+				break;
+			case SCCashGiftResult_0x230.ResultType.USED_GIFT:
+				styleResult.normal.textColor = Color.red;
+				strResult = "已经领过这个礼品";
+				break;
+			case SCCashGiftResult_0x230.ResultType.EXPIRED:
+				styleResult.normal.textColor = Color.red;
+				strResult = "礼品码已过期";
+				break;
+			}
+		}
+		rmg.ToEnable();
+		enable_button = true;
+	}
+
+	private void sc_newbie_gift(MemoryStream stream, object arg)
+	{
+		rmg.ToEnable();
+		enable_button = true;
+		if (stream != null)
+		{
+			SCNewbieGift_0x32 sCNewbieGift_0x = JSProtoBuf.Serializer.Deserialize<SCNewbieGift_0x32>(stream);
+			if (sCNewbieGift_0x.result == 0)
+			{
+				Global.character_.newbie_gift = true;
+				strCode = string.Empty;
+				styleResult.normal.textColor = Color.green;
+				strResult = __BaseUI.load_str(486u);
+			}
+			else if (sCNewbieGift_0x.result == 1)
+			{
+				Global.character_.newbie_gift = true;
+				strCode = string.Empty;
+				styleResult.normal.textColor = Color.green;
+				strResult = __BaseUI.load_str(495u);
+			}
+		}
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_gift");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_gift");
+		texTitle = asset.Load("ui_biaoti") as Texture2D;
+		styleCodeField.normal.background = asset.Load("ui_duihuan_di2") as Texture2D;
+		styleCodeField.overflow.top = 27;
+		styleCodeField.overflow.bottom = 5;
+		RectOffset overflow = styleCodeField.overflow;
+		int num = 3;
+		styleCodeField.overflow.right = num;
+		overflow.left = num;
+		styleCodeField.alignment = TextAnchor.MiddleCenter;
+		styleCodeField.wordWrap = false;
+		styleCodeField.normal.textColor = new Color(1f, 1f, 0.4f);
+		styleOtherNameField.normal.background = asset.Load("ui_duihuan_di3") as Texture2D;
+		styleOtherNameField.overflow.left = 73;
+		styleOtherNameField.overflow.right = 7;
+		styleOtherNameField.overflow.top = 7;
+		styleOtherNameField.overflow.bottom = 5;
+		styleOtherNameField.alignment = TextAnchor.MiddleLeft;
+		styleOtherNameField.normal.textColor = styleCodeField.normal.textColor;
+		styleOtherNameField.wordWrap = false;
+		styleResult.alignment = TextAnchor.MiddleCenter;
+		styleResult.normal.textColor = Color.green;
+		stylePage[0] = new GUIStyle();
+		stylePage[1] = new GUIStyle();
+		stylePage[0].normal.background = asset.Load("button_duihuan_ben_normal") as Texture2D;
+		stylePage[0].hover.background = asset.Load("button_duihuan_ben_hover") as Texture2D;
+		stylePage[0].active.background = asset.Load("button_duihuan_ben_hover") as Texture2D;
+		stylePage[0].onActive.background = stylePage[0].active.background;
+		stylePage[0].onHover.background = stylePage[0].active.background;
+		stylePage[0].onNormal.background = stylePage[0].active.background;
+		stylePage[1].normal.background = asset.Load("button_duihuan_qita_normal") as Texture2D;
+		stylePage[1].hover.background = asset.Load("button_duihuan_qita_hover") as Texture2D;
+		stylePage[1].active.background = asset.Load("button_duihuan_qita_hover") as Texture2D;
+		stylePage[1].onActive.background = stylePage[1].active.background;
+		stylePage[1].onHover.background = stylePage[1].active.background;
+		stylePage[1].onNormal.background = stylePage[1].active.background;
+		strCode = string.Empty;
+		friendName = string.Empty;
+		strResult = string.Empty;
+		cashForFriend = 0;
+		BaseAsset.lds.Hide();
+		rmg.ToEnable();
+		Visible();
+		EnableAll();
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

@@ -1,0 +1,1017 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "db_templates1")]
+public class db_templates1 : IExtensible
+{
+	private readonly List<db_achievement> _achievements = new List<db_achievement>();
+
+	private readonly List<db_action> _actions = new List<db_action>();
+
+	private readonly List<db_activity> _activitys = new List<db_activity>();
+
+	private readonly List<db_activity_quest_template> _activity_quest_templates = new List<db_activity_quest_template>();
+
+	private readonly List<db_activity_rank> _activity_ranks = new List<db_activity_rank>();
+
+	private readonly List<db_activity_reward> _activity_rewards = new List<db_activity_reward>();
+
+	private readonly List<db_activity_rewardrate> _activity_rewardrates = new List<db_activity_rewardrate>();
+
+	private readonly List<db_activity_treasure> _activity_treasures = new List<db_activity_treasure>();
+
+	private readonly List<db_amulet_quality> _amulet_qualitys = new List<db_amulet_quality>();
+
+	private readonly List<db_amulet_rank> _amulet_ranks = new List<db_amulet_rank>();
+
+	private readonly List<db_amulet_slot_open> _amulet_slot_opens = new List<db_amulet_slot_open>();
+
+	private readonly List<db_amulet_special> _amulet_specials = new List<db_amulet_special>();
+
+	private readonly List<db_amulet_template> _amulet_templates = new List<db_amulet_template>();
+
+	private readonly List<db_anecdote_reward> _anecdote_rewards = new List<db_anecdote_reward>();
+
+	private readonly List<db_anti_addicted> _anti_addicteds = new List<db_anti_addicted>();
+
+	private readonly List<db_area_patrol_bonus> _area_patrol_bonuss = new List<db_area_patrol_bonus>();
+
+	private readonly List<db_arena_bonus> _arena_bonuss = new List<db_arena_bonus>();
+
+	private readonly List<db_army> _armys = new List<db_army>();
+
+	private readonly List<db_army_category> _army_categorys = new List<db_army_category>();
+
+	private readonly List<db_army_name> _army_names = new List<db_army_name>();
+
+	private readonly List<db_army_school> _army_schools = new List<db_army_school>();
+
+	private readonly List<db_army_size> _army_sizes = new List<db_army_size>();
+
+	private readonly List<db_army_star> _army_stars = new List<db_army_star>();
+
+	private readonly List<db_army_star_start> _army_star_starts = new List<db_army_star_start>();
+
+	private readonly List<db_army_template> _army_templates = new List<db_army_template>();
+
+	private readonly List<db_artifact_attrib_param> _artifact_attrib_params = new List<db_artifact_attrib_param>();
+
+	private readonly List<db_artifact_attribute> _artifact_attributes = new List<db_artifact_attribute>();
+
+	private readonly List<db_artifact_forge_growup> _artifact_forge_growups = new List<db_artifact_forge_growup>();
+
+	private readonly List<db_artifact_forge_info> _artifact_forge_infos = new List<db_artifact_forge_info>();
+
+	private readonly List<db_artifact_forge_requirement> _artifact_forge_requirements = new List<db_artifact_forge_requirement>();
+
+	private readonly List<db_artifact_luck_chance> _artifact_luck_chances = new List<db_artifact_luck_chance>();
+
+	private readonly List<db_artifact_template> _artifact_templates = new List<db_artifact_template>();
+
+	private readonly List<db_artifact_upgrade> _artifact_upgrades = new List<db_artifact_upgrade>();
+
+	private readonly List<db_artifact_upgrade_advanced> _artifact_upgrade_advanceds = new List<db_artifact_upgrade_advanced>();
+
+	private readonly List<db_artifact_upgrade_advanced_exp> _artifact_upgrade_advanced_exps = new List<db_artifact_upgrade_advanced_exp>();
+
+	private readonly List<db_artifact_upgrade_advanced_exp_gold> _artifact_upgrade_advanced_exp_golds = new List<db_artifact_upgrade_advanced_exp_gold>();
+
+	private readonly List<db_artifact_zhiheng> _artifact_zhihengs = new List<db_artifact_zhiheng>();
+
+	private readonly List<db_assault_shop_item> _assault_shop_items = new List<db_assault_shop_item>();
+
+	private readonly List<db_assault_stronghold_level> _assault_stronghold_levels = new List<db_assault_stronghold_level>();
+
+	private readonly List<db_assault_stronghold_mainchar> _assault_stronghold_mainchars = new List<db_assault_stronghold_mainchar>();
+
+	private readonly List<db_assault_stronghold_monster> _assault_stronghold_monsters = new List<db_assault_stronghold_monster>();
+
+	private readonly List<db_assault_stronghold_monster_rate> _assault_stronghold_monster_rates = new List<db_assault_stronghold_monster_rate>();
+
+	private readonly List<db_bagua_activity> _bagua_activitys = new List<db_bagua_activity>();
+
+	private readonly List<db_battle_buffer> _battle_buffers = new List<db_battle_buffer>();
+
+	private readonly List<db_battle_buffer_effect> _battle_buffer_effects = new List<db_battle_buffer_effect>();
+
+	private readonly List<db_battle_cd> _battle_cds = new List<db_battle_cd>();
+
+	private readonly List<db_battle_effect> _battle_effects = new List<db_battle_effect>();
+
+	private readonly List<db_battle_field> _battle_fields = new List<db_battle_field>();
+
+	private readonly List<db_battle_report_storage> _battle_report_storages = new List<db_battle_report_storage>();
+
+	private readonly List<db_battle_type> _battle_types = new List<db_battle_type>();
+
+	private readonly List<db_battle_value> _battle_values = new List<db_battle_value>();
+
+	private readonly List<db_battle_value_category> _battle_value_categorys = new List<db_battle_value_category>();
+
+	private readonly List<db_battle_value_rank> _battle_value_ranks = new List<db_battle_value_rank>();
+
+	private readonly List<db_battle_wave_unit> _battle_wave_units = new List<db_battle_wave_unit>();
+
+	private readonly List<db_bonus_template> _bonus_templates = new List<db_bonus_template>();
+
+	private readonly List<db_bonuslist> _bonuslists = new List<db_bonuslist>();
+
+	private readonly List<db_brawl_break_bonus> _brawl_break_bonuss = new List<db_brawl_break_bonus>();
+
+	private readonly List<db_brawl_heartening> _brawl_heartenings = new List<db_brawl_heartening>();
+
+	private readonly List<db_brawl_rank_bonus> _brawl_rank_bonuss = new List<db_brawl_rank_bonus>();
+
+	private readonly List<db_brawl_streak_bonus> _brawl_streak_bonuss = new List<db_brawl_streak_bonus>();
+
+	private readonly List<db_brawl_streak_spiritbonus> _brawl_streak_spiritbonuss = new List<db_brawl_streak_spiritbonus>();
+
+	private readonly List<db_brawl_win_bonus> _brawl_win_bonuss = new List<db_brawl_win_bonus>();
+
+	private readonly List<db_brawl_win_spiritbonus> _brawl_win_spiritbonuss = new List<db_brawl_win_spiritbonus>();
+
+	private readonly List<db_buddy_event> _buddy_events = new List<db_buddy_event>();
+
+	private readonly List<db_buddy_list_level> _buddy_list_levels = new List<db_buddy_list_level>();
+
+	private readonly List<db_buff_table> _buff_tables = new List<db_buff_table>();
+
+	private readonly List<db_building> _buildings = new List<db_building>();
+
+	private readonly List<db_building_advance> _building_advances = new List<db_building_advance>();
+
+	private readonly List<db_building_area> _building_areas = new List<db_building_area>();
+
+	private readonly List<db_building_backup> _building_backups = new List<db_building_backup>();
+
+	private readonly List<db_building_default> _building_defaults = new List<db_building_default>();
+
+	private readonly List<db_building_drawing_drop> _building_drawing_drops = new List<db_building_drawing_drop>();
+
+	private readonly List<db_building_floor> _building_floors = new List<db_building_floor>();
+
+	private readonly List<db_building_havest> _building_havests = new List<db_building_havest>();
+
+	private readonly List<db_building_havest_treasure> _building_havest_treasures = new List<db_building_havest_treasure>();
+
+	private readonly List<db_building_interact_drop> _building_interact_drops = new List<db_building_interact_drop>();
+
+	private readonly List<db_building_island> _building_islands = new List<db_building_island>();
+
+	private readonly List<db_building_monster> _building_monsters = new List<db_building_monster>();
+
+	private readonly List<db_building_monster_type> _building_monster_types = new List<db_building_monster_type>();
+
+	private readonly List<db_building_product> _building_products = new List<db_building_product>();
+
+	private readonly List<db_building_quest> _building_quests = new List<db_building_quest>();
+
+	private readonly List<db_building_return> _building_returns = new List<db_building_return>();
+
+	private readonly List<db_building_type> _building_types = new List<db_building_type>();
+
+	private readonly List<db_building_unique_drawing> _building_unique_drawings = new List<db_building_unique_drawing>();
+
+	private readonly List<db_building_upgrade> _building_upgrades = new List<db_building_upgrade>();
+
+	private readonly List<db_buy_challenge_gold_cost> _buy_challenge_gold_costs = new List<db_buy_challenge_gold_cost>();
+
+	private readonly List<db_buy_general_slot_cost> _buy_general_slot_costs = new List<db_buy_general_slot_cost>();
+
+	private readonly List<db_buy_patrol_slot> _buy_patrol_slots = new List<db_buy_patrol_slot>();
+
+	private readonly List<db_buy_template> _buy_templates = new List<db_buy_template>();
+
+	private readonly List<db_calendar> _calendars = new List<db_calendar>();
+
+	private readonly List<db_campaign> _campaigns = new List<db_campaign>();
+
+	private readonly List<db_campaign_chest> _campaign_chests = new List<db_campaign_chest>();
+
+	private readonly List<db_campaign_chest_drop> _campaign_chest_drops = new List<db_campaign_chest_drop>();
+
+	private readonly List<db_campaign_condition_type> _campaign_condition_types = new List<db_campaign_condition_type>();
+
+	private readonly List<db_campaign_copy> _campaign_copys = new List<db_campaign_copy>();
+
+	private readonly List<db_campaign_copy_category> _campaign_copy_categorys = new List<db_campaign_copy_category>();
+
+	private readonly List<db_campaign_copy_troop> _campaign_copy_troops = new List<db_campaign_copy_troop>();
+
+	private readonly List<db_campaign_copy_troop_army> _campaign_copy_troop_armys = new List<db_campaign_copy_troop_army>();
+
+	private readonly List<db_campaign_drop> _campaign_drops = new List<db_campaign_drop>();
+
+	private readonly List<db_campaign_festival> _campaign_festivals = new List<db_campaign_festival>();
+
+	private readonly List<db_campaign_fk_bonus> _campaign_fk_bonuss = new List<db_campaign_fk_bonus>();
+
+	private readonly List<db_campaign_sign> _campaign_signs = new List<db_campaign_sign>();
+
+	private readonly List<db_campaign_spirit_beast> _campaign_spirit_beasts = new List<db_campaign_spirit_beast>();
+
+	private readonly List<db_campaign_star_awards> _campaign_star_awardss = new List<db_campaign_star_awards>();
+
+	private readonly List<db_campaign_troop> _campaign_troops = new List<db_campaign_troop>();
+
+	private readonly List<db_campaign_troop_army> _campaign_troop_armys = new List<db_campaign_troop_army>();
+
+	private readonly List<db_campaign_troop_condition> _campaign_troop_conditions = new List<db_campaign_troop_condition>();
+
+	private readonly List<db_campaign_troop_drop> _campaign_troop_drops = new List<db_campaign_troop_drop>();
+
+	private readonly List<db_campaign_troop_rank> _campaign_troop_ranks = new List<db_campaign_troop_rank>();
+
+	private readonly List<db_campaign_type> _campaign_types = new List<db_campaign_type>();
+
+	private readonly List<db_card_rank_up> _card_rank_ups = new List<db_card_rank_up>();
+
+	private readonly List<db_chat_channel> _chat_channels = new List<db_chat_channel>();
+
+	private readonly List<db_checkin_award> _checkin_awards = new List<db_checkin_award>();
+
+	private readonly List<db_checkin_award_once> _checkin_award_onces = new List<db_checkin_award_once>();
+
+	private readonly List<db_chest_model> _chest_models = new List<db_chest_model>();
+
+	private readonly List<db_chinese_new_year_lottery_item> _chinese_new_year_lottery_items = new List<db_chinese_new_year_lottery_item>();
+
+	private readonly List<db_chinese_new_year_lottery_special_item> _chinese_new_year_lottery_special_items = new List<db_chinese_new_year_lottery_special_item>();
+
+	private readonly List<db_christmas_lottery_extra_item> _christmas_lottery_extra_items = new List<db_christmas_lottery_extra_item>();
+
+	private readonly List<db_christmas_lottery_gold_cost> _christmas_lottery_gold_costs = new List<db_christmas_lottery_gold_cost>();
+
+	private readonly List<db_christmas_lottery_item> _christmas_lottery_items = new List<db_christmas_lottery_item>();
+
+	private readonly List<db_christmas_lottery_times_award> _christmas_lottery_times_awards = new List<db_christmas_lottery_times_award>();
+
+	private readonly List<db_christmas_recharge> _christmas_recharges = new List<db_christmas_recharge>();
+
+	private readonly List<db_christmas_recharge_chest> _christmas_recharge_chests = new List<db_christmas_recharge_chest>();
+
+	private readonly List<db_christmas_shop> _christmas_shops = new List<db_christmas_shop>();
+
+	private readonly List<db_city_event> _city_events = new List<db_city_event>();
+
+	private readonly List<db_city_event_branch> _city_event_branchs = new List<db_city_event_branch>();
+
+	private readonly List<db_city_event_building_distribute> _city_event_building_distributes = new List<db_city_event_building_distribute>();
+
+	private readonly List<db_city_event_param> _city_event_params = new List<db_city_event_param>();
+
+	private readonly List<db_city_event_result> _city_event_results = new List<db_city_event_result>();
+
+	private readonly List<db_city_event_reward> _city_event_rewards = new List<db_city_event_reward>();
+
+	private readonly List<db_city_event_stage> _city_event_stages = new List<db_city_event_stage>();
+
+	private readonly List<db_client_version> _client_versions = new List<db_client_version>();
+
+	private readonly List<db_consume_activity_bonus> _consume_activity_bonuss = new List<db_consume_activity_bonus>();
+
+	private readonly List<db_consume_activity_template> _consume_activity_templates = new List<db_consume_activity_template>();
+
+	private readonly List<db_consume_tip> _consume_tips = new List<db_consume_tip>();
+
+	private readonly List<db_convoy_income> _convoy_incomes = new List<db_convoy_income>();
+
+	private readonly List<db_convoy_npc> _convoy_npcs = new List<db_convoy_npc>();
+
+	private readonly List<db_convoy_npc_chance> _convoy_npc_chances = new List<db_convoy_npc_chance>();
+
+	private readonly List<db_convoy_param> _convoy_params = new List<db_convoy_param>();
+
+	private readonly List<db_convoy_rank_award> _convoy_rank_awards = new List<db_convoy_rank_award>();
+
+	private readonly List<db_cooldown> _cooldowns = new List<db_cooldown>();
+
+	private readonly List<db_cost_times_bonus> _cost_times_bonuss = new List<db_cost_times_bonus>();
+
+	private readonly List<db_cost_times_template> _cost_times_templates = new List<db_cost_times_template>();
+
+	private readonly List<db_craft_bonus> _craft_bonuss = new List<db_craft_bonus>();
+
+	private readonly List<db_craft_bonus_special> _craft_bonus_specials = new List<db_craft_bonus_special>();
+
+	private readonly List<db_craft_bonus_special_loop> _craft_bonus_special_loops = new List<db_craft_bonus_special_loop>();
+
+	private readonly List<db_craft_general> _craft_generals = new List<db_craft_general>();
+
+	private readonly List<db_craft_shop_item> _craft_shop_items = new List<db_craft_shop_item>();
+
+	private readonly List<db_craft_support_bonus> _craft_support_bonuss = new List<db_craft_support_bonus>();
+
+	private readonly List<db_craft_time> _craft_times = new List<db_craft_time>();
+
+	private readonly List<db_craftworld_bet> _craftworld_bets = new List<db_craftworld_bet>();
+
+	private readonly List<db_craftworld_bet_bonus> _craftworld_bet_bonuss = new List<db_craftworld_bet_bonus>();
+
+	private readonly List<db_craftworld_bet_choice> _craftworld_bet_choices = new List<db_craftworld_bet_choice>();
+
+	private readonly List<db_craftworld_bet_point_param> _craftworld_bet_point_params = new List<db_craftworld_bet_point_param>();
+
+	private readonly List<db_create_army> _create_armys = new List<db_create_army>();
+
+	private readonly List<db_create_events> _create_eventss = new List<db_create_events>();
+
+	private readonly List<db_create_names> _create_namess = new List<db_create_names>();
+
+	private readonly List<db_daily_ranking_award> _daily_ranking_awards = new List<db_daily_ranking_award>();
+
+	private readonly List<db_daily_ranking_gold_type_chance> _daily_ranking_gold_type_chances = new List<db_daily_ranking_gold_type_chance>();
+
+	private readonly List<db_daily_ranking_requirement> _daily_ranking_requirements = new List<db_daily_ranking_requirement>();
+
+	private readonly List<db_daily_ranking_type_chance> _daily_ranking_type_chances = new List<db_daily_ranking_type_chance>();
+
+	private readonly List<db_daily_ranking_type_regular> _daily_ranking_type_regulars = new List<db_daily_ranking_type_regular>();
+
+	private readonly List<db_day_award> _day_awards = new List<db_day_award>();
+
+	private readonly List<db_depot_slot> _depot_slots = new List<db_depot_slot>();
+
+	private readonly List<db_divine_general_star> _divine_general_stars = new List<db_divine_general_star>();
+
+	private readonly List<db_divine_general_star_start> _divine_general_star_starts = new List<db_divine_general_star_start>();
+
+	private readonly List<db_dongtian> _dongtians = new List<db_dongtian>();
+
+	private readonly List<db_dummy_challenge_setting> _dummy_challenge_settings = new List<db_dummy_challenge_setting>();
+
+	private readonly List<db_dummy_challenge_template> _dummy_challenge_templates = new List<db_dummy_challenge_template>();
+
+	private readonly List<db_earthpavilion_reward> _earthpavilion_rewards = new List<db_earthpavilion_reward>();
+
+	private readonly List<db_earthpavilion_spirit_beast> _earthpavilion_spirit_beasts = new List<db_earthpavilion_spirit_beast>();
+
+	private readonly List<db_emote_code> _emote_codes = new List<db_emote_code>();
+
+	private readonly List<db_enchant_dig_award> _enchant_dig_awards = new List<db_enchant_dig_award>();
+
+	private readonly List<db_enchant_harvest_chance> _enchant_harvest_chances = new List<db_enchant_harvest_chance>();
+
+	private readonly List<db_enchant_harvest_gold> _enchant_harvest_golds = new List<db_enchant_harvest_gold>();
+
+	private readonly List<db_enchant_price> _enchant_prices = new List<db_enchant_price>();
+
+	private readonly List<db_enchant_time> _enchant_times = new List<db_enchant_time>();
+
+	private readonly List<db_equipment_accessory> _equipment_accessorys = new List<db_equipment_accessory>();
+
+	private readonly List<db_equipment_enchant> _equipment_enchants = new List<db_equipment_enchant>();
+
+	private readonly List<db_equipment_exp> _equipment_exps = new List<db_equipment_exp>();
+
+	private readonly List<db_equipment_forge_bonus> _equipment_forge_bonuss = new List<db_equipment_forge_bonus>();
+
+	private readonly List<db_equipment_forge_chance> _equipment_forge_chances = new List<db_equipment_forge_chance>();
+
+	private readonly List<db_equipment_forge_cost> _equipment_forge_costs = new List<db_equipment_forge_cost>();
+
+	private readonly List<db_equipment_forge_exp> _equipment_forge_exps = new List<db_equipment_forge_exp>();
+
+	private readonly List<db_equipment_forge_param> _equipment_forge_params = new List<db_equipment_forge_param>();
+
+	private readonly List<db_equipment_forge_price> _equipment_forge_prices = new List<db_equipment_forge_price>();
+
+	private readonly List<db_equipment_forge_spec> _equipment_forge_specs = new List<db_equipment_forge_spec>();
+
+	private readonly List<db_equipment_log> _equipment_logs = new List<db_equipment_log>();
+
+	private readonly List<db_equipment_main> _equipment_mains = new List<db_equipment_main>();
+
+	private readonly List<db_equipment_rank_name> _equipment_rank_names = new List<db_equipment_rank_name>();
+
+	private readonly List<db_equipment_set> _equipment_sets = new List<db_equipment_set>();
+
+	private readonly List<db_equipment_slot_price> _equipment_slot_prices = new List<db_equipment_slot_price>();
+
+	private readonly List<db_equipment_speciality> _equipment_specialitys = new List<db_equipment_speciality>();
+
+	private readonly List<db_equipment_type> _equipment_types = new List<db_equipment_type>();
+
+	private readonly List<db_event_desc> _event_descs = new List<db_event_desc>();
+
+	private readonly List<db_event_timer> _event_timers = new List<db_event_timer>();
+
+	private readonly List<db_everyday_login> _everyday_logins = new List<db_everyday_login>();
+
+	private readonly List<db_exchange_shop> _exchange_shops = new List<db_exchange_shop>();
+
+	private readonly List<db_exchange_shop_item_left> _exchange_shop_item_lefts = new List<db_exchange_shop_item_left>();
+
+	private readonly List<db_exchange_shop_item_right> _exchange_shop_item_rights = new List<db_exchange_shop_item_right>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, Name = "achievements", DataFormat = DataFormat.Default)]
+	public List<db_achievement> achievements => _achievements;
+
+	[ProtoMember(2, Name = "actions", DataFormat = DataFormat.Default)]
+	public List<db_action> actions => _actions;
+
+	[ProtoMember(3, Name = "activitys", DataFormat = DataFormat.Default)]
+	public List<db_activity> activitys => _activitys;
+
+	[ProtoMember(4, Name = "activity_quest_templates", DataFormat = DataFormat.Default)]
+	public List<db_activity_quest_template> activity_quest_templates => _activity_quest_templates;
+
+	[ProtoMember(5, Name = "activity_ranks", DataFormat = DataFormat.Default)]
+	public List<db_activity_rank> activity_ranks => _activity_ranks;
+
+	[ProtoMember(6, Name = "activity_rewards", DataFormat = DataFormat.Default)]
+	public List<db_activity_reward> activity_rewards => _activity_rewards;
+
+	[ProtoMember(7, Name = "activity_rewardrates", DataFormat = DataFormat.Default)]
+	public List<db_activity_rewardrate> activity_rewardrates => _activity_rewardrates;
+
+	[ProtoMember(8, Name = "activity_treasures", DataFormat = DataFormat.Default)]
+	public List<db_activity_treasure> activity_treasures => _activity_treasures;
+
+	[ProtoMember(9, Name = "amulet_qualitys", DataFormat = DataFormat.Default)]
+	public List<db_amulet_quality> amulet_qualitys => _amulet_qualitys;
+
+	[ProtoMember(10, Name = "amulet_ranks", DataFormat = DataFormat.Default)]
+	public List<db_amulet_rank> amulet_ranks => _amulet_ranks;
+
+	[ProtoMember(11, Name = "amulet_slot_opens", DataFormat = DataFormat.Default)]
+	public List<db_amulet_slot_open> amulet_slot_opens => _amulet_slot_opens;
+
+	[ProtoMember(12, Name = "amulet_specials", DataFormat = DataFormat.Default)]
+	public List<db_amulet_special> amulet_specials => _amulet_specials;
+
+	[ProtoMember(13, Name = "amulet_templates", DataFormat = DataFormat.Default)]
+	public List<db_amulet_template> amulet_templates => _amulet_templates;
+
+	[ProtoMember(14, Name = "anecdote_rewards", DataFormat = DataFormat.Default)]
+	public List<db_anecdote_reward> anecdote_rewards => _anecdote_rewards;
+
+	[ProtoMember(15, Name = "anti_addicteds", DataFormat = DataFormat.Default)]
+	public List<db_anti_addicted> anti_addicteds => _anti_addicteds;
+
+	[ProtoMember(16, Name = "area_patrol_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_area_patrol_bonus> area_patrol_bonuss => _area_patrol_bonuss;
+
+	[ProtoMember(17, Name = "arena_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_arena_bonus> arena_bonuss => _arena_bonuss;
+
+	[ProtoMember(18, Name = "armys", DataFormat = DataFormat.Default)]
+	public List<db_army> armys => _armys;
+
+	[ProtoMember(19, Name = "army_categorys", DataFormat = DataFormat.Default)]
+	public List<db_army_category> army_categorys => _army_categorys;
+
+	[ProtoMember(20, Name = "army_names", DataFormat = DataFormat.Default)]
+	public List<db_army_name> army_names => _army_names;
+
+	[ProtoMember(21, Name = "army_schools", DataFormat = DataFormat.Default)]
+	public List<db_army_school> army_schools => _army_schools;
+
+	[ProtoMember(22, Name = "army_sizes", DataFormat = DataFormat.Default)]
+	public List<db_army_size> army_sizes => _army_sizes;
+
+	[ProtoMember(23, Name = "army_stars", DataFormat = DataFormat.Default)]
+	public List<db_army_star> army_stars => _army_stars;
+
+	[ProtoMember(24, Name = "army_star_starts", DataFormat = DataFormat.Default)]
+	public List<db_army_star_start> army_star_starts => _army_star_starts;
+
+	[ProtoMember(25, Name = "army_templates", DataFormat = DataFormat.Default)]
+	public List<db_army_template> army_templates => _army_templates;
+
+	[ProtoMember(26, Name = "artifact_attrib_params", DataFormat = DataFormat.Default)]
+	public List<db_artifact_attrib_param> artifact_attrib_params => _artifact_attrib_params;
+
+	[ProtoMember(27, Name = "artifact_attributes", DataFormat = DataFormat.Default)]
+	public List<db_artifact_attribute> artifact_attributes => _artifact_attributes;
+
+	[ProtoMember(28, Name = "artifact_forge_growups", DataFormat = DataFormat.Default)]
+	public List<db_artifact_forge_growup> artifact_forge_growups => _artifact_forge_growups;
+
+	[ProtoMember(29, Name = "artifact_forge_infos", DataFormat = DataFormat.Default)]
+	public List<db_artifact_forge_info> artifact_forge_infos => _artifact_forge_infos;
+
+	[ProtoMember(30, Name = "artifact_forge_requirements", DataFormat = DataFormat.Default)]
+	public List<db_artifact_forge_requirement> artifact_forge_requirements => _artifact_forge_requirements;
+
+	[ProtoMember(31, Name = "artifact_luck_chances", DataFormat = DataFormat.Default)]
+	public List<db_artifact_luck_chance> artifact_luck_chances => _artifact_luck_chances;
+
+	[ProtoMember(32, Name = "artifact_templates", DataFormat = DataFormat.Default)]
+	public List<db_artifact_template> artifact_templates => _artifact_templates;
+
+	[ProtoMember(33, Name = "artifact_upgrades", DataFormat = DataFormat.Default)]
+	public List<db_artifact_upgrade> artifact_upgrades => _artifact_upgrades;
+
+	[ProtoMember(34, Name = "artifact_upgrade_advanceds", DataFormat = DataFormat.Default)]
+	public List<db_artifact_upgrade_advanced> artifact_upgrade_advanceds => _artifact_upgrade_advanceds;
+
+	[ProtoMember(35, Name = "artifact_upgrade_advanced_exps", DataFormat = DataFormat.Default)]
+	public List<db_artifact_upgrade_advanced_exp> artifact_upgrade_advanced_exps => _artifact_upgrade_advanced_exps;
+
+	[ProtoMember(36, Name = "artifact_upgrade_advanced_exp_golds", DataFormat = DataFormat.Default)]
+	public List<db_artifact_upgrade_advanced_exp_gold> artifact_upgrade_advanced_exp_golds => _artifact_upgrade_advanced_exp_golds;
+
+	[ProtoMember(37, Name = "artifact_zhihengs", DataFormat = DataFormat.Default)]
+	public List<db_artifact_zhiheng> artifact_zhihengs => _artifact_zhihengs;
+
+	[ProtoMember(38, Name = "assault_shop_items", DataFormat = DataFormat.Default)]
+	public List<db_assault_shop_item> assault_shop_items => _assault_shop_items;
+
+	[ProtoMember(39, Name = "assault_stronghold_levels", DataFormat = DataFormat.Default)]
+	public List<db_assault_stronghold_level> assault_stronghold_levels => _assault_stronghold_levels;
+
+	[ProtoMember(40, Name = "assault_stronghold_mainchars", DataFormat = DataFormat.Default)]
+	public List<db_assault_stronghold_mainchar> assault_stronghold_mainchars => _assault_stronghold_mainchars;
+
+	[ProtoMember(41, Name = "assault_stronghold_monsters", DataFormat = DataFormat.Default)]
+	public List<db_assault_stronghold_monster> assault_stronghold_monsters => _assault_stronghold_monsters;
+
+	[ProtoMember(42, Name = "assault_stronghold_monster_rates", DataFormat = DataFormat.Default)]
+	public List<db_assault_stronghold_monster_rate> assault_stronghold_monster_rates => _assault_stronghold_monster_rates;
+
+	[ProtoMember(43, Name = "bagua_activitys", DataFormat = DataFormat.Default)]
+	public List<db_bagua_activity> bagua_activitys => _bagua_activitys;
+
+	[ProtoMember(44, Name = "battle_buffers", DataFormat = DataFormat.Default)]
+	public List<db_battle_buffer> battle_buffers => _battle_buffers;
+
+	[ProtoMember(45, Name = "battle_buffer_effects", DataFormat = DataFormat.Default)]
+	public List<db_battle_buffer_effect> battle_buffer_effects => _battle_buffer_effects;
+
+	[ProtoMember(46, Name = "battle_cds", DataFormat = DataFormat.Default)]
+	public List<db_battle_cd> battle_cds => _battle_cds;
+
+	[ProtoMember(47, Name = "battle_effects", DataFormat = DataFormat.Default)]
+	public List<db_battle_effect> battle_effects => _battle_effects;
+
+	[ProtoMember(48, Name = "battle_fields", DataFormat = DataFormat.Default)]
+	public List<db_battle_field> battle_fields => _battle_fields;
+
+	[ProtoMember(49, Name = "battle_report_storages", DataFormat = DataFormat.Default)]
+	public List<db_battle_report_storage> battle_report_storages => _battle_report_storages;
+
+	[ProtoMember(50, Name = "battle_types", DataFormat = DataFormat.Default)]
+	public List<db_battle_type> battle_types => _battle_types;
+
+	[ProtoMember(51, Name = "battle_values", DataFormat = DataFormat.Default)]
+	public List<db_battle_value> battle_values => _battle_values;
+
+	[ProtoMember(52, Name = "battle_value_categorys", DataFormat = DataFormat.Default)]
+	public List<db_battle_value_category> battle_value_categorys => _battle_value_categorys;
+
+	[ProtoMember(53, Name = "battle_value_ranks", DataFormat = DataFormat.Default)]
+	public List<db_battle_value_rank> battle_value_ranks => _battle_value_ranks;
+
+	[ProtoMember(54, Name = "battle_wave_units", DataFormat = DataFormat.Default)]
+	public List<db_battle_wave_unit> battle_wave_units => _battle_wave_units;
+
+	[ProtoMember(55, Name = "bonus_templates", DataFormat = DataFormat.Default)]
+	public List<db_bonus_template> bonus_templates => _bonus_templates;
+
+	[ProtoMember(56, Name = "bonuslists", DataFormat = DataFormat.Default)]
+	public List<db_bonuslist> bonuslists => _bonuslists;
+
+	[ProtoMember(57, Name = "brawl_break_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_break_bonus> brawl_break_bonuss => _brawl_break_bonuss;
+
+	[ProtoMember(58, Name = "brawl_heartenings", DataFormat = DataFormat.Default)]
+	public List<db_brawl_heartening> brawl_heartenings => _brawl_heartenings;
+
+	[ProtoMember(59, Name = "brawl_rank_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_rank_bonus> brawl_rank_bonuss => _brawl_rank_bonuss;
+
+	[ProtoMember(60, Name = "brawl_streak_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_streak_bonus> brawl_streak_bonuss => _brawl_streak_bonuss;
+
+	[ProtoMember(61, Name = "brawl_streak_spiritbonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_streak_spiritbonus> brawl_streak_spiritbonuss => _brawl_streak_spiritbonuss;
+
+	[ProtoMember(62, Name = "brawl_win_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_win_bonus> brawl_win_bonuss => _brawl_win_bonuss;
+
+	[ProtoMember(63, Name = "brawl_win_spiritbonuss", DataFormat = DataFormat.Default)]
+	public List<db_brawl_win_spiritbonus> brawl_win_spiritbonuss => _brawl_win_spiritbonuss;
+
+	[ProtoMember(64, Name = "buddy_events", DataFormat = DataFormat.Default)]
+	public List<db_buddy_event> buddy_events => _buddy_events;
+
+	[ProtoMember(65, Name = "buddy_list_levels", DataFormat = DataFormat.Default)]
+	public List<db_buddy_list_level> buddy_list_levels => _buddy_list_levels;
+
+	[ProtoMember(66, Name = "buff_tables", DataFormat = DataFormat.Default)]
+	public List<db_buff_table> buff_tables => _buff_tables;
+
+	[ProtoMember(67, Name = "buildings", DataFormat = DataFormat.Default)]
+	public List<db_building> buildings => _buildings;
+
+	[ProtoMember(68, Name = "building_advances", DataFormat = DataFormat.Default)]
+	public List<db_building_advance> building_advances => _building_advances;
+
+	[ProtoMember(69, Name = "building_areas", DataFormat = DataFormat.Default)]
+	public List<db_building_area> building_areas => _building_areas;
+
+	[ProtoMember(70, Name = "building_backups", DataFormat = DataFormat.Default)]
+	public List<db_building_backup> building_backups => _building_backups;
+
+	[ProtoMember(71, Name = "building_defaults", DataFormat = DataFormat.Default)]
+	public List<db_building_default> building_defaults => _building_defaults;
+
+	[ProtoMember(72, Name = "building_drawing_drops", DataFormat = DataFormat.Default)]
+	public List<db_building_drawing_drop> building_drawing_drops => _building_drawing_drops;
+
+	[ProtoMember(73, Name = "building_floors", DataFormat = DataFormat.Default)]
+	public List<db_building_floor> building_floors => _building_floors;
+
+	[ProtoMember(74, Name = "building_havests", DataFormat = DataFormat.Default)]
+	public List<db_building_havest> building_havests => _building_havests;
+
+	[ProtoMember(75, Name = "building_havest_treasures", DataFormat = DataFormat.Default)]
+	public List<db_building_havest_treasure> building_havest_treasures => _building_havest_treasures;
+
+	[ProtoMember(76, Name = "building_interact_drops", DataFormat = DataFormat.Default)]
+	public List<db_building_interact_drop> building_interact_drops => _building_interact_drops;
+
+	[ProtoMember(77, Name = "building_islands", DataFormat = DataFormat.Default)]
+	public List<db_building_island> building_islands => _building_islands;
+
+	[ProtoMember(78, Name = "building_monsters", DataFormat = DataFormat.Default)]
+	public List<db_building_monster> building_monsters => _building_monsters;
+
+	[ProtoMember(79, Name = "building_monster_types", DataFormat = DataFormat.Default)]
+	public List<db_building_monster_type> building_monster_types => _building_monster_types;
+
+	[ProtoMember(80, Name = "building_products", DataFormat = DataFormat.Default)]
+	public List<db_building_product> building_products => _building_products;
+
+	[ProtoMember(81, Name = "building_quests", DataFormat = DataFormat.Default)]
+	public List<db_building_quest> building_quests => _building_quests;
+
+	[ProtoMember(82, Name = "building_returns", DataFormat = DataFormat.Default)]
+	public List<db_building_return> building_returns => _building_returns;
+
+	[ProtoMember(83, Name = "building_types", DataFormat = DataFormat.Default)]
+	public List<db_building_type> building_types => _building_types;
+
+	[ProtoMember(84, Name = "building_unique_drawings", DataFormat = DataFormat.Default)]
+	public List<db_building_unique_drawing> building_unique_drawings => _building_unique_drawings;
+
+	[ProtoMember(85, Name = "building_upgrades", DataFormat = DataFormat.Default)]
+	public List<db_building_upgrade> building_upgrades => _building_upgrades;
+
+	[ProtoMember(86, Name = "buy_challenge_gold_costs", DataFormat = DataFormat.Default)]
+	public List<db_buy_challenge_gold_cost> buy_challenge_gold_costs => _buy_challenge_gold_costs;
+
+	[ProtoMember(87, Name = "buy_general_slot_costs", DataFormat = DataFormat.Default)]
+	public List<db_buy_general_slot_cost> buy_general_slot_costs => _buy_general_slot_costs;
+
+	[ProtoMember(88, Name = "buy_patrol_slots", DataFormat = DataFormat.Default)]
+	public List<db_buy_patrol_slot> buy_patrol_slots => _buy_patrol_slots;
+
+	[ProtoMember(89, Name = "buy_templates", DataFormat = DataFormat.Default)]
+	public List<db_buy_template> buy_templates => _buy_templates;
+
+	[ProtoMember(90, Name = "calendars", DataFormat = DataFormat.Default)]
+	public List<db_calendar> calendars => _calendars;
+
+	[ProtoMember(91, Name = "campaigns", DataFormat = DataFormat.Default)]
+	public List<db_campaign> campaigns => _campaigns;
+
+	[ProtoMember(92, Name = "campaign_chests", DataFormat = DataFormat.Default)]
+	public List<db_campaign_chest> campaign_chests => _campaign_chests;
+
+	[ProtoMember(93, Name = "campaign_chest_drops", DataFormat = DataFormat.Default)]
+	public List<db_campaign_chest_drop> campaign_chest_drops => _campaign_chest_drops;
+
+	[ProtoMember(94, Name = "campaign_condition_types", DataFormat = DataFormat.Default)]
+	public List<db_campaign_condition_type> campaign_condition_types => _campaign_condition_types;
+
+	[ProtoMember(95, Name = "campaign_copys", DataFormat = DataFormat.Default)]
+	public List<db_campaign_copy> campaign_copys => _campaign_copys;
+
+	[ProtoMember(96, Name = "campaign_copy_categorys", DataFormat = DataFormat.Default)]
+	public List<db_campaign_copy_category> campaign_copy_categorys => _campaign_copy_categorys;
+
+	[ProtoMember(97, Name = "campaign_copy_troops", DataFormat = DataFormat.Default)]
+	public List<db_campaign_copy_troop> campaign_copy_troops => _campaign_copy_troops;
+
+	[ProtoMember(98, Name = "campaign_copy_troop_armys", DataFormat = DataFormat.Default)]
+	public List<db_campaign_copy_troop_army> campaign_copy_troop_armys => _campaign_copy_troop_armys;
+
+	[ProtoMember(99, Name = "campaign_drops", DataFormat = DataFormat.Default)]
+	public List<db_campaign_drop> campaign_drops => _campaign_drops;
+
+	[ProtoMember(100, Name = "campaign_festivals", DataFormat = DataFormat.Default)]
+	public List<db_campaign_festival> campaign_festivals => _campaign_festivals;
+
+	[ProtoMember(101, Name = "campaign_fk_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_campaign_fk_bonus> campaign_fk_bonuss => _campaign_fk_bonuss;
+
+	[ProtoMember(102, Name = "campaign_signs", DataFormat = DataFormat.Default)]
+	public List<db_campaign_sign> campaign_signs => _campaign_signs;
+
+	[ProtoMember(103, Name = "campaign_spirit_beasts", DataFormat = DataFormat.Default)]
+	public List<db_campaign_spirit_beast> campaign_spirit_beasts => _campaign_spirit_beasts;
+
+	[ProtoMember(104, Name = "campaign_star_awardss", DataFormat = DataFormat.Default)]
+	public List<db_campaign_star_awards> campaign_star_awardss => _campaign_star_awardss;
+
+	[ProtoMember(105, Name = "campaign_troops", DataFormat = DataFormat.Default)]
+	public List<db_campaign_troop> campaign_troops => _campaign_troops;
+
+	[ProtoMember(106, Name = "campaign_troop_armys", DataFormat = DataFormat.Default)]
+	public List<db_campaign_troop_army> campaign_troop_armys => _campaign_troop_armys;
+
+	[ProtoMember(107, Name = "campaign_troop_conditions", DataFormat = DataFormat.Default)]
+	public List<db_campaign_troop_condition> campaign_troop_conditions => _campaign_troop_conditions;
+
+	[ProtoMember(108, Name = "campaign_troop_drops", DataFormat = DataFormat.Default)]
+	public List<db_campaign_troop_drop> campaign_troop_drops => _campaign_troop_drops;
+
+	[ProtoMember(109, Name = "campaign_troop_ranks", DataFormat = DataFormat.Default)]
+	public List<db_campaign_troop_rank> campaign_troop_ranks => _campaign_troop_ranks;
+
+	[ProtoMember(110, Name = "campaign_types", DataFormat = DataFormat.Default)]
+	public List<db_campaign_type> campaign_types => _campaign_types;
+
+	[ProtoMember(111, Name = "card_rank_ups", DataFormat = DataFormat.Default)]
+	public List<db_card_rank_up> card_rank_ups => _card_rank_ups;
+
+	[ProtoMember(112, Name = "chat_channels", DataFormat = DataFormat.Default)]
+	public List<db_chat_channel> chat_channels => _chat_channels;
+
+	[ProtoMember(113, Name = "checkin_awards", DataFormat = DataFormat.Default)]
+	public List<db_checkin_award> checkin_awards => _checkin_awards;
+
+	[ProtoMember(114, Name = "checkin_award_onces", DataFormat = DataFormat.Default)]
+	public List<db_checkin_award_once> checkin_award_onces => _checkin_award_onces;
+
+	[ProtoMember(115, Name = "chest_models", DataFormat = DataFormat.Default)]
+	public List<db_chest_model> chest_models => _chest_models;
+
+	[ProtoMember(116, Name = "chinese_new_year_lottery_items", DataFormat = DataFormat.Default)]
+	public List<db_chinese_new_year_lottery_item> chinese_new_year_lottery_items => _chinese_new_year_lottery_items;
+
+	[ProtoMember(117, Name = "chinese_new_year_lottery_special_items", DataFormat = DataFormat.Default)]
+	public List<db_chinese_new_year_lottery_special_item> chinese_new_year_lottery_special_items => _chinese_new_year_lottery_special_items;
+
+	[ProtoMember(118, Name = "christmas_lottery_extra_items", DataFormat = DataFormat.Default)]
+	public List<db_christmas_lottery_extra_item> christmas_lottery_extra_items => _christmas_lottery_extra_items;
+
+	[ProtoMember(119, Name = "christmas_lottery_gold_costs", DataFormat = DataFormat.Default)]
+	public List<db_christmas_lottery_gold_cost> christmas_lottery_gold_costs => _christmas_lottery_gold_costs;
+
+	[ProtoMember(120, Name = "christmas_lottery_items", DataFormat = DataFormat.Default)]
+	public List<db_christmas_lottery_item> christmas_lottery_items => _christmas_lottery_items;
+
+	[ProtoMember(121, Name = "christmas_lottery_times_awards", DataFormat = DataFormat.Default)]
+	public List<db_christmas_lottery_times_award> christmas_lottery_times_awards => _christmas_lottery_times_awards;
+
+	[ProtoMember(122, Name = "christmas_recharges", DataFormat = DataFormat.Default)]
+	public List<db_christmas_recharge> christmas_recharges => _christmas_recharges;
+
+	[ProtoMember(123, Name = "christmas_recharge_chests", DataFormat = DataFormat.Default)]
+	public List<db_christmas_recharge_chest> christmas_recharge_chests => _christmas_recharge_chests;
+
+	[ProtoMember(124, Name = "christmas_shops", DataFormat = DataFormat.Default)]
+	public List<db_christmas_shop> christmas_shops => _christmas_shops;
+
+	[ProtoMember(125, Name = "city_events", DataFormat = DataFormat.Default)]
+	public List<db_city_event> city_events => _city_events;
+
+	[ProtoMember(126, Name = "city_event_branchs", DataFormat = DataFormat.Default)]
+	public List<db_city_event_branch> city_event_branchs => _city_event_branchs;
+
+	[ProtoMember(127, Name = "city_event_building_distributes", DataFormat = DataFormat.Default)]
+	public List<db_city_event_building_distribute> city_event_building_distributes => _city_event_building_distributes;
+
+	[ProtoMember(128, Name = "city_event_params", DataFormat = DataFormat.Default)]
+	public List<db_city_event_param> city_event_params => _city_event_params;
+
+	[ProtoMember(129, Name = "city_event_results", DataFormat = DataFormat.Default)]
+	public List<db_city_event_result> city_event_results => _city_event_results;
+
+	[ProtoMember(130, Name = "city_event_rewards", DataFormat = DataFormat.Default)]
+	public List<db_city_event_reward> city_event_rewards => _city_event_rewards;
+
+	[ProtoMember(131, Name = "city_event_stages", DataFormat = DataFormat.Default)]
+	public List<db_city_event_stage> city_event_stages => _city_event_stages;
+
+	[ProtoMember(132, Name = "client_versions", DataFormat = DataFormat.Default)]
+	public List<db_client_version> client_versions => _client_versions;
+
+	[ProtoMember(133, Name = "consume_activity_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_consume_activity_bonus> consume_activity_bonuss => _consume_activity_bonuss;
+
+	[ProtoMember(134, Name = "consume_activity_templates", DataFormat = DataFormat.Default)]
+	public List<db_consume_activity_template> consume_activity_templates => _consume_activity_templates;
+
+	[ProtoMember(135, Name = "consume_tips", DataFormat = DataFormat.Default)]
+	public List<db_consume_tip> consume_tips => _consume_tips;
+
+	[ProtoMember(136, Name = "convoy_incomes", DataFormat = DataFormat.Default)]
+	public List<db_convoy_income> convoy_incomes => _convoy_incomes;
+
+	[ProtoMember(137, Name = "convoy_npcs", DataFormat = DataFormat.Default)]
+	public List<db_convoy_npc> convoy_npcs => _convoy_npcs;
+
+	[ProtoMember(138, Name = "convoy_npc_chances", DataFormat = DataFormat.Default)]
+	public List<db_convoy_npc_chance> convoy_npc_chances => _convoy_npc_chances;
+
+	[ProtoMember(139, Name = "convoy_params", DataFormat = DataFormat.Default)]
+	public List<db_convoy_param> convoy_params => _convoy_params;
+
+	[ProtoMember(140, Name = "convoy_rank_awards", DataFormat = DataFormat.Default)]
+	public List<db_convoy_rank_award> convoy_rank_awards => _convoy_rank_awards;
+
+	[ProtoMember(141, Name = "cooldowns", DataFormat = DataFormat.Default)]
+	public List<db_cooldown> cooldowns => _cooldowns;
+
+	[ProtoMember(142, Name = "cost_times_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_cost_times_bonus> cost_times_bonuss => _cost_times_bonuss;
+
+	[ProtoMember(143, Name = "cost_times_templates", DataFormat = DataFormat.Default)]
+	public List<db_cost_times_template> cost_times_templates => _cost_times_templates;
+
+	[ProtoMember(144, Name = "craft_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_craft_bonus> craft_bonuss => _craft_bonuss;
+
+	[ProtoMember(145, Name = "craft_bonus_specials", DataFormat = DataFormat.Default)]
+	public List<db_craft_bonus_special> craft_bonus_specials => _craft_bonus_specials;
+
+	[ProtoMember(146, Name = "craft_bonus_special_loops", DataFormat = DataFormat.Default)]
+	public List<db_craft_bonus_special_loop> craft_bonus_special_loops => _craft_bonus_special_loops;
+
+	[ProtoMember(147, Name = "craft_generals", DataFormat = DataFormat.Default)]
+	public List<db_craft_general> craft_generals => _craft_generals;
+
+	[ProtoMember(148, Name = "craft_shop_items", DataFormat = DataFormat.Default)]
+	public List<db_craft_shop_item> craft_shop_items => _craft_shop_items;
+
+	[ProtoMember(149, Name = "craft_support_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_craft_support_bonus> craft_support_bonuss => _craft_support_bonuss;
+
+	[ProtoMember(150, Name = "craft_times", DataFormat = DataFormat.Default)]
+	public List<db_craft_time> craft_times => _craft_times;
+
+	[ProtoMember(151, Name = "craftworld_bets", DataFormat = DataFormat.Default)]
+	public List<db_craftworld_bet> craftworld_bets => _craftworld_bets;
+
+	[ProtoMember(152, Name = "craftworld_bet_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_craftworld_bet_bonus> craftworld_bet_bonuss => _craftworld_bet_bonuss;
+
+	[ProtoMember(153, Name = "craftworld_bet_choices", DataFormat = DataFormat.Default)]
+	public List<db_craftworld_bet_choice> craftworld_bet_choices => _craftworld_bet_choices;
+
+	[ProtoMember(154, Name = "craftworld_bet_point_params", DataFormat = DataFormat.Default)]
+	public List<db_craftworld_bet_point_param> craftworld_bet_point_params => _craftworld_bet_point_params;
+
+	[ProtoMember(155, Name = "create_armys", DataFormat = DataFormat.Default)]
+	public List<db_create_army> create_armys => _create_armys;
+
+	[ProtoMember(156, Name = "create_eventss", DataFormat = DataFormat.Default)]
+	public List<db_create_events> create_eventss => _create_eventss;
+
+	[ProtoMember(157, Name = "create_namess", DataFormat = DataFormat.Default)]
+	public List<db_create_names> create_namess => _create_namess;
+
+	[ProtoMember(158, Name = "daily_ranking_awards", DataFormat = DataFormat.Default)]
+	public List<db_daily_ranking_award> daily_ranking_awards => _daily_ranking_awards;
+
+	[ProtoMember(159, Name = "daily_ranking_gold_type_chances", DataFormat = DataFormat.Default)]
+	public List<db_daily_ranking_gold_type_chance> daily_ranking_gold_type_chances => _daily_ranking_gold_type_chances;
+
+	[ProtoMember(160, Name = "daily_ranking_requirements", DataFormat = DataFormat.Default)]
+	public List<db_daily_ranking_requirement> daily_ranking_requirements => _daily_ranking_requirements;
+
+	[ProtoMember(161, Name = "daily_ranking_type_chances", DataFormat = DataFormat.Default)]
+	public List<db_daily_ranking_type_chance> daily_ranking_type_chances => _daily_ranking_type_chances;
+
+	[ProtoMember(162, Name = "daily_ranking_type_regulars", DataFormat = DataFormat.Default)]
+	public List<db_daily_ranking_type_regular> daily_ranking_type_regulars => _daily_ranking_type_regulars;
+
+	[ProtoMember(163, Name = "day_awards", DataFormat = DataFormat.Default)]
+	public List<db_day_award> day_awards => _day_awards;
+
+	[ProtoMember(164, Name = "depot_slots", DataFormat = DataFormat.Default)]
+	public List<db_depot_slot> depot_slots => _depot_slots;
+
+	[ProtoMember(165, Name = "divine_general_stars", DataFormat = DataFormat.Default)]
+	public List<db_divine_general_star> divine_general_stars => _divine_general_stars;
+
+	[ProtoMember(166, Name = "divine_general_star_starts", DataFormat = DataFormat.Default)]
+	public List<db_divine_general_star_start> divine_general_star_starts => _divine_general_star_starts;
+
+	[ProtoMember(167, Name = "dongtians", DataFormat = DataFormat.Default)]
+	public List<db_dongtian> dongtians => _dongtians;
+
+	[ProtoMember(168, Name = "dummy_challenge_settings", DataFormat = DataFormat.Default)]
+	public List<db_dummy_challenge_setting> dummy_challenge_settings => _dummy_challenge_settings;
+
+	[ProtoMember(169, Name = "dummy_challenge_templates", DataFormat = DataFormat.Default)]
+	public List<db_dummy_challenge_template> dummy_challenge_templates => _dummy_challenge_templates;
+
+	[ProtoMember(170, Name = "earthpavilion_rewards", DataFormat = DataFormat.Default)]
+	public List<db_earthpavilion_reward> earthpavilion_rewards => _earthpavilion_rewards;
+
+	[ProtoMember(171, Name = "earthpavilion_spirit_beasts", DataFormat = DataFormat.Default)]
+	public List<db_earthpavilion_spirit_beast> earthpavilion_spirit_beasts => _earthpavilion_spirit_beasts;
+
+	[ProtoMember(172, Name = "emote_codes", DataFormat = DataFormat.Default)]
+	public List<db_emote_code> emote_codes => _emote_codes;
+
+	[ProtoMember(173, Name = "enchant_dig_awards", DataFormat = DataFormat.Default)]
+	public List<db_enchant_dig_award> enchant_dig_awards => _enchant_dig_awards;
+
+	[ProtoMember(174, Name = "enchant_harvest_chances", DataFormat = DataFormat.Default)]
+	public List<db_enchant_harvest_chance> enchant_harvest_chances => _enchant_harvest_chances;
+
+	[ProtoMember(175, Name = "enchant_harvest_golds", DataFormat = DataFormat.Default)]
+	public List<db_enchant_harvest_gold> enchant_harvest_golds => _enchant_harvest_golds;
+
+	[ProtoMember(176, Name = "enchant_prices", DataFormat = DataFormat.Default)]
+	public List<db_enchant_price> enchant_prices => _enchant_prices;
+
+	[ProtoMember(177, Name = "enchant_times", DataFormat = DataFormat.Default)]
+	public List<db_enchant_time> enchant_times => _enchant_times;
+
+	[ProtoMember(178, Name = "equipment_accessorys", DataFormat = DataFormat.Default)]
+	public List<db_equipment_accessory> equipment_accessorys => _equipment_accessorys;
+
+	[ProtoMember(179, Name = "equipment_enchants", DataFormat = DataFormat.Default)]
+	public List<db_equipment_enchant> equipment_enchants => _equipment_enchants;
+
+	[ProtoMember(180, Name = "equipment_exps", DataFormat = DataFormat.Default)]
+	public List<db_equipment_exp> equipment_exps => _equipment_exps;
+
+	[ProtoMember(181, Name = "equipment_forge_bonuss", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_bonus> equipment_forge_bonuss => _equipment_forge_bonuss;
+
+	[ProtoMember(182, Name = "equipment_forge_chances", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_chance> equipment_forge_chances => _equipment_forge_chances;
+
+	[ProtoMember(183, Name = "equipment_forge_costs", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_cost> equipment_forge_costs => _equipment_forge_costs;
+
+	[ProtoMember(184, Name = "equipment_forge_exps", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_exp> equipment_forge_exps => _equipment_forge_exps;
+
+	[ProtoMember(185, Name = "equipment_forge_params", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_param> equipment_forge_params => _equipment_forge_params;
+
+	[ProtoMember(186, Name = "equipment_forge_prices", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_price> equipment_forge_prices => _equipment_forge_prices;
+
+	[ProtoMember(187, Name = "equipment_forge_specs", DataFormat = DataFormat.Default)]
+	public List<db_equipment_forge_spec> equipment_forge_specs => _equipment_forge_specs;
+
+	[ProtoMember(188, Name = "equipment_logs", DataFormat = DataFormat.Default)]
+	public List<db_equipment_log> equipment_logs => _equipment_logs;
+
+	[ProtoMember(189, Name = "equipment_mains", DataFormat = DataFormat.Default)]
+	public List<db_equipment_main> equipment_mains => _equipment_mains;
+
+	[ProtoMember(190, Name = "equipment_rank_names", DataFormat = DataFormat.Default)]
+	public List<db_equipment_rank_name> equipment_rank_names => _equipment_rank_names;
+
+	[ProtoMember(191, Name = "equipment_sets", DataFormat = DataFormat.Default)]
+	public List<db_equipment_set> equipment_sets => _equipment_sets;
+
+	[ProtoMember(192, Name = "equipment_slot_prices", DataFormat = DataFormat.Default)]
+	public List<db_equipment_slot_price> equipment_slot_prices => _equipment_slot_prices;
+
+	[ProtoMember(193, Name = "equipment_specialitys", DataFormat = DataFormat.Default)]
+	public List<db_equipment_speciality> equipment_specialitys => _equipment_specialitys;
+
+	[ProtoMember(194, Name = "equipment_types", DataFormat = DataFormat.Default)]
+	public List<db_equipment_type> equipment_types => _equipment_types;
+
+	[ProtoMember(195, Name = "event_descs", DataFormat = DataFormat.Default)]
+	public List<db_event_desc> event_descs => _event_descs;
+
+	[ProtoMember(196, Name = "event_timers", DataFormat = DataFormat.Default)]
+	public List<db_event_timer> event_timers => _event_timers;
+
+	[ProtoMember(197, Name = "everyday_logins", DataFormat = DataFormat.Default)]
+	public List<db_everyday_login> everyday_logins => _everyday_logins;
+
+	[ProtoMember(198, Name = "exchange_shops", DataFormat = DataFormat.Default)]
+	public List<db_exchange_shop> exchange_shops => _exchange_shops;
+
+	[ProtoMember(199, Name = "exchange_shop_item_lefts", DataFormat = DataFormat.Default)]
+	public List<db_exchange_shop_item_left> exchange_shop_item_lefts => _exchange_shop_item_lefts;
+
+	[ProtoMember(200, Name = "exchange_shop_item_rights", DataFormat = DataFormat.Default)]
+	public List<db_exchange_shop_item_right> exchange_shop_item_rights => _exchange_shop_item_rights;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

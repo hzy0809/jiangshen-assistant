@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "scenario": "suite",
+  "compile_exit": 0,
+  "test_exit": 0,
+  "source_hashes_stable": true,
+  "model_sha256": "9deab8d4bb862b76e4c20683e7632079fbdd43db6d59822ab1b3abf429ec69bc",
+  "scenario_count": 63,
+  "checks": 659,
+  "dependencies": {
+    "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+    "protobuf-net.dll": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+    "Ionic.Zlib.dll": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+  },
+  "production_full_model": true,
+  "production_helpers_reader_transport_clock": true,
+  "actual_protobuf_and_deflate": true,
+  "game_access": false,
+  "network_access": false,
+  "limitations": "Detached Unity, stock presentation callback, Model scene inventory, BattleLaunch and BattleSettlement substitutes. Pinned protobuf and deflate code are real; no live game, rendering, IPC guard, physical interaction, deployment, or business acceptance."
+}

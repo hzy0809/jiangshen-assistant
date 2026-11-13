@@ -1,0 +1,125 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CapitalAsset : BaseAsset
+{
+	private class BuildingAssetInfo
+	{
+		public string bundleName;
+
+		public string assetName;
+
+		public string buildingName;
+
+		public BuildingAssetInfo(string b, string a, string n)
+		{
+			bundleName = b;
+			assetName = a;
+			buildingName = n;
+		}
+	}
+
+	private class BuildingObject
+	{
+		public string asset_name;
+
+		public int obj_index;
+
+		public BuildingObject(string n, int o)
+		{
+			asset_name = n;
+			obj_index = o;
+		}
+	}
+
+	private GameObject[] ps_obj = new GameObject[3];
+
+	private List<CityEventParam> CityEvents = new List<CityEventParam>();
+
+	private static readonly string[] m_strMonsters = new string[3] { "battle/swordmaster01", "battle/wizard01", "battle/ape01" };
+
+	private int m_curEvent;
+
+	private bool b_showDg;
+
+	private bool b_loaded;
+
+	private DateTime refreshtime = default(DateTime);
+
+	private bool m_bUpper = true;
+
+	private Dictionary<int, BuildingAssetInfo> building_asset = new Dictionary<int, BuildingAssetInfo>();
+
+	private Dictionary<int, BuildingObject> exist_building_asset = new Dictionary<int, BuildingObject>();
+
+	private void Update()
+	{
+	}
+
+	public void refreshnow()
+	{
+		refreshtime = DateTime.Now;
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		if (!(id != "Capital"))
+		{
+			building_asset.Clear();
+			CollectingStart();
+		}
+	}
+
+	private void myLoading()
+	{
+	}
+
+	private int get_building_model_lvl_id(int idbuilding, string level)
+	{
+		if (idbuilding == 10 || idbuilding == 20 || idbuilding == 30 || idbuilding == 40 || idbuilding == 50 || idbuilding == 60 || idbuilding == 70 || idbuilding == 80)
+		{
+			return 1;
+		}
+		if (level == null)
+		{
+			return 2;
+		}
+		return 1;
+	}
+
+	protected override void Show()
+	{
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		for (int i = 0; i < 3; i++)
+		{
+			ps_obj[i] = null;
+		}
+		for (int j = 0; j < CityEvents.Count; j++)
+		{
+			if (CityEvents[j].mesh != null)
+			{
+				UnityEngine.Object.Destroy(CityEvents[j].mesh);
+			}
+		}
+	}
+
+	public void ActivePSObj(bool bActive)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (ps_obj[i] != null)
+			{
+				ps_obj[i].SetActiveRecursively(bActive);
+			}
+		}
+	}
+
+	public void CheckBuildingUpdate()
+	{
+	}
+}

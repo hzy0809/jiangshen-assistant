@@ -1,0 +1,76 @@
+using System;
+using UnityEngine;
+
+public class FPS_Script : MonoBehaviour
+{
+	public static float fps;
+
+	private static float fps_count;
+
+	private DateTime m_prevTime;
+
+	private DateTime m_adaptTime;
+
+	private void Start()
+	{
+		base.enabled = false;
+	}
+
+	public void StartFPS()
+	{
+		if (!base.enabled)
+		{
+			base.enabled = true;
+			m_prevTime = DateTime.Now;
+			m_adaptTime = DateTime.Now;
+		}
+	}
+
+	private void Update()
+	{
+		TimeSpan timeSpan = DateTime.Now - m_prevTime;
+		if (timeSpan.TotalSeconds >= 2.0)
+		{
+			fps = (float)((double)fps_count / timeSpan.TotalSeconds);
+			fps_count = 0f;
+			m_prevTime = DateTime.Now;
+		}
+		else
+		{
+			fps_count += 1f;
+		}
+		if (!OptionUI.quality_auto)
+		{
+			return;
+		}
+		if ((DateTime.Now - m_adaptTime).TotalSeconds >= 2.0)
+		{
+			if (fps < 20f && QualitySettings.currentLevel != QualityLevel.Fastest)
+			{
+				OptionUI.DecreaseLevel();
+				m_adaptTime = DateTime.Now;
+			}
+			if (fps > 50f && QualitySettings.currentLevel != QualityLevel.Fantastic)
+			{
+				OptionUI.IncreaseLevel();
+				m_adaptTime = DateTime.Now;
+			}
+		}
+		if ((DateTime.Now - m_adaptTime).TotalSeconds >= 2.0)
+		{
+			OptionUI.quality_auto = false;
+		}
+	}
+
+	private void OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Effect;
+		if (OptionUI.quality_auto)
+		{
+			GUI.BeginGroup(new Rect(Screen.width / 2 - 100, Screen.height / 2 - 50, 200f, 100f));
+			GUI.Box(new Rect(0f, 0f, 200f, 100f), string.Empty);
+			GUI.Label(new Rect(50f, 50f, 100f, 20f), "脳脭脢脢脫娄脰脨");
+			GUI.EndGroup();
+		}
+	}
+}

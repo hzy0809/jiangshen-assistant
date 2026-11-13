@@ -1,0 +1,128 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _building_product
+{
+	public byte id;
+
+	public string name;
+
+	public string desc;
+
+	public uint icon;
+
+	public uint time;
+
+	public byte idbuilding;
+
+	public byte population;
+
+	public bool lucky;
+
+	public byte demand_type;
+
+	public uint demand_consume;
+
+	public uint money_output;
+
+	public uint spirit_output;
+
+	public uint enchant_output;
+
+	public uint mana_output;
+
+	public uint exp_output;
+
+	public uint stone_output;
+
+	public uint gold_consume;
+
+	public uint wood_consume;
+
+	public uint mine_consume;
+
+	public uint mana_consume;
+
+	public byte prebuilding;
+
+	public string model_name;
+
+	public void Set(_building_product d)
+	{
+		id = d.id;
+		name = d.name;
+		desc = d.desc;
+		icon = d.icon;
+		time = d.time;
+		idbuilding = d.idbuilding;
+		population = d.population;
+		lucky = d.lucky;
+		demand_type = d.demand_type;
+		demand_consume = d.demand_consume;
+		money_output = d.money_output;
+		spirit_output = d.spirit_output;
+		enchant_output = d.enchant_output;
+		mana_output = d.mana_output;
+		exp_output = d.exp_output;
+		stone_output = d.stone_output;
+		gold_consume = d.gold_consume;
+		wood_consume = d.wood_consume;
+		mine_consume = d.mine_consume;
+		mana_consume = d.mana_consume;
+		prebuilding = d.prebuilding;
+		model_name = d.model_name;
+	}
+
+	public void Set(db_building_product d)
+	{
+		id = (byte)d.id;
+		name = d.name;
+		desc = d.desc;
+		icon = d.icon;
+		time = d.time;
+		idbuilding = (byte)d.idbuilding;
+		population = (byte)d.population;
+		lucky = d.lucky;
+		demand_type = (byte)d.demand_type;
+		demand_consume = d.demand_consume;
+		money_output = d.money_output;
+		spirit_output = d.spirit_output;
+		enchant_output = d.enchant_output;
+		mana_output = d.mana_output;
+		exp_output = d.exp_output;
+		stone_output = d.stone_output;
+		gold_consume = d.gold_consume;
+		wood_consume = d.wood_consume;
+		mine_consume = d.mine_consume;
+		mana_consume = d.mana_consume;
+		prebuilding = (byte)d.prebuilding;
+		model_name = d.model_name;
+	}
+
+	public void Get(ref db_building_product d)
+	{
+		d.id = id;
+		d.name = name;
+		d.desc = desc;
+		d.icon = icon;
+		d.time = time;
+		d.idbuilding = idbuilding;
+		d.population = population;
+		d.lucky = lucky;
+		d.demand_type = demand_type;
+		d.demand_consume = demand_consume;
+		d.money_output = money_output;
+		d.spirit_output = spirit_output;
+		d.enchant_output = enchant_output;
+		d.mana_output = mana_output;
+		d.exp_output = exp_output;
+		d.stone_output = stone_output;
+		d.gold_consume = gold_consume;
+		d.wood_consume = wood_consume;
+		d.mine_consume = mine_consume;
+		d.mana_consume = mana_consume;
+		d.prebuilding = prebuilding;
+		d.model_name = model_name;
+	}
+}

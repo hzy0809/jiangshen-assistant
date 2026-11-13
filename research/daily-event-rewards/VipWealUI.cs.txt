@@ -1,0 +1,620 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class VipWealUI : BaseUI
+{
+	public enum VipPage
+	{
+		Vipdengji,
+		Vipmeiri,
+		Viptequan,
+		number
+	}
+
+	public delegate bool delegate_checkday();
+
+	public delegate void delegate_drawpage();
+
+	private const int numperpage = 7;
+
+	private Texture2D titleStyle;
+
+	private int curPage = -1;
+
+	private _ButtonStyle ui_bar = new _ButtonStyle();
+
+	private GUIStyle ui_bar_down = new GUIStyle();
+
+	private GUIStyle[] ui_zi = new GUIStyle[3];
+
+	private GUIStyle[] ui_di = new GUIStyle[3];
+
+	private delegate_checkday[] checkDay = new delegate_checkday[4];
+
+	private delegate_checkday[] checkAward = new delegate_checkday[4];
+
+	private delegate_drawpage[] drawPage = new delegate_drawpage[4];
+
+	private List<int> pageList = new List<int>();
+
+	private int pagenum;
+
+	private int pagemax;
+
+	private _ButtonStyle ui_down = new _ButtonStyle();
+
+	private _ButtonStyle ui_up = new _ButtonStyle();
+
+	private bool upMoving;
+
+	private bool downMoving;
+
+	private DateTime UpTimer = default(DateTime);
+
+	private DateTime DownTimer = default(DateTime);
+
+	private Dictionary<int, int> pageidx = new Dictionary<int, int>();
+
+	private _ButtonStyle btnlingqu = new _ButtonStyle();
+
+	private _ButtonStyle btnlingqu2 = new _ButtonStyle();
+
+	private GUIStyle ui_ling = new GUIStyle();
+
+	private Texture2D ui_jzjdt;
+
+	private _ButtonStyle Btn_lingqu6 = new _ButtonStyle();
+
+	private _ButtonStyle ui_chongzhi3 = new _ButtonStyle();
+
+	private _ButtonStyle ui_lingqu2 = new _ButtonStyle();
+
+	private GUIStyle ui_gou = new GUIStyle();
+
+	private Texture2D ui_kuang1;
+
+	private Texture2D ui_kuang2;
+
+	private Texture2D[] n_number = new Texture2D[11];
+
+	private Texture2D[] u_number = new Texture2D[11];
+
+	private _ButtonStyle Btn_chongzhi = new _ButtonStyle();
+
+	private _ButtonStyle Btn_lingqu = new _ButtonStyle();
+
+	private _ButtonStyle Btn_qianggou = new _ButtonStyle();
+
+	private Texture2D ui_wenzi1;
+
+	private Texture2D ui_bar1;
+
+	private Texture2D ui_bar2;
+
+	private Texture2D ui_bar3;
+
+	private Texture2D ui_xian;
+
+	private Texture2D ui_dui;
+
+	private _Treasure m_t = new _Treasure();
+
+	private Dictionary<int, Texture2D> m_tequantex = new Dictionary<int, Texture2D>();
+
+	public void MyLoading()
+	{
+		setmyloading();
+		StartLoading();
+	}
+
+	public void setmyloading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_vipweal");
+		AddAsset("ui_premium");
+		AddAsset("ui_main");
+		m_tequantex.Clear();
+		CollectingStart(bCollecting: false);
+		initRechargePages();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (m_t != null)
+		{
+			m_t.setTexIcon(BaseAsset.LoadTexture(m_t.getIconName()));
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("t"))
+		{
+			string[] array = tip.Replace("t", string.Empty).Split("|".ToCharArray());
+			int num = int.Parse(array[0]);
+			int param = int.Parse(array[1]);
+			int param2 = int.Parse(array[2]);
+			_Treasure treasure = new _Treasure();
+			treasure.make((byte)num, param2, param);
+			treasure.PrepTooltip();
+		}
+	}
+
+	private void initRechargePages()
+	{
+		pageidx.Clear();
+		int num = 0;
+		pageidx.Add(0, num);
+		num++;
+		pageidx.Add(1, num);
+		num++;
+		pageidx.Add(2, num);
+		checkDay[pageidx[0]] = checkVipNew;
+		checkDay[pageidx[1]] = checkVipmeiri;
+		checkDay[pageidx[2]] = checkViptequan;
+		checkAward[pageidx[0]] = checkVipAwardNew;
+		checkAward[pageidx[1]] = checkVipmeiriAward;
+		checkAward[pageidx[2]] = checkViptequanAward;
+		drawPage[pageidx[0]] = DrawVipLibaoNew;
+		drawPage[pageidx[1]] = DrawVipmeiri;
+		drawPage[pageidx[2]] = DrawViptequan;
+	}
+
+	public bool checkVipNew()
+	{
+		return true;
+	}
+
+	public bool checkVipmeiri()
+	{
+		return true;
+	}
+
+	public bool checkViptequan()
+	{
+		return true;
+	}
+
+	public bool checkVipAwardNew()
+	{
+		if (checkVipNew())
+		{
+			foreach (object value in Global.getTemplates("vip_rewards_new").Values)
+			{
+				_vip_rewards_new vip_rewards_new = (_vip_rewards_new)value;
+				if (vip_rewards_new.vip_level <= Global.character_.VIPLEVEL && !Global.character_.viprewards.Contains(vip_rewards_new.id))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public bool checkVipmeiriAward()
+	{
+		return !Global.character_.vip_gift_today;
+	}
+
+	public bool checkViptequanAward()
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			if (!Global.character_.vipdailyshopitems.ContainsKey((byte)(i + 1)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void DrawVipLibaoNew()
+	{
+		__BaseUI.Label(__BaseUI._rect(621f, 83f, 39f, 19f), "VIP" + Global.character_.VIPLEVEL, __BaseUI._numCenter, __BaseUI._clrWhite);
+		if (ui_chongzhi3.Button(bBtn: true, __BaseUI._rect(665f, 80f, 80f, 22f), string.Empty))
+		{
+			RootUI.Coin();
+		}
+		for (uint num = 1u; num <= 10; num++)
+		{
+			if (num > Global.character_.VIPLEVEL)
+			{
+				continue;
+			}
+			if (checkVipLevelNew(num))
+			{
+				if (ui_lingqu2.Button(bBtn: true, __BaseUI._rect(664f, 118 + 33 * (num - 1), 80f, 22f), string.Empty))
+				{
+					PremiumUI component = BaseUI.GetRootUI().GetComponent<PremiumUI>();
+					component.cs_vip_get_reward_new(num);
+				}
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(687f, 115 + 32 * (num - 1), 27f, 26f), string.Empty, ui_gou);
+			}
+		}
+	}
+
+	private void DrawVipmeiri()
+	{
+		__BaseUI.Box(__BaseUI._rect(445f, 94f, 63f, 46f), n_number[Global.character_.VIPLEVEL]);
+		DrawmeiriTre(159, Global.character_.VIPLEVEL);
+		if (Global.character_.VIPLEVEL < 10)
+		{
+			__BaseUI.Box(__BaseUI._rect(380f, 236f, 366f, 167f), ui_kuang1);
+			__BaseUI.Box(__BaseUI._rect(445f, 235f, 63f, 46f), u_number[Global.character_.VIPLEVEL + 1]);
+			if (Btn_chongzhi.Button(IsEnable(), __BaseUI._rect(597f, 369f, 80f, 22f), string.Empty))
+			{
+				RootUI.Coin();
+			}
+			DrawmeiriTre(298, Global.character_.VIPLEVEL + 1);
+		}
+		else
+		{
+			__BaseUI.Box(__BaseUI._rect(380f, 236f, 366f, 167f), ui_kuang2);
+		}
+		if (Global.character_.vip_gift_today)
+		{
+			__BaseUI.Box(__BaseUI._rect(486f, 414f, 144f, 18f), ui_wenzi1);
+		}
+		else if (Btn_lingqu.Button(IsEnable(), __BaseUI._rect(486f, 400f, 146f, 36f), string.Empty))
+		{
+			cs_vip_daily_gift_get();
+		}
+	}
+
+	private void DrawmeiriTre(int y, int level)
+	{
+		Hashtable templates = Global.getTemplates("vip_daily_gift");
+		_vip_daily_gift vip_daily_gift = null;
+		int num = 0;
+		foreach (DictionaryEntry item in templates)
+		{
+			_vip_daily_gift vip_daily_gift2 = item.Value as _vip_daily_gift;
+			if (vip_daily_gift2.viplevel != level)
+			{
+				continue;
+			}
+			m_t.make(vip_daily_gift2.treasure_type, vip_daily_gift2.param0, vip_daily_gift2.param1);
+			if (m_t.texIcon != null)
+			{
+				if (m_t.texIcon.name != m_t.getIconName())
+				{
+					AddAssetSub(m_t.getIconName());
+					StartLoadingSub();
+				}
+				if (m_t.texIcon.name == m_t.getIconName())
+				{
+					__BaseUI.Box(__BaseUI._rect(552 + 68 * num, y, 46f, 46f), new GUIContent(string.Empty, "t" + vip_daily_gift2.treasure_type + "|" + vip_daily_gift2.param1 + "|" + vip_daily_gift2.param0), m_t.texIcon);
+				}
+			}
+			else
+			{
+				AddAssetSub(m_t.getIconName());
+				StartLoadingSub();
+			}
+			__BaseUI.OutlinedLabel(__BaseUI._rect(552 + 68 * num, y + 33, 46f, 16f), Global.getFormatNumber((uint)m_t.param[1]), __BaseUI._numNCenter, __BaseUI._clrGreen);
+			num++;
+		}
+	}
+
+	private void DrawViptequan()
+	{
+		__BaseUI.Box(__BaseUI._rect(360f, 78f, 63f, 46f), n_number[Global.character_.VIPLEVEL]);
+		Hashtable templates = Global.getTemplates("vip_daily_shop");
+		for (int i = 0; i < 4; i++)
+		{
+			_vip_daily_shop vip_daily_shop = null;
+			foreach (DictionaryEntry item in templates)
+			{
+				_vip_daily_shop vip_daily_shop2 = item.Value as _vip_daily_shop;
+				if (vip_daily_shop2.vip_level == Global.character_.VIPLEVEL && vip_daily_shop2.iditem == i + 1)
+				{
+					vip_daily_shop = vip_daily_shop2;
+					break;
+				}
+			}
+			int num = i % 2;
+			int num2 = i / 2;
+			__BaseUI.BeginGroup(__BaseUI._rect(210 + num * 266, 144 + num2 * 134, 263f, 132f));
+			if (vip_daily_shop == null)
+			{
+				__BaseUI.Box(__BaseUI._rect(0f, 0f, 263f, 132f), ui_bar2);
+			}
+			else if (Global.character_.vipdailyshopitems.ContainsKey((byte)(i + 1)))
+			{
+				__BaseUI.Box(__BaseUI._rect(0f, 0f, 263f, 132f), ui_bar3);
+			}
+			else
+			{
+				__BaseUI.Box(__BaseUI._rect(0f, 0f, 263f, 132f), ui_bar1);
+				m_t.make((byte)vip_daily_shop.treasure_type, vip_daily_shop.param0, vip_daily_shop.param1);
+				if (m_t.texIcon != null)
+				{
+					if (m_t.texIcon.name != m_t.getIconName())
+					{
+						AddAssetSub(m_t.getIconName());
+						StartLoadingSub();
+					}
+					__BaseUI.Box(__BaseUI._rect(37f, 37f, 58f, 58f), new GUIContent(string.Empty, "t" + vip_daily_shop.treasure_type + "|" + vip_daily_shop.param1 + "|" + vip_daily_shop.param0), m_t.texIcon);
+				}
+				else
+				{
+					AddAssetSub(m_t.getIconName());
+					StartLoadingSub();
+				}
+				__BaseUI.OutlinedLabel(__BaseUI._rect(37f, 83f, 58f, 16f), Global.getFormatNumber((uint)m_t.param[1]), __BaseUI._numNCenter, __BaseUI._clrGreen);
+				__BaseUI.Label(__BaseUI._rect(207f, 31f, 18f, 16f), string.Empty, __BaseUI._goldIcon);
+				__BaseUI.Label(__BaseUI._rect(207f, 63f, 18f, 16f), string.Empty, __BaseUI._goldIcon);
+				__BaseUI.Label(__BaseUI._rect(148f, 30f, 56f, 16f), vip_daily_shop.original_price.ToString(), __BaseUI._numNCenter, __BaseUI._clrWhite);
+				__BaseUI.Label(__BaseUI._rect(148f, 61f, 56f, 16f), vip_daily_shop.price.ToString(), __BaseUI._numNCenter, __BaseUI._clrWhite);
+				__BaseUI.Box(__BaseUI._rect(155f, 38f, 65f, 2f), ui_xian);
+				if (Btn_qianggou.Button(IsEnable(), __BaseUI._rect(130f, 89f, 80f, 22f), string.Empty))
+				{
+					__BaseUI.GetConsumeUI().setConsume((int)vip_daily_shop.price, 103, BuyCallback, new object[1] { vip_daily_shop.id });
+				}
+			}
+			__BaseUI.EndGroup();
+		}
+		if (Btn_chongzhi.Button(IsEnable(), __BaseUI._rect(650f, 424f, 80f, 22f), string.Empty))
+		{
+			RootUI.Coin();
+		}
+	}
+
+	private void BuyCallback(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			uint id = (uint)objs[0];
+			cs_vip_daily_shop_buy(id);
+		}
+	}
+
+	private bool checkVipLevelNew(uint level)
+	{
+		foreach (_vip_rewards_new value in Global.getTemplates("vip_rewards_new").Values)
+		{
+			if (value.vip_level == level && !Global.character_.viprewards.Contains(value.id))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void Update()
+	{
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_vipweal");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_premium");
+		AssetBundle asset3 = BaseAsset.was.GetAsset("ui_main");
+		for (int i = 0; i < 3; i++)
+		{
+			if (checkDay[pageidx[i]] != null && checkDay[pageidx[i]]())
+			{
+				ui_di[pageidx[i]] = new GUIStyle();
+				ui_di[pageidx[i]].normal.background = asset.Load("ui_di" + (i + 1)) as Texture2D;
+				ui_zi[pageidx[i]] = new GUIStyle();
+				ui_zi[pageidx[i]].normal.background = asset.Load("ui_zi" + (i + 1)) as Texture2D;
+			}
+		}
+		titleStyle = asset.Load("ui_biaoti_meirilibao") as Texture2D;
+		ui_bar.make(asset2, "ui_bar");
+		ui_bar_down.normal.background = asset2.Load("ui_bar_down") as Texture2D;
+		ui_ling.normal.background = asset2.Load("ui_ling") as Texture2D;
+		pageList.Clear();
+		for (int j = 0; j < 3; j++)
+		{
+			if (checkDay[j] != null && checkDay[j]())
+			{
+				pageList.Add(j);
+			}
+		}
+		if (pageList.Count > 0)
+		{
+			curPage = 0;
+		}
+		pagenum = 0;
+		ui_down.make(asset2, "ui_down");
+		ui_up.make(asset2, "ui_up");
+		btnlingqu.make(asset2, "button_lingqu");
+		btnlingqu2.make(asset, "ui_lingqu");
+		ui_jzjdt = asset.Load("ui_jzjdt") as Texture2D;
+		Btn_lingqu6.make(asset, "ui_lingqu6");
+		ui_gou.normal.background = asset2.Load("ui_gou") as Texture2D;
+		ui_lingqu2.make(asset2, "ui_lingqu2");
+		ui_kuang1 = asset.Load("ui_kuang1") as Texture2D;
+		ui_kuang2 = asset.Load("ui_kuang2") as Texture2D;
+		Btn_chongzhi.make(asset, "button_chongzhi3");
+		for (int k = 0; k < 11; k++)
+		{
+			n_number[k] = asset.Load("ui_" + k + "_normal") as Texture2D;
+			u_number[k] = asset.Load("ui_" + k + "_unable") as Texture2D;
+		}
+		ui_wenzi1 = asset.Load("ui_wenzi1") as Texture2D;
+		Btn_lingqu.make(asset, "button_lingqulibao");
+		ui_bar1 = asset.Load("ui_bar1") as Texture2D;
+		ui_bar2 = asset.Load("ui_bar2") as Texture2D;
+		ui_bar3 = asset.Load("ui_bar3") as Texture2D;
+		ui_xian = asset.Load("ui_xian") as Texture2D;
+		Btn_qianggou.make(asset, "button_qianggou");
+		ui_dui = asset.Load("ui_dui") as Texture2D;
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(800f, 480f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, titleStyle))
+		{
+			return;
+		}
+		if (ui_di[pageList[curPage]] != null)
+		{
+			__BaseUI.Label(__BaseUI._rect(169f, 61f, 610f, 397f), string.Empty, ui_di[pageList[curPage]]);
+		}
+		if (drawPage[pageList[curPage]] != null)
+		{
+			drawPage[pageList[curPage]]();
+		}
+		int num = 0;
+		pagemax = (pageList.Count - 1) / 7;
+		GUI.BeginGroup(__BaseUI._rect(20f, 86f, 171f, 343f));
+		int num2 = -1 * pagenum * 49 * 7;
+		if (DownTimer > DateTime.Now)
+		{
+			double num3 = (1.0 - (DownTimer - DateTime.Now).TotalSeconds / 0.3) * 49.0 * 7.0;
+			num2 -= (int)num3;
+		}
+		else if (UpTimer > DateTime.Now)
+		{
+			double num4 = (1.0 - (UpTimer - DateTime.Now).TotalSeconds / 0.3) * 49.0 * 7.0;
+			num2 += (int)num4;
+		}
+		else if (downMoving)
+		{
+			downMoving = false;
+			pagenum++;
+			curPage = pagenum * 7;
+		}
+		else if (upMoving)
+		{
+			upMoving = false;
+			pagenum--;
+			curPage = pagenum * 7;
+		}
+		GUI.BeginGroup(__BaseUI._rect(0f, num2, 171f, 147f));
+		for (int i = 0; i < pageList.Count; i++)
+		{
+			if (i != curPage)
+			{
+				if (ui_bar.Button(IsEnable(), __BaseUI._rect(0f, 49 * num, 171f, 50f), string.Empty))
+				{
+					curPage = i;
+				}
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(0f, 49 * num, 171f, 50f), string.Empty, ui_bar_down);
+			}
+			__BaseUI.Label(__BaseUI._rect(15f, 14 + 49 * num, 92f, 20f), string.Empty, ui_zi[pageList[i]]);
+			if (checkAward[pageList[i]] != null && checkAward[pageList[i]]())
+			{
+				if (pageList[i] == pageidx[2])
+				{
+					__BaseUI.Box(__BaseUI._rect(119f, 0 + 49 * num, 28f, 28f), ui_dui);
+				}
+				else
+				{
+					__BaseUI.Label(__BaseUI._rect(119f, 0 + 49 * num, 28f, 28f), string.Empty, __BaseUI._ui_jiang);
+				}
+			}
+			num++;
+		}
+		GUI.EndGroup();
+		GUI.EndGroup();
+		if (DownTimer < DateTime.Now && UpTimer < DateTime.Now)
+		{
+			if (pagenum < pagemax && ui_down.Button(bBtn: true, __BaseUI._rect(61f, 428f, 56f, 38f), string.Empty))
+			{
+				DownTimer = DateTime.Now.AddSeconds(0.3);
+				downMoving = true;
+			}
+			if (pagenum > 0 && ui_up.Button(bBtn: true, __BaseUI._rect(61f, 51f, 56f, 38f), string.Empty))
+			{
+				UpTimer = DateTime.Now.AddSeconds(0.3);
+				upMoving = true;
+			}
+		}
+		if (EndGUI(hasClose: true, hasBlock: true, isX: false, hasFrameAnimation: false))
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	public void cs_vip_daily_shop_buy(uint id)
+	{
+		CSVipDailyShopBuy_0x3B3 cSVipDailyShopBuy_0x3B = new CSVipDailyShopBuy_0x3B3();
+		cSVipDailyShopBuy_0x3B.iditem = id;
+		RootUI.m_client.Send(947, cSVipDailyShopBuy_0x3B, sc_vip_daily_shop_buy);
+	}
+
+	private void sc_vip_daily_shop_buy(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCVipDailyShopBuy_0x3B3 sCVipDailyShopBuy_0x3B = JSProtoBuf.Serializer.Deserialize<SCVipDailyShopBuy_0x3B3>(stream);
+		if (sCVipDailyShopBuy_0x3B.result == 1)
+		{
+			if (sCVipDailyShopBuy_0x3B.bonus != null)
+			{
+				List<_Treasure> list = new List<_Treasure>();
+				_Treasure treasure = new _Treasure();
+				treasure.make(sCVipDailyShopBuy_0x3B.bonus);
+				list.Add(treasure);
+				BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+				battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+				battleResultUI.MyLoading();
+			}
+			Global.character_.gold -= (int)sCVipDailyShopBuy_0x3B.goldcost;
+			__BaseUI.drawStateBubble("gold-" + sCVipDailyShopBuy_0x3B.goldcost);
+			VipDailyShopItem vipDailyShopItem = new VipDailyShopItem();
+			vipDailyShopItem.Set(sCVipDailyShopBuy_0x3B.item);
+			Global.character_.vipdailyshopitems.Add(vipDailyShopItem.iditem, vipDailyShopItem);
+		}
+	}
+
+	public void BonusClose()
+	{
+		EnableAll();
+	}
+
+	public void cs_vip_daily_gift_get()
+	{
+		CSVIPDailyGiftGet_0x71C pkt = new CSVIPDailyGiftGet_0x71C();
+		RootUI.m_client.Send(1820, pkt, sc_vip_daily_gift_get);
+	}
+
+	private void sc_vip_daily_gift_get(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCVIPDailyGiftGet_0x71C sCVIPDailyGiftGet_0x71C = JSProtoBuf.Serializer.Deserialize<SCVIPDailyGiftGet_0x71C>(stream);
+		if (sCVIPDailyGiftGet_0x71C.operate != SCVIPDailyGiftGet_0x71C.Operate.OK)
+		{
+			return;
+		}
+		Global.character_.vip_gift_today = true;
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonu in sCVIPDailyGiftGet_0x71C.bonus)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonu);
+			list.Add(treasure);
+		}
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+		battleResultUI.MyLoading();
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

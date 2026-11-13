@@ -1,0 +1,460 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+
+public class BuildingUI : BaseUI
+{
+	private Texture2D texTitle;
+
+	private Texture2D texLock;
+
+	private Texture2D texBottom;
+
+	private GUIStyle styBar = new GUIStyle();
+
+	private _ButtonStyle btnDetail = new _ButtonStyle();
+
+	private _ButtonStyle btnBuild = new _ButtonStyle();
+
+	private _ButtonStyle btnPrev = new _ButtonStyle();
+
+	private _ButtonStyle btnNext = new _ButtonStyle();
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private List<BuildingType> buildingTypes;
+
+	private BuildingType curType;
+
+	private int m_iPage;
+
+	private float xoffset;
+
+	private float yoffset;
+
+	private bool isclosing;
+
+	private int buildcount;
+
+	private BuildingTemplate bt;
+
+	private Dictionary<int, Texture2D> buildTex = new Dictionary<int, Texture2D>();
+
+	private Texture2D ui_bar_zs;
+
+	private static readonly uint[] sort_types = new uint[1];
+
+	private Rect m_TypeRc = default(Rect);
+
+	private Rect m_BuildRc = default(Rect);
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	private void MyClose()
+	{
+		Hide();
+		BuildingBuildUI.m_bBuildVisible = false;
+		MainUI.heightBottomFrame = 87;
+		BroadcastMessage("EnableMouseDown", SendMessageOptions.DontRequireReceiver);
+		BroadcastMessage("VisibleMesh", SendMessageOptions.DontRequireReceiver);
+	}
+
+	private void BuildClose()
+	{
+		Hide();
+		MainUI.heightBottomFrame = 87;
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		isclosing = false;
+		m_iPage = 0;
+		xoffset = 0f;
+		yoffset = 0f;
+		BuildingBuildUI.m_bBuildVisible = true;
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		BroadcastMessage("HideMesh", SendMessageOptions.DontRequireReceiver);
+		MainUI.heightBottomFrame = 0;
+		buildingTypes = null;
+		if (buildingTypes == null)
+		{
+			buildingTypes = new List<BuildingType>();
+			_building building = null;
+			uint[] array = sort_types;
+			foreach (uint id in array)
+			{
+				_building_type d = Global.getTemplate("building_type", id) as _building_type;
+				BuildingType buildingType = new BuildingType(d);
+				buildingTypes.Add(buildingType);
+				Hashtable templates = Global.getTemplates("building");
+				foreach (DictionaryEntry item in templates)
+				{
+					_building building2 = item.Value as _building;
+					if (building2.open_level > Global.character_.level)
+					{
+						if (building == null || building.open_level > building2.open_level)
+						{
+							building = building2;
+						}
+					}
+					else if (Global.character_.hasBuilding(building2.prebuilding) && Global.character_.limitBuildingCount(building2) && ((buildingType.id == 0 && building2.type != 1 && building2.type != 7) || building2.type == buildingType.id))
+					{
+						buildingType.buildings.Add(new BuildingTemplate(building2));
+					}
+				}
+				if (building != null)
+				{
+					buildingType.buildings.Add(new BuildingTemplate(building));
+				}
+				buildingType.buildings.Sort(delegate(BuildingTemplate a, BuildingTemplate b)
+				{
+					int num = 0;
+					int num2 = 0;
+					for (int j = 0; j < sort_types.Length; j++)
+					{
+						if (a.type == sort_types[j])
+						{
+							num = j;
+						}
+						if (b.type == sort_types[j])
+						{
+							num2 = j;
+						}
+					}
+					return (num != num2) ? num.CompareTo(num2) : a.open_level.CompareTo(b.open_level);
+				});
+			}
+			curType = buildingTypes[0];
+		}
+		AddAsset("ui_building");
+		AddAsset("ui_buildingup");
+		buildcount = 0;
+		foreach (BuildingDrawing value in Global.character_.buildingdrawings.Values)
+		{
+			if (value.num != 0)
+			{
+				buildcount++;
+			}
+		}
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (AssetName.Contains("building"))
+		{
+			string s = AssetName.Replace("building", string.Empty);
+			int key = int.Parse(s);
+			if (!buildTex.ContainsKey(key))
+			{
+				Texture2D value = BaseAsset.LoadTexture(AssetName);
+				buildTex.Add(key, value);
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		Visible();
+		Enable();
+		m_bInit = true;
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_building");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_buildingup");
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		texTitle = asset.Load("ui_biaoti") as Texture2D;
+		texLock = asset.Load("ui_zhegai") as Texture2D;
+		styBar.normal.background = asset.Load("ui_bar") as Texture2D;
+		styBar.border = new RectOffset(16, 16, 16, 16);
+		texBottom = asset.Load("ui_jianbian") as Texture2D;
+		btnDetail.make(asset, "button_xiang", unable: false);
+		btnPrev.make(asset, "button_left", unable: false);
+		btnNext.make(asset, "button_right", unable: false);
+		ui_bar_zs = asset2.Load("ui_bar_zs") as Texture2D;
+	}
+
+	private void drawResource(ref Rect rc, string msg, Color clr, Texture2D icon)
+	{
+		GUI.BeginGroup(rc);
+		GUI.DrawTexture(__BaseUI._rect(0f, 0f, 23f, 23f), icon);
+		__BaseUI.Label(__BaseUI._rect(30f, 1f, 100f, 22f), msg, __BaseUI._numLeft, clr);
+		GUI.EndGroup();
+		rc.x += rc.width;
+	}
+
+	private void drawConsume(ref Rect rc, uint consume, Texture2D icon, ref bool bRight)
+	{
+		if (consume != 0)
+		{
+			GUI.BeginGroup(rc);
+			GUI.Label(new Rect(10f, 0f, 60f, 34f), string.Empty, __BaseUI._box13Style);
+			__BaseUI.Label(__BaseUI._rect(25f, 0f, 55f, 34f), consume.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+			if (icon != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(0f, 5f, icon.width, icon.height), icon);
+			}
+			GUI.EndGroup();
+			if (bRight)
+			{
+				rc.x += 70f;
+			}
+			else
+			{
+				rc.x -= 70f;
+				rc.y += 30f;
+			}
+			bRight = !bRight;
+		}
+	}
+
+	private void BuildingClose()
+	{
+		Hide();
+		MainUI.heightBottomFrame = 87;
+	}
+
+	public bool isCurType()
+	{
+		return curType.id == 5;
+	}
+
+	public Rect getTypeRc()
+	{
+		return m_TypeRc;
+	}
+
+	public Rect getBuildRc()
+	{
+		return m_BuildRc;
+	}
+
+	private void Update()
+	{
+		if (isclosing)
+		{
+			if (!(yoffset > 0f))
+			{
+				return;
+			}
+			yoffset -= Time.deltaTime * 775f;
+			if (yoffset < 0f)
+			{
+				if (OnClose != null)
+				{
+					OnClose();
+				}
+				isclosing = false;
+			}
+			return;
+		}
+		if (yoffset < 155f)
+		{
+			yoffset += Time.deltaTime * 775f;
+			if (yoffset > 155f)
+			{
+				yoffset = 155f;
+			}
+		}
+		int num = Screen.width - 110 - 120;
+		int num2 = num / 109;
+		int num3 = (m_iPage + 1) * num2;
+		if (num3 > buildcount)
+		{
+			num3 = buildcount;
+		}
+		if (xoffset < (float)(num3 * 109))
+		{
+			xoffset += Time.deltaTime * ((float)(num2 * 109) / 0.2f);
+			if (xoffset > (float)(num3 * 109))
+			{
+				xoffset = num3 * 109;
+			}
+		}
+		else if (xoffset > (float)(num3 * 109))
+		{
+			xoffset -= Time.deltaTime * ((float)(num2 * 109) / 0.2f);
+			if (xoffset < (float)(num3 * 109))
+			{
+				xoffset = num3 * 109;
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rectB(0f, yoffset, Screen.width, 155f));
+		GUI.DrawTexture(__BaseUI._rect(0f, 20f, Screen.width, 135f), texBottom);
+		draw_right_bar();
+		int num = Screen.width - 110 - 120;
+		int num2 = num / 109;
+		__BaseUI.BeginGroup(__BaseUI._rect(110f, 0f, num, 128f));
+		int num3 = 0;
+		foreach (BuildingDrawing value in Global.character_.buildingdrawings.Values)
+		{
+			if (value.num == 0)
+			{
+				continue;
+			}
+			Rect rc = __BaseUI._rect((float)(num + num3 * 109) - xoffset, 0f, 109f, 128f);
+			num3++;
+			if (rc.x + rc.width < 0f)
+			{
+				continue;
+			}
+			if (rc.x > __BaseUI._rcCur.width)
+			{
+				break;
+			}
+			_building d = Global.getTemplate("building", value.idbuilding) as _building;
+			bt = new BuildingTemplate(d);
+			__BaseUI.BeginGroup(rc);
+			if (buildTex.ContainsKey((int)bt.icon) && buildTex[(int)bt.icon] != null)
+			{
+				__BaseUI.Box(__BaseUI._rect(8f, 8f, 80f, 80f), new GUIContent(string.Empty, "building" + bt.id), buildTex[(int)bt.icon]);
+			}
+			else
+			{
+				AddAssetSub("building" + (int)bt.icon);
+				StartLoadingSub();
+			}
+			GUI.Label(__BaseUI._rect(0f, 0f, 96f, 128f), string.Empty, styBar);
+			__BaseUI.ShadowLabel(__BaseUI._rect(0f, 78f, 96f, 20f), bt.name, __BaseUI._textCenter, __BaseUI._clrGreen, 14);
+			bool flag = true;
+			if (bt.open_level <= Global.character_.level && Global.character_.hasBuilding(bt.prebuilding) && Global.character_.limitBuildingCount(bt))
+			{
+				flag = false;
+			}
+			if (flag)
+			{
+				__BaseUI.Box(__BaseUI._rect(0f, 0f, 96f, 128f), new GUIContent(string.Empty, "Building" + bt.id), texLock);
+			}
+			else
+			{
+				if (value.idbuilding == 16)
+				{
+					m_BuildRc = GUITOScreen(__BaseUI._rect(0f, 0f, 96f, 128f));
+				}
+				if (__BaseUI._hover6Button.Button(bBtn: true, __BaseUI._rect(0f, 0f, 96f, 128f), new GUIContent(string.Empty, "Building" + bt.id)))
+				{
+					if (Global.character_.building_material >= bt.material_consume)
+					{
+						if (BuildBuilding(bt))
+						{
+							Disable();
+							isclosing = true;
+							OnClose = BuildClose;
+						}
+					}
+					else
+					{
+						DisableAll();
+						int gold = (int)Mathf.Ceil(((float)bt.material_consume - (float)Global.character_.building_material) / 40f);
+						__BaseUI.GetConsumeUI().setConsume(gold, 94, buildRecall, new object[1] { bt });
+					}
+				}
+			}
+			__BaseUI.Box(__BaseUI._rect(17f, 94f, 62f, 27f), ui_bar_zs);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(0f, 98f, 50f, 20f), value.num.ToString(), __BaseUI._textNRight, __BaseUI._clrGreen);
+			__BaseUI.EndGroup();
+		}
+		__BaseUI.EndGroup();
+		if (m_iPage > 0 && btnPrev.Button(bBtn: true, __BaseUI._rect(50f, 15f, 51f, 56f), string.Empty))
+		{
+			m_iPage--;
+		}
+		int num4 = (int)Math.Ceiling((float)buildcount / (float)num2);
+		if (m_iPage < num4 - 1 && btnNext.Button(bBtn: true, __BaseUI._rectR(120f, 15f, 51f, 56f), string.Empty))
+		{
+			m_iPage++;
+		}
+		__BaseUI.EndGroup();
+		drawTooltips();
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void buildRecall(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			EnableAll();
+			BuildingTemplate buildingTemplate = objs[0] as BuildingTemplate;
+			BuildBuilding(buildingTemplate, usegold: true);
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("Building"))
+		{
+			int id = int.Parse(tip.Replace("Building", string.Empty));
+			_building d = Global.getTemplate("building", (uint)id) as _building;
+			BuildingTemplate d2 = new BuildingTemplate(d);
+			tooltipUI.ShowTooltipBuildingTemplate(d2, "Building");
+		}
+	}
+
+	private void _return()
+	{
+		Disable();
+		isclosing = true;
+		OnClose = MyClose;
+	}
+
+	public bool BuildBuilding(_building bt)
+	{
+		return BuildBuilding(bt, usegold: false);
+	}
+
+	public bool BuildBuilding(_building bt, bool usegold)
+	{
+		if (bt.open_level > Global.character_.level)
+		{
+			DisableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20194u, bt.name, bt.open_level), null, EnableAll);
+		}
+		else if (!Global.character_.hasBuilding(bt.prebuilding))
+		{
+			DisableAll();
+			_building building = Global.getTemplate("building", bt.prebuilding) as _building;
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20195u, building.name, bt.name), null, EnableAll);
+		}
+		else
+		{
+			if (Global.character_.limitBuildingCount(bt))
+			{
+				GetComponent<BuildingBuildUI>().MyLoading(bt, BuildingClose, usegold);
+				return true;
+			}
+			DisableAll();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20196u), null, EnableAll);
+		}
+		return false;
+	}
+}

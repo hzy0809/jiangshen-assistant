@@ -1,0 +1,46 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSArenaBonusGet_0x462")]
+public class CSArenaBonusGet_0x462 : IExtensible
+{
+	private uint _time;
+
+	private bool _find_back;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "time", DataFormat = DataFormat.TwosComplement)]
+	public uint time
+	{
+		get
+		{
+			return _time;
+		}
+		set
+		{
+			_time = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "find_back", DataFormat = DataFormat.Default)]
+	public bool find_back
+	{
+		get
+		{
+			return _find_back;
+		}
+		set
+		{
+			_find_back = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

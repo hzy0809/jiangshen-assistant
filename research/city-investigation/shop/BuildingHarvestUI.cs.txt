@@ -1,0 +1,869 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BuildingHarvestUI : BaseUI
+{
+	private Texture2D texCaption;
+
+	private Texture2D texFinish;
+
+	private _ButtonStyle btnStart = new _ButtonStyle();
+
+	private _ButtonStyle btnStop = new _ButtonStyle();
+
+	private _ButtonStyle btnHarvest = new _ButtonStyle();
+
+	private _ButtonStyle btnAccel = new _ButtonStyle();
+
+	private _ButtonStyle btnCancel = new _ButtonStyle();
+
+	private _ButtonStyle Btn_kuorong = new _ButtonStyle();
+
+	private _ButtonStyle Btn_shengji = new _ButtonStyle();
+
+	private bool upbuilding;
+
+	private bool allbuildOneUp;
+
+	private bool kuorongOK;
+
+	private Building building;
+
+	private Building building_next = new Building();
+
+	private Rect m_rect;
+
+	private bool m_bAcceling;
+
+	public static bool _bHarvesting;
+
+	public static byte _idbuilding;
+
+	public static delegate_OnClose _onClose;
+
+	public static bool _bBubble = true;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public override void Hide()
+	{
+		base.Hide();
+	}
+
+	private void MyClose()
+	{
+		Hide();
+		building = null;
+		MainUI.SetSubUI(null);
+	}
+
+	public void MyLoading(Building data)
+	{
+		if (IsVisible() && building != null && building.id == data.id)
+		{
+			MyClose();
+			return;
+		}
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		building = data;
+		AddAsset("ui_building");
+		AddAsset("ui_buildingup");
+		if (building.texIcon == null)
+		{
+			AddAssetSub("building" + building.data.icon);
+		}
+		if (building.product != null)
+		{
+			if (building.product.texIcon == null)
+			{
+				AddAssetSub("product" + building.product.icon);
+			}
+			if (building.product.texIconB == null)
+			{
+				AddAssetSub("product" + building.product.icon + "_b");
+			}
+			if (building.product.texZi == null)
+			{
+				AddAssetSub("product" + building.product.icon + "_zi");
+			}
+		}
+		CollectingStart(bCollecting: false);
+		StartLoading();
+		Vector3 vector = Camera.main.WorldToScreenPoint(building.mesh.transform.position);
+		vector.y = (float)Screen.height - vector.y;
+		int num = 384;
+		int num2 = 152;
+		if (vector.x + 50f + (float)num * __BaseUI._screenScale > (float)Screen.width)
+		{
+			vector.x = (float)(Screen.width - 50) - (float)num * __BaseUI._screenScale;
+		}
+		if (vector.y + (float)num2 * __BaseUI._screenScale / 2f > (float)Screen.height)
+		{
+			vector.y = (float)Screen.height - (float)num2 * __BaseUI._screenScale / 2f;
+		}
+		if (vector.y - (float)num2 * __BaseUI._screenScale / 2f < 0f)
+		{
+			vector.y = (float)num2 * __BaseUI._screenScale / 2f;
+		}
+		m_rect = new Rect(vector.x + 50f, vector.y - (float)num2 * __BaseUI._screenScale / 2f, (float)num * __BaseUI._screenScale, (float)num2 * __BaseUI._screenScale);
+		if (building.data.type != 4)
+		{
+			return;
+		}
+		Hashtable templates = Global.getTemplates("building_advance");
+		upbuilding = false;
+		kuorongOK = false;
+		foreach (DictionaryEntry item in templates)
+		{
+			_building_advance building_advance = item.Value as _building_advance;
+			if (building_advance.idbuilding != building.idbuilding && building_advance.target_building != building.idbuilding)
+			{
+				continue;
+			}
+			if (building_advance.target_building == building.idbuilding)
+			{
+				kuorongOK = true;
+			}
+			building_next.idbuilding = building_advance.target_building;
+			if (!(Global.getTemplate("building", building_next.idbuilding) is _building data2))
+			{
+				break;
+			}
+			building_next.data = data2;
+			Hashtable templates2 = Global.getTemplates("building_upgrade");
+			foreach (DictionaryEntry item2 in templates2)
+			{
+				_building_upgrade building_upgrade = item2.Value as _building_upgrade;
+				if (building_upgrade.level > building.level && building_upgrade.idbuilding == building.idbuilding && building_upgrade.level == building.level + 1)
+				{
+					upbuilding = true;
+					building_next.level = building_upgrade.level;
+				}
+			}
+			AddAssetSub("building" + building_next.data.icon);
+			StartLoadingSub();
+			break;
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (building == null)
+		{
+			return;
+		}
+		building.texIcon = BaseAsset.LoadTexture("building" + building.data.icon);
+		if (building.product != null)
+		{
+			if (building.product.texIcon == null)
+			{
+				building.product.texIcon = BaseAsset.LoadTexture("product" + building.product.icon);
+			}
+			if (building.product.texIconB == null)
+			{
+				building.product.texIconB = BaseAsset.LoadTexture("product" + building.product.icon + "_b");
+			}
+			if (building.product.texZi == null)
+			{
+				building.product.texZi = BaseAsset.LoadTexture("product" + building.product.icon + "_zi");
+			}
+		}
+		if (building.data.type == 4 && building_next != null && building_next.data != null)
+		{
+			building_next.texIcon = BaseAsset.LoadTexture("building" + building_next.data.icon);
+		}
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+		MainUI.SetSubUI(this);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_building");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_buildingup");
+		texCaption = asset.Load("ui_shengchanzhong") as Texture2D;
+		texFinish = asset.Load("tga_yishengchanwanbi") as Texture2D;
+		btnStart.make(asset, "button_kaishi", unable: false);
+		btnStop.make(asset, "button_tingzhi", unable: false);
+		btnHarvest.make(asset, "button_shouhuo", unable: false);
+		btnAccel.make(asset, "button_jiasushengchan", unable: false);
+		btnCancel.make(asset, "button_quxiao2", unable: false);
+		Btn_kuorong.make(asset2, "button_kuorong3");
+		Btn_shengji.make(asset2, "button_shengji");
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (building != null && BeginGUI(346f, 167f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, null, texCaption))
+		{
+			Rect rect = __BaseUI._rect(0f, 6f, 180f, 26f);
+			if (building.data.automatic == 2)
+			{
+				drawGather();
+			}
+			else if (building.data.automatic == 3)
+			{
+				drawGather();
+			}
+			else if (building.product != null)
+			{
+				drawGather();
+			}
+			else if (building.cd_time > TimeUtil.Now)
+			{
+				drawCD();
+			}
+			else
+			{
+				Building data = building;
+				MyClose();
+				GameObject.Find("Capital/CapitalUI").GetComponent<BuildingProductUI>().MyLoading(data, bSub: true, null);
+			}
+			if (EndGUI(hasClose: true, hasBlock: true, isX: true))
+			{
+				MyClose();
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "accel")
+		{
+			if (building == null || building.product == null)
+			{
+				return;
+			}
+			int num = 0;
+			uint time = building.product.time;
+			if (building.start_time + time > TimeUtil.Now)
+			{
+				num = (int)(time + building.start_time - TimeUtil.Now);
+			}
+			if (num > time)
+			{
+				num = (int)time;
+			}
+			int num2 = 0;
+			if (building.automatic)
+			{
+				if (building.product != null)
+				{
+					int num3 = 3600;
+					num2 = (int)Math.Ceiling((float)(num3 * building.product.mana_output) * 0.5f / (float)building.product.time);
+				}
+				tooltipUI.ShowTooltipContent("BuildingHarvest", __BaseUI.format(122u, new object[1] { num2 }), 200, __BaseUI._fontSize);
+			}
+			else
+			{
+				num2 = (int)Math.Ceiling((float)num / 1800f);
+				tooltipUI.ShowTooltipContent("BuildingHarvest", __BaseUI.format(123u, new object[1] { num2 }), 200, __BaseUI._fontSize);
+			}
+		}
+		else
+		{
+			tooltipUI.HideTooltip(string.Empty);
+		}
+	}
+
+	private void drawOutput(ref Rect rc, uint output, Texture2D icon, ref int horz_count, Color clr)
+	{
+		if (output != 0)
+		{
+			GUI.BeginGroup(rc);
+			GUI.Label(__BaseUI._rect(0f, 0f, 80f, 65f), string.Empty, __BaseUI._box13Style);
+			if (icon != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(28f, 12f, 23f, 23f), icon);
+			}
+			__BaseUI.Label(__BaseUI._rect(0f, 37f, 80f, 20f), "+" + output, __BaseUI._numCenter, clr);
+			GUI.EndGroup();
+			rc.x += 80f;
+			horz_count++;
+			if (horz_count == 2)
+			{
+				horz_count = 0;
+				rc.x -= 160f;
+				rc.y += 60f;
+			}
+		}
+	}
+
+	private void drawCD()
+	{
+		GUI.Label(__BaseUI._rect(20f, 35f, w - 40f, h - 60f), string.Empty, __BaseUI._box6Style);
+		GUI.Label(__BaseUI._rect(45f, 54f, 100f, 100f), string.Empty, __BaseUI._box12Style);
+		Texture2D texture2D = null;
+		texture2D = building.texIcon;
+		if (texture2D != null)
+		{
+			GUI.DrawTexture(__BaseUI._rect(45f, 54f, 100f, 100f), texture2D);
+		}
+		GUI.Label(__BaseUI._rect(160f, 55f, w - 203f, h - 124f), string.Empty, __BaseUI._box12Style);
+		__BaseUI.BeginGroup(__BaseUI._rect(160f, 55f, w - 203f, h - 124f));
+		GUI.DrawTexture(__BaseUI._rect(10f, 5f, 56f, 56f), CapitalUI.texCD);
+		__BaseUI.Label(__BaseUI._rect(70f, 20f, __BaseUI._rcCur.width - 80f, 30f), __BaseUI.load_str(20172u), __BaseUI._textLeft, __BaseUI._clrWhite, 16);
+		int t = (int)(building.cd_time - TimeUtil.Now);
+		__BaseUI.Label(__BaseUI._rectB(10f, 34f, __BaseUI._rcCur.width - 20f, 20f), Global.getFormatTime(t), __BaseUI._numCenter, __BaseUI._clrRed, 26);
+		__BaseUI.EndGroup();
+		if (__BaseUI._btnClose2.Button(bBtn: true, __BaseUI._rectB(w / 2f - 49f, 74f, 98f, 30f), string.Empty))
+		{
+			MyClose();
+		}
+	}
+
+	private void BuildingAccelerateOK(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			cs_building_accelerate_0x490();
+		}
+	}
+
+	private void drawGather()
+	{
+		GUI.Label(__BaseUI._rect(15f, 35f, w - 30f, 82f), string.Empty, __BaseUI._boxnew3Style);
+		Rect rect = __BaseUI._rect(5f, 2f, 80f, 65f);
+		BuildingProduct product = this.building.product;
+		int num = 0;
+		uint time = product.time;
+		if (this.building.start_time + time > TimeUtil.Now)
+		{
+			num = (int)(time + this.building.start_time - TimeUtil.Now);
+		}
+		if (num > time)
+		{
+			num = (int)time;
+		}
+		string empty = string.Empty;
+		if (num == 0)
+		{
+			empty = __BaseUI.load_str(20173u);
+		}
+		else if (this.building.automatic)
+		{
+			empty = __BaseUI.load_str(20174u, (time - num) * product.mana_output / time);
+		}
+		else
+		{
+			empty = __BaseUI.load_str(20175u, Global.getFormatTime(num));
+		}
+		if (num == 0)
+		{
+			GUI.DrawTexture(__BaseUI._rect(185f, 55f, 96f, 17f), texFinish);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(138f, 48f, 176f, 26f), Global.getFormatTime(num), __BaseUI._numNCenter, __BaseUI._clrWhite, 12);
+		}
+		GUI.Label(__BaseUI._rect(138f, 72f, 176f, 26f), string.Empty, __BaseUI._barBgStyle);
+		GUI.DrawTexture(__BaseUI._rect(149f, 80f, (float)(time - num) * 154f / (float)time, 10f), __BaseUI._barBlueTex);
+		float num2 = w / 2f - 40f;
+		if (num > 0 && !this.building.automatic)
+		{
+			int gold = this.building.goldConsume(num);
+			if (this.building.automatic)
+			{
+				num2 = w / 2f - 20f - 80f;
+			}
+			if (btnAccel.Button(bBtn: true, __BaseUI._rectB(num2, 45f, 80f, 22f), new GUIContent(string.Empty, "accel")))
+			{
+				DisableAll();
+				__BaseUI.GetConsumeUI().setConsume(gold, 30, BuildingAccelerateOK);
+			}
+			num2 = ((!this.building.automatic) ? (num2 + 140f) : (num2 + 120f));
+		}
+		if (num == 0 || this.building.automatic)
+		{
+			if (btnHarvest.Button(bBtn: true, __BaseUI._rectB(num2, 45f, 80f, 22f), string.Empty))
+			{
+				DisableAll();
+				wantHarvest(this.building, HarvestOK, bBubble: false);
+			}
+			if (num > 0)
+			{
+				num2 += 100f;
+			}
+			else
+			{
+				num2 += 140f;
+			}
+		}
+		__BaseUI.Box(__BaseUI._rect(28f, 48f, 160f, 56f), product.texIconB);
+		_building_upgrade building_upgrade = new _building_upgrade();
+		Hashtable templates = Global.getTemplates("building_upgrade");
+		foreach (DictionaryEntry item in templates)
+		{
+			_building_upgrade building_upgrade2 = item.Value as _building_upgrade;
+			if (building_upgrade2.idbuilding == this.building.idbuilding && building_upgrade2.level == this.building.level)
+			{
+				building_upgrade = building_upgrade2;
+				break;
+			}
+		}
+		int num3 = (int)((float)product.Output * (float)building_upgrade.product_addition / 100f + (float)product.Output);
+		if (this.building.automatic)
+		{
+			float num4 = __BaseUI._fontNumber.draw(__BaseUI._rect(40f, 89f, 100f, 20f), (time - num) * num3 / time + "/" + num3, TextAnchor.UpperRight);
+			float num5 = 135f - num4 - 35f;
+			if (num5 > 40f)
+			{
+				num5 = 47f;
+			}
+			__BaseUI.Box(__BaseUI._rect(num5, 82f, 53f, 25f), product.texZi);
+		}
+		else
+		{
+			__BaseUI.Box(__BaseUI._rect(47f, 82f, 53f, 25f), product.texZi);
+			__BaseUI._fontNumber.draw(__BaseUI._rect(77f, 89f, 80f, 20f), "x" + num3, TextAnchor.UpperCenter);
+		}
+		if (this.building.data.type != 4)
+		{
+			return;
+		}
+		Building building = new Building();
+		foreach (KeyValuePair<byte, Building> building2 in Global.character_.buildings)
+		{
+			if (building2.Value.upgrade_finish > TimeUtil.Now)
+			{
+				allbuildOneUp = true;
+				break;
+			}
+			allbuildOneUp = false;
+		}
+		if (!allbuildOneUp)
+		{
+			if (!kuorongOK && Btn_kuorong.Button(IsEnable(), __BaseUI._rect(29f, 122f, 80f, 22f), string.Empty))
+			{
+				BuildingUpUI component = GameObject.Find("/Root/RootUI").GetComponent<BuildingUpUI>();
+				MainUI.SetSubUI(component);
+				component.MyLoading(this.building, building_next, 1, _lingqishu: true);
+				this.building = null;
+			}
+			if (Btn_shengji.Button(IsEnable(), __BaseUI._rect(234f, 122f, 80f, 22f), string.Empty))
+			{
+				if (upbuilding)
+				{
+					BuildingUpUI component2 = GameObject.Find("/Root/RootUI").GetComponent<BuildingUpUI>();
+					MainUI.SetSubUI(component2);
+					component2.MyLoading(this.building, building_next, 2, _lingqishu: true);
+					this.building = null;
+				}
+				else
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21527u), rmg);
+				}
+			}
+			return;
+		}
+		if (!kuorongOK && Btn_kuorong.Button(IsEnable(), __BaseUI._rect(29f, 122f, 80f, 22f), string.Empty))
+		{
+			BuildingUpUI component3 = GameObject.Find("/Root/RootUI").GetComponent<BuildingUpUI>();
+			MainUI.SetSubUI(component3);
+			component3.MyLoading(this.building, building_next, 1, _lingqishu: true);
+			this.building = null;
+		}
+		if (Btn_shengji.Button(IsEnable(), __BaseUI._rect(234f, 122f, 80f, 22f), string.Empty))
+		{
+			if (upbuilding)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21545u), rmg);
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21527u), rmg);
+			}
+		}
+	}
+
+	private void drawAutomatic()
+	{
+		GUI.Label(__BaseUI._rect(20f, 37f, w - 40f, h - 70f), string.Empty, __BaseUI._frame1Style);
+		GUI.Label(__BaseUI._rect(35f, 50f, w - 70f, h - 115f), string.Empty, __BaseUI._box6Style);
+		GUI.Label(__BaseUI._rect(60f, 75f, 56f, 56f), string.Empty, __BaseUI._box14Style);
+		if (building.product.texIcon != null)
+		{
+			GUI.DrawTexture(__BaseUI._rect(60f, 75f, 56f, 56f), building.product.texIcon);
+		}
+		GUI.Label(__BaseUI._rect(130f, 75f, w - 190f, 56f), string.Empty, __BaseUI._box12Style);
+		__BaseUI.BeginGroup(__BaseUI._rect(130f, 75f, w - 190f, 56f));
+		int num = (int)building.product.time;
+		if (building.gathering)
+		{
+			num = (int)(building.product.time + building.start_time - TimeUtil.Now);
+			if (num < 0)
+			{
+				num = 0;
+			}
+		}
+		if (num > building.product.time)
+		{
+			num = (int)building.product.time;
+		}
+		__BaseUI.Label(__BaseUI._rect(20f, 10f, 60f, 20f), building.product.name, __BaseUI._textLeft, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(60f, 10f, __BaseUI._rcCur.width - 75f, 20f), __BaseUI.load_str(20175u, Global.getFormatTime(num)), __BaseUI._numCenter, __BaseUI._clrWhite);
+		GUI.Label(__BaseUI._rect(10f, 35f, __BaseUI._rcCur.width - 20f, 20f), string.Empty, __BaseUI._expFrame);
+		GUI.Label(__BaseUI._rect(15f, 39f, (float)(building.product.time - num) * (__BaseUI._rcCur.width - 34f) / (float)building.product.time, 8f), string.Empty, __BaseUI._expBar);
+		__BaseUI.EndGroup();
+		if (building.gathering)
+		{
+			if (btnStop.Button(bBtn: true, __BaseUI._rect(w / 2f - 143f - 10f, 160f, 143f, 52f), string.Empty))
+			{
+				cs_building_gathering_0x485();
+			}
+		}
+		else if (btnStart.Button(bBtn: true, __BaseUI._rect(w / 2f - 143f - 10f, 160f, 143f, 52f), string.Empty))
+		{
+			cs_building_gathering_0x485();
+		}
+		if (__BaseUI._btnnewOK.Button(bBtn: true, __BaseUI._rect(w / 2f + 10f, 170f, 98f, 30f), string.Empty))
+		{
+			MyClose();
+		}
+	}
+
+	private void HarvestOK()
+	{
+		if (this.building.cd_time > TimeUtil.Now)
+		{
+			EnableAll();
+		}
+		else if (this.building.data.automatic == 1)
+		{
+			Building building = this.building;
+			building.idproduct = 0;
+			if (building.product != null && building.product.mesh != null)
+			{
+				UnityEngine.Object.Destroy(building.product.mesh);
+			}
+			building.product = null;
+			EnableAll();
+			MyClose();
+			GameObject.Find("Capital/CapitalUI").GetComponent<BuildingProductUI>().MyLoading(building, bSub: true, null);
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	public static void wantHarvest(Building b, delegate_OnClose onClose, bool bBubble)
+	{
+		if (_bHarvesting)
+		{
+			return;
+		}
+		int capacityMax = Global.character_.capacityMax;
+		int num = 0;
+		uint time = b.product.time;
+		if (b.start_time + time > TimeUtil.Now)
+		{
+			num = (int)(time + b.start_time - TimeUtil.Now);
+		}
+		if (num > time)
+		{
+			num = (int)time;
+		}
+		_building_upgrade building_upgrade = new _building_upgrade();
+		Hashtable templates = Global.getTemplates("building_upgrade");
+		foreach (DictionaryEntry item in templates)
+		{
+			_building_upgrade building_upgrade2 = item.Value as _building_upgrade;
+			if (building_upgrade2.idbuilding == b.idbuilding && building_upgrade2.level == b.level)
+			{
+				building_upgrade = building_upgrade2;
+				break;
+			}
+		}
+		int num2 = (int)((float)b.product.Output * (float)building_upgrade.product_addition / 100f + (float)b.product.Output);
+		int num3 = (int)((time - num) * num2 / time);
+		_bBubble = bBubble;
+		if (b.product.mana_output != 0 && num3 + Global.character_.mana > capacityMax)
+		{
+			_idbuilding = b.id;
+			_onClose = onClose;
+			BaseAsset.lds.GetCurUI().ToDisable();
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20176u), null, WantHarvestOK, _bCancel: true);
+		}
+		else
+		{
+			cs_building_harvest_0x482(b.id, onClose);
+		}
+	}
+
+	protected static void WantHarvestOK(bool bOK, object[] objs)
+	{
+		BaseAsset.lds.GetCurUI().ToEnable();
+		if (bOK)
+		{
+			cs_building_harvest_0x482(_idbuilding, _onClose);
+		}
+		_idbuilding = 0;
+		_onClose = null;
+	}
+
+	public static void cs_building_harvest_0x482(byte id, delegate_OnClose onClose)
+	{
+		_bHarvesting = true;
+		CSBuildingHarvest_0x482 cSBuildingHarvest_0x = new CSBuildingHarvest_0x482();
+		cSBuildingHarvest_0x.id = id;
+		RootUI.m_client.Send(1154, cSBuildingHarvest_0x, sc_building_harvest_0x482, onClose);
+	}
+
+	private static void makeOutput(byte idtreasure_type, uint output, List<_Treasure> vctBonuses)
+	{
+		if (output != 0)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(idtreasure_type, 1, (int)output);
+			vctBonuses.Add(treasure);
+		}
+	}
+
+	public static void harvest(byte id, uint start_time, object arg)
+	{
+		Building building = Global.character_.getBuilding(id);
+		_building_product product = building.product;
+		float num = 1f;
+		if (building.automatic && start_time < product.time + building.start_time)
+		{
+			num = (float)(start_time - building.start_time) / (float)product.time;
+		}
+		num *= ((!building.lucky) ? 1f : 1.5f);
+		Hashtable templates = Global.getTemplates("building_upgrade");
+		foreach (DictionaryEntry item in templates)
+		{
+			_building_upgrade building_upgrade = item.Value as _building_upgrade;
+			if (building_upgrade.idbuilding == building.idbuilding && building_upgrade.level == building.level)
+			{
+				num *= (float)building_upgrade.product_addition / 100f + 1f;
+				break;
+			}
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		makeOutput(4, (uint)Mathf.RoundToInt((float)product.money_output * num), list);
+		makeOutput(30, (uint)Mathf.RoundToInt((float)product.stone_output * num), list);
+		int capacityMax = Global.character_.capacityMax;
+		makeOutput(9, (uint)Mathf.RoundToInt((float)product.spirit_output * num), list);
+		makeOutput(10, (uint)Mathf.RoundToInt((float)product.enchant_output * num), list);
+		uint num2 = (uint)Mathf.RoundToInt((float)product.mana_output * num);
+		if (num2 != 0 && Global.character_.mana < capacityMax)
+		{
+			if (Global.character_.mana + num2 > capacityMax)
+			{
+				num2 = (uint)Mathf.RoundToInt((float)capacityMax - (float)Global.character_.mana);
+			}
+			makeOutput(5, num2, list);
+		}
+		building.start_time = start_time;
+		if (list.Count > 0)
+		{
+			if (!_bBubble)
+			{
+				BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+				battleResultUI.Set(null, string.Empty, string.Empty, 0, 0, list, arg as delegate_OnClose);
+				battleResultUI.MyLoading();
+				return;
+			}
+			BonusGetUI component = BaseUI.GetRootUI().GetComponent<BonusGetUI>();
+			int num3 = 0;
+			Vector3 position = building.mesh.transform.position;
+			position.y = building.mesh.collider.bounds.center.y + building.mesh.collider.bounds.extents.y;
+			position = Camera.main.WorldToScreenPoint(position);
+			position.y = (float)Screen.height - position.y;
+			position.x -= 30f;
+			position.y -= 50f;
+			foreach (_Treasure item2 in list)
+			{
+				BonusGetUI.getBonus(item2);
+				Texture2D texIcon = null;
+				if (item2.type == 4)
+				{
+					texIcon = __BaseUI._iconMoney;
+				}
+				else if (item2.type == 8)
+				{
+					texIcon = __BaseUI._iconExp;
+				}
+				else if (item2.type == 30)
+				{
+					texIcon = __BaseUI._iconStone;
+				}
+				else if (item2.type == 9)
+				{
+					texIcon = __BaseUI._iconFruit;
+				}
+				else if (item2.type == 10)
+				{
+					texIcon = __BaseUI._iconEnchant;
+				}
+				else if (item2.type == 5)
+				{
+					texIcon = __BaseUI._iconMana;
+				}
+				RootBase._drawBubble(item2.param[1], __BaseUI._rect(position.x, position.y + (float)(num3 * 20), 200f, 30f), texIcon, 1f, -5f, -20f);
+				num3++;
+			}
+			if (building.data.automatic == 1)
+			{
+				building.idproduct = 0;
+				if (building.product.mesh != null)
+				{
+					UnityEngine.Object.Destroy(building.product.mesh);
+				}
+				building.product = null;
+			}
+			if (arg != null)
+			{
+				(arg as delegate_OnClose)();
+			}
+		}
+		else if (arg != null)
+		{
+			(arg as delegate_OnClose)();
+		}
+	}
+
+	public static void harvestBatch(uint id, uint idproduct, uint batch_times, delegate_OnClose onClose)
+	{
+		Building building = Global.character_.getBuilding((byte)id);
+		_building_product building_product = Global.getTemplate("building_product", idproduct) as _building_product;
+		float num = batch_times;
+		List<_Treasure> list = new List<_Treasure>();
+		makeOutput(4, (uint)((float)building_product.money_output * num), list);
+		makeOutput(30, (uint)((float)building_product.stone_output * num), list);
+		makeOutput(9, (uint)((float)building_product.spirit_output * num), list);
+		makeOutput(10, (uint)((float)building_product.enchant_output * num), list);
+		if (list.Count > 0)
+		{
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(null, string.Empty, string.Empty, 0, 0, list, onClose);
+			battleResultUI.MyLoading();
+		}
+	}
+
+	public static void sc_building_harvest_0x482(MemoryStream stream, object arg)
+	{
+		_bHarvesting = false;
+		if (stream != null)
+		{
+			SCBuildingHarvest_0x482 sCBuildingHarvest_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingHarvest_0x482>(stream);
+			if (sCBuildingHarvest_0x.result == 0)
+			{
+				harvest((byte)sCBuildingHarvest_0x.id, sCBuildingHarvest_0x.start_time, arg);
+			}
+		}
+	}
+
+	public void cs_building_gathering_0x485()
+	{
+		CSBuildingGathering_0x485 cSBuildingGathering_0x = new CSBuildingGathering_0x485();
+		cSBuildingGathering_0x.id = building.id;
+		cSBuildingGathering_0x.gathering = !building.gathering;
+		RootUI.m_client.Send(1157, cSBuildingGathering_0x, sc_building_gathering_0x485);
+	}
+
+	public void sc_building_gathering_0x485(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuildingGathering_0x485 sCBuildingGathering_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingGathering_0x485>(stream);
+		if (sCBuildingGathering_0x.result != 0)
+		{
+			return;
+		}
+		Building building = Global.character_.getBuilding((byte)sCBuildingGathering_0x.id);
+		building.gathering = sCBuildingGathering_0x.gathering;
+		building.start_time = sCBuildingGathering_0x.start_time;
+		building.playAnim();
+		if (building.product == null)
+		{
+			return;
+		}
+		if (building.gathering)
+		{
+			if (building.product.spirit_output != 0)
+			{
+				Global.character_.woodYield += building.product.spirit_output * 3600 / building.product.time;
+			}
+			if (building.product.enchant_output != 0)
+			{
+				Global.character_.mineYield += building.product.enchant_output * 3600 / building.product.time;
+			}
+			if (building.product.mana_output != 0)
+			{
+				Global.character_.manaYield += building.product.mana_output * 3600 / building.product.time;
+			}
+		}
+		else
+		{
+			if (building.product.spirit_output != 0)
+			{
+				Global.character_.woodYield -= building.product.spirit_output * 3600 / building.product.time;
+			}
+			if (building.product.enchant_output != 0)
+			{
+				Global.character_.mineYield -= building.product.enchant_output * 3600 / building.product.time;
+			}
+			if (building.product.mana_output != 0)
+			{
+				Global.character_.manaYield -= building.product.mana_output * 3600 / building.product.time;
+			}
+		}
+	}
+
+	public void cs_building_accelerate_0x490()
+	{
+		if (!m_bAcceling)
+		{
+			m_bAcceling = true;
+			CSBuildingAccelerate_0x490 cSBuildingAccelerate_0x = new CSBuildingAccelerate_0x490();
+			cSBuildingAccelerate_0x.id = building.id;
+			RootUI.m_client.Send(1168, cSBuildingAccelerate_0x, sc_building_accelerate_0x490);
+		}
+	}
+
+	public void sc_building_accelerate_0x490(MemoryStream stream, object arg)
+	{
+		m_bAcceling = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuildingAccelerate_0x490 sCBuildingAccelerate_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingAccelerate_0x490>(stream);
+		if (sCBuildingAccelerate_0x.result == 0)
+		{
+			Global.character_.gold = sCBuildingAccelerate_0x.gold;
+			Building building = Global.character_.getBuilding((byte)sCBuildingAccelerate_0x.id);
+			building.start_time = sCBuildingAccelerate_0x.start_time;
+			if (sCBuildingAccelerate_0x.gold_consume != 0)
+			{
+				__BaseUI.drawStateBubble("gold-" + sCBuildingAccelerate_0x.gold_consume);
+			}
+			harvest((byte)sCBuildingAccelerate_0x.id, sCBuildingAccelerate_0x.start_time, new delegate_OnClose(HarvestOK));
+		}
+		else if (sCBuildingAccelerate_0x.result == 2)
+		{
+			Global.character_.gold = sCBuildingAccelerate_0x.gold;
+		}
+	}
+}

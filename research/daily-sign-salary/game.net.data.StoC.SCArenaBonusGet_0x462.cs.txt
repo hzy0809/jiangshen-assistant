@@ -1,0 +1,160 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCArenaBonusGet_0x462")]
+public class SCArenaBonusGet_0x462 : IExtensible
+{
+	private uint _result;
+
+	private uint _time = 0u;
+
+	private uint _money = 0u;
+
+	private uint _reputation = 0u;
+
+	private uint _gold_consume = 0u;
+
+	private uint _fruit1 = 0u;
+
+	private uint _fruit2 = 0u;
+
+	private uint _fruit3 = 0u;
+
+	private uint _fruit4 = 0u;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint time
+	{
+		get
+		{
+			return _time;
+		}
+		set
+		{
+			_time = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "money", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint money
+	{
+		get
+		{
+			return _money;
+		}
+		set
+		{
+			_money = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "reputation", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint reputation
+	{
+		get
+		{
+			return _reputation;
+		}
+		set
+		{
+			_reputation = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "gold_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint gold_consume
+	{
+		get
+		{
+			return _gold_consume;
+		}
+		set
+		{
+			_gold_consume = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "fruit1", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint fruit1
+	{
+		get
+		{
+			return _fruit1;
+		}
+		set
+		{
+			_fruit1 = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "fruit2", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint fruit2
+	{
+		get
+		{
+			return _fruit2;
+		}
+		set
+		{
+			_fruit2 = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "fruit3", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint fruit3
+	{
+		get
+		{
+			return _fruit3;
+		}
+		set
+		{
+			_fruit3 = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = false, Name = "fruit4", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint fruit4
+	{
+		get
+		{
+			return _fruit4;
+		}
+		set
+		{
+			_fruit4 = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

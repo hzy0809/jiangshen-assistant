@@ -1,0 +1,166 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCAllBonusGetNew_0x394")]
+public class SCAllBonusGetNew_0x394 : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error
+	}
+
+	private Operate _operate;
+
+	private uint _arenatime;
+
+	private uint _salarytime;
+
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private uint _pointracetime;
+
+	private uint _gold_consume;
+
+	private bool _checkin;
+
+	private bool _salary;
+
+	private bool _arena;
+
+	private bool _pointrace;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "arenatime", DataFormat = DataFormat.TwosComplement)]
+	public uint arenatime
+	{
+		get
+		{
+			return _arenatime;
+		}
+		set
+		{
+			_arenatime = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "salarytime", DataFormat = DataFormat.TwosComplement)]
+	public uint salarytime
+	{
+		get
+		{
+			return _salarytime;
+		}
+		set
+		{
+			_salarytime = value;
+		}
+	}
+
+	[ProtoMember(4, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	[ProtoMember(5, IsRequired = true, Name = "pointracetime", DataFormat = DataFormat.TwosComplement)]
+	public uint pointracetime
+	{
+		get
+		{
+			return _pointracetime;
+		}
+		set
+		{
+			_pointracetime = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = true, Name = "gold_consume", DataFormat = DataFormat.TwosComplement)]
+	public uint gold_consume
+	{
+		get
+		{
+			return _gold_consume;
+		}
+		set
+		{
+			_gold_consume = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = true, Name = "checkin", DataFormat = DataFormat.Default)]
+	public bool checkin
+	{
+		get
+		{
+			return _checkin;
+		}
+		set
+		{
+			_checkin = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = true, Name = "salary", DataFormat = DataFormat.Default)]
+	public bool salary
+	{
+		get
+		{
+			return _salary;
+		}
+		set
+		{
+			_salary = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = true, Name = "arena", DataFormat = DataFormat.Default)]
+	public bool arena
+	{
+		get
+		{
+			return _arena;
+		}
+		set
+		{
+			_arena = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = true, Name = "pointrace", DataFormat = DataFormat.Default)]
+	public bool pointrace
+	{
+		get
+		{
+			return _pointrace;
+		}
+		set
+		{
+			_pointrace = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

@@ -1,0 +1,20 @@
+{
+  "pid": 12844,
+  "remaining_bridge_hosts": [],
+  "loaded_bridge_module_count": 3,
+  "loaded_bridge_modules": [
+    {
+      "ModuleName": "bridge.dll",
+      "FileName": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\bridge\\sessions\\64731d2da0864727a8d6cf0ce6eecd0c\\bin\\bridge.dll"
+    },
+    {
+      "ModuleName": "bridge.dll",
+      "FileName": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\bridge\\sessions\\bebdb0d9f3b349b48ef191585f2b43b5\\bin\\bridge.dll"
+    },
+    {
+      "ModuleName": "bridge.dll",
+      "FileName": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\bridge\\sessions\\fa0435ba7b134503a973d4a9834c7a70\\bin\\bridge.dll"
+    }
+  ],
+  "complete_unload": "next normal game process exit"
+}

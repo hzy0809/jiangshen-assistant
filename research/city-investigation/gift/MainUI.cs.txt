@@ -1,0 +1,5944 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using AnimMaps;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class MainUI : BaseUI
+{
+	public enum TOPBARMOOD
+	{
+		NORMAL,
+		SHRINK
+	}
+
+	private enum ToggleIndex : byte
+	{
+		Area,
+		World,
+		Capital,
+		Campaign
+	}
+
+	public enum LUOSHUSTATUS
+	{
+		SHOUQI,
+		ZHANKAI
+	}
+
+	private class TrialMazeStamina
+	{
+		public int stamina;
+
+		public int stamina_limit;
+
+		public int refresh_timestamp;
+
+		public int refresh_inverval;
+
+		public TrialMazeStamina(SCTrialMazeStaminaRefresh_0x2B3 pkt)
+		{
+			stamina = (int)pkt.stamina;
+			stamina_limit = (int)pkt.stamina_limit;
+			refresh_timestamp = (int)pkt.refresh_timestamp;
+			refresh_inverval = (int)pkt.refresh_interval;
+		}
+
+		public void Update()
+		{
+			if (TimeUtil.Now > refresh_inverval + refresh_timestamp)
+			{
+				int num = (int)(TimeUtil.Now - refresh_timestamp) / refresh_inverval;
+				stamina += num;
+				if (stamina > stamina_limit)
+				{
+					stamina = stamina_limit;
+				}
+				refresh_timestamp += refresh_inverval * num;
+			}
+		}
+	}
+
+	public delegate bool staminafight();
+
+	private delegate string tooltip_string(string key);
+
+	private const float rotspeed = 100f;
+
+	private const float TURNNING_TIME = 0.2f;
+
+	private const float shrink_time = 0.3f;
+
+	private const int light_round = 85;
+
+	private string m_lastTooltip = string.Empty;
+
+	private bool m_bRefreshResource;
+
+	private bool m_bBattleResult;
+
+	private static __BaseUI m_subui;
+
+	private GUIStyle bgStyle = new GUIStyle();
+
+	private Texture2D texCharacter;
+
+	private Texture2D texLevelBar;
+
+	private Texture2D texExpMask;
+
+	private Texture2D texExpBar;
+
+	private _ButtonStyle btnVip = new _ButtonStyle();
+
+	private _ButtonStyle btnGift = new _ButtonStyle();
+
+	private _ButtonStyle btnAntiAddict = new _ButtonStyle();
+
+	private _ButtonStyle btnCharacter = new _ButtonStyle();
+
+	private int checkGift = -1;
+
+	private Texture2D texBattleCD;
+
+	private Texture2D texFriend;
+
+	private Texture2D texVisit;
+
+	public List<_ButtonMain> btnTop = new List<_ButtonMain>();
+
+	private int[] checkTop;
+
+	private int[] guideTop;
+
+	private Texture2D texTopRightFrame;
+
+	private List<_ButtonMain> btnTopRight = new List<_ButtonMain>();
+
+	private _ButtonMain btnBattleValue;
+
+	private Texture2D texBattleValueBar;
+
+	private GUIStyle battlevalue_mask;
+
+	private GUIStyle battlevalue_light;
+
+	private GUIStyle battlevalue_black;
+
+	private List<_ButtonMain> btnBottomRight = new List<_ButtonMain>();
+
+	private int[] checkBottomRight;
+
+	private int[] guideBottomRight;
+
+	private readonly string[,] _bottom_bar_names = new string[7, 2]
+	{
+		{ "formation", "icon_buzhen_normal" },
+		{ "equipment", "icon_zhuangbei_normal" },
+		{ "star", "icon_xingling_normal" },
+		{ "recruit", "icon_zhaomu_normal" },
+		{ "spirit", "icon_lingshou_normal" },
+		{ "friend", "icon_haoyou_normal" },
+		{ "guild", "icon_tongmeng_normal" }
+	};
+
+	private Texture2D texBottomFrame;
+
+	public static int heightBottomFrame = 87;
+
+	private GUIStyle bottomSubFrame = new GUIStyle();
+
+	public List<_ButtonMain> btnBottom = new List<_ButtonMain>();
+
+	private int[] checkBottom;
+
+	private int[] guideBottom;
+
+	private Texture2D event_anim_light;
+
+	private Texture2D act_anim_light;
+
+	private Texture2D favorite_anim_light;
+
+	private GUIStyle craft_anim_light = new GUIStyle();
+
+	private GUIStyle icon_jingyingsai_light = new GUIStyle();
+
+	private GUIStyle icon_qiandao_light = new GUIStyle();
+
+	private GUIStyle icon_mubiao_light = new GUIStyle();
+
+	private GUIStyle icon_xunyou_light = new GUIStyle();
+
+	private GUIStyle icon_kuafuzhan_light = new GUIStyle();
+
+	private GUIStyle icon_chongzhihuodong_light = new GUIStyle();
+
+	private GUIStyle icon_huiguilb_hover = new GUIStyle();
+
+	private GUIStyle button_jfsd_hover = new GUIStyle();
+
+	private GUIStyle icon_jipintemai_hover = new GUIStyle();
+
+	private GUIStyle icon_shuangdan_hover = new GUIStyle();
+
+	private GUIStyle icon_fengshen_hover = new GUIStyle();
+
+	private GUIStyle icon_jierichoujiang_hover = new GUIStyle();
+
+	private GUIStyle icon_tiantisai_light = new GUIStyle();
+
+	private GUIStyle ui_zi_znq = new GUIStyle();
+
+	private GUIStyle ui_zi_fl = new GUIStyle();
+
+	public static TOPBARMOOD topBarMood;
+
+	private _ButtonStyle btnShrink = new _ButtonStyle();
+
+	private _ButtonStyle btnExpand = new _ButtonStyle();
+
+	private _ButtonStyle btnSecretary = new _ButtonStyle();
+
+	private Texture2D secretary_light;
+
+	private List<_ButtonMain> wanFaNeiRong;
+
+	private List<_ButtonMain> huoQuZiYuan;
+
+	private List<_ButtonMain> qiTaXiTong;
+
+	private Texture2D wanFaNeiRong_tex;
+
+	private Texture2D huoQuZiYuan_tex;
+
+	private Texture2D qiTaXiTong_tex;
+
+	private Texture2D fenGeXian_tex;
+
+	private static bool first_campaign_auto = true;
+
+	private int event_anim;
+
+	private float event_anim_timer;
+
+	private float grow_timer;
+
+	private float m_rotAngle;
+
+	private DateTime m_NQBlinkTime = default(DateTime);
+
+	private GUIStyle tga_bangzhukuang = new GUIStyle();
+
+	private GUIStyle tga_bangzhukuang02 = new GUIStyle();
+
+	public static bool isShowNewbieQuest;
+
+	private bool army_star;
+
+	private bool[] level_star = new bool[4];
+
+	private bool okorno;
+
+	private PremiumUI.delegate_checkday[] checkAward = new PremiumUI.delegate_checkday[54];
+
+	private PremiumUI.delegate_checkday[] checkDay = new PremiumUI.delegate_checkday[54];
+
+	private VipWealUI.delegate_checkday[] VipWealcheckAward = new VipWealUI.delegate_checkday[3];
+
+	private VipWealUI.delegate_checkday[] VipWealcheckDay = new VipWealUI.delegate_checkday[3];
+
+	private ClubUI.delegate_checkday[] ClubcheckAward = new ClubUI.delegate_checkday[6];
+
+	private ClubUI.delegate_checkday[] ClubcheckDay = new ClubUI.delegate_checkday[6];
+
+	private RechargeUI.delegate_checkday[] RechargecheckAward = new RechargeUI.delegate_checkday[5];
+
+	private RechargeUI.delegate_checkday[] RechargecheckDay = new RechargeUI.delegate_checkday[5];
+
+	private DaliyTargetUI.delegate_checkday[] DaliyTargetcheckAward = new DaliyTargetUI.delegate_checkday[7];
+
+	private DaliyTargetUI.delegate_checkday[] DaliyTargetcheckDay = new DaliyTargetUI.delegate_checkday[7];
+
+	private bool m_bStaminaBuy;
+
+	private bool m_directBattle;
+
+	public staminafight stFight;
+
+	private bool m_bAnecdoteHeroBuy;
+
+	public staminafight ahbFight;
+
+	private ScenarioSection ssMoney = new ScenarioSection();
+
+	private ScenarioSection ssLevel = new ScenarioSection();
+
+	private _ButtonStyle btnNewSystemTipUI = new _ButtonStyle();
+
+	private GUIStyle ui_zi_zs = new GUIStyle();
+
+	private GUIStyle ui_zi_jjkf = new GUIStyle();
+
+	public GUIStyle ui_zhenxingge = new GUIStyle();
+
+	public Dictionary<int, GUIStyle> newSystemTipIcons = new Dictionary<int, GUIStyle>();
+
+	private Dictionary<int, GUIStyle> generalStys = new Dictionary<int, GUIStyle>();
+
+	private Dictionary<int, GUIStyle> skillStys = new Dictionary<int, GUIStyle>();
+
+	private Dictionary<int, GUIStyle> itemStys = new Dictionary<int, GUIStyle>();
+
+	public GUIStyle ui_di = new GUIStyle();
+
+	public List<GUIStyle> tipLightstyList = new List<GUIStyle>();
+
+	public List<GUIStyle> firstOrderLightStys = new List<GUIStyle>();
+
+	private DateTime turningEndTime = default(DateTime);
+
+	private float startposx = 40 * Global.character_.formation_set;
+
+	private float target_pos;
+
+	private float start_pos;
+
+	private int last_count = Global.character_.formation_set;
+
+	private _ButtonMain Btn_gongshi;
+
+	private _ButtonStyle[] btn_luoshu = new _ButtonStyle[6];
+
+	private GUIStyle[] ui_zi = new GUIStyle[6];
+
+	private _ButtonStyle btn_luoshu_shou = new _ButtonStyle();
+
+	private _ButtonStyle btn_luoshu_zhan = new _ButtonStyle();
+
+	public LUOSHUSTATUS luoshustatus;
+
+	public int anime_idx;
+
+	public float anime_timer = 0.0625f;
+
+	public DateTime anime_time = default(DateTime);
+
+	private DateTime m_WealthTimer = DateTime.Now;
+
+	private GUIStyle tga_dianjilingqu = new GUIStyle();
+
+	private GUIStyle tga_guang = new GUIStyle();
+
+	private GUIStyle tga_guang3 = new GUIStyle();
+
+	private static bool showOnlineTip = true;
+
+	private GUIStyle jingcai_light = new GUIStyle();
+
+	private GUIStyle richang_light = new GUIStyle();
+
+	private GUIStyle timelimit_light = new GUIStyle();
+
+	private GUIStyle dailyRanking_light = new GUIStyle();
+
+	private GUIStyle julebu_light = new GUIStyle();
+
+	private GUIStyle icon_jipintemai_light = new GUIStyle();
+
+	public static bool premuimEnter;
+
+	public static bool actEnter;
+
+	private GUIStyle button_qingdian_light = new GUIStyle();
+
+	private GUIStyle button_qingdian_zi = new GUIStyle();
+
+	private float btnTopPosX;
+
+	private float extend_timer;
+
+	private float shrink_timer;
+
+	public int anime_idx_order;
+
+	public float anime_timer_order = 0.1f;
+
+	public DateTime anime_time_order = default(DateTime);
+
+	private Rect rc_firstorder = default(Rect);
+
+	private Vector2 battle_soul_pos;
+
+	private Rect m_btnRc = default(Rect);
+
+	private Rect m_btnCampaign = default(Rect);
+
+	private Rect m_btnAnecdote = default(Rect);
+
+	private static readonly float bottom_bar_x = 30f;
+
+	private float bottom_x = 30f;
+
+	private Dictionary<string, tooltip_string> m_tooltip_delegate = new Dictionary<string, tooltip_string>();
+
+	private _ScreenButton m_tutorial_button = new _ScreenButton();
+
+	private AnimMapsMgr m_anim_maps = AnimMapsMgrFactory.create();
+
+	public static bool quest_update;
+
+	private _ButtonStyle b_trace_tbc = new _ButtonStyle();
+
+	private _ButtonStyle b_trace_complete = new _ButtonStyle();
+
+	private _ButtonStyle b_traceweb = new _ButtonStyle();
+
+	private GUIStyle traceweb_tbc = new GUIStyle();
+
+	private GUIStyle traceweb_complete = new GUIStyle();
+
+	private GUIStyle trace_name = new GUIStyle();
+
+	private Quest first_quest;
+
+	private int trace_ypos;
+
+	public static bool act_click_record = true;
+
+	private Camera camGUI;
+
+	private GameObject battle_soul_effect;
+
+	private static TrialMazeStamina trial_maze_stamina;
+
+	public static bool IsSubUI(BaseAsset ui)
+	{
+		return (m_subui == ui) ? true : false;
+	}
+
+	public static void SetSubUI(__BaseUI ui)
+	{
+		if (m_subui == ui)
+		{
+			return;
+		}
+		LoadScreen component = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+		if (m_subui != null)
+		{
+			component.GetCurUI().BroadcastMessage("CloseBuildingInsideUI", SendMessageOptions.DontRequireReceiver);
+			if (ui == null)
+			{
+				component.GetCurUI().BroadcastMessage("ResetCapitalCamera", SendMessageOptions.DontRequireReceiver);
+				component.GetCurUI().BroadcastMessage("EnableMouseDown", SendMessageOptions.DontRequireReceiver);
+			}
+			m_subui.Hide();
+		}
+		m_subui = ui;
+	}
+
+	public static bool handle_sub_ui(__BaseUI ui, string id)
+	{
+		if (IsSubUI(ui))
+		{
+			SetSubUI(null);
+			return false;
+		}
+		__BaseUI.subui = id;
+		SetSubUI(ui);
+		return true;
+	}
+
+	public static BaseUI GetSubUI()
+	{
+		return m_subui as BaseUI;
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_main");
+		AddAsset("face" + Global.character_.icon, bForce: false);
+		AddAsset("battle_soul");
+		CollectingStart();
+	}
+
+	public static bool checkUI(string name)
+	{
+		return Global.character_.checkUI(name);
+	}
+
+	public static bool checkStarTechUI(string name)
+	{
+		return Global.character_.checkUI(name) && Global.character_.star_tech < 196;
+	}
+
+	public static bool checkGeniusUI(string name)
+	{
+		return Global.character_.checkUI(name) && Global.character_.star_tech >= 196;
+	}
+
+	public bool checkBottomUI(string name)
+	{
+		return rmg.LevelID != "Fairy" && rmg.LevelID != "Anecdote" && rmg.LevelID != "Divinity" && rmg.LevelID != "SealDevil" && rmg.LevelID != "SealMonster" && rmg.LevelID != "Convoy" && rmg.LevelID != "Nation" && rmg.LevelID != "TalentCampaign" && rmg.LevelID != "TrialMaze" && rmg.LevelID != "TeamFight" && rmg.LevelID != "SpiritAscend" && rmg.LevelID != "RescueFormation" && rmg.LevelID != "LakeTempleFormation" && rmg.LevelID != "ZhenYaoTaFormation" && Global.character_.checkUI(name);
+	}
+
+	public void expandUI(string name)
+	{
+		foreach (_ButtonMain item in btnBottom)
+		{
+			if (item.btnSubs == null)
+			{
+				continue;
+			}
+			foreach (_ButtonMain btnSub in item.btnSubs)
+			{
+				if (!(btnSub.name == name))
+				{
+					continue;
+				}
+				if (item.expand)
+				{
+					item.expand = false;
+					item.current = false;
+					item.state = _ButtonMain.STATE.NONE;
+					item.subWidth = 0f;
+				}
+				item.expand = true;
+				item.current = true;
+				item.state = _ButtonMain.STATE.EXPANDING1;
+				{
+					foreach (_ButtonMain item2 in btnBottom)
+					{
+						if (item != item2 && item2.expand)
+						{
+							item2.expand = false;
+							item2.current = false;
+							item2.state = _ButtonMain.STATE.NONE;
+							item2.subWidth = 0f;
+						}
+					}
+					return;
+				}
+			}
+		}
+	}
+
+	private bool _gift_first_check()
+	{
+		return true;
+	}
+
+	public void handle_button(uint idbutton)
+	{
+		_ui_button ui_button = Global.getTemplate("ui_button", idbutton) as _ui_button;
+		foreach (_ButtonMain item in btnBottom)
+		{
+			if (item.btnSubs == null)
+			{
+				continue;
+			}
+			foreach (_ButtonMain btnSub in item.btnSubs)
+			{
+				if (btnSub.name == ui_button.name)
+				{
+					if (btnSub.handler != null)
+					{
+						btnSub.handler();
+					}
+					return;
+				}
+			}
+		}
+	}
+
+	public Rect getButtonRect(string name)
+	{
+		foreach (_ButtonMain item in btnBottom)
+		{
+			if (item.name == name)
+			{
+				return item.getRect();
+			}
+			if (item.btnSubs == null)
+			{
+				continue;
+			}
+			foreach (_ButtonMain btnSub in item.btnSubs)
+			{
+				if (btnSub.name == name)
+				{
+					return btnSub.getRect();
+				}
+			}
+		}
+		foreach (_ButtonMain item2 in btnTop)
+		{
+			if (BaseAsset._PHONEUI && !BaseAsset.isipad)
+			{
+				continue;
+			}
+			if (item2.name == name)
+			{
+				if (item2.btnMain_type != _ButtonMain.btnType.NOEXPANDING && topBarMood == TOPBARMOOD.SHRINK)
+				{
+					return __BaseUI._rect(Screen.width - 260 - 87 - 62, 22f, 59f, 59f);
+				}
+				return item2.getRect();
+			}
+			if (item2.btnSubs == null)
+			{
+				continue;
+			}
+			foreach (_ButtonMain btnSub2 in item2.btnSubs)
+			{
+				if (btnSub2.name == name)
+				{
+					return btnSub2.getRect();
+				}
+			}
+		}
+		foreach (_ButtonMain item3 in btnBottomRight)
+		{
+			if (item3.name == name)
+			{
+				return item3.getRect();
+			}
+			if (item3.btnSubs == null)
+			{
+				continue;
+			}
+			foreach (_ButtonMain btnSub3 in item3.btnSubs)
+			{
+				if (btnSub3.name == name)
+				{
+					return btnSub3.getRect();
+				}
+			}
+		}
+		return new Rect(0f, 0f, 0f, 0f);
+	}
+
+	public Texture2D getButtonTex(string name)
+	{
+		foreach (_ButtonMain item in btnBottom)
+		{
+			if (item.name == name)
+			{
+				return item.getTex();
+			}
+		}
+		foreach (_ButtonMain item2 in btnTop)
+		{
+			if (item2.name == name)
+			{
+				return item2.getTex();
+			}
+		}
+		foreach (_ButtonMain item3 in btnBottomRight)
+		{
+			if (item3.name == name)
+			{
+				return item3.getTex();
+			}
+		}
+		return null;
+	}
+
+	public Vector2 getButtonPos(string name)
+	{
+		Vector2 zero = Vector2.zero;
+		Rect buttonRect = getButtonRect(name);
+		return new Vector2(buttonRect.x, buttonRect.y);
+	}
+
+	public bool isButtonShrinked(string name)
+	{
+		if (topBarMood == TOPBARMOOD.NORMAL)
+		{
+			return false;
+		}
+		if (topBarMood == TOPBARMOOD.SHRINK)
+		{
+			foreach (_ButtonMain item in btnTop)
+			{
+				if (item.name == name)
+				{
+					return item.btnMain_type != _ButtonMain.btnType.NOEXPANDING;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+		if (rmg.LevelID == "CapitalFriend")
+		{
+			CapitalFriendUI.myfriend.texIcon = asset.Load("ui_zhu_xitong" + CapitalFriendUI.myfriend.icon) as Texture2D;
+		}
+		button_qingdian_light.normal.background = asset.Load("button_qingdian_light") as Texture2D;
+		button_qingdian_zi.normal.background = asset.Load("button_qingdian_zi") as Texture2D;
+		bgStyle.normal.background = asset.Load("ui_zhu_bar1") as Texture2D;
+		bgStyle.border = new RectOffset(30, 30, 30, 30);
+		texCharacter = asset.Load("ui_zhu_namebar") as Texture2D;
+		btnCharacter.make(asset, "button_zhu_namebar");
+		if (rmg.LevelID != "CapitalFriend")
+		{
+			Global.character_.texIcon = asset.Load("ui_zhu_xitong" + Global.character_.icon) as Texture2D;
+			Global.character_.texIcon2 = BaseAsset.LoadTexture("face" + Global.character_.icon);
+		}
+		texLevelBar = asset.Load("ui_zhu_level") as Texture2D;
+		texExpBar = asset.Load("ui_exp") as Texture2D;
+		texExpMask = asset.Load("ui_zhu_jingyan") as Texture2D;
+		if (check_new_system_tip())
+		{
+			btnNewSystemTipUI.make(asset, "ui_bar2");
+			ui_zi_zs.normal.background = asset.Load("ui_zi_zs") as Texture2D;
+			ui_zi_jjkf.normal.background = asset.Load("ui_zi_jjkf") as Texture2D;
+			ui_zhenxingge.normal.background = asset.Load("ui_zhenxingge") as Texture2D;
+			ui_di.normal.background = asset.Load("ui_di") as Texture2D;
+			newSystemTipIcons.Clear();
+			Hashtable templates = Global.getTemplates("new_system_tip_icon");
+			foreach (object value in templates.Values)
+			{
+				_new_system_tip_icon new_system_tip_icon = (_new_system_tip_icon)value;
+				GUIStyle gUIStyle = new GUIStyle();
+				gUIStyle.normal.background = asset.Load(new_system_tip_icon.texname) as Texture2D;
+				newSystemTipIcons.Add(new_system_tip_icon.idicon, gUIStyle);
+			}
+			tipLightstyList.Clear();
+			for (int i = 0; i < 16; i++)
+			{
+				GUIStyle gUIStyle2 = new GUIStyle();
+				gUIStyle2.normal.background = asset.Load((i + 1).ToString()) as Texture2D;
+				tipLightstyList.Add(gUIStyle2);
+			}
+		}
+		if (Global.character_.first_order_bonus != 2)
+		{
+			firstOrderLightStys.Clear();
+			for (int j = 0; j < 15; j++)
+			{
+				GUIStyle gUIStyle3 = new GUIStyle();
+				gUIStyle3.normal.background = asset.Load("ui_huoyan" + (j + 1)) as Texture2D;
+				firstOrderLightStys.Add(gUIStyle3);
+			}
+		}
+		btnVip.make(asset, "button_chongzhi", unable: false);
+		btnGift.make(asset, "ui_liwu", unable: false);
+		btnAntiAddict.make(asset, "button_fang", unable: false);
+		texBattleCD = asset.Load("ui_zhu_cd") as Texture2D;
+		texFriend = asset.Load("ui_zhu_namebar2") as Texture2D;
+		texVisit = asset.Load("ui_zhu_baifang") as Texture2D;
+		ui_zi_fl.normal.background = asset.Load("ui_zi_fl") as Texture2D;
+		Global.character_.generalbookcount = GeneralBookFormationUI.GeneralBookCount();
+		event_anim_light = asset.Load("icon_huodong_light") as Texture2D;
+		act_anim_light = asset.Load("icon_richang_light") as Texture2D;
+		favorite_anim_light = asset.Load("icon_soucang_light") as Texture2D;
+		craft_anim_light.normal.background = asset.Load("icon_zhengba_light") as Texture2D;
+		icon_jingyingsai_light.normal.background = asset.Load("icon_jingyingsai_light") as Texture2D;
+		icon_qiandao_light.normal.background = asset.Load("icon_qiandao_light") as Texture2D;
+		icon_mubiao_light.normal.background = asset.Load("icon_mubiao_light") as Texture2D;
+		icon_xunyou_light.normal.background = asset.Load("icon_xunyou_light") as Texture2D;
+		icon_kuafuzhan_light.normal.background = asset.Load("icon_kuafuzhan_light") as Texture2D;
+		icon_chongzhihuodong_light.normal.background = asset.Load("icon_chongzhihuodong_light") as Texture2D;
+		icon_huiguilb_hover.normal.background = asset.Load("icon_huiguilb_hover") as Texture2D;
+		button_jfsd_hover.normal.background = asset.Load("button_jfsd_hover") as Texture2D;
+		icon_jipintemai_hover.normal.background = asset.Load("icon_jipintemai_hover") as Texture2D;
+		icon_shuangdan_hover.normal.background = asset.Load("icon_shuangdan_hover") as Texture2D;
+		icon_fengshen_hover.normal.background = asset.Load("icon_fengshen_hover") as Texture2D;
+		icon_jierichoujiang_hover.normal.background = asset.Load("icon_jierichoujiang_hover") as Texture2D;
+		jingcai_light.normal.background = asset.Load("icon_jingcai_light") as Texture2D;
+		julebu_light.normal.background = asset.Load("icon_julebu_light") as Texture2D;
+		richang_light.normal.background = asset.Load("icon_richang_light") as Texture2D;
+		timelimit_light.normal.background = asset.Load("icon_xianshi_light") as Texture2D;
+		dailyRanking_light.normal.background = asset.Load("icon_ribang_light") as Texture2D;
+		icon_jipintemai_light.normal.background = asset.Load("icon_jipintemai_light") as Texture2D;
+		icon_tiantisai_light.normal.background = asset.Load("icon_tiantisai_light") as Texture2D;
+		btnTop.Clear();
+		btnTop.Add(new _ButtonMain(asset, "icon_shoujibangding", "mobile_bind", 62f, null, _mobilebind, _mobilebind_check, _ButtonMain.btnType.NOEXPANDING));
+		btnTop.Add(new _ButtonMain(asset, "icon_shoucang", "favorite", 62f, __BaseUI._iconMask2, _favorite, _favorite_check, _ButtonMain.btnType.NOEXPANDING));
+		btnTop.Add(new _ButtonMain(asset, "icon_libao", "online", 62f, __BaseUI._iconMask2, _online_reward, _online_check, _ButtonMain.btnType.NOEXPANDING));
+		_ButtonMain buttonMain = new _ButtonMain(asset, "icon_huodong", "huodong", 62f, __BaseUI._iconMask2, _huodong, _huodong_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_huodong_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_kuafuzhan", "teamfight", 62f, __BaseUI._iconMask2, _teamfight, _teamfight_check, _ButtonMain.btnType.ELSE);
+		buttonMain.setLight(_teamfight_light_check, icon_kuafuzhan_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_richang", "quest_act", 62f, __BaseUI._iconMask2, _quest_act, checkUI, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_quest_act_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_jingji", "battle_arena", 62f, __BaseUI._iconMask2, _battle_arena, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_battle_arena_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_liangong", "training", 62f, __BaseUI._iconMask2, _training, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_training_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_xunyou", "trial_maze", 62f, __BaseUI._iconMask2, _trial_maze, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_trial_maze_stamina_count, __BaseUI._markNumStyle);
+		buttonMain.setLight(_maze_holiday_check, icon_xunyou_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_xunlian", "seal_monster", 62f, __BaseUI._iconMask2, _seal_monster, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_sealmonster_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_muren", "wood_war", 62f, __BaseUI._iconMask2, _muren, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_muren_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhaocai", "resource_wealth", 62f, __BaseUI._iconMask2, _resource_wealth, checkUI, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_resource_wealth_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_caishi", "enchant_dig", 62f, __BaseUI._iconMask2, _enchant, checkUI, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_enchant_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_bagua", "eightgraphic", 62f, __BaseUI._iconMask2, _eightgraphic, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_eightgraphic_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tujian", "chesttotem", 62f, __BaseUI._iconMask2, _chesttotem, _chesttotemOpen, _ButtonMain.btnType.ELSE);
+		buttonMain.setMarkNum(_chesttotem_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_lianhun", "star_refine", 62f, __BaseUI._iconMask2, _starRefine, checkUI, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_starRefine_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_mingshi", "resource_collect", 62f, __BaseUI._iconMask2, _resource_collect, checkUI, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_resource_collect_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tanbao", "grave", 62f, __BaseUI._iconMask2, _grave, checkUI, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_grave_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_husong", "convoy", 62f, __BaseUI._iconMask2, _convoy, checkUI, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_convoy_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_shenjiang", "divine_general", 62f, __BaseUI._iconMask2, _divine_general, checkUI, _ButtonMain.btnType.ELSE);
+		buttonMain.setMarkNum(_divine_general_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_shengwang", "reputation", 62f, __BaseUI._iconMask2, _reputation, checkUI, _ButtonMain.btnType.ELSE);
+		buttonMain.setMarkUp(_reputation_up, __BaseUI._markUpStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_lingfeng", "salary", 62f, __BaseUI._iconMask2, _salary, _salary_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_salary_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_jingcai", "premium", 62f, null, _premium, _premium_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_premium_count, __BaseUI._markNumStyle);
+		buttonMain.setLight(_premium_light_check, jingcai_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_vipfuli", "vipweal", 62f, __BaseUI._iconMask2, _vipweal, _vipweal_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_vipweal_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_julebu", "club", 62f, null, _club, _club_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_club_count, __BaseUI._markNumStyle);
+		buttonMain.setLight(_club_light_check, julebu_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_mubiao", "seven_target", 62f, null, seven_target_load, seven_target_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(seven_target_count, __BaseUI._markNumStyle);
+		buttonMain.setLight(seven_target_check, icon_mubiao_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_qiandao", "signin", 62f, __BaseUI._iconMask2, _signin, _signin_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setLight(_signin_light_check, icon_qiandao_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_fuliqiandao", "newyear_checkin", 62f, null, _newyear_checkin, _newyear_checkin_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_chongzhihuodong", "recharge_activity", 62f, null, _recharge_activity, _recharge_activity_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(recharge_activity_count, __BaseUI._markNumStyle);
+		buttonMain.setLight(_recharge_activity_check, icon_chongzhihuodong_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_shouchong", "first_order_bonus", 62f, __BaseUI._iconMask2, _firstorderbonus, _firstorderbonus_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_firstorder_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_qingdian", "festivalnationlottery", 62f, null, _festivalnationlottery, checkfestivallottery, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_zhounian", "anniversarylottery", 62f, null, _anniversarylottery, checkanniversarylottery, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "ui_icon_fuli", "weekendlottery", 62f, __BaseUI._iconMask2, _weekendlottery, checkweekendlottery, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_xianshi", "timelimit", 62f, null, _timelimit, _timelimit_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setLight(_timelimit_check, timelimit_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhengba", "craft", 62f, __BaseUI._iconMask2, _craft, _craft_check, _ButtonMain.btnType.ELSE);
+		buttonMain.setLight(_craft_light_check, craft_anim_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_wudaohui", "craft_world", 62f, __BaseUI._iconMask2, _craft_world, _craft_world_check, _ButtonMain.btnType.ELSE);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_jingyingsai", "craft_tactic", 62f, __BaseUI._iconMask2, _craft_tactic, _craft_tactic_check, _ButtonMain.btnType.ELSE);
+		buttonMain.setLight(_craft_tactic_light_check, icon_jingyingsai_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tiantisai", "ladder", 62f, __BaseUI._iconMask2, _ladder, _ladder_check, _ButtonMain.btnType.ELSE);
+		buttonMain.setMarkNum(_ladder_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_ribang", "daily_ranking", 67f, __BaseUI._iconMask2, _daily_ranking, checkUI, _ButtonMain.btnType.ELSE);
+		buttonMain.setLight(_daily_ranking_light_check, dailyRanking_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_ronglian", "artifact_forge", 62f, __BaseUI._iconMask2, _artifact_forge, _artifact_forge_check, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_artifact_forge_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_huiguilb", "return_gift", 62f, icon_huiguilb_hover, _return_gift, _return_gift_check, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_return_gift_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_keji", "tech_tree", 62f, __BaseUI._iconMask2, _techtree, _techtree_check, _ButtonMain.btnType.ELSE);
+		buttonMain.setMarkNum(_techtree_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_dianjiang", "dianjiangtai", 62f, __BaseUI._iconMask, _dianjiangtai, _dianjiangtai_check, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_dianjiangtai_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_mingjiangka", "GeneralShengJieLotteryUI", 62f, __BaseUI._iconMask, _cardlottery, _cardlottery_check, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_cardlottery_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_chaolu", "tech_book_copy", 62f, __BaseUI._iconMask2, _techbookcopy, _techbookcopy_check, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_techbookcopy_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_youqing", "friend_lottery", 62f, __BaseUI._iconMask2, _friendlottery, _friendlottery_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_friendlottery_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhuanfu", "zhuan_fu", 62f, __BaseUI._iconMask2, _zhuanfu, _zhuanfu_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhanyi", "stronghold", 62f, __BaseUI._iconMask2, _stronghold, _stronghold_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_stronghold_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_chiyuan", "rescue", 62f, __BaseUI._iconMask2, _rescue, _rescue_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_rescue_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_jfsd", "assaultshop", 62f, button_jfsd_hover, _strongholdshop, _strongholdshop_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setMarkNum(_strongholdshop_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_jipintemai", "specialitemshop", 62f, icon_jipintemai_hover, _specialitemshop, _specialitemshop_check, _ButtonMain.btnType.NOEXPANDING);
+		buttonMain.setLight(_specialitemshop_check, icon_jipintemai_light);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_shuangdan", "christmas", 62f, icon_shuangdan_hover, _christmas, _christmas_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_fengshen", "christmas", 62f, icon_fengshen_hover, _christmas, _christmas_fengshen_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_jierichoujiang", "christmas", 62f, icon_jierichoujiang_hover, _christmas, _christmas_common_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_jqgm", "christmasshopbuy", 62f, null, _christmaslotteryshopbuy, _christmas_lotteryshopbuy_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_longxianjie", "spirit_ascend", 62f, __BaseUI._iconMask2, _spiritfairy, _check_spiritfairy, _ButtonMain.btnType.PLAY);
+		buttonMain.setMarkNum(_spiritfairy_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_juling", "spirit_fariy_gather", 62f, __BaseUI._iconMask2, _spiritfairygather, _check_spiritfairygather, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_spiritfairygather_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_yingxin", "newyear_2016", 62f, "button_yingxin_hover", _chinesenewyear, _chinesenewyear_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_baoku", "treasury", 62f, __BaseUI._iconMask2, _treasury, _treasury_check, _ButtonMain.btnType.RESOURCE);
+		buttonMain.setMarkNum(_treasury_count, __BaseUI._markNumStyle);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_37youxijie", "37youxijie", 62f, "icon_37youxijie_hover", youxijie37, youxijie37_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_youhuibao", "packgeneralshop", 62f, __BaseUI._iconMask2, packgeneralshop, packgeneralshop_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "button_jlzm", "onegeneralshop", 62f, __BaseUI._iconMask2, onegeneralshop, onegeneralshop_check, _ButtonMain.btnType.NOEXPANDING);
+		btnTop.Add(buttonMain);
+		btnShrink.make(asset, "button_shouqi");
+		btnExpand.make(asset, "button_zhankai");
+		btnSecretary.make(asset, "icon_xiaozhushou");
+		secretary_light = asset.Load("icon_xiaozhushou_light") as Texture2D;
+		texTopRightFrame = asset.Load("ui_zhu_xitong") as Texture2D;
+		btnTopRight.Clear();
+		buttonMain = new _ButtonMain(asset, "icon_haoyou2", "social_friend", 32f, null, _social_friend, checkBottomUI);
+		buttonMain.setMarkNum_small(_social_friend_count, __BaseUI._markNumStyle_small);
+		btnTopRight.Add(buttonMain);
+		btnTopRight.Add(new _ButtonMain(asset, "icon_yinyue", string.Empty, 32f, null, _music, _music_check));
+		btnTopRight.Add(new _ButtonMain(asset, "icon_yinyuejingzhi", string.Empty, 32f, null, _music_forbid, _music_forbid_check));
+		buttonMain = new _ButtonMain(asset, "icon_youjian", string.Empty, 50f, null, _mail, null);
+		buttonMain.setMarkNum_small(_mail_count, __BaseUI._markNumStyle_small);
+		btnTopRight.Add(buttonMain);
+		btnTopRight.Add(new _ButtonMain(asset, "icon_paihang", string.Empty, 32f, null, _ranking, null));
+		buttonMain = new _ButtonMain(asset, "icon_zhanbao", string.Empty, 50f, null, _battle_report, null);
+		buttonMain.setMarkNum_small(_battle_report_count, __BaseUI._markNumStyle_small);
+		btnTopRight.Add(buttonMain);
+		btnTopRight.Add(new _ButtonMain(asset, "icon_xitong", string.Empty, 32f, null, _system, null));
+		GUIStyle gUIStyle4 = new GUIStyle();
+		gUIStyle4.normal.background = asset.Load("ui_battlevalue_focus") as Texture2D;
+		btnBattleValue = new _ButtonMain(asset, "ui_battlevalue", string.Empty, 0f, gUIStyle4, _battlevalue, null);
+		texBottomFrame = asset.Load("ui_zhu_bar3") as Texture2D;
+		bottomSubFrame.normal.background = asset.Load("ui_zhu_bar2") as Texture2D;
+		bottomSubFrame.border = new RectOffset(0, 0, 10, 10);
+		btnBottomRight.Clear();
+		buttonMain = new _ButtonMain(asset, "icon_zhucheng", "Capital", 62f, __BaseUI._iconMask2, _capital, checkUI);
+		buttonMain.setMarkNum(_capital_count, __BaseUI._markNumStyle);
+		btnBottomRight.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhengzhan", "Campaign", 62f, __BaseUI._iconMask2, _campaign, _campaign_check);
+		buttonMain.setMarkNum(_campaign_count, __BaseUI._markNumStyle);
+		btnBottomRight.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_guanka", "chapter", 62f, __BaseUI._iconMask2, _chapter, _chapter_check);
+		buttonMain.setMarkNum(_campaign_count, __BaseUI._markNumStyle);
+		btnBottomRight.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tiaozhan", "anecdote", 62f, __BaseUI._iconMask2, _anecdote, checkUI);
+		buttonMain.setMarkNum(_anecdote_count, __BaseUI._markNumStyle);
+		btnBottomRight.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_huanjing", "fairy", 62f, __BaseUI._iconMask2, _fairy, checkUI);
+		buttonMain.setMarkNum(_fairy_count, __BaseUI._markNumStyle);
+		btnBottomRight.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_guozhan", "nation", 62f, __BaseUI._iconMask2, _nation, _nation_check);
+		btnBottomRight.Add(buttonMain);
+		bottom_x = bottom_bar_x;
+		btnBottom.Clear();
+		buttonMain = new _ButtonMain(asset, string.Empty, "empty", 62f, null, null, null);
+		buttonMain.enable = false;
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_hufu", "amulet", 62f, __BaseUI._iconMask, _amulet, checkUI);
+		buttonMain.setMarkUp(_amulet_new, __BaseUI._markNewStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tongmeng", "social_guild", 62f, __BaseUI._iconMask, _social_guild, checkBottomUI);
+		buttonMain.setMarkNum(_social_guild_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_lingshou", "army_spirit", 62f, __BaseUI._iconMask, _army_spirit, checkSpirit);
+		buttonMain.setMarkNum(_army_spirit_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_lingshou", "spirit2", 62f, __BaseUI._iconMask, _spirit2, checkSpirit2);
+		buttonMain.setMarkNum(_army_spirit_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_lingshou", "spirit3", 62f, __BaseUI._iconMask, _spirit3, checkSpirit3);
+		buttonMain.setMarkNum(_army_spirit_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhaomu", "army_recruit", 62f, __BaseUI._iconMask, _army_recruit, checkUI);
+		buttonMain.setMarkNum(_army_recruit_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_xingling", "army_star", 62f, __BaseUI._iconMask, _army_star, checkStarTechUI);
+		buttonMain.setMarkUp(_army_star_up, __BaseUI._markUpStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_tianfu", "genius_ui", 62f, __BaseUI._iconMask, _genius_ui, checkGeniusUI);
+		buttonMain.setMarkUp(_genius_up, __BaseUI._markUpStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_fengshenbang", "god_list", 62f, __BaseUI._iconMask, _godlist, checkUI);
+		buttonMain.setMarkNum(_godlist_count, __BaseUI._markNumStyle);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_zhuangbei", "general_person", 62f, __BaseUI._iconMask, _general_person, checkUI);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset, "icon_buzhen", "formation", 62f, __BaseUI._iconMask, _formation, checkUI);
+		btnBottom.Add(buttonMain);
+		m_tutorial_button.make(asset, "button_zhu_tishi", unable: false);
+		tga_dianjilingqu.normal.background = asset.Load("tga_dianjilingqu") as Texture2D;
+		tga_guang.normal.background = asset.Load("tga_guang") as Texture2D;
+		tga_bangzhukuang.normal.background = asset.Load("tga_bangzhukuang") as Texture2D;
+		tga_bangzhukuang02.normal.background = asset.Load("tga_bangzhukuang02") as Texture2D;
+		tga_guang3.normal.background = asset.Load("tga_guang3") as Texture2D;
+		ui_zi_znq.normal.background = asset.Load("ui_zi_znq") as Texture2D;
+		b_trace_tbc.make(asset, "ui_trace_tbc");
+		b_trace_complete.make(asset, "ui_trace_complete");
+		b_traceweb.make(asset, "ui_traceweb");
+		traceweb_tbc.normal.background = asset.Load("ui_traceweb_weijie") as Texture2D;
+		traceweb_complete.normal.background = asset.Load("ui_traceweb_wanchang") as Texture2D;
+		trace_name.normal.textColor = new Color(1f, 1f, 0f);
+		trace_name.alignment = TextAnchor.MiddleCenter;
+		m_bInit = true;
+		add_anmi_maps();
+		init_tooltip();
+		if (Character.cur_bv_value == 0 && Character.target_bv_value == 0)
+		{
+			Global.character_.calc_battlescore_form();
+			Character.cur_bv_value = (Character.target_bv_value = (int)Global.character_.battlescore_form);
+		}
+		texBattleValueBar = asset.Load("ui_battlevalue_bar") as Texture2D;
+		__BaseUI.init_lable(asset, "ui_battlevalue_mask", ref battlevalue_mask);
+		__BaseUI.init_lable(asset, "ui_battlevalue_light", ref battlevalue_light);
+		__BaseUI.init_lable(asset, "ui_battlevalue_black", ref battlevalue_black);
+		Btn_gongshi = new _ButtonMain(asset, "button_gongshi", "itemnotice", 62f, __BaseUI._iconMask2, _itemnotice, _itemnotice_check, _ButtonMain.btnType.NOEXPANDING);
+		luoshu_show(asset);
+		checkCameraGUI();
+	}
+
+	public void setBattleResult(bool bBattleResult)
+	{
+		m_bBattleResult = bBattleResult;
+	}
+
+	protected override void PostInit()
+	{
+		if (m_bBattleResult)
+		{
+			m_bBattleResult = false;
+			rmg.ToDisable();
+			__BaseUI.GetBattleResultUI().myVisible();
+		}
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (camGUI != null)
+		{
+			UnityEngine.Object.Destroy(camGUI.gameObject);
+			camGUI = null;
+		}
+		if (m_subui != null)
+		{
+			m_subui.Hide();
+			m_subui = null;
+		}
+		clearFrameAnimation();
+	}
+
+	private void Update()
+	{
+		bool flag = false;
+		bool flag2 = false;
+		_ButtonMain buttonMain = null;
+		foreach (_ButtonMain item in btnBottom)
+		{
+			bool flag3 = false;
+			if (item.state == _ButtonMain.STATE.COLLASPING)
+			{
+				flag3 = true;
+			}
+			if (item.Update())
+			{
+				buttonMain = item;
+			}
+			if (item.state == _ButtonMain.STATE.NONE && flag3)
+			{
+				flag2 = true;
+			}
+			if (item.getRect().x > (float)Screen.width - 100f * __BaseUI._screenScale)
+			{
+				item.enable = false;
+			}
+			else
+			{
+				item.enable = true;
+			}
+		}
+		if (buttonMain != null)
+		{
+			float num = 0f;
+			float num2 = 370f * __BaseUI._screenScale;
+			float num3 = (float)Screen.width - bottom_bar_x * __BaseUI._screenScale;
+			foreach (_ButtonMain item2 in btnBottom)
+			{
+				if (!item2.Check())
+				{
+					continue;
+				}
+				num += item2.offset;
+				num += item2.subWidth;
+				if (item2.subWidth > 0f)
+				{
+					num += 10f;
+				}
+				if (item2.current && buttonMain != item2 && flag2)
+				{
+					item2.state = _ButtonMain.STATE.EXPANDING1;
+					item2.right_width = 0f;
+					float num4 = (float)item2.subCount * item2.subOffset - item2.subWidth;
+					if (__BaseUI._rectRB(bottom_x + num + num4, 0f, num + num4, 0f).width > num3 - num2)
+					{
+						item2.right_width = 1f;
+					}
+				}
+				if (buttonMain != item2)
+				{
+					continue;
+				}
+				float num5 = item2.subWidth - (float)item2.subCount * item2.subOffset;
+				if (num5 > 0f)
+				{
+					num -= num5;
+				}
+				Rect rect = __BaseUI._rectRB(bottom_x + num, 0f, num, 0f);
+				if (rect.x + rect.width > num3)
+				{
+					bottom_x = bottom_bar_x;
+				}
+				if (__BaseUI._rectRB(bottom_x + num, 0f, num, 0f).x < num2)
+				{
+					bottom_x = (num3 - num2) / __BaseUI._screenScale - num + bottom_bar_x;
+				}
+				if (item2.state == _ButtonMain.STATE.EXPANDING1)
+				{
+					rect = __BaseUI._rectRB(bottom_bar_x + num - item2.subWidth - 10f, 0f, num - item2.subWidth - 10f, 0f);
+					num += (float)item2.subCount * item2.subOffset - 30f - item2.subWidth;
+					Rect rect2 = __BaseUI._rectRB(bottom_bar_x + num, 0f, num, 0f);
+					if (rect2.x < num2 && rect.x + rect2.width > num3)
+					{
+						float num6 = rect2.x - num2;
+						float num7 = rect.x + rect2.width - item2.offset + 30f - item2.subOffset - num3;
+						bottom_x = bottom_bar_x - item2.subWidth / ((float)item2.subCount * item2.subOffset - 30f) * num7;
+					}
+				}
+			}
+		}
+		m_anim_maps.update();
+		if (event_anim == 0)
+		{
+			event_anim = 1;
+			event_anim_timer = 0.3f;
+		}
+		else if (event_anim_timer > 0f)
+		{
+			event_anim_timer -= Time.deltaTime;
+		}
+		else if (event_anim == 1)
+		{
+			event_anim = 2;
+			event_anim_timer = 0.2f;
+		}
+		else if (event_anim == 2)
+		{
+			event_anim = 3;
+			event_anim_timer = 0.9f;
+		}
+		else if (event_anim == 3)
+		{
+			event_anim = 0;
+		}
+		if (Character.bvanim_time > 0f)
+		{
+			if (Character.bvanim_time < Time.deltaTime)
+			{
+				Character.cur_bv_value = Character.target_bv_value;
+				Character.bvanim_time = 0f;
+			}
+			else if (Character.bvanim_time < 1f)
+			{
+				Character.cur_bv_value += (int)((float)(Character.target_bv_value - Character.cur_bv_value) / Character.bvanim_time * Time.deltaTime);
+				Character.bvanim_time -= Time.deltaTime;
+			}
+			else
+			{
+				Character.bvanim_time -= Time.deltaTime;
+			}
+		}
+		if (Character.bvanim_start)
+		{
+			Character.bvanim_start = false;
+			if (rmg.LevelID == "Campaign" || rmg.LevelID == "Capital")
+			{
+				show_battle_soul();
+			}
+		}
+		m_rotAngle += 100f * Time.deltaTime;
+		if (shrink_timer > 0f)
+		{
+			shrink_timer -= Time.deltaTime;
+			if (shrink_timer <= 0f)
+			{
+				shrink_timer = 0f;
+				topBarMood = TOPBARMOOD.SHRINK;
+				btnTopPosX = 0f;
+			}
+			else
+			{
+				float num8 = (float)(Screen.width - 260) * Time.deltaTime / 0.3f;
+				btnTopPosX += num8;
+			}
+		}
+		if (extend_timer > 0f)
+		{
+			extend_timer -= Time.deltaTime;
+			if (extend_timer <= 0f)
+			{
+				extend_timer = 0f;
+				btnTopPosX = 0f;
+			}
+			else
+			{
+				float num9 = (float)(Screen.width - 260) * Time.deltaTime / 0.3f;
+				btnTopPosX -= num9;
+			}
+		}
+		if (trial_maze_stamina != null)
+		{
+			trial_maze_stamina.Update();
+		}
+	}
+
+	private void ClearBattleCD(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			RootBase.cs_cooldown_clear_0x20(1, null);
+		}
+		EnableAll();
+	}
+
+	private bool _premium_check(string name)
+	{
+		return true;
+	}
+
+	private bool _premium_light_check(string name)
+	{
+		return _premium_check(name) && !premuimEnter;
+	}
+
+	private void _vipweal()
+	{
+		VipWealUI component = BaseUI.GetRootUI().GetComponent<VipWealUI>();
+		if (handle_sub_ui(component, "vipweal"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _vipweal_check(string name)
+	{
+		return true;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main;
+		if (m_bInit)
+		{
+			LoginUI.initFont();
+		}
+		__BaseUI.my_enabled = IsEnable();
+		if (rmg.LevelID == "Nation")
+		{
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, Screen.width, 100f), string.Empty, NationUI.ui_black);
+		}
+		GUI.DrawTexture(new Rect(0f, Screen.height - heightBottomFrame, Screen.width, heightBottomFrame), texBottomFrame);
+		GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, bgStyle);
+		if (BuildingBuildUI.m_bBuildVisible)
+		{
+			return;
+		}
+		if (Global.character_.gm)
+		{
+			int num = Screen.height - 100;
+			if (GUI.Button(new Rect(70f, num, 60f, 30f), "Debug"))
+			{
+				DebugUI component = GameObject.Find("/Debug/DebugUI").GetComponent<DebugUI>();
+				DebugUI.m_timeoffset = TimeUtil._offsettime.ToString();
+				DebugUI.m_daytime = TimeUtil.ThisDay.ToString();
+				DebugUI.m_strongholdlevel = Global.character_.assaultstronghold.max_level.ToString();
+				component.Visible();
+			}
+			if (GUI.Button(new Rect(260f, num, 60f, 30f), "测试craft"))
+			{
+				testcraft();
+			}
+			if (GUI.Button(new Rect(140f, num, 60f, 30f), "IPhone"))
+			{
+				if (__BaseUI._screenScale == 1f)
+				{
+					__BaseUI._screenScale = 1.2f;
+				}
+				else
+				{
+					__BaseUI._screenScale = 1f;
+				}
+			}
+			if (rmg.LevelID == "Capital" && GUI.Button(new Rect(200f, num, 60f, 30f), "Demand"))
+			{
+				BuildingDemandUI component2 = GetComponent<BuildingDemandUI>();
+				SetSubUI(component2);
+				component2.MyLoading();
+			}
+			if (rmg.LevelID == "Capital" && GUI.Button(new Rect(320f, num, 60f, 30f), "QuestB"))
+			{
+				Rect rc = __BaseUI._rectC(186f, 112f, 373f, 224f);
+				BuildingQuestBonusUI buildingQuestBonusUI = GameObject.Find("Capital/CapitalUI").AddComponent<BuildingQuestBonusUI>();
+				buildingQuestBonusUI.Start();
+				BuildingQuest buildingQuest = null;
+				using (Dictionary<byte, BuildingQuest>.ValueCollection.Enumerator enumerator = Global.character_.building_quests.Values.GetEnumerator())
+				{
+					if (enumerator.MoveNext())
+					{
+						BuildingQuest current = enumerator.Current;
+						buildingQuest = current;
+					}
+				}
+				if (buildingQuest != null)
+				{
+					buildingQuestBonusUI.MyLoading(rc, buildingQuest);
+				}
+			}
+		}
+		if (rmg.LevelID == "CapitalFriend")
+		{
+			draw_friend();
+		}
+		else if (rmg.LevelID != "Convoy" && rmg.LevelID != "Nation" && rmg.LevelID != "TrialMaze" && rmg.LevelID != "TeamFight" && rmg.LevelID != "RescueFormation" && rmg.LevelID != "LakeTempleFormation" && rmg.LevelID != "ZhenYaoTaFormation")
+		{
+			draw_character();
+		}
+		if (rmg.LevelID == "Capital" || rmg.LevelID == "Campaign")
+		{
+			DrawNewbieQuest();
+		}
+		Cooldown cooldown = Global.character_.getCooldown(1);
+		if (cooldown != null && (rmg.LevelID == "Campaign" || rmg.LevelID == "Anecdote"))
+		{
+			if (cooldown.time <= TimeUtil.Now)
+			{
+				Global.character_.cooldowns.Remove(1);
+			}
+			else
+			{
+				GUI.DrawTexture(__BaseUI._rect(15f, 120f, 184f, 31f), texBattleCD);
+				int num2 = (int)(cooldown.time - TimeUtil.Now);
+				string formatTime = Global.getFormatTime(num2);
+				__BaseUI.Label(__BaseUI._rect(110f, 120f, 100f, 31f), formatTime, __BaseUI._numLeft, (!cooldown.in_cd) ? Color.white : __BaseUI._clrRed);
+				if (__BaseUI._btnCD.Button(bBtn: true, __BaseUI._rect(15f, 126f, 184f, 19f), new GUIContent(string.Empty, "battlecd_bar")) && Global.character_.gm)
+				{
+					int gold = (int)Math.Ceiling((double)num2 / 60.0) * cooldown.Template.gold_consume;
+					DisableAll();
+					__BaseUI.GetConsumeUI().setConsume(gold, 1, ClearBattleCD);
+				}
+			}
+		}
+		draw_bottom_bar();
+		if (rmg.LevelID != "Fairy" && rmg.LevelID != "Anecdote" && rmg.LevelID != "Divinity" && rmg.LevelID != "SealDevil" && rmg.LevelID != "SealMonster" && rmg.LevelID != "Convoy" && rmg.LevelID != "Nation" && rmg.LevelID != "TalentCampaign" && rmg.LevelID != "PointRace" && rmg.LevelID != "TrialMaze" && rmg.LevelID != "TeamFight" && rmg.LevelID != "SpiritAscend" && rmg.LevelID != "RescueFormation" && rmg.LevelID != "LakeTempleFormation" && rmg.LevelID != "ZhenYaoTaFormation")
+		{
+			draw_top_bar();
+			draw_top_bar_button_light();
+			draw_bottom_right_bar();
+			draw_quest_trace();
+			if (check_new_system_tip())
+			{
+				int num3 = 130;
+				if (rmg.LevelID == "Capital")
+				{
+					num3 += 45;
+				}
+				__BaseUI.BeginGroup(__BaseUI._rect(0f, num3, 261f, 72f));
+				draw_new_system_tip();
+				__BaseUI.EndGroup();
+			}
+			else
+			{
+				removeFrameAnimation("NewSystemTipMain");
+			}
+		}
+		if (rmg.LevelID != "Fairy" && rmg.LevelID != "Anecdote" && rmg.LevelID != "Divinity" && rmg.LevelID != "SealDevil" && rmg.LevelID != "SealMonster" && rmg.LevelID != "Convoy" && rmg.LevelID != "Nation" && rmg.LevelID != "TalentCampaign" && rmg.LevelID != "PointRace" && rmg.LevelID != "TrialMaze" && rmg.LevelID != "TeamFight" && rmg.LevelID != "SpiritAscend" && rmg.LevelID != "RescueFormation" && rmg.LevelID != "LakeTempleFormation" && rmg.LevelID != "ZhenYaoTaFormation")
+		{
+			draw_top_right_bar();
+		}
+		drawLuoshu();
+		Btn_gongshi.Button(__BaseUI._rect(24f, 170f, 52f, 46f));
+		drawFrameAnimation();
+		drawTooltips();
+		m_anim_maps.draw();
+		if (Event.current.type == EventType.Repaint && camGUI != null && camGUI.transform.childCount > 0)
+		{
+			camGUI.Render();
+		}
+		__BaseUI.my_enabled = true;
+	}
+
+	private void DrawNewbieQuest()
+	{
+		BattleGuideUI component = BaseUI.GetRootUI().GetComponent<BattleGuideUI>();
+		NewbieQuestUI component2 = BaseUI.GetRootUI().GetComponent<NewbieQuestUI>();
+		CampaignChapterClearUI component3 = GameObject.Find("Campaign/CampaignUI").GetComponent<CampaignChapterClearUI>();
+		if (component.IsVisible() || component2.IsVisible() || component3.IsVisible())
+		{
+			return;
+		}
+		bool flag = false;
+		ushort num = 0;
+		int index = 0;
+		for (int num2 = Global.character_.newbiequests.Count - 1; num2 >= 0; num2--)
+		{
+			NewbieQuest newbieQuest = Global.character_.newbiequests[num2];
+			if (newbieQuest.isfinish != 1)
+			{
+				index = num2;
+				num = newbieQuest.idnewbie_quest;
+				flag = true;
+				break;
+			}
+		}
+		if (!flag)
+		{
+			for (int i = 0; i < Global.character_.newbiequests.Count; i++)
+			{
+				NewbieQuest newbieQuest2 = Global.character_.newbiequests[i];
+				if (newbieQuest2.isgot != 1)
+				{
+					index = i;
+					num = newbieQuest2.idnewbie_quest;
+					flag = true;
+					break;
+				}
+			}
+		}
+		if (flag)
+		{
+			int num3 = 342;
+			int num4 = 98;
+			isShowNewbieQuest = true;
+			if (m_NQBlinkTime < DateTime.Now)
+			{
+				m_NQBlinkTime = DateTime.Now.AddSeconds(2.0);
+			}
+			double totalSeconds = (m_NQBlinkTime - DateTime.Now).TotalSeconds;
+			double num5 = (1.0 - totalSeconds) / 1.0;
+			if (num5 < 0.0)
+			{
+				num5 *= -1.0;
+			}
+			GUIStyle gUIStyle = new GUIStyle();
+			NewbieQuest newbieQuest3 = Global.character_.newbiequests[index];
+			if (Global.getTemplate("newbie_quest", num) is _newbie_quest newbie_quest)
+			{
+				GUI.BeginGroup(new Rect(Screen.width - num3 - 100, Screen.height - num4 - 100, num3, num4));
+				int num6 = 0;
+				int num7 = 0;
+				int num8 = 0;
+				int num9 = 0;
+				string str = newbie_quest.name;
+				GUIStyle gUIStyle2 = new GUIStyle();
+				Color color = new Color(1f, 1f, 1f, 1f);
+				int num10 = 52;
+				string empty = string.Empty;
+				if (newbieQuest3.isfinish == 1)
+				{
+					num6 = (num4 - 37) / 2;
+					num7 = 13;
+					gUIStyle2 = __BaseUI._icon_finish;
+					num8 = 37;
+					num9 = 37;
+					color = __BaseUI._clrGreen;
+					gUIStyle = tga_bangzhukuang02;
+					empty = __BaseUI.load_str(20382u);
+				}
+				else
+				{
+					num6 = (num4 - 47) / 2;
+					num7 = 12;
+					gUIStyle2 = __BaseUI._icon_unfinish;
+					num8 = 39;
+					num9 = 47;
+					color = __BaseUI._clrRed;
+					gUIStyle = tga_bangzhukuang;
+					empty = __BaseUI.load_str(20383u);
+				}
+				GUI.Label(__BaseUI._rect(0f, 0f, num3, num4), string.Empty, gUIStyle);
+				Color backgroundColor = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, 1f - (float)num5);
+				GUI.Label(__BaseUI._rect(0f, 0f, num3, num4), string.Empty, tga_guang);
+				GUI.backgroundColor = backgroundColor;
+				int fontSize = __BaseUI._textLeft.fontSize;
+				__BaseUI._textLeft.fontSize = 14;
+				__BaseUI.Label(__BaseUI._rect(num10 + 40 + 50, 3f, num3 - num10, num4), str, __BaseUI._textLeft, __BaseUI._clrBlack);
+				__BaseUI._textLeft.fontSize = fontSize;
+				GUIStyle style = new GUIStyle();
+				Rect btnRc = GUITOScreen(__BaseUI._rect(0f, 0f, num3, num4));
+				if (GUI.Button(__BaseUI._rect(0f, 0f, num3, num4), string.Empty, style))
+				{
+					NewbieQuestUI component4 = BaseUI.GetRootUI().GetComponent<NewbieQuestUI>();
+					SetSubUI(null);
+					component4.MyLoading(num, rmg.LevelID);
+				}
+				NewbieQuestUI component5 = BaseUI.GetRootUI().GetComponent<NewbieQuestUI>();
+				component5.CheckQuest(num);
+				GUI.EndGroup();
+				btnRc.y += 20f;
+				__BaseUI.DrawArea(btnRc, empty, ArrowFace.Down);
+			}
+		}
+		else
+		{
+			isShowNewbieQuest = false;
+		}
+	}
+
+	private void _choose_faction()
+	{
+	}
+
+	private void _choose_nation()
+	{
+	}
+
+	private void LoadSubUIFail(string title)
+	{
+		if (__BaseUI.subui == title)
+		{
+			Enable();
+		}
+	}
+
+	private void SubUIClose(string title)
+	{
+		if (__BaseUI.subui == title)
+		{
+			__BaseUI.subui = string.Empty;
+			SetSubUI(null);
+		}
+		if (title == "PlayerBattle" && __BaseUI.subui == "Formation")
+		{
+			_battle_arena();
+		}
+	}
+
+	private void LoadSubUISuccess(string title)
+	{
+		SendMessage("ShowSubUI", title, SendMessageOptions.DontRequireReceiver);
+		Enable();
+	}
+
+	private void add_anmi_maps()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+		Rect rect = ScreenRect._rect(0f, 0f, 85f, 85f);
+	}
+
+	public void _faction()
+	{
+	}
+
+	private bool _faction_check()
+	{
+		return Global.character_.checkUI("faction");
+	}
+
+	private bool _faction_first_check()
+	{
+		return _faction_check() && Global.getFirstCheck("faction");
+	}
+
+	private bool _faction_guide_check()
+	{
+		return _faction_check() && Global.getGuideCheck("faction");
+	}
+
+	private void _secretary()
+	{
+	}
+
+	private void _notice()
+	{
+	}
+
+	private bool _notice_check(string name)
+	{
+		return false;
+	}
+
+	private int _huodong_count()
+	{
+		int num = 0;
+		if (Global.character_.brawlinfo.phase == 2 || Global.character_.brawlinfo.phase == 3)
+		{
+			num++;
+		}
+		if (!Global.character_.quiz.end && Global.character_.getDailyEventState())
+		{
+			num++;
+		}
+		if (Global.teamfight_.status >= 2)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public static void _huodong()
+	{
+		EventUI component = BaseUI.GetRootUI().GetComponent<EventUI>();
+		if (handle_sub_ui(component, "EventUI"))
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable["subui"] = "EventUI";
+			component.SubLoading(hashtable);
+		}
+	}
+
+	public static bool _huodong_check(string name)
+	{
+		if (Global.character_.checkUI("quiz"))
+		{
+			return true;
+		}
+		if (Global.character_.checkUI("brawl"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void _online_reward()
+	{
+		OnlineAwardsUI component = GameObject.Find("/Root/RootUI").GetComponent<OnlineAwardsUI>();
+		if (handle_sub_ui(component, "online_reward"))
+		{
+			SetSubUI(component);
+			component.cs_online_get();
+		}
+	}
+
+	private bool _online_check(string name)
+	{
+		return Global.character_.OnlineGift.isNextAvailable();
+	}
+
+	private void _favorite()
+	{
+		FavoriteUI component = BaseUI.GetRootUI().GetComponent<FavoriteUI>();
+		if (handle_sub_ui(component, "favorite"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _favorite_check(string name)
+	{
+		bool flag = false;
+		if (Global.game_data.Contains("login_type") && Global.game_data["login_type"].ToString() == "web" && !Global.character_.add_favorite)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void _mobilebind()
+	{
+		MobileBindUI component = BaseUI.GetRootUI().GetComponent<MobileBindUI>();
+		if (handle_sub_ui(component, "mobile_bind"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _mobilebind_check(string name)
+	{
+		if (Global.character_.mobile_bind != 2 && Global.mobile_url.Length > 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private int _training_count()
+	{
+		if (Global.character_.trialinfo.cur_level <= 5)
+		{
+			return Global.character_.stamina;
+		}
+		return 0;
+	}
+
+	private int _sealmonster_count()
+	{
+		int result = 10;
+		if (Global.getTemplate("vip_template", Global.character_.VIPLEVEL) is _vip_template vip_template)
+		{
+			result = vip_template.sealmonster_refresh_times - Global.character_.sealmonsterinfo.times;
+		}
+		return result;
+	}
+
+	public static void _training()
+	{
+		TrialUI component = BaseUI.GetRootUI().GetComponent<TrialUI>();
+		if (handle_sub_ui(component, "training"))
+		{
+			SetSubUI(component);
+			component.cs_trial_load_all();
+		}
+	}
+
+	public static void _muren()
+	{
+		WoodWarUI component = BaseUI.GetRootUI().GetComponent<WoodWarUI>();
+		if (handle_sub_ui(component, "muren"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private int _muren_count()
+	{
+		if (Global.character_.dummy_challenge_status != null && Global.character_.dummy_challenge_status.player != null && (Global.character_.dummy_challenge_status.player.rank == 0 || Global.character_.dummy_challenge_status.player.can_take))
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	public void _anniversarylottery()
+	{
+		AnniversaryLotteryUI component = BaseUI.GetRootUI().GetComponent<AnniversaryLotteryUI>();
+		if (handle_sub_ui(component, "anniversarylottery"))
+		{
+			component.MyLoading();
+			SetSubUI(component);
+		}
+	}
+
+	public void _weekendlottery()
+	{
+		WeekendLotteryUI component = BaseUI.GetRootUI().GetComponent<WeekendLotteryUI>();
+		if (handle_sub_ui(component, "weekendlottery"))
+		{
+			component.MyLoading();
+			SetSubUI(component);
+		}
+	}
+
+	public void _festivalnationlottery()
+	{
+		FestivalLotteryUI component = BaseUI.GetRootUI().GetComponent<FestivalLotteryUI>();
+		if (handle_sub_ui(component, "festivallottery"))
+		{
+			component.MyLoading(1u);
+			SetSubUI(component);
+		}
+	}
+
+	public bool checkfestivallottery(string name)
+	{
+		return Global.character_.festival_lottery.isFestivalLotteryOpen(1u);
+	}
+
+	public bool checkanniversarylottery(string name)
+	{
+		return Global.character_.festival_lottery.isFestivalLotteryOpen(2u);
+	}
+
+	public bool checkweekendlottery(string name)
+	{
+		return Global.character_.festival_lottery.isFestivalLotteryOpen(3u);
+	}
+
+	public void _convoy()
+	{
+		uint num = TimeUtil.Now - TimeUtil.ThisDay;
+		if (!(Global.getTemplate("convoy_param", 1u) is _convoy_param convoy_param))
+		{
+			return;
+		}
+		if ((num >= convoy_param.begin_time1 && num <= convoy_param.end_time1 + 1800) || (num >= convoy_param.begin_time2 && num <= convoy_param.end_time2 + 1800))
+		{
+			DisableAll();
+			GameObject.Find("Convoy/ConvoyUI").GetComponent<ConvoyUI>().cs_convoy_refresh(isOpenUI: true);
+		}
+		else if (convoy_param.auto_vip <= Global.character_.VIPLEVEL)
+		{
+			if (num > convoy_param.end_time2 + 1800)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20839u) + __BaseUI.load_str(20869u), null, showAutoConvoy, _bCancel: true);
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20837u) + __BaseUI.load_str(20869u), null, showAutoConvoy, _bCancel: true);
+			}
+		}
+		else if (num > convoy_param.end_time2 + 1800)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20839u), null);
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20837u), null);
+		}
+	}
+
+	private static void showAutoConvoy(bool bOK, object[] arg)
+	{
+		if (bOK)
+		{
+			ConvoyAutoUI component = BaseUI.GetRootUI().GetComponent<ConvoyAutoUI>();
+			if (component != null)
+			{
+				component.MyLoading();
+			}
+		}
+	}
+
+	private int _convoy_count()
+	{
+		uint num = TimeUtil.Now - TimeUtil.ThisDay;
+		if (!(Global.getTemplate("convoy_param", 1u) is _convoy_param convoy_param))
+		{
+			return 0;
+		}
+		if ((num >= convoy_param.begin_time1 && num <= convoy_param.end_time1 + 1800) || (num >= convoy_param.begin_time2 && num <= convoy_param.end_time2 + 1800))
+		{
+			return convoy_param.convoy_times - Global.character_.convoy.times;
+		}
+		return 0;
+	}
+
+	private void _day_award()
+	{
+	}
+
+	public static void _trial_maze()
+	{
+		MazeSelectUI component = BaseUI.GetRootUI().GetComponent<MazeSelectUI>();
+		if (handle_sub_ui(component, "trail_maze_select"))
+		{
+			component.MyLoading(auto_enter: true);
+			SetSubUI(component);
+		}
+	}
+
+	private static int _trial_maze_stamina_count()
+	{
+		return (trial_maze_stamina != null) ? trial_maze_stamina.stamina : 0;
+	}
+
+	private int _general_count()
+	{
+		int num = 0;
+		if (_general_person_up())
+		{
+			num++;
+		}
+		if (_general_practice_count() > 0)
+		{
+			num++;
+		}
+		if (_general_talisman_up())
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public static void _general_person()
+	{
+		EquipmentUI component = BaseUI.GetRootUI().GetComponent<EquipmentUI>();
+		if (handle_sub_ui(component, "equipment"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _general_person_up()
+	{
+		if (!Global.character_.checkUI("anecdote"))
+		{
+			return false;
+		}
+		foreach (Equipment value in Global.character_.equipments.Values)
+		{
+			if (value.canup)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void _general_enchant()
+	{
+	}
+
+	private int _general_practice_count()
+	{
+		return 0;
+	}
+
+	private void _general_practice()
+	{
+	}
+
+	private int _general_talisman_count()
+	{
+		return 0;
+	}
+
+	private bool _general_talisman_up()
+	{
+		if (checkUI("general_talisman"))
+		{
+			if (Global.character_.artifact_remind == 0)
+			{
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	public void _general_talisman()
+	{
+	}
+
+	private void _general_manage()
+	{
+	}
+
+	public static void _formation()
+	{
+		Global.setGuideCheck("formation", bCheck: false);
+		Global.setFirstCheck("formation", bCheck: false);
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		if (handle_sub_ui(component, "Formation"))
+		{
+			component.FormSubLoading();
+		}
+	}
+
+	public static void _formation_teamfight()
+	{
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		if (handle_sub_ui(component, "Formation"))
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable["subui"] = "Formation";
+			hashtable["OnClose"] = new delegate_OnClose(TeamFightUI._formation_save);
+			component.SubLoading(hashtable);
+		}
+	}
+
+	private int _army_count()
+	{
+		int num = 0;
+		if (_army_star_up())
+		{
+			num++;
+		}
+		if (_army_recruit_count() > 0)
+		{
+			num++;
+		}
+		if (_army_spirit_count() > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	private bool _army_star_up()
+	{
+		if (!checkUI("army_star"))
+		{
+			return false;
+		}
+		return Global.getTemplate("star_tech", (uint)(Global.character_.star_tech + 1)) is _star_tech star_tech && Global.character_.practice >= star_tech.require_practice;
+	}
+
+	public static void _army_star()
+	{
+		StarTechUI component = BaseUI.GetRootUI().GetComponent<StarTechUI>();
+		if (handle_sub_ui(component, "army_star"))
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable.Add("subui", "StarTechUI");
+			component.SubLoading(hashtable);
+		}
+	}
+
+	public static void _genius_ui()
+	{
+		GeniusUI component = BaseUI.GetRootUI().GetComponent<GeniusUI>();
+		if (handle_sub_ui(component, "genius_ui"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _genius_up()
+	{
+		if (!checkGeniusUI("genius_ui"))
+		{
+			return false;
+		}
+		int num = 0;
+		int num2 = 0;
+		okorno = false;
+		for (int i = 1001; i <= 1004; i++)
+		{
+			_army_star_start army_star_start = Global.getTemplate("army_star_start", (uint)i) as _army_star_start;
+			int start_id = army_star_start.start_id;
+			int max_id = army_star_start.max_id;
+			int num3 = (max_id - start_id + 1) / 10;
+			int num4 = 0;
+			if (army_star_start != null)
+			{
+				this.army_star = true;
+				if (Global.character_.armystars.ContainsKey((ushort)i))
+				{
+					num4 = Global.character_.armystars[(ushort)i];
+				}
+				_army_star army_star = Global.getTemplate("army_star", (uint)((num4 + start_id <= max_id) ? (num4 + start_id) : max_id)) as _army_star;
+				if (Global.character_.level < army_star.reqlevel || num4 == num3 * 10)
+				{
+					level_star[num] = false;
+				}
+				else
+				{
+					level_star[num] = true;
+				}
+				num2 = ((num2 <= army_star.practice) ? army_star.practice : num2);
+			}
+			else
+			{
+				this.army_star = false;
+			}
+			num++;
+		}
+		for (int j = 0; j < 4; j++)
+		{
+			if (level_star[j])
+			{
+				okorno = true;
+				break;
+			}
+		}
+		return this.army_star && Global.character_.practice >= num2 && okorno;
+	}
+
+	public static int _army_recruit_count()
+	{
+		if (!checkUI("army_recruit"))
+		{
+			return 0;
+		}
+		int num = 0;
+		foreach (uint item in Global.character_.newgenid)
+		{
+			if (Global.getTemplate("general_template", item) is _general_template general_template && general_template.unlock_level <= Global.character_.level)
+			{
+				if (general_template.color == 3 && Global.character_.newpageid_blue.Contains((uint)(general_template.sortid / 10)))
+				{
+					num++;
+				}
+				else if (general_template.color == 4 && Global.character_.newpageid_purple.Contains((uint)(general_template.sortid / 10)))
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	public static void _army_recruit()
+	{
+		GeneralRecruitUI component = BaseUI.GetRootUI().GetComponent<GeneralRecruitUI>();
+		if (m_subui == component)
+		{
+			SetSubUI(null);
+			return;
+		}
+		component.SubLoading();
+		SetSubUI(component);
+	}
+
+	public static int _army_spirit_count()
+	{
+		if (!checkUI("army_spirit"))
+		{
+			return 0;
+		}
+		return (Global.character_.spirit.level < 100 && Global.character_.spirit_food > 0) ? 1 : 0;
+	}
+
+	public static void _general_upgrade()
+	{
+		GeneralUpgradeUI component = BaseUI.GetRootUI().GetComponent<GeneralUpgradeUI>();
+		if (m_subui == component)
+		{
+			SetSubUI(null);
+			return;
+		}
+		component.MyLoading();
+		SetSubUI(component);
+	}
+
+	public static int _general_upgrade_count()
+	{
+		if (Global.getTemplate("general_star_param", 1u) is _general_star_param general_star_param)
+		{
+			return general_star_param.challenge_times + general_star_param.challenge_free_times - (int)Global.character_.general_star_challenge_free_times - (int)Global.character_.general_star_challenge_times;
+		}
+		return 0;
+	}
+
+	public static bool _general_upgrade_check(string name)
+	{
+		return true;
+	}
+
+	public static void _army_spirit()
+	{
+		SpiritUI component = BaseUI.GetRootUI().GetComponent<SpiritUI>();
+		if (handle_sub_ui(component, "army_spirit"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void _spirit2()
+	{
+		SpiritUI_2 component = BaseUI.GetRootUI().GetComponent<SpiritUI_2>();
+		if (handle_sub_ui(component, "spirit2"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void _spirit3()
+	{
+		SpiritUI_3 component = BaseUI.GetRootUI().GetComponent<SpiritUI_3>();
+		if (handle_sub_ui(component, "spirit3"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static bool checkSpirit(string name)
+	{
+		if (checkUI(name) && Global.character_.spirit != null && Global.character_.spirit.level < 41)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool checkSpirit2(string name)
+	{
+		if (checkSpirit3("spirit3"))
+		{
+			return false;
+		}
+		bool flag = checkUI(name);
+		Database.Spirit spirit = Global.character_.spirit;
+		byte level = Global.character_.spirit.level;
+		if (checkUI(name) && Global.character_.spirit != null && Global.character_.spirit.level >= 41)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool checkSpirit3(string name)
+	{
+		if (checkUI("spirit2") && Global.character_.spirit != null && Global.character_.spirit.level >= 41 && checkUI("spirit_ascend"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private int _resource_count()
+	{
+		int num = 0;
+		if (_resource_depot_up())
+		{
+			num++;
+		}
+		if (_resource_collect_count() > 0)
+		{
+			num++;
+		}
+		if (_resource_soul_count() > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	private int _resource_soul_count()
+	{
+		if (!checkUI("resource_soul"))
+		{
+			return 0;
+		}
+		_general_soul_start_mode[] array = new _general_soul_start_mode[3]
+		{
+			Global.getTemplate("general_soul_start_mode", 1u) as _general_soul_start_mode,
+			Global.getTemplate("general_soul_start_mode", 2u) as _general_soul_start_mode,
+			Global.getTemplate("general_soul_start_mode", 3u) as _general_soul_start_mode
+		};
+		byte[] array2 = new byte[3]
+		{
+			Global.character_.generalsoul_blue_times,
+			Global.character_.generalsoul_purple_times,
+			Global.character_.generalsoul_orange_times
+		};
+		int num = 0;
+		if (Global.character_.generalsoul_blue_times < array[0].free_times)
+		{
+			num += array[0].free_times - Global.character_.generalsoul_blue_times;
+		}
+		if ((Global.character_.level >= array[1].require_level || Global.character_.VIPLEVEL >= array[1].nolimit_viplevel) && Global.character_.generalsoul_purple_times < array[1].free_times)
+		{
+			num += array[1].free_times - Global.character_.generalsoul_purple_times;
+		}
+		if (Global.character_.level >= array[2].require_level && Global.character_.VIPLEVEL >= array[2].nolimit_viplevel && Global.character_.generalsoul_orange_times < array[2].free_times)
+		{
+			num += array[2].free_times - Global.character_.generalsoul_orange_times;
+		}
+		return num;
+	}
+
+	public static void _resource_soul()
+	{
+		GeneralSoulGatherUI component = BaseUI.GetRootUI().GetComponent<GeneralSoulGatherUI>();
+		if (handle_sub_ui(component, "resource_soul"))
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable.Add("subui", "SoulUI");
+			component.SubLoading(hashtable);
+		}
+	}
+
+	private int _resource_wealth_count()
+	{
+		if (checkUI("resource_wealth"))
+		{
+			return Global.character_.exchange.getCount();
+		}
+		return 0;
+	}
+
+	public static void _resource_wealth(delegate_OnClose _onclose)
+	{
+		ExchangeUI component = BaseUI.GetRootUI().GetComponent<ExchangeUI>();
+		if (handle_sub_ui(component, "resource_wealth"))
+		{
+			component.MyLoading(_onclose);
+		}
+	}
+
+	public static void _resource_wealth()
+	{
+		_resource_wealth(null);
+	}
+
+	public void resource_partrol(Building building)
+	{
+		BuildingHarvestUI component = GetComponent<BuildingHarvestUI>();
+		component.MyLoading(building);
+	}
+
+	private void _resource_patrol()
+	{
+		resource_partrol(Global.character_.capital);
+	}
+
+	public static void _resource_collect()
+	{
+		BaseUI.GetRootUI().cs_divinity_enter(BaseAsset.lds.GetCurUI());
+	}
+
+	private int _resource_collect_count()
+	{
+		if (Global.character_.god_bonus_today == 0)
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	private void _resource_depot()
+	{
+		ShopSelectorUI component = BaseUI.GetRootUI().GetComponent<ShopSelectorUI>();
+		if (handle_sub_ui(component, "resource_depot"))
+		{
+			SetSubUI(component);
+			component.SubLoading();
+		}
+	}
+
+	private bool _resource_depot_up()
+	{
+		foreach (Equipment value in Global.character_.equipments.Values)
+		{
+			if (value.idgeneral_template == ushort.MaxValue && value.temp_new)
+			{
+				return true;
+			}
+		}
+		foreach (Database.Material value2 in Global.character_.materials.Values)
+		{
+			if (value2.temp_new)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void _meditation()
+	{
+		MeditationUI component = BaseUI.GetRootUI().GetComponent<MeditationUI>();
+		component.StartMeditation(showui: true);
+	}
+
+	public void _aide()
+	{
+	}
+
+	public Rect getAideRect()
+	{
+		return new Rect(0f, 0f, 0f, 0f);
+	}
+
+	public static void _premium()
+	{
+		_premium(0u);
+	}
+
+	public static void _premium(uint id)
+	{
+		PremiumUI component = BaseUI.GetRootUI().GetComponent<PremiumUI>();
+		if (handle_sub_ui(component, "premium"))
+		{
+			SetSubUI(component);
+			component.MyLoading(id);
+		}
+	}
+
+	public int _premium_count()
+	{
+		PremiumUI component = BaseUI.GetRootUI().GetComponent<PremiumUI>();
+		int num = 0;
+		if (component != null)
+		{
+			checkAward[0] = null;
+			checkAward[1] = component.checkZijiangAward;
+			checkAward[2] = component.checkJinbiAward;
+			checkAward[3] = component.checkChongjiAward;
+			checkAward[4] = component.checkYingxiongAward;
+			checkAward[5] = component.checkShenlongAward;
+			checkAward[6] = component.checkZhoumoAward;
+			checkAward[7] = component.checkJifenAward;
+			checkAward[8] = component.checkVipAward;
+			checkAward[9] = component.checkGuoguanAward;
+			checkAward[10] = null;
+			checkAward[11] = component.checkJieriAward;
+			checkAward[12] = null;
+			checkAward[13] = null;
+			checkAward[14] = component.checkZhaoZiLongAward;
+			checkAward[15] = component.checkHequOnlineAward;
+			checkAward[16] = null;
+			checkAward[17] = component.checkWanMeiShiLianAward;
+			checkAward[18] = component.checkZiJiangFangSongAward;
+			checkAward[19] = component.checkZiLongFaBaoAward;
+			checkAward[20] = component.checkZhouNianFanLiAward;
+			checkAward[21] = component.checkOneTargetAward;
+			checkAward[22] = component.checkTwoTargetAward;
+			checkAward[23] = component.checkThreeTargetAward;
+			checkAward[24] = component.checkFourTargetAward;
+			checkAward[25] = component.checkFiveTargetAward;
+			checkAward[26] = component.checkSixTargetAward;
+			checkAward[27] = component.checkSevenTargetAward;
+			checkAward[28] = component.checkRechargeActivityGoldAward;
+			checkAward[29] = component.checkRechargeActivitySingleAward;
+			checkAward[30] = component.checkRechargeActivityItemAward;
+			checkAward[33] = component.checkSevenDaysLoginAward;
+			checkAward[34] = component.checkOnlineLotteryAward;
+			checkAward[35] = component.checkFundAward;
+			checkAward[36] = component.checkNewShenlongAward;
+			checkAward[37] = component.CheckCaiShiRuKuAward;
+			checkAward[38] = component.CheckZhaoCaiJinBaoAward;
+			checkAward[39] = component.CheckZhaoXianNaShiAward;
+			checkAward[40] = component.checkAcitivityQuestAward1;
+			checkAward[41] = component.checkAcitivityQuestAward2;
+			checkAward[42] = component.checkAcitivityQuestAward3;
+			checkAward[43] = component.CheckEverydayLoginAward;
+			checkAward[44] = component.CheckExchangeShopAward;
+			checkAward[45] = component.checkCostTimesAward1;
+			checkAward[46] = component.checkCostTimesAward2;
+			checkAward[47] = component.checkCostTimesAward3;
+			checkAward[48] = component.checkCostTimesAward4;
+			checkAward[49] = component.checkCostTimesAward5;
+			checkDay[0] = component.checkChongzhi;
+			checkDay[1] = component.checkZijiang;
+			checkDay[2] = component.checkJinbi;
+			checkDay[3] = component.checkChongji;
+			checkDay[4] = component.checkYingxiong;
+			checkDay[5] = component.checkShenlong;
+			checkDay[6] = component.checkZhoumo;
+			checkDay[7] = component.checkJifen;
+			checkDay[8] = component.checkVip;
+			checkDay[9] = component.checkGuoguan;
+			checkDay[10] = component.checkXinshouka;
+			checkDay[11] = component.checkJieri;
+			checkDay[12] = component.checkMingyue;
+			checkDay[13] = component.checkTiaozhan;
+			checkDay[14] = component.checkZhaoZiLong;
+			checkDay[15] = component.checkHequOnline;
+			checkDay[16] = component.checkHequChongzhi;
+			checkDay[17] = component.checkWanMeiShiLian;
+			checkDay[18] = component.checkZiJiangFangSong;
+			checkDay[19] = component.checkZiLongFaBao;
+			checkDay[20] = component.checkZhouNianFanLi;
+			checkDay[21] = component.checkOneTarget;
+			checkDay[22] = component.checkTwoTarget;
+			checkDay[23] = component.checkThreeTarget;
+			checkDay[24] = component.checkFourTarget;
+			checkDay[25] = component.checkFiveTarget;
+			checkDay[26] = component.checkSixTarget;
+			checkDay[27] = component.checkSevenTarget;
+			checkDay[28] = component.checkRechargeGold;
+			checkDay[29] = component.checkRechargeSingle;
+			checkDay[30] = component.checkRechargeItem;
+			checkDay[33] = component.checkSevenDaysLogin;
+			checkDay[34] = component.checkOnlineLottery;
+			checkDay[35] = component.checkFund;
+			checkDay[36] = component.checkNewShenlong;
+			checkDay[37] = component.CheckCaiShiRuKu;
+			checkDay[38] = component.CheckZhaoCaiJinBao;
+			checkDay[39] = component.CheckZhaoXianNaShi;
+			checkDay[40] = component.checkAcitivityQuest1;
+			checkDay[41] = component.checkAcitivityQuest2;
+			checkDay[42] = component.checkAcitivityQuest3;
+			checkDay[43] = component.CheckEverydayLogin;
+			checkDay[44] = component.CheckExchangeShop;
+			checkDay[45] = component.checkCostTimes1;
+			checkDay[46] = component.checkCostTimes2;
+			checkDay[47] = component.checkCostTimes3;
+			checkDay[48] = component.checkCostTimes4;
+			checkDay[49] = component.checkCostTimes5;
+			for (int i = 0; i < 54; i++)
+			{
+				if (checkDay[i] != null && checkDay[i]() && checkAward[i] != null && checkAward[i]())
+				{
+					num++;
+				}
+			}
+		}
+		if (num > 0)
+		{
+			premuimEnter = false;
+		}
+		return num;
+	}
+
+	public int _vipweal_count()
+	{
+		VipWealUI component = BaseUI.GetRootUI().GetComponent<VipWealUI>();
+		int num = 0;
+		if (component != null)
+		{
+			VipWealcheckAward[0] = component.checkVipAwardNew;
+			VipWealcheckAward[1] = component.checkVipmeiriAward;
+			VipWealcheckAward[2] = component.checkViptequanAward;
+			VipWealcheckDay[0] = component.checkVipAwardNew;
+			VipWealcheckDay[1] = component.checkVipmeiri;
+			VipWealcheckDay[2] = component.checkViptequan;
+			for (int i = 0; i < 3; i++)
+			{
+				if (VipWealcheckDay[i] != null && VipWealcheckDay[i]() && VipWealcheckAward[i] != null && VipWealcheckAward[i]())
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	public static void _club()
+	{
+		ClubUI component = BaseUI.GetRootUI().GetComponent<ClubUI>();
+		if (handle_sub_ui(component, "club"))
+		{
+			component.cs_groupon_refresh();
+			SetSubUI(component);
+		}
+	}
+
+	public int _club_count()
+	{
+		ClubUI component = BaseUI.GetRootUI().GetComponent<ClubUI>();
+		int num = 0;
+		if (component != null)
+		{
+			ClubcheckAward[0] = component.CheckVipAward;
+			ClubcheckAward[1] = component.CheckMingYueAward;
+			ClubcheckAward[2] = component.CheckBaoShiAward;
+			ClubcheckAward[3] = component.CheckLingShouAward;
+			ClubcheckAward[4] = component.CheckHaoShuAward;
+			ClubcheckAward[5] = component.CheckHaoZhaiAward;
+			ClubcheckDay[0] = component.CheckVip;
+			ClubcheckDay[1] = component.CheckMingYue;
+			ClubcheckDay[2] = component.CheckBaoShi;
+			ClubcheckDay[3] = component.CheckLingShou;
+			ClubcheckDay[4] = component.CheckHaoShu;
+			ClubcheckDay[5] = component.CheckHaoZhai;
+			for (int i = 0; i < 6; i++)
+			{
+				if (ClubcheckDay[i] != null && ClubcheckDay[i]() && ClubcheckAward[i] != null && ClubcheckAward[i]())
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	private bool _club_check(string name)
+	{
+		ClubUI component = BaseUI.GetRootUI().GetComponent<ClubUI>();
+		int num = 0;
+		if (component != null)
+		{
+			ClubcheckDay[0] = component.CheckVip;
+			ClubcheckDay[1] = component.CheckMingYue;
+			ClubcheckDay[2] = component.CheckBaoShi;
+			ClubcheckDay[3] = component.CheckLingShou;
+			ClubcheckDay[4] = component.CheckHaoShu;
+			ClubcheckDay[5] = component.CheckHaoZhai;
+			for (int i = 0; i < 6; i++)
+			{
+				if (ClubcheckDay[i] != null && ClubcheckDay[i]())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private bool _club_light_check(string name)
+	{
+		return _club_check(name);
+	}
+
+	private void _signin()
+	{
+		SignInUI component = BaseUI.GetRootUI().GetComponent<SignInUI>();
+		if (handle_sub_ui(component, "signin"))
+		{
+			component.MyLoading(isnewyear: false);
+		}
+	}
+
+	private bool _signin_check(string name)
+	{
+		return true;
+	}
+
+	private bool _signin_light_check(string name)
+	{
+		return _signin_check(name) && Global.character_.checkin_today == 0;
+	}
+
+	private void _newyear_checkin()
+	{
+		SignInUI component = BaseUI.GetRootUI().GetComponent<SignInUI>();
+		if (handle_sub_ui(component, "signin"))
+		{
+			component.MyLoading(isnewyear: true);
+		}
+	}
+
+	private bool _newyear_checkin_check(string name)
+	{
+		return Global.character_.isNewYearCheckinVisible();
+	}
+
+	private void _chinesenewyear()
+	{
+		ChineseNewYearUI component = BaseUI.GetRootUI().GetComponent<ChineseNewYearUI>();
+		if (handle_sub_ui(component, "ChineseNewYearUI"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _chinesenewyear_check(string name)
+	{
+		return Global.character_.chineseNewYearLottery.isOpen();
+	}
+
+	public static void youxijie37()
+	{
+		Application.OpenURL(__BaseUI.load_str(9298u));
+	}
+
+	public bool youxijie37_check(string name)
+	{
+		if (Global.game_data["channel"].ToString() == "37wan" && TimeUtil.Now >= 1520352000 && TimeUtil.Now <= 1520524800)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void packgeneralshop()
+	{
+		PackGeneralShopUI component = BaseUI.GetRootUI().GetComponent<PackGeneralShopUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public bool packgeneralshop_check(string name)
+	{
+		if (Global.getTemplate("packgeneral_time", 1u) is _packgeneral_time packgeneral_time && TimeUtil.Now >= packgeneral_time.starttime && TimeUtil.Now <= packgeneral_time.endtime)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void onegeneralshop()
+	{
+		OneGeneralShopBuyUI component = BaseUI.GetRootUI().GetComponent<OneGeneralShopBuyUI>();
+		if (handle_sub_ui(component, "onegeneralshop"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public bool onegeneralshop_check(string name)
+	{
+		if ((Global.game_data["channel"].ToString() == "37wan" || Global.game_data["channel"].ToString() == "test") && TimeUtil.Now >= 1545944400 && TimeUtil.Now <= 1546549200)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _treasury()
+	{
+		TreasuryUI component = BaseUI.GetRootUI().GetComponent<TreasuryUI>();
+		if (handle_sub_ui(component, "treasury"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public bool _treasury_check(string name)
+	{
+		return Global.character_.treasuryItems.Count > 0;
+	}
+
+	public int _treasury_count()
+	{
+		int num = 0;
+		foreach (Treasury value in Global.character_.treasuryItems.Values)
+		{
+			if (value.treasure_id == 0)
+			{
+				if (Global.character_.checkGeneralAvilable((int)value.param0))
+				{
+					num++;
+				}
+			}
+			else if (value.treasure_id == 36)
+			{
+				if (Global.character_.checkArtifactAvilable((int)value.param0))
+				{
+					num++;
+				}
+			}
+			else if (Global.character_.checkBonusAvilable(value.treasure_id))
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	private void _recharge_activity()
+	{
+		RechargeUI component = BaseUI.GetRootUI().GetComponent<RechargeUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public int recharge_activity_count()
+	{
+		RechargeUI component = BaseUI.GetRootUI().GetComponent<RechargeUI>();
+		int num = 0;
+		if (component != null)
+		{
+			RechargecheckAward[0] = component.checkRechargeActivityGoldAward;
+			RechargecheckAward[1] = component.checkRechargeActivitySingleAward;
+			RechargecheckAward[2] = component.checkRechargeActivityItemAward;
+			RechargecheckAward[3] = component.checkJunzijihuaAward;
+			RechargecheckAward[4] = component.checkConsumeAward;
+			RechargecheckDay[0] = component.checkRechargeGold;
+			RechargecheckDay[1] = component.checkRechargeSingle;
+			RechargecheckDay[2] = component.checkRechargeItem;
+			RechargecheckDay[3] = component.checkJunzijihua;
+			RechargecheckDay[4] = component.checkConsume;
+			for (int i = 0; i < 5; i++)
+			{
+				if (RechargecheckDay[i] != null && RechargecheckDay[i]() && RechargecheckAward[i] != null && RechargecheckAward[i]())
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	private bool _recharge_activity_check(string name)
+	{
+		RechargeUI component = BaseUI.GetRootUI().GetComponent<RechargeUI>();
+		int num = 0;
+		if (component != null)
+		{
+			RechargecheckDay[0] = component.checkRechargeGold;
+			RechargecheckDay[1] = component.checkRechargeSingle;
+			RechargecheckDay[2] = component.checkRechargeItem;
+			RechargecheckDay[3] = component.checkJunzijihua;
+			RechargecheckDay[4] = component.checkConsume;
+			for (int i = 0; i < 5; i++)
+			{
+				if (RechargecheckDay[i] != null && RechargecheckDay[i]())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private int get_recharge_activity_openid()
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			if (Global.character_.recharge_activity_open[i])
+			{
+				switch (i)
+				{
+				case 0:
+					return 28;
+				case 1:
+					return 29;
+				case 2:
+					return 30;
+				}
+			}
+		}
+		return -1;
+	}
+
+	private void _artifact_forge()
+	{
+		ArtifactForgeUI component = BaseUI.GetRootUI().GetComponent<ArtifactForgeUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _artifact_forge_check(string name)
+	{
+		if (Global.character_.god_challenge_level - 5 >= 0 && Global.character_.god_challenge_level - 5 >= 195)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private int _artifact_forge_count()
+	{
+		if (Global.character_.id_forging != 0)
+		{
+			if (Global.character_.today_is_forged == 0)
+			{
+				return 1;
+			}
+			return 0;
+		}
+		foreach (KeyValuePair<ushort, Database.Artifact> artifact in Global.character_.artifacts)
+		{
+			if (Global.getTemplate("artifact_template", artifact.Key) is _artifact_template { max_forge_level: >0 } && artifact.Value.forge_level == 0)
+			{
+				return 1;
+			}
+		}
+		return 0;
+	}
+
+	private void _return_gift()
+	{
+		ReturnGiftUI component = BaseUI.GetRootUI().GetComponent<ReturnGiftUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _return_gift_check(string name)
+	{
+		if (Global.character_.return_gift && Global.character_.return_gift_status == 511)
+		{
+			return false;
+		}
+		return Global.is_return_server || Global.character_.return_gift;
+	}
+
+	private int _return_gift_count()
+	{
+		return Global.character_.return_gift_red_count;
+	}
+
+	public static void goto_ArtifactForgeUI()
+	{
+		ArtifactForgeUI component = BaseUI.GetRootUI().GetComponent<ArtifactForgeUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void goto_GeneralUpgradeUI()
+	{
+		GeneralUpgradeUI component = BaseUI.GetRootUI().GetComponent<GeneralUpgradeUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _maze_holiday_check(string name)
+	{
+		if (Global.getTemplate("trial_maze_schedule", 46u) is _trial_maze_schedule trial_maze_schedule && TimeUtil.Now >= trial_maze_schedule.start_timestamp && TimeUtil.Now < trial_maze_schedule.end_timestamp)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void seven_target_load()
+	{
+		DaliyTargetUI component = BaseUI.GetRootUI().GetComponent<DaliyTargetUI>();
+		if (handle_sub_ui(component, string.Empty))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool seven_target_check(string name)
+	{
+		DaliyTargetUI component = BaseUI.GetRootUI().GetComponent<DaliyTargetUI>();
+		if (component != null)
+		{
+			DaliyTargetcheckDay[0] = component.checkOneTarget;
+			DaliyTargetcheckDay[1] = component.checkTwoTarget;
+			DaliyTargetcheckDay[2] = component.checkThreeTarget;
+			DaliyTargetcheckDay[3] = component.checkFourTarget;
+			DaliyTargetcheckDay[4] = component.checkFiveTarget;
+			DaliyTargetcheckDay[5] = component.checkSixTarget;
+			DaliyTargetcheckDay[6] = component.checkSevenTarget;
+			for (int i = 0; i < 7; i++)
+			{
+				if (DaliyTargetcheckDay[i] != null && DaliyTargetcheckDay[i]())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public int seven_target_count()
+	{
+		DaliyTargetUI component = BaseUI.GetRootUI().GetComponent<DaliyTargetUI>();
+		int num = 0;
+		if (component != null)
+		{
+			DaliyTargetcheckAward[0] = component.checkOneTargetAward;
+			DaliyTargetcheckAward[1] = component.checkTwoTargetAward;
+			DaliyTargetcheckAward[2] = component.checkThreeTargetAward;
+			DaliyTargetcheckAward[3] = component.checkFourTargetAward;
+			DaliyTargetcheckAward[4] = component.checkFiveTargetAward;
+			DaliyTargetcheckAward[5] = component.checkSixTargetAward;
+			DaliyTargetcheckAward[6] = component.checkSevenTargetAward;
+			DaliyTargetcheckDay[0] = component.checkOneTarget;
+			DaliyTargetcheckDay[1] = component.checkTwoTarget;
+			DaliyTargetcheckDay[2] = component.checkThreeTarget;
+			DaliyTargetcheckDay[3] = component.checkFourTarget;
+			DaliyTargetcheckDay[4] = component.checkFiveTarget;
+			DaliyTargetcheckDay[5] = component.checkSixTarget;
+			DaliyTargetcheckDay[6] = component.checkSevenTarget;
+			for (int i = 0; i < 7; i++)
+			{
+				if (DaliyTargetcheckDay[i] != null && DaliyTargetcheckDay[i]() && DaliyTargetcheckAward[i] != null && DaliyTargetcheckAward[i]())
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	private bool seven_target_light(string name)
+	{
+		for (int i = 0; i < Global.character_.sevendaysopen.Count; i++)
+		{
+			if (Global.character_.sevendaysopen[i])
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void testcraft()
+	{
+	}
+
+	public static void _craft()
+	{
+		CraftUI.setCraft(Global.craft_, Cross.MATCHTYPE.CRAFT);
+		CSCrossCraftEnter_0x602 cSCrossCraftEnter_0x = new CSCrossCraftEnter_0x602();
+		cSCrossCraftEnter_0x.match_type = 1u;
+		RootUI.m_client.Send(1538, cSCrossCraftEnter_0x, CraftUI.sc_crosscraft_enter_0x602);
+		if ((Global.craft_.status >= 6 && Global.craft_.status <= 7) || (Global.craft_.status >= 12 && Global.craft_.status <= 15))
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+			BaseUI.GetRootUI().craft_enter();
+			return;
+		}
+		CraftCalendarUI component = BaseUI.GetRootUI().GetComponent<CraftCalendarUI>();
+		if (handle_sub_ui(component, "craft"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public bool _craft_check(string name)
+	{
+		return (Global.craft_.status > 1 && Global.character_.level >= 30) ? true : false;
+	}
+
+	public bool _craft_light_check(string name)
+	{
+		return _craft_check(name) && Global.craft_.status != 7 && Global.craft_.status < 14;
+	}
+
+	public static void _craft_world()
+	{
+		CSWorldCraftEnter_0x632 pkt = new CSWorldCraftEnter_0x632();
+		RootUI.m_client.Send(1586, pkt, CraftWorldUI.sc_worldcraft_enter_0x632);
+		if (Global.craft_world.status >= 12 && Global.craft_world.status <= 15)
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+			BaseUI.GetRootUI().craft_world_enter();
+			return;
+		}
+		CraftWorldCalendarUI component = BaseUI.GetRootUI().GetComponent<CraftWorldCalendarUI>();
+		if (handle_sub_ui(component, "craft_world"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public bool _craft_world_check(string name)
+	{
+		return (Global.craft_world.status > 1 && Global.character_.level >= 30) ? true : false;
+	}
+
+	public static void _craft_tactic()
+	{
+		CraftUI.setCraft(Global.craft_tactic, Cross.MATCHTYPE.CRAFT_TACTIC);
+		CSCrossCraftEnter_0x602 cSCrossCraftEnter_0x = new CSCrossCraftEnter_0x602();
+		cSCrossCraftEnter_0x.match_type = 4u;
+		RootUI.m_client.Send(1538, cSCrossCraftEnter_0x, CraftUI.sc_crosscraft_enter_0x602);
+		if ((Global.craft_tactic.status >= 6 && Global.craft_tactic.status <= 7) || (Global.craft_tactic.status >= 12 && Global.craft_tactic.status <= 15))
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+			BaseUI.GetRootUI().craft_enter();
+			return;
+		}
+		CraftCalendarUI component = BaseUI.GetRootUI().GetComponent<CraftCalendarUI>();
+		if (handle_sub_ui(component, "craft"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public bool _craft_tactic_check(string name)
+	{
+		return (Global.craft_tactic.status > 1 && Global.craft_tactic.status < 15 && Global.character_.level >= 30) ? true : false;
+	}
+
+	public bool _craft_tactic_light_check(string name)
+	{
+		return _craft_tactic_check(name) && Global.craft_tactic.status != 7 && Global.craft_tactic.status < 14;
+	}
+
+	public void _teamfight()
+	{
+		if (Global.teamfight_.status < 3)
+		{
+			TeamFightSignUI component = BaseUI.GetRootUI().GetComponent<TeamFightSignUI>();
+			if (handle_sub_ui(component, "teamfight"))
+			{
+				SetSubUI(component);
+				component.MyLoading();
+			}
+		}
+		else
+		{
+			rmg.ToDisable();
+			CSCrossTeamFightEnter_0x641 pkt = new CSCrossTeamFightEnter_0x641();
+			RootUI.m_client.Send(1601, pkt, TeamFightUI.sc_crossteamfight_enter_0x641, new delegate_OnClose(EnableAll));
+		}
+	}
+
+	public bool _teamfight_check(string name)
+	{
+		return false;
+	}
+
+	public bool _teamfight_light_check(string name)
+	{
+		return Global.teamfight_.status == 3 || Global.teamfight_.team_status == 4;
+	}
+
+	public static void _friendlottery()
+	{
+		FriendLotteryUI component = BaseUI.GetRootUI().GetComponent<FriendLotteryUI>();
+		if (handle_sub_ui(component, "friend_lottery"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public int _friendlottery_count()
+	{
+		int num = 0;
+		if (Global.character_.friendlottery.change_friend)
+		{
+			return (int)Global.character_.friendlottery.draw_times;
+		}
+		return 1;
+	}
+
+	private bool _friendlottery_check(string name)
+	{
+		return false;
+	}
+
+	public static void _godlist()
+	{
+		GodListUI component = BaseUI.GetRootUI().GetComponent<GodListUI>();
+		if (handle_sub_ui(component, "god_list"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public int _godlist_count()
+	{
+		return 0;
+	}
+
+	public static void _techtree()
+	{
+		TechTreeUI component = BaseUI.GetRootUI().GetComponent<TechTreeUI>();
+		if (handle_sub_ui(component, "tech_tree"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _techtree_check(string name)
+	{
+		return checkUI(name);
+	}
+
+	public int _techtree_count()
+	{
+		return Global.character_.techtree._techtree_count();
+	}
+
+	public static void _techbookcopy()
+	{
+		TechBookCopyUI component = BaseUI.GetRootUI().GetComponent<TechBookCopyUI>();
+		if (handle_sub_ui(component, "tech_book_copy"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _techbookcopy_check(string name)
+	{
+		return checkUI(name);
+	}
+
+	public int _techbookcopy_count()
+	{
+		if (!(Global.getTemplate("tech_book_copy_setting", 1u) is _tech_book_copy_setting tech_book_copy_setting))
+		{
+			return 0;
+		}
+		return tech_book_copy_setting.free_copy_times - Global.character_.tech_book_copy_free_times;
+	}
+
+	public static void _christmas()
+	{
+		ChristmasUI component = BaseUI.GetRootUI().GetComponent<ChristmasUI>();
+		if (handle_sub_ui(component, "christmas"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public static void _christmaslotteryshopbuy()
+	{
+		ChristmasLotteryShopBuyUI component = BaseUI.GetRootUI().GetComponent<ChristmasLotteryShopBuyUI>();
+		if (handle_sub_ui(component, "christmasshopbuy"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _christmas_check(string name)
+	{
+		if (Global.christmaseventtemplate.isShopOpen() && Global.christmaseventtemplate.idlottery == 1)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool _christmas_fengshen_check(string name)
+	{
+		if (Global.christmaseventtemplate.isShopOpen() && Global.christmaseventtemplate.idlottery == 2)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool _christmas_common_check(string name)
+	{
+		if (Global.christmaseventtemplate.isShopOpen() && Global.christmaseventtemplate.idlottery == 3)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool _christmas_lotteryshopbuy_check(string name)
+	{
+		if (Global.christmaseventtemplate.isOpen())
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _specialitemshop()
+	{
+		SpecialItemShopUI component = BaseUI.GetRootUI().GetComponent<SpecialItemShopUI>();
+		if (handle_sub_ui(component, "specialitemshop"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _specialitemshop_check(string name)
+	{
+		if (Global.getTemplate("special_item_shop", Global.specialitemshoptemp.id) is _special_item_shop special_item_shop && Global.specialitemshoptemp.start_time <= TimeUtil.Now && Global.specialitemshoptemp.end_time >= TimeUtil.Now)
+		{
+			int num = 0;
+			if (Global.character_.specialitemshops.ContainsKey(Global.specialitemshoptemp.id))
+			{
+				num = Global.character_.specialitemshops[Global.specialitemshoptemp.id].num;
+			}
+			if (num < special_item_shop.limit)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private bool _strongholdshop_check(string name)
+	{
+		if (Global.assault_setting.end_time <= TimeUtil.Now && Global.assault_setting.end_time + 86400 > TimeUtil.Now)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _strongholdshop()
+	{
+		AssaultShopUI component = BaseUI.GetRootUI().GetComponent<AssaultShopUI>();
+		if (handle_sub_ui(component, "assaultshop"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public int _strongholdshop_count()
+	{
+		return 0;
+	}
+
+	public static void _spiritfairygather()
+	{
+		SpiritFairyGatherUI component = BaseUI.GetRootUI().GetComponent<SpiritFairyGatherUI>();
+		if (handle_sub_ui(component, "spirit_fariy_gather"))
+		{
+			component.MyLoading(reback: false);
+		}
+	}
+
+	public static bool _check_spiritfairygather(string name)
+	{
+		if (checkSpirit3("spirit3"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public int _spiritfairygather_count()
+	{
+		Hashtable templates = Global.getTemplates("spirit_ascend_campaign");
+		Hashtable templates2 = Global.getTemplates("spirit_ascend_salary_cost");
+		int num = 1;
+		if (Global.character_.spiritascend.battle_times >= 10 || Global.character_.spiritascend.idcampaign == templates.Count + 1)
+		{
+			num = 2;
+		}
+		num += templates2.Count;
+		return num - (Global.character_.spiritascend.salary_times + Global.character_.spiritascend.gold_salary_times);
+	}
+
+	public static void _spiritfairy()
+	{
+		SpiritFairyUI component = BaseUI.GetRootUI().GetComponent<SpiritFairyUI>();
+		if (handle_sub_ui(component, "spirit_ascend"))
+		{
+			component.MyLoading(0);
+		}
+	}
+
+	public static bool _check_spiritfairy(string name)
+	{
+		if (checkSpirit3("spirit3"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public int _spiritfairy_count()
+	{
+		return Global.character_.spiritascend.stamina;
+	}
+
+	private bool _stronghold_check(string name)
+	{
+		if (TimeUtil.Now >= Global.assault_setting.start_time && Global.assault_setting.end_time > TimeUtil.Now)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _stronghold()
+	{
+		if (Global.character_.level >= 25)
+		{
+			RootUI component = BaseUI.GetRootUI().GetComponent<RootUI>();
+			component.startStrongHold(Global.character_.assaultstronghold.idlevel);
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21644u), null);
+		}
+	}
+
+	public int _stronghold_count()
+	{
+		return 0;
+	}
+
+	private bool _rescue_check(string name)
+	{
+		if (Global.character_.rescue.isRescueShopOpen())
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _rescue()
+	{
+		if (Global.character_.level >= 25)
+		{
+			RescueUI component = BaseUI.GetRootUI().GetComponent<RescueUI>();
+			if (handle_sub_ui(component, "rescue"))
+			{
+				component.MyLoading();
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21644u), null);
+		}
+	}
+
+	public int _rescue_count()
+	{
+		int num = 0;
+		for (uint num2 = 0u; num2 < 10; num2++)
+		{
+			if (Global.character_.rescue.m_quests.ContainsKey(num2 + 1) && !Global.character_.rescue.m_quests[num2 + 1].isfinished && Global.character_.rescue.isRescueOpen())
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	private static void zhuanfu_ok(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			Global.IEExplore(Global.zf_url, "normal");
+		}
+	}
+
+	public static void _zhuanfu()
+	{
+		__BaseUI.GetMessageBox().setMessage(string.Empty, "是否要转服", null, zhuanfu_ok, _bCancel: true);
+	}
+
+	private bool _zhuanfu_check(string name)
+	{
+		return Global.zhuan_fu;
+	}
+
+	public static void _daily_ranking()
+	{
+		DailyRankingUI.showLight = false;
+		if (TimeUtil.Now > TimeUtil.ThisDay + 18000)
+		{
+			DailyRankingUI component = BaseUI.GetRootUI().GetComponent<DailyRankingUI>();
+			if (handle_sub_ui(component, string.Empty))
+			{
+				component.cs_daily_ranking_refresh();
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9032u), null);
+		}
+	}
+
+	private bool _daily_ranking_light_check(string name)
+	{
+		return checkUI(name) && DailyRankingUI.showLight;
+	}
+
+	public static void _timelimit()
+	{
+		TimeLimitMessageUI component = BaseUI.GetRootUI().GetComponent<TimeLimitMessageUI>();
+		if (handle_sub_ui(component, "timelimit"))
+		{
+			SetSubUI(component);
+			component.cs_timelimitui_open_0x4E1();
+		}
+	}
+
+	private bool _timelimit_check(string name)
+	{
+		if (Global.timelimit_messages.Count > -1)
+		{
+			foreach (Database.TimeLimitMessage timelimit_message in Global.timelimit_messages)
+			{
+				if (timelimit_message.start_time < TimeUtil.Now && timelimit_message.end_time > TimeUtil.Now)
+				{
+					return true;
+				}
+			}
+		}
+		if (Global.tempevent_messages.Count > 0)
+		{
+			foreach (Database.TempEventMessage tempevent_message in Global.tempevent_messages)
+			{
+				if (tempevent_message.start_time < TimeUtil.Now && tempevent_message.end_time > TimeUtil.Now)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public void _nation()
+	{
+		if (Global.character_.level >= 40)
+		{
+			if (Global.nation_.status == 2)
+			{
+				NationPreviewUI component = BaseUI.GetRootUI().GetComponent<NationPreviewUI>();
+				if (handle_sub_ui(component, "nation"))
+				{
+					component.MyLoading();
+				}
+			}
+			else if (Global.nation_.status == 1)
+			{
+				FameHallUI component2 = BaseUI.GetRootUI().GetComponent<FameHallUI>();
+				if (handle_sub_ui(component2, null))
+				{
+					component2.MyLoading();
+				}
+			}
+			else
+			{
+				rmg.ToDisable();
+				CSCrossNationEnter_0x611 pkt = new CSCrossNationEnter_0x611();
+				RootUI.m_client.Send(1553, pkt, NationUI.sc_crossnation_enter_0x611, new delegate_OnClose(EnableAll));
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21022u, 40), rmg);
+		}
+	}
+
+	public static bool _nation_check(string name)
+	{
+		return (Global.nation_.status >= 1 && Global.character_.level >= 40) ? true : false;
+	}
+
+	public void _ladder()
+	{
+		LadderUI ladderUI = BaseUI.GetLadderUI();
+		ladderUI.cs_cross_ladder_command_0x74D(1u);
+	}
+
+	public static bool _ladder_check(string name)
+	{
+		return Global.character_.level >= 60 && Global.ladder_.status >= 2 && Global.ladder_.status < 6;
+	}
+
+	public int _ladder_count()
+	{
+		if (Global.ladder_.status == 5 && Global.character_.today_ladder_challenge_times < 5)
+		{
+			return 5 - Global.character_.today_ladder_challenge_times;
+		}
+		return 0;
+	}
+
+	public static void _enchant()
+	{
+		EnchantUI component = BaseUI.GetRootUI().GetComponent<EnchantUI>();
+		if (handle_sub_ui(component, "enchant"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private int _enchant_count()
+	{
+		return Global.character_.sliver_pick;
+	}
+
+	public void _eightgraphic()
+	{
+		EightGraphicUI component = BaseUI.GetRootUI().GetComponent<EightGraphicUI>();
+		if (handle_sub_ui(component, "eightgraphic"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private int _eightgraphic_count()
+	{
+		return Global.character_.skytower.challengeLeftTimes;
+	}
+
+	private bool _eightgraphicOpen(string name)
+	{
+		bool result = false;
+		if (Global.character_.campaigns_.ContainsKey(78))
+		{
+			result = (Global.character_.campaigns_[78].finished ? true : false);
+		}
+		return result;
+	}
+
+	public static void _chesttotem()
+	{
+		ChestTotemBaseUI component = BaseUI.GetRootUI().GetComponent<ChestTotemBaseUI>();
+		if (handle_sub_ui(component, "chesttotem"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private int _chesttotem_count()
+	{
+		_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+		int result = 0;
+		foreach (Puzzle value in Global.character_.puzzles.Values)
+		{
+			if (!value.isfinish && vip_template != null)
+			{
+				result = (int)(vip_template.puzzle_times - Global.character_.puzzleshop.times);
+			}
+		}
+		return result;
+	}
+
+	private bool _chesttotemOpen(string name)
+	{
+		Hashtable templates = Global.getTemplates("puzzle_template");
+		float num = Global.CalcServerOpenDays();
+		int server_open_time = Global.character_.server_open_time;
+		bool result = false;
+		foreach (DictionaryEntry item in templates)
+		{
+			_puzzle_template puzzle_template = item.Value as _puzzle_template;
+			bool flag = true;
+			bool flag2 = true;
+			bool flag3 = true;
+			bool flag4 = true;
+			if (puzzle_template != null)
+			{
+				flag = ((num >= (float)puzzle_template.require_days) ? true : false);
+				flag2 = ((Global.character_.level >= puzzle_template.require_level) ? true : false);
+				if (Global.character_.campaigns_.ContainsKey(puzzle_template.require_campaign))
+				{
+					flag3 = (Global.character_.campaigns_[puzzle_template.require_campaign].finished ? true : false);
+				}
+				if (puzzle_template.treasure_type == 56)
+				{
+					flag4 = (Global.character_.GetTreasureOpen() ? true : false);
+				}
+				if (puzzle_template.treasure_type == 36 && Global.character_.artifacts.ContainsKey((ushort)puzzle_template.param0))
+				{
+					flag4 = false;
+				}
+				if (flag && flag2 && flag3 && flag4)
+				{
+					return true;
+				}
+			}
+		}
+		return result;
+	}
+
+	public static void _starRefine(delegate_OnClose _onclose)
+	{
+		ArmyStarRefineUI component = BaseUI.GetRootUI().GetComponent<ArmyStarRefineUI>();
+		if (handle_sub_ui(component, "star_refine"))
+		{
+			component.MyLoading(_onclose);
+		}
+	}
+
+	public static void _starRefine()
+	{
+		_starRefine(null);
+	}
+
+	private int _starRefine_count()
+	{
+		int num = ((!Global.character_.checkUI(91u)) ? 10 : 30);
+		return num - Global.character_.practice_exchange - Global.character_.practice_exchange_gold - Global.character_.practice_money_exchange_times;
+	}
+
+	public static void _grave()
+	{
+		GraveChooseUI component = BaseUI.GetRootUI().GetComponent<GraveChooseUI>();
+		if (handle_sub_ui(component, "grave"))
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+			component.cs_grave_load();
+		}
+	}
+
+	private int _grave_count()
+	{
+		return 0;
+	}
+
+	public static void _divine_general(uint generalID)
+	{
+		DivineGeneralRecruitUI component = BaseUI.GetRootUI().GetComponent<DivineGeneralRecruitUI>();
+		if (handle_sub_ui(component, "divine_general"))
+		{
+			component.MyLoading(generalID);
+		}
+	}
+
+	public static void _divine_general()
+	{
+		if (Global.character_.quest_gens.Keys.Count > 1)
+		{
+			DivineGeneralSelect component = BaseUI.GetRootUI().GetComponent<DivineGeneralSelect>();
+			if (handle_sub_ui(component, "divine_general"))
+			{
+				component.MyLoading();
+			}
+		}
+		else
+		{
+			DivineGeneralRecruitUI component2 = BaseUI.GetRootUI().GetComponent<DivineGeneralRecruitUI>();
+			if (handle_sub_ui(component2, "divine_general"))
+			{
+				component2.MyLoading(212u);
+			}
+		}
+	}
+
+	private int _divine_general_count()
+	{
+		return 0;
+	}
+
+	public int _firstorder_count()
+	{
+		int num = 0;
+		if (Global.isNewFirstRecharge)
+		{
+			foreach (object value in Global.getTemplates("first_recharge_award").Values)
+			{
+				_first_recharge_award first_recharge_award = (_first_recharge_award)value;
+				if (first_recharge_award.id > Global.character_.first_recharge_got && Global.character_.level >= first_recharge_award.require_level)
+				{
+					num++;
+				}
+			}
+		}
+		return num;
+	}
+
+	public static void _firstorderbonus()
+	{
+		if (!Global.isNewFirstRecharge)
+		{
+			FirstOrderBonusUI component = BaseUI.GetRootUI().GetComponent<FirstOrderBonusUI>();
+			if (handle_sub_ui(component, string.Empty))
+			{
+				component.MyLoading();
+			}
+		}
+		else
+		{
+			FirstRechargeUI component2 = BaseUI.GetRootUI().GetComponent<FirstRechargeUI>();
+			if (handle_sub_ui(component2, string.Empty))
+			{
+				component2.MyLoading();
+			}
+		}
+	}
+
+	public bool _firstorderbonus_check(string name)
+	{
+		if (!Global.isNewFirstRecharge)
+		{
+			if (checkUI("first_order_bonus") && Global.character_.first_order_bonus != 2)
+			{
+				return true;
+			}
+		}
+		else if (Global.character_.first_recharge_got < 9)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _seal_monster()
+	{
+		BaseUI.GetRootUI().sealmonster_enter();
+	}
+
+	public static void _reputation()
+	{
+		ReputationUI component = BaseUI.GetRootUI().GetComponent<ReputationUI>();
+		if (handle_sub_ui(component, "reputation"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private void _salary()
+	{
+		AllBonusUI component = BaseUI.GetRootUI().GetComponent<AllBonusUI>();
+		if (handle_sub_ui(component, "allbonus"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private bool _salary_check(string name)
+	{
+		return checkUI(name) && (!Global.character_.gotSalary() || Global.character_.checkArenaToday() != -1);
+	}
+
+	private int _salary_count()
+	{
+		return 1;
+	}
+
+	private bool _reputation_up()
+	{
+		if (Global.getTemplate("reputation", (ushort)(Global.character_.reputation_level + 1)) is _reputation reputation && reputation.reputation <= Global.character_.reputation)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private int _battle_count()
+	{
+		int num = 0;
+		if (_battle_arena_count() > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public static void _battle_arena()
+	{
+		ArenaSelectUI component = BaseUI.GetRootUI().GetComponent<ArenaSelectUI>();
+		if (handle_sub_ui(component, "ArenaSelectUI"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private int _battle_arena_count()
+	{
+		int num = 0;
+		if (Global.character_.arena.new_count > ArenaUI.oldCount)
+		{
+			num++;
+		}
+		if (Global.character_.arena.bonuses.Count > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public static void _cardlottery()
+	{
+		GeneralShengJieLotteryUI component = BaseUI.GetRootUI().GetComponent<GeneralShengJieLotteryUI>();
+		if (handle_sub_ui(component, "GeneralShengJieLotteryUI"))
+		{
+			component.MyLoading(needreturn: true);
+			SetSubUI(component);
+		}
+	}
+
+	public static int _cardlottery_count()
+	{
+		_general_shengjie_lottery general_shengjie_lottery = Global.getTemplate("general_shengjie_lottery", 1u) as _general_shengjie_lottery;
+		int num = (int)(general_shengjie_lottery.free_times + general_shengjie_lottery.gold_times + general_shengjie_lottery.money_times) + Global.character_.card_lottery_ticket;
+		return num - (int)(Global.character_.shengjieLottery.free_times + Global.character_.shengjieLottery.gold_times + Global.character_.shengjieLottery.money_times);
+	}
+
+	public static void _dianjiangtai()
+	{
+		DianJiangTaiUI component = BaseUI.GetRootUI().GetComponent<DianJiangTaiUI>();
+		if (handle_sub_ui(component, "dianjiangtai"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	private int _dianjiangtai_count()
+	{
+		return 0;
+	}
+
+	public static bool _dianjiangtai_check(string name)
+	{
+		if (_generalbook_check("generalbook") || checkUI("general_upgrade") || checkUI("general_shengjie"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool _cardlottery_check(string name)
+	{
+		if (Global.character_.level >= 80)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static void _general_book()
+	{
+		GeneralBookUI component = BaseUI.GetRootUI().GetComponent<GeneralBookUI>();
+		if (handle_sub_ui(component, "generalbook"))
+		{
+			SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+
+	public static int _general_book_count()
+	{
+		return Global.character_.generalbookcount;
+	}
+
+	public static bool _generalbook_check(string name)
+	{
+		if (Global.character_.checkUI("army_recruit"))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool _amulet_new()
+	{
+		return Global.character_.amulet_new;
+	}
+
+	public static void _amulet()
+	{
+		AmuletUI component = BaseUI.GetRootUI().GetComponent<AmuletUI>();
+		if (handle_sub_ui(component, "amulet"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private int _social_count()
+	{
+		int num = 0;
+		if (_social_guild_count() > 0)
+		{
+			num++;
+		}
+		if (_social_friend_count() > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public static void _guild()
+	{
+		GuildUI_3 guildUI_ = BaseUI.GetRootUI().GetComponent("GuildUI_3") as GuildUI_3;
+		if (handle_sub_ui(guildUI_, "GuildUI"))
+		{
+			guildUI_.SubLoading();
+		}
+	}
+
+	private int _social_guild_count()
+	{
+		return 0;
+	}
+
+	public static void _social_guild()
+	{
+		_guild();
+	}
+
+	private int _social_friend_count()
+	{
+		BuddyUI component = BaseUI.GetRootUI().GetComponent<BuddyUI>();
+		return component.getCount();
+	}
+
+	public static void _social_friend()
+	{
+		BuddyUI component = BaseUI.GetRootUI().GetComponent<BuddyUI>();
+		if (handle_sub_ui(component, "buddy"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	public void _quest()
+	{
+	}
+
+	public static void _quest_act()
+	{
+		ActivityUI component = BaseUI.GetRootUI().GetComponent<ActivityUI>();
+		if (handle_sub_ui(component, "ActivityUI"))
+		{
+			component.SubLoading();
+		}
+		act_click_record = false;
+	}
+
+	private int _quest_act_count()
+	{
+		return Global._quest_act_num;
+	}
+
+	public void _main_char(string panel)
+	{
+	}
+
+	private bool _technology_check()
+	{
+		return Global.character_.checkUI("technology");
+	}
+
+	private bool _technology_first_check()
+	{
+		return _technology_check() && Global.getFirstCheck("technology");
+	}
+
+	private bool _technology_guide_check()
+	{
+		return _technology_check() && Global.getGuideCheck("technology");
+	}
+
+	private bool _train_check()
+	{
+		return Global.character_.checkUI("train");
+	}
+
+	private bool _train_first_check()
+	{
+		return _train_check() && Global.getFirstCheck("train");
+	}
+
+	private bool _train_guide_check()
+	{
+		return _train_check() && Global.getGuideCheck("train");
+	}
+
+	private void _building()
+	{
+		OpenBuildingUI();
+	}
+
+	private bool _building_check()
+	{
+		return Global.character_.checkUI("building");
+	}
+
+	private bool _building_first_check()
+	{
+		return _building_check() && Global.getFirstCheck("building");
+	}
+
+	private bool _building_guide_check()
+	{
+		return _building_check() && Global.getGuideCheck("building");
+	}
+
+	private void _patrol()
+	{
+	}
+
+	public void _resource()
+	{
+		Global.setGuideCheck("resource", bCheck: false);
+		Global.setFirstCheck("resource", bCheck: false);
+		if (rmg.LevelID != "Resource")
+		{
+			rmg.ToDisable();
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Resource", rmg);
+		}
+	}
+
+	public static void _capital()
+	{
+		RootMessenger curUI = BaseAsset.lds.GetCurUI();
+		if (curUI.LevelID != "Capital")
+		{
+			Global.setFirstCheck("capital", bCheck: false);
+			Global.setGuideCheck("capital", bCheck: false);
+			curUI.ToDisable();
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Capital", curUI);
+		}
+		Logger.Log("capital");
+	}
+
+	private int _capital_count()
+	{
+		int num = 0;
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (!value.automatic && ((value.data.type == 5 && value.product == null && value.build_time <= TimeUtil.Now && value.cd_time <= TimeUtil.Now) || (value.product != null && ((value.data.automatic == 1 && value.start_time + value.product.time <= TimeUtil.Now) || (value.data.automatic == 2 && value.start_time + value.product.time <= TimeUtil.Now)))))
+			{
+				num++;
+			}
+		}
+		Hashtable templates = Global.getTemplates("building");
+		foreach (DictionaryEntry item in templates)
+		{
+			_building building = item.Value as _building;
+			if (building.open_level <= Global.character_.level && Global.character_.hasBuilding(building.prebuilding) && Global.character_.limitBuildingCount(building) && building.type != 1 && building.type != 7)
+			{
+				num++;
+			}
+		}
+		if (num > 0)
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	private void _campaign()
+	{
+		Global.setFirstCheck("Campaign", bCheck: false);
+		Global.setGuideCheck("Campaign", bCheck: false);
+		rmg.ToDisable();
+		GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+	}
+
+	private int _campaign_count()
+	{
+		int num = 0;
+		foreach (Database.Campaign value in Global.character_.campaigns_.Values)
+		{
+			if (value.unlocked && value.first && value.idcampaign_type == 0)
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	private bool _campaign_check(string name)
+	{
+		return rmg.LevelID != "Campaign" && checkUI(name);
+	}
+
+	private void _itemnotice()
+	{
+		ItemNoticeUI component = BaseUI.GetRootUI().GetComponent<ItemNoticeUI>();
+		if (handle_sub_ui(component, "itemnotice"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private bool _itemnotice_check(string name)
+	{
+		return true;
+	}
+
+	private void _chapter()
+	{
+		CampaignChapterUI component = BaseUI.GetRootUI().GetComponent<CampaignChapterUI>();
+		if (handle_sub_ui(component, "Chapter"))
+		{
+			rmg.ToDisable();
+			component.SetCampaigns();
+		}
+	}
+
+	private bool _chapter_check(string name)
+	{
+		return rmg.LevelID == "Campaign" && checkUI(name);
+	}
+
+	public static void _anecdote()
+	{
+		AnecdoteSelectUI component = GameObject.Find("Anecdote/AnecdoteUI").GetComponent<AnecdoteSelectUI>();
+		if (handle_sub_ui(component, "Anecdote"))
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+			component.SetCampaigns();
+		}
+	}
+
+	private int _anecdote_count()
+	{
+		int num = 0;
+		foreach (Database.Campaign value in Global.character_.campaigns_.Values)
+		{
+			if (value.real_unlocked && value.first && value.anecdote)
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	public void _fairy()
+	{
+		FairySelectUI component = GameObject.Find("Fairy/FairyUI").GetComponent<FairySelectUI>();
+		if (handle_sub_ui(component, "Fairy"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private int _fairy_count()
+	{
+		int num = 0;
+		foreach (Database.Campaign value in Global.character_.campaigns_.Values)
+		{
+			if (value.fairy && (value.first || (!value.unlocked && value.idcampaign_type == 13 && Global.character_.checkUI(value.unlock_ui)) || (!value.unlocked && value.idcampaign_type == 14 && FairySelectUI.checkFestival(value)) || (!value.unlocked && value.idcampaign_type == 22 && FairySelectUI.checkFestival(value))))
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	private bool _character_first_check()
+	{
+		return Global.getFirstCheck("character");
+	}
+
+	private bool _character_guide_check()
+	{
+		return Global.getGuideCheck("character");
+	}
+
+	private void _area()
+	{
+		if (rmg.LevelID != "Area")
+		{
+			Global.setFirstCheck("area", bCheck: false);
+			Global.setGuideCheck("area", bCheck: false);
+			rmg.ToDisable();
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Area", rmg);
+		}
+	}
+
+	private void _world()
+	{
+		if (rmg.LevelID != "World")
+		{
+			Global.setFirstCheck("world", bCheck: false);
+			Global.setGuideCheck("world", bCheck: false);
+			rmg.ToDisable();
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("World", rmg);
+		}
+	}
+
+	private void _levelup()
+	{
+	}
+
+	private void _congzhi()
+	{
+		Global.setGuideCheck("congzhi", bCheck: false);
+		Global.setFirstCheck("congzhi", bCheck: false);
+		MessageBox component = GameObject.Find("Root/RootUI").GetComponent<MessageBox>();
+		rmg.ToDisable();
+		component.setMessage(__BaseUI.load_str(20384u), __BaseUI.load_str(20385u), rmg);
+	}
+
+	private void _gift()
+	{
+		GiftUI component = GetComponent<GiftUI>();
+		if (m_subui == component)
+		{
+			SetSubUI(null);
+			return;
+		}
+		component.MyLoading();
+		SetSubUI(component);
+	}
+
+	private bool _chapter_guide_check()
+	{
+		return rmg != null && rmg.LevelID == "Campaign" && Global.getGuideCheck("chapter");
+	}
+
+	private bool _star_guide_check()
+	{
+		return rmg != null && rmg.LevelID == "Campaign" && Global.getGuideCheck("campaign_star");
+	}
+
+	private void StaminaOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			m_bStaminaBuy = true;
+			CSStaminaBuy_0x30 pkt = new CSStaminaBuy_0x30();
+			RootUI.m_client.Send(48, pkt, sc_stamina_buy_0x30);
+		}
+		EnableAll();
+	}
+
+	private void sc_stamina_buy_0x30(MemoryStream stream, object arg)
+	{
+		m_bStaminaBuy = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCStaminaBuy_0x30 sCStaminaBuy_0x = JSProtoBuf.Serializer.Deserialize<SCStaminaBuy_0x30>(stream);
+		if (sCStaminaBuy_0x.result == 0)
+		{
+			Global.character_.stamina++;
+			Global.character_.stamina_buy_count++;
+			Global.character_.gold -= (int)sCStaminaBuy_0x.gold_consume;
+			__BaseUI.drawStateBubble("gold-" + sCStaminaBuy_0x.gold_consume);
+			if (stFight != null)
+			{
+				stFight();
+				stFight = null;
+			}
+		}
+	}
+
+	public void _stamina()
+	{
+		_stamina(string.Empty);
+	}
+
+	public void _stamina(string title)
+	{
+		if (!m_bStaminaBuy)
+		{
+			MessageBox messageBox = __BaseUI.GetMessageBox();
+			_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+			if (vip_template.stamina_buy_times != -1 && Global.character_.stamina_buy_count >= vip_template.stamina_buy_times)
+			{
+				messageBox.setMessage(title, __BaseUI.load_str(20386u, vip_template.stamina_buy_times), null);
+			}
+			else
+			{
+				DisableAll();
+				_buy_template buy_template = Global.get_buy_template(_buy_template.TYPE.STAMINA, Global.character_.stamina_buy_count + 1);
+				__BaseUI.GetConsumeUI().setConsume(buy_template.gold, 27, StaminaOK, string.Empty, title);
+			}
+		}
+	}
+
+	private void AnecdoteHeroBuyOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			m_bAnecdoteHeroBuy = true;
+			CSAnecdoteHeroBuy_0x35 pkt = new CSAnecdoteHeroBuy_0x35();
+			RootUI.m_client.Send(53, pkt, sc_anecdote_hero_buy_0x35);
+		}
+		EnableAll();
+	}
+
+	private void sc_anecdote_hero_buy_0x35(MemoryStream stream, object arg)
+	{
+		m_bAnecdoteHeroBuy = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCAnecdoteHeroBuy_0x35 sCAnecdoteHeroBuy_0x = JSProtoBuf.Serializer.Deserialize<SCAnecdoteHeroBuy_0x35>(stream);
+		if (sCAnecdoteHeroBuy_0x.result == 0)
+		{
+			Global.character_.anecdote_hero_try++;
+			Global.character_.anecdote_hero_buy++;
+			Global.character_.gold -= (int)sCAnecdoteHeroBuy_0x.gold_consume;
+			__BaseUI.drawStateBubble("gold-" + sCAnecdoteHeroBuy_0x.gold_consume);
+			if (ahbFight != null)
+			{
+				ahbFight();
+				ahbFight = null;
+			}
+		}
+	}
+
+	public void _anecdote_hero_buy()
+	{
+		_anecdote_hero_buy(string.Empty);
+	}
+
+	public void _anecdote_hero_buy(string title)
+	{
+		if (!m_bAnecdoteHeroBuy)
+		{
+			MessageBox messageBox = __BaseUI.GetMessageBox();
+			if (Global.character_.anecdote_hero_buy >= 100)
+			{
+				messageBox.setMessage(title, __BaseUI.load_str(20386u, 100), null);
+			}
+			else
+			{
+				DisableAll();
+				__BaseUI.GetConsumeUI().setConsume(10, 27, AnecdoteHeroBuyOK, string.Empty, title);
+			}
+		}
+	}
+
+	private void _system()
+	{
+		OptionUI component = BaseUI.GetRootUI().GetComponent<OptionUI>();
+		if (m_subui == component)
+		{
+			SetSubUI(null);
+		}
+		else
+		{
+			cs_player_setting();
+		}
+	}
+
+	private void cs_player_setting()
+	{
+		DisableAll();
+		CSPlayerSettings_0x2F0 pkt = new CSPlayerSettings_0x2F0();
+		RootUI.m_client.Send(752, pkt, sc_player_setting);
+	}
+
+	private void sc_player_setting(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCPlayerSettings_0x2F0 sCPlayerSettings_0x2F = JSProtoBuf.Serializer.Deserialize<SCPlayerSettings_0x2F0>(stream);
+			OptionUI component = BaseUI.GetRootUI().GetComponent<OptionUI>();
+			component.SelectedDuelOption = sCPlayerSettings_0x2F.simple_duel_permission;
+			component.SubLoading();
+			SetSubUI(component);
+		}
+		EnableAll();
+	}
+
+	private int _battle_report_count()
+	{
+		return 0;
+	}
+
+	private void _battle_report()
+	{
+		BattleReportMgrUI component = BaseUI.GetRootUI().GetComponent<BattleReportMgrUI>();
+		if (component != null)
+		{
+			if (m_subui == component)
+			{
+				SetSubUI(null);
+				return;
+			}
+			component.MyLoading();
+			SetSubUI(component);
+		}
+	}
+
+	public static void _secret_shop()
+	{
+		SecretShopUI component = BaseUI.GetRootUI().GetComponent<SecretShopUI>();
+		if (handle_sub_ui(component, "secret_shop"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private int _mail_count()
+	{
+		return (int)Global.character_.UnreadMailNum;
+	}
+
+	private void _mail()
+	{
+		MailUI component = BaseUI.GetRootUI().GetComponent<MailUI>();
+		if (component != null)
+		{
+			if (m_subui == component)
+			{
+				SetSubUI(null);
+				return;
+			}
+			component.MyLoading();
+			SetSubUI(component);
+		}
+	}
+
+	private void _ranking()
+	{
+		RankListUI_2 component = BaseUI.GetRootUI().GetComponent<RankListUI_2>();
+		if (m_subui == component)
+		{
+			SetSubUI(null);
+		}
+		else
+		{
+			component.SubLoading();
+		}
+	}
+
+	private void _music()
+	{
+		GameObject.Find("Root/RootUI").GetComponent<OptionUI>().setBGMMute(flag: true);
+		GameObject.Find("Root/RootUI").GetComponent<OptionUI>().setSEMute(flag: true);
+	}
+
+	private bool _music_check(string name)
+	{
+		return !BGMHandler.Instance.Mute;
+	}
+
+	private void _music_forbid()
+	{
+		GameObject.Find("Root/RootUI").GetComponent<OptionUI>().setBGMMute(flag: false);
+		GameObject.Find("Root/RootUI").GetComponent<OptionUI>().setSEMute(flag: false);
+	}
+
+	private bool _music_forbid_check(string name)
+	{
+		return BGMHandler.Instance.Mute;
+	}
+
+	public static void _battlevalue()
+	{
+		BattleValueUI component = BaseUI.GetRootUI().GetComponent<BattleValueUI>();
+		if (handle_sub_ui(component, "battle_value"))
+		{
+			component.SubLoading("normal");
+		}
+	}
+
+	public static void _battlevalue_failed()
+	{
+		BattleValueUI component = BaseUI.GetRootUI().GetComponent<BattleValueUI>();
+		if (handle_sub_ui(component, "battle_value"))
+		{
+			component.SubLoading("battle");
+		}
+	}
+
+	private void _tutorial()
+	{
+	}
+
+	private void _tutorial_quest(int questid)
+	{
+	}
+
+	private void _baike()
+	{
+	}
+
+	private void _bonus()
+	{
+		BonusUI component = GameObject.Find("/Root/RootUI").GetComponent<BonusUI>();
+		rmg.ToDisable();
+		component.BonusLoading();
+		component.setTreasure(rmg);
+		component.setOnClose(null);
+	}
+
+	private bool _bonus_check(string name)
+	{
+		return Global.character_.treasure_count > 0;
+	}
+
+	private void _CampaignEntity()
+	{
+		rmg.ToDisable();
+		GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("CampaignEntity", rmg);
+	}
+
+	private bool _CampaignEntity_check()
+	{
+		return Global.character_.campaign_entity_single != 0L && rmg.LevelID != "CampaignEntity";
+	}
+
+	private void _Siege()
+	{
+	}
+
+	private void _GuildWar()
+	{
+		_guild();
+	}
+
+	public void ShowGuildWar()
+	{
+		_GuildWar();
+	}
+
+	public void _alliance_raid()
+	{
+		_guild();
+	}
+
+	private void draw_character()
+	{
+		GUI.BeginGroup(__BaseUI._rect(10f, 10f, 248f, 100f));
+		__BaseUI.Box(__BaseUI._rect(15f, 13f, 66f, 66f), Global.character_.texIcon);
+		__BaseUI.Box(__BaseUI._rect(0f, 0f, 242f, 92f), new GUIContent(string.Empty, "Background"), texCharacter);
+		__BaseUI.ShadowLabel(__BaseUI._rect(125f, 16f, 96f, 16f), Global.character_.name, __BaseUI._textCenter, __BaseUI._clrYellow);
+		string text = "#c=ffffcc#s=1";
+		text = ((Global.character_.money < 100000) ? (text + Global.character_.money) : (text + Global.character_.money / 10000 + "#b=1" + __BaseUI.load_str(20387u)));
+		ssMoney.make_arial(text, __BaseUI._textLeft, 200, __BaseUI._fontSize);
+		ssMoney.draw_right(__BaseUI._rect(132f, 38f, 70f, 16f), __BaseUI._textLeft);
+		GUI.Label(__BaseUI._rect(132f, 37f, 80f, 16f), new GUIContent(string.Empty, "money_bar"), __BaseUI.normalStyle);
+		__BaseUI.ShadowLabel(__BaseUI._rect(115f, 58f, 80f, 16f), Global.character_.gold.ToString(), __BaseUI._numRight, __BaseUI._clrYellowDark);
+		GUI.Label(__BaseUI._rect(115f, 58f, 80f, 16f), new GUIContent(string.Empty, "gold_bar"), __BaseUI.normalStyle);
+		if (Global.anti_addicted_on && btnAntiAddict.Button(bBtn: true, __BaseUI._rect(0f, 36f, 23f, 26f), string.Empty))
+		{
+			string url = Global.game_data["fcm_url"].ToString();
+			Global.IEExplore(url, "addict");
+		}
+		if (btnCharacter.Button(IsEnable(), __BaseUI._rect(2f, 1f, 90f, 90f), string.Empty))
+		{
+			BaseUI.GetRootUI().GetComponent<InspectUI>().SubLoading(Global.character_.name);
+		}
+		GUI.DrawTexture(__BaseUI._rect(15f, 70f, 59f, 28f), texLevelBar);
+		ssLevel.make_arial(__BaseUI.load_str(20088u, "#c=ffffcc#s=1" + Global.character_.level + "#b=1"), __BaseUI._textLeft, 200, __BaseUI._fontSize);
+		ssLevel.draw_center(__BaseUI._rect(18f, 77f, 55f, 16f), __BaseUI._textLeft);
+		GUI.BeginGroup(__BaseUI._rect(80f, 8f, 55f, 29f));
+		if (btnVip.Button(bBtn: true, __BaseUI._rect(5f, 5f, 45f, 19f), string.Empty))
+		{
+			VipUI component = BaseUI.GetRootUI().GetComponent<VipUI>();
+			if (handle_sub_ui(component, "vip"))
+			{
+				component.MyLoading();
+			}
+		}
+		GUI.EndGroup();
+		if (btnGift.Button(bBtn: true, __BaseUI._rect(200f, 50f, 32f, 31f), string.Empty))
+		{
+			_gift();
+		}
+		if (!Global.anti_addicted_on || btnAntiAddict.Button(bBtn: true, __BaseUI._rect(0f, 36f, 23f, 26f), string.Empty))
+		{
+		}
+		GUI.BeginGroup(__BaseUI._rect(78f, 80f, 145f, 8f));
+		float num = Global.get_exp_require_character(Global.character_.level + 1);
+		float num2 = 0f;
+		if (num > 0f)
+		{
+			num2 = (float)Global.character_.experience / num;
+		}
+		num2 = ((!(num2 > 1f)) ? num2 : 1f);
+		GUI.DrawTexture(__BaseUI._rect(0f, 0f, num2 * 140f, 8f), texExpBar);
+		GUI.DrawTexture(__BaseUI._rect(25f, 0f, 91f, 8f), texExpMask);
+		GUI.Label(__BaseUI._rect(0f, 0f, 140f, 10f), new GUIContent(string.Empty, "exp_bar"), __BaseUI.normalStyle);
+		GUI.EndGroup();
+		GUI.EndGroup();
+	}
+
+	private void draw_friend()
+	{
+		Friend myfriend = CapitalFriendUI.myfriend;
+		GUI.BeginGroup(__BaseUI._rect(10f, 10f, 248f, 100f));
+		__BaseUI.Box(__BaseUI._rect(15f, 13f, 66f, 66f), myfriend.texIcon);
+		__BaseUI.Box(__BaseUI._rect(0f, 0f, 242f, 92f), new GUIContent(string.Empty, "Background"), texFriend);
+		__BaseUI.ShadowLabel(__BaseUI._rect(125f, 16f, 96f, 16f), myfriend.name + ((myfriend.server_sid == Global.character_.SID) ? string.Empty : (".s" + myfriend.server_sid)), __BaseUI._textCenter, __BaseUI._clrYellow);
+		__BaseUI.ShadowLabel(__BaseUI._rect(132f, 37f, 75f, 16f), myfriend.fans_count.ToString(), __BaseUI._numRight, __BaseUI._clrYellowLight);
+		GUI.Label(__BaseUI._rect(132f, 37f, 80f, 16f), new GUIContent(string.Empty, "fans_bar"), __BaseUI.normalStyle);
+		__BaseUI.ShadowLabel(__BaseUI._rect(115f, 58f, 75f, 16f), myfriend.flower_count.ToString(), __BaseUI._numRight, __BaseUI._clrYellowDark);
+		GUI.Label(__BaseUI._rect(115f, 58f, 80f, 16f), new GUIContent(string.Empty, "flower_bar"), __BaseUI.normalStyle);
+		GUI.DrawTexture(__BaseUI._rect(15f, 70f, 59f, 28f), texLevelBar);
+		__BaseUI.ShadowLabel(__BaseUI._rect(15f, 70f, 59f, 28f), __BaseUI.load_str(20088u, myfriend.level), __BaseUI._numCenter, __BaseUI._clrYellowLight);
+		GUI.EndGroup();
+		GUI.DrawTexture(__BaseUI._rect(15f, 5f, 88f, 31f), texVisit);
+	}
+
+	private bool check_new_system_tip()
+	{
+		Hashtable templates = Global.getTemplates("new_system_tip");
+		if (Global.getTemplate("new_system_tip", (uint)templates.Count) is _new_system_tip new_system_tip)
+		{
+			if (new_system_tip.idskill == 0)
+			{
+				Database.Campaign campaign = Global.character_.getCampaign(new_system_tip.idcampaign);
+				if (!campaign.finished && campaign.troops_.ContainsKey(new_system_tip.idtroop))
+				{
+					if (campaign.troops_[new_system_tip.idtroop].killed)
+					{
+						return false;
+					}
+				}
+				else if (campaign.finished)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (Global.character_.skills.ContainsKey(new_system_tip.param))
+				{
+					return false;
+				}
+				foreach (Skill value in Global.character_.skills.Values)
+				{
+					if (Global.getTemplate("skill", value.idskill) is _skill skill && skill.former_skill == new_system_tip.param)
+					{
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private void draw_new_system_tip()
+	{
+		_new_system_tip new_system_tip = null;
+		Hashtable templates = Global.getTemplates("new_system_tip");
+		for (int i = 1; i <= templates.Count; i++)
+		{
+			new_system_tip = Global.getTemplate("new_system_tip", (uint)i) as _new_system_tip;
+			if (new_system_tip.idskill == 0)
+			{
+				Database.Campaign campaign = Global.character_.getCampaign(new_system_tip.idcampaign);
+				if (campaign != null && !campaign.finished && campaign.troops_.ContainsKey(new_system_tip.idtroop) && !campaign.troops_[new_system_tip.idtroop].killed)
+				{
+					break;
+				}
+			}
+			else
+			{
+				if (Global.character_.skills.ContainsKey(new_system_tip.param))
+				{
+					continue;
+				}
+				bool flag = false;
+				foreach (Skill value in Global.character_.skills.Values)
+				{
+					if (Global.getTemplate("skill", value.idskill) is _skill skill && skill.former_skill == new_system_tip.param)
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
+				{
+					break;
+				}
+			}
+		}
+		if (new_system_tip == null)
+		{
+			return;
+		}
+		if (btnNewSystemTipUI.Button(IsEnable(), __BaseUI._rect(0f, 0f, 261f, 72f), new GUIContent(string.Empty, string.Empty)))
+		{
+			NewSystemTipUI component = BaseUI.GetRootUI().GetComponent<NewSystemTipUI>();
+			if (handle_sub_ui(component, string.Empty))
+			{
+				component.MyLoading();
+			}
+		}
+		if (new_system_tip.level - Global.character_.level > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(97f, 15f, 126f, 22f), string.Empty, ui_zi_zs);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(132f, 15f, 41f, 22f), __BaseUI.load_str(20088u, new_system_tip.level - Global.character_.level), __BaseUI._textCenter, __BaseUI._clrWhite, 16);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(97f, 15f, 126f, 22f), string.Empty, ui_zi_jjkf);
+		}
+		__BaseUI.OutlinedLabel(__BaseUI._rect(100f, 37f, 200f, 22f), new_system_tip.desc, __BaseUI._textNLeft, __BaseUI._clrYellowLight, 14);
+		drawTipIcon(__BaseUI._rect(30f, 6f, 59f, 59f), new_system_tip);
+		__BaseUI.Label(__BaseUI._rect(18f, -6f, 84f, 84f), string.Empty, ui_di);
+		addFrameAnimation("NewSystemTipMain", tipLightstyList, anime_timer, GUITOScreen(__BaseUI._rect(18f, -6f, 84f, 84f)), anime_idx, isCirculate: true);
+	}
+
+	private void luoshu_show(AssetBundle uibundle)
+	{
+		target_pos = (startposx = 40 * Global.character_.formation_set);
+		for (int i = 0; i < 6; i++)
+		{
+			btn_luoshu[i] = new _ButtonStyle();
+			btn_luoshu[i].make(uibundle, "button_yunzhen" + (i + 1));
+			ui_zi[i] = new GUIStyle();
+			ui_zi[i].normal.background = uibundle.Load("ui_zi" + (i + 1)) as Texture2D;
+			btn_luoshu_shou.make(uibundle, "button_luoshu_shou");
+			btn_luoshu_zhan.make(uibundle, "button_luoshu_zhan");
+		}
+	}
+
+	public void UpdateLuoshuStartpos()
+	{
+		target_pos = (startposx = 40 * Global.character_.formation_set);
+	}
+
+	public void DrawItemNotice()
+	{
+	}
+
+	public void drawLuoshu()
+	{
+		if (!Global.character_.checkUI(90u))
+		{
+			return;
+		}
+		int cur_formation_set = Global.character_.cur_formation_set;
+		int formation_set = Global.character_.formation_set;
+		if (luoshustatus == LUOSHUSTATUS.SHOUQI)
+		{
+			if (btn_luoshu_zhan.Button(IsEnable(), __BaseUI._rectB(11f, 70f, 57f, 62f), string.Empty))
+			{
+				luoshuZhankai();
+			}
+		}
+		else if (luoshustatus == LUOSHUSTATUS.ZHANKAI && btn_luoshu_shou.Button(IsEnable(), __BaseUI._rectB(11f, 70f, 57f, 62f), string.Empty))
+		{
+			luoshuShouqi();
+		}
+		if (cur_formation_set > 0 && cur_formation_set - 1 < ui_zi.Length)
+		{
+			__BaseUI.Label(__BaseUI._rectB(31f, 50f, 17f, 19f), string.Empty, ui_zi[cur_formation_set - 1]);
+		}
+		if (last_count != Global.character_.formation_set)
+		{
+			if (luoshustatus == LUOSHUSTATUS.SHOUQI)
+			{
+				if (turningEndTime < DateTime.Now)
+				{
+					target_pos = 40 * Global.character_.formation_set;
+				}
+				else
+				{
+					startposx = 40 * Global.character_.formation_set;
+				}
+			}
+			last_count = Global.character_.formation_set;
+		}
+		__BaseUI.BeginGroup(__BaseUI._rectB(11f, 62 + 40 * formation_set, 57f, 40 * formation_set));
+		__BaseUI.BeginGroup(__BaseUI._rect(0f, startposx, 57f, 40 * formation_set));
+		for (int i = 0; i < formation_set; i++)
+		{
+			if (i < btn_luoshu.Length && btn_luoshu[i].Button(IsEnable(), __BaseUI._rectB(13f, 40 + 40 * i, 32f, 32f), string.Empty))
+			{
+				if (cur_formation_set != i + 1)
+				{
+					SetSubUI(null);
+					RootUI component = BaseUI.GetRootUI().GetComponent<RootUI>();
+					component.cs_formation_set_switch((uint)(i + 1));
+				}
+				else
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9257u, cur_formation_set), null);
+				}
+			}
+		}
+		__BaseUI.EndGroup();
+		__BaseUI.EndGroup();
+		if (turningEndTime > DateTime.Now)
+		{
+			drawLuoshuDonghua(ref startposx, target_pos, start_pos);
+		}
+		else
+		{
+			startposx = target_pos;
+		}
+	}
+
+	private void drawLuoshuDonghua(ref float pos, float target_pos, float start_pos)
+	{
+		float num = Mathf.Abs(target_pos - start_pos);
+		float num2 = num / 0.2f;
+		float num3 = (float)(turningEndTime - DateTime.Now).TotalSeconds;
+		float num4 = num2 * num3;
+		if (target_pos > start_pos)
+		{
+			pos = target_pos - num4;
+		}
+		else
+		{
+			pos = num4;
+		}
+	}
+
+	public void luoshuZhankai()
+	{
+		target_pos = 0f;
+		start_pos = startposx;
+		turningEndTime = DateTime.Now.AddSeconds(0.20000000298023224);
+		luoshustatus = LUOSHUSTATUS.ZHANKAI;
+	}
+
+	public void luoshuShouqi()
+	{
+		target_pos = 40 * Global.character_.formation_set;
+		start_pos = startposx;
+		turningEndTime = DateTime.Now.AddSeconds(0.20000000298023224);
+		luoshustatus = LUOSHUSTATUS.SHOUQI;
+	}
+
+	public void drawTipIcon(Rect rc, _new_system_tip nst)
+	{
+		switch (nst.tiptype)
+		{
+		case 1:
+			if (Global.getTemplate("general_template", nst.param) is _general_template general_template)
+			{
+				if (generalStys.ContainsKey(general_template.icon) && generalStys[general_template.icon] != null)
+				{
+					__BaseUI.Label(__BaseUI._rect(rc.x + 9f, rc.y + 9f, 41f, 41f), new GUIContent(string.Empty, "tip_general" + nst.param), generalStys[general_template.icon], GUI.color);
+				}
+				else
+				{
+					AddAssetSub("face" + general_template.icon);
+					StartLoadingSub();
+				}
+				__BaseUI.OutlinedLabel(__BaseUI._rect(rc.x + 9f, rc.y + 9f + 41f - 15f, 42f, 20f), general_template.name, __BaseUI._textNCenter, __BaseUI._clrYellowLight, 13);
+			}
+			break;
+		case 2:
+		{
+			MainUI mainUI = BaseUI.GetMainUI();
+			if (mainUI != null && mainUI.newSystemTipIcons.ContainsKey(nst.param))
+			{
+				__BaseUI.Label(rc, string.Empty, mainUI.newSystemTipIcons[nst.param]);
+			}
+			break;
+		}
+		case 3:
+		{
+			int icon = Global.getSkillTemplate(nst.param).icon;
+			if (skillStys.ContainsKey(icon) && skillStys[icon] != null)
+			{
+				__BaseUI.Label(__BaseUI._rect(rc.x + 9f, rc.y + 9f, 41f, 41f), new GUIContent(string.Empty, "tip_skill" + nst.param), skillStys[icon], GUI.color);
+				break;
+			}
+			AddAssetSub("skill" + icon);
+			StartLoadingSub();
+			break;
+		}
+		case 4:
+		{
+			MainUI mainUI2 = BaseUI.GetMainUI();
+			if (mainUI2 != null && mainUI2.ui_zhenxingge != null)
+			{
+				__BaseUI.Label(__BaseUI._rect(rc.x + 9f, rc.y + 9f, 41f, 41f), string.Empty, mainUI2.ui_zhenxingge);
+			}
+			break;
+		}
+		case 5:
+		{
+			Equipment equipment = new Equipment(1, 0);
+			if (itemStys.ContainsKey(equipment.parts_[0].icon) && itemStys[equipment.parts_[0].icon] != null)
+			{
+				__BaseUI.Label(__BaseUI._rect(rc.x + 9f, rc.y + 9f, 41f, 41f), new GUIContent(string.Empty, "tip_etemp" + 1), itemStys[equipment.parts_[0].icon], GUI.color);
+				break;
+			}
+			AddAssetSub(equipment.iconname);
+			StartLoadingSub();
+			break;
+		}
+		case 6:
+		{
+			_artifact_template artifact_template = Global.getTemplate("artifact_template", nst.param) as _artifact_template;
+			_artifact_forge_info artifact_forge_info = Database.Artifact.get_forge_info(nst.param, 0);
+			if (artifact_forge_info != null && itemStys.ContainsKey(artifact_forge_info.icon) && itemStys[artifact_forge_info.icon] != null)
+			{
+				__BaseUI.Label(__BaseUI._rect(rc.x + 9f, rc.y + 9f, 41f, 41f), new GUIContent(string.Empty, "tip_atemp" + nst.param), itemStys[artifact_forge_info.icon], GUI.color);
+				break;
+			}
+			AddAssetSub("item" + artifact_forge_info.icon);
+			StartLoadingSub();
+			break;
+		}
+		}
+	}
+
+	public static void set_online_showTip(bool tip)
+	{
+		showOnlineTip = tip;
+	}
+
+	private bool CheckLevelAward(out uint level)
+	{
+		Hashtable templates = Global.getTemplates("newbie_levelup_award");
+		ArrayList arrayList = new ArrayList(templates.Keys);
+		arrayList.Sort();
+		for (int i = 0; i < arrayList.Count; i++)
+		{
+			level = (uint)arrayList[i];
+			if (templates[level] is _newbie_levelup_award && Global.character_.level >= level && level > Global.character_.newbieinfo.award_level)
+			{
+				return true;
+			}
+		}
+		level = 0u;
+		return false;
+	}
+
+	private bool CheckLevelAward()
+	{
+		uint level = 0u;
+		return CheckLevelAward(out level);
+	}
+
+	private bool CheckDayAward(string name)
+	{
+		return CheckDayAward();
+	}
+
+	public static bool CheckDayAward()
+	{
+		uint register_time = Global.character_.register_time;
+		float num = (float)(get_Last_RefreshTime(TimeUtil.Now) - get_Last_RefreshTime(register_time)) / 60f / 60f / 24f;
+		if (num < 7f && Global.character_.newbieinfo.day_award_time < get_Last_RefreshTime(TimeUtil.Now))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static int CheckDayAwardNum()
+	{
+		uint register_time = Global.character_.register_time;
+		float num = (float)(get_Last_RefreshTime(TimeUtil.Now) - get_Last_RefreshTime(register_time)) / 60f / 60f / 24f;
+		if (Global.character_.newbieinfo.day_award_time >= get_Last_RefreshTime(TimeUtil.Now))
+		{
+			num += 1f;
+		}
+		return (int)num;
+	}
+
+	public static int calcRegisterRefDays()
+	{
+		int num = (int)get_Last_RefreshTime(Global.character_.register_time);
+		float num2 = (float)(get_Last_RefreshTime(TimeUtil.Now) - num) / 60f / 60f / 24f;
+		return (int)num2;
+	}
+
+	public static float CalcServerHequDays()
+	{
+		if (TimeUtil.Now < Global.character_.server_hequ_time)
+		{
+			return 0f;
+		}
+		return (float)(TimeUtil.Now - Global.character_.server_hequ_time) / 86400f;
+	}
+
+	public static int CalcServerOpenRefreshDaysTest()
+	{
+		int serverOpenTimeTest = (int)Global.serverOpenTimeTest;
+		float num = ((float)get_Last_RefreshTime(TimeUtil.Now) - (float)Global.serverOpenTimeTest) / 60f / 60f / 24f + 1f;
+		return (int)num;
+	}
+
+	public static int CalcServerOpenRefreshDays()
+	{
+		int server_open_time = Global.character_.server_open_time;
+		float num = ((float)get_Last_RefreshTime(TimeUtil.Now) - (float)Global.character_.server_open_time) / 60f / 60f / 24f + 1f;
+		return (int)num;
+	}
+
+	public static uint get_Last_RefreshTime(uint time)
+	{
+		return Global.get_Last_RefreshTime(time);
+	}
+
+	public static uint New_get_Last_RefreshTime(uint time)
+	{
+		if (time > TimeUtil.ThisDay + 18000)
+		{
+			uint num = 30u;
+			while (time <= TimeUtil.ThisDay + 86400 * num + 18000 && num != 0)
+			{
+				num--;
+			}
+			return TimeUtil.ThisDay + 86400 * num + 18000;
+		}
+		uint num2;
+		for (num2 = 0u; time <= TimeUtil.ThisDay - 86400 * num2 + 18000 && num2 <= 30; num2++)
+		{
+		}
+		return TimeUtil.ThisDay - 86400 * num2 + 18000;
+	}
+
+	private void draw_top_bar()
+	{
+		int num = (int)((float)Screen.width - 520f * __BaseUI._screenScale) / 62;
+		if (topBarMood == TOPBARMOOD.SHRINK)
+		{
+			num = (int)((float)Screen.width - 669f * __BaseUI._screenScale) / 62;
+		}
+		int num2 = 0;
+		foreach (_ButtonMain item in btnTop)
+		{
+			int num3 = num2 % num;
+			int num4 = num2 / num;
+			if (topBarMood == TOPBARMOOD.NORMAL)
+			{
+				__BaseUI.BeginGroup(__BaseUI._rect(btnTopPosX + 260f + (float)(num3 * 62), 15 + num4 * 62, 75f, 75f));
+			}
+			else if (topBarMood == TOPBARMOOD.SHRINK)
+			{
+				__BaseUI.BeginGroup(__BaseUI._rect(btnTopPosX + (float)Screen.width - 260f - 90f - 59f - 62f - (float)(num3 * 62), 15 + num4 * 62, 75f, 75f));
+			}
+			bool flag = true;
+			if (topBarMood == TOPBARMOOD.NORMAL || (topBarMood == TOPBARMOOD.SHRINK && item.btnMain_type == _ButtonMain.btnType.NOEXPANDING))
+			{
+				if (item.checker(item.name))
+				{
+					num2++;
+				}
+				if ((btnTopPosX + 260f + (float)(num3 * 62) < (float)(Screen.width - 260 - 87) || (shrink_timer <= 0f && extend_timer <= 0f)) && item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+				{
+					if (item.name == "online")
+					{
+						int num5 = Math.Max(Global.character_.OnlineGift.next_get_time - (int)TimeUtil.Now, 0);
+						string str = string.Empty;
+						Color clr = __BaseUI._clrWhite;
+						if (num5 > 0)
+						{
+							str = Global.getFormatTime(num5);
+							clr = __BaseUI._clrBlack;
+						}
+						__BaseUI.OutlinedLabel(__BaseUI._rect(0f, 0f, 75f, 75f), str, 1, new Color(1f, 74f / 85f, 0f, 1f), __BaseUI._numCenter, clr);
+					}
+					else if (item.name == "teamfight")
+					{
+						if (Global.teamfight_.status == 2)
+						{
+							string str2 = string.Empty;
+							if (Global.teamfight_.sign_time > TimeUtil.Now)
+							{
+								int t = (int)(Global.teamfight_.sign_time - TimeUtil.Now);
+								str2 = Global.getFormatTime(t);
+							}
+							__BaseUI.OutlinedLabel(__BaseUI._rect(0f, 0f, 75f, 75f), str2, 1, new Color(1f, 74f / 85f, 0f, 1f), __BaseUI._numCenter, __BaseUI._clrBlack);
+						}
+					}
+					else if (item.name == "stronghold")
+					{
+						if (TimeUtil.Now >= Global.assault_setting.start_time && Global.assault_setting.end_time > TimeUtil.Now)
+						{
+							DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddSeconds(Global.assault_setting.end_time).ToLocalTime();
+							string str3 = dateTime.Month + "." + dateTime.Day + __BaseUI.load_str(21643u);
+							__BaseUI.OutlinedLabel(__BaseUI._rect(0f, 59f, 75f, 16f), str3, 1, new Color(1f, 74f / 85f, 0f, 1f), __BaseUI._numCenter, __BaseUI._clrBlack);
+						}
+					}
+					else if (item.name == "assaultshop")
+					{
+						if (Global.assault_setting.end_time <= TimeUtil.Now && Global.assault_setting.end_time + 86400 > TimeUtil.Now)
+						{
+							int t2 = (int)(Global.assault_setting.end_time + 86400 - TimeUtil.Now);
+							string formatTime = Global.getFormatTime(t2);
+							__BaseUI.OutlinedLabel(__BaseUI._rect(0f, 0f, 75f, 75f), formatTime, 1, new Color(1f, 74f / 85f, 0f, 1f), __BaseUI._numCenter, __BaseUI._clrBlack);
+						}
+					}
+					else if (item.name == "first_order_bonus")
+					{
+						addFrameAnimation("FirstOrderBonusMain", firstOrderLightStys, anime_timer_order, GUITOScreen(__BaseUI._rect(8f, 7f, 60f, 60f)), anime_idx_order, isCirculate: true);
+					}
+					flag = true;
+				}
+			}
+			__BaseUI.EndGroup();
+			if (flag)
+			{
+			}
+		}
+		if (Global.character_.first_order_bonus == 2)
+		{
+			removeFrameAnimation("FirstOrderBonusMain");
+		}
+		drawSecretary(num2);
+	}
+
+	private void drawSecretary(int btnToPCount)
+	{
+		if (topBarMood == TOPBARMOOD.SHRINK || shrink_timer > 0f)
+		{
+			if (btnExpand.Button(IsEnable() && shrink_timer <= 0f, __BaseUI._rect(Screen.width - 260 - 87 - 62, 22f, 59f, 59f), new GUIContent(string.Empty, string.Empty)))
+			{
+				btnTopPosX = Screen.width - 260;
+				extend_timer = 0.3f;
+				topBarMood = TOPBARMOOD.NORMAL;
+			}
+			if (btnSecretary.Button(IsEnable(), __BaseUI._rect(Screen.width - 260 - 87, 11f, 83f, 83f), new GUIContent(string.Empty, string.Empty)))
+			{
+				SecretaryUI component = BaseUI.GetRootUI().GetComponent<SecretaryUI>();
+				if (handle_sub_ui(component, "secretary"))
+				{
+					component.MyLoading();
+				}
+			}
+		}
+		else if (topBarMood == TOPBARMOOD.NORMAL)
+		{
+			int num = (int)((float)Screen.width - 520f * __BaseUI._screenScale) / 62;
+			Rect rc = __BaseUI._rect(260 + btnToPCount % num * 62 + 8, 15 + btnToPCount / num * 62 + 7, 59f, 59f);
+			if (btnToPCount % num == 0)
+			{
+				rc.x = 260 + (btnToPCount - 1) % num * 62 + 8 + 62;
+				rc.y -= 62f;
+			}
+			if (shrink_timer <= 0f && extend_timer <= 0f && btnShrink.Button(IsEnable() && extend_timer <= 0f, rc, new GUIContent(string.Empty, string.Empty)))
+			{
+				shrink_timer = 0.3f;
+			}
+		}
+	}
+
+	private void draw_top_bar_button_light()
+	{
+		if (shrink_timer > 0f || extend_timer > 0f)
+		{
+			return;
+		}
+		bool flag = false;
+		if (m_WealthTimer < DateTime.Now)
+		{
+			m_WealthTimer = DateTime.Now.AddSeconds(1.0);
+		}
+		double totalSeconds = (m_WealthTimer - DateTime.Now).TotalSeconds;
+		double num = (totalSeconds - 0.5) / 0.5;
+		if (num < 0.0)
+		{
+			num *= -1.0;
+		}
+		Color backgroundColor = GUI.backgroundColor;
+		if (_online_check(string.Empty))
+		{
+			Rect buttonRect = getButtonRect("online");
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (1f - (float)num) * 0.85f);
+			__BaseUI.Label(__BaseUI._rect(buttonRect.x - 6f, buttonRect.y - 4f, 70f, 70f), string.Empty, tga_guang3);
+			GUI.backgroundColor = backgroundColor;
+		}
+		double num2 = ((!(totalSeconds >= 0.9)) ? ((totalSeconds - 0.9) / 0.9) : ((totalSeconds - 0.9) / 0.1));
+		if (num2 < 0.0)
+		{
+			num2 *= -1.0;
+		}
+		num2 *= 0.8;
+		backgroundColor = GUI.backgroundColor;
+		GUI.backgroundColor = new Color(1f, 1f, 1f, 1f - (float)num2);
+		if (_online_check(string.Empty))
+		{
+			int num3 = Math.Max(Global.character_.OnlineGift.next_get_time - (int)TimeUtil.Now, 0);
+			if (num3 <= 0)
+			{
+				Rect buttonRect2 = getButtonRect("online");
+				__BaseUI.Label(__BaseUI._rect(buttonRect2.x - 25f, buttonRect2.y - 30f, 103f, 55f), string.Empty, tga_dianjilingqu);
+			}
+		}
+		GUI.backgroundColor = backgroundColor;
+		if (event_anim > 0)
+		{
+			float num4 = 1f;
+			switch (event_anim)
+			{
+			case 1:
+				num4 = 1f - event_anim_timer / 0.2f * 0.9f;
+				if (num4 > 1f)
+				{
+					num4 = 1f;
+				}
+				break;
+			case 3:
+				num4 = event_anim_timer + 0.1f;
+				if ((double)num4 < 0.1)
+				{
+					num4 = 0.1f;
+				}
+				break;
+			}
+			Color contentColor = GUI.contentColor;
+			GUI.contentColor = new Color(GUI.contentColor.r, GUI.contentColor.g, GUI.contentColor.b, num4);
+			if (event_state())
+			{
+				GUI.Label(getButtonRect("huodong"), event_anim_light, __BaseUI.normalStyle);
+			}
+			if (act_state())
+			{
+				GUI.Label(getButtonRect("quest_act"), act_anim_light, __BaseUI.normalStyle);
+			}
+			if (_favorite_check(string.Empty))
+			{
+				GUI.Label(getButtonRect("favorite"), favorite_anim_light, __BaseUI.normalStyle);
+			}
+			if (flag)
+			{
+				GUI.Label(__BaseUI._rect(Screen.width - 260 - 87, 11f, 83f, 83f), secretary_light, __BaseUI.normalStyle);
+			}
+			GUI.contentColor = contentColor;
+		}
+		if (checkfestivallottery(string.Empty))
+		{
+			Rect buttonRect3 = getButtonRect("festivalnationlottery");
+			Rect rect = __BaseUI._rect(buttonRect3.x + 1f, buttonRect3.y - 3f, 59f, 59f);
+			Matrix4x4 matrix = GUI.matrix;
+			GUIUtility.RotateAroundPivot(m_rotAngle, new Vector2(rect.x + rect.width / 2f, rect.y + rect.height / 2f));
+			__BaseUI.Label(__BaseUI._rect(rect.x, rect.y, rect.width, rect.height), string.Empty, button_qingdian_light);
+			GUI.matrix = matrix;
+			__BaseUI.Label(__BaseUI._rect(buttonRect3.x, buttonRect3.y + 59f - 15f, 59f, 15f), string.Empty, button_qingdian_zi);
+		}
+		if (checkanniversarylottery(string.Empty))
+		{
+			Rect buttonRect4 = getButtonRect("anniversarylottery");
+			Rect rect2 = __BaseUI._rect(buttonRect4.x + 1f, buttonRect4.y - 3f, 59f, 59f);
+			Matrix4x4 matrix2 = GUI.matrix;
+			GUIUtility.RotateAroundPivot(m_rotAngle, new Vector2(rect2.x + rect2.width / 2f, rect2.y + rect2.height / 2f));
+			__BaseUI.Label(__BaseUI._rect(rect2.x, rect2.y, rect2.width, rect2.height), string.Empty, button_qingdian_light);
+			GUI.matrix = matrix2;
+			__BaseUI.Label(__BaseUI._rect(buttonRect4.x, buttonRect4.y + 59f - 19f, 58f, 19f), string.Empty, ui_zi_znq);
+		}
+		if (checkweekendlottery(string.Empty))
+		{
+			Rect buttonRect5 = getButtonRect("weekendlottery");
+			Rect rect3 = __BaseUI._rect(buttonRect5.x + 1f, buttonRect5.y, 59f, 59f);
+			Matrix4x4 matrix3 = GUI.matrix;
+			GUIUtility.RotateAroundPivot(m_rotAngle, new Vector2(rect3.x + rect3.width / 2f, rect3.y + rect3.height / 2f));
+			__BaseUI.Label(__BaseUI._rect(rect3.x, rect3.y, rect3.width, rect3.height), string.Empty, button_qingdian_light);
+			GUI.matrix = matrix3;
+			__BaseUI.Label(__BaseUI._rect(buttonRect5.x, buttonRect5.y + 59f - 19f, 58f, 19f), string.Empty, ui_zi_fl);
+		}
+		if (_chinesenewyear_check(string.Empty))
+		{
+			Rect buttonRect6 = getButtonRect("newyear_2016");
+			Rect rect4 = __BaseUI._rect(buttonRect6.x, buttonRect6.y - 3f, 59f, 59f);
+			Matrix4x4 matrix4 = GUI.matrix;
+			GUIUtility.RotateAroundPivot(m_rotAngle, new Vector2(rect4.x + rect4.width / 2f, rect4.y + rect4.height / 2f));
+			__BaseUI.Label(__BaseUI._rect(rect4.x, rect4.y, rect4.width, rect4.height), string.Empty, button_qingdian_light);
+			GUI.matrix = matrix4;
+		}
+	}
+
+	private void draw_top_right_bar()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rectR(252f, 0f, 252f, 120f));
+		__BaseUI.Label(__BaseUI._rect(2f, 15f, 229f, 51f), string.Empty, battlevalue_black);
+		if (btnBattleValue.Button(__BaseUI._rect(2f, 15f, 229f, 51f)))
+		{
+		}
+		int num = 34;
+		_battle_value battle_value = Global.getTemplate("battle_value", (uint)Global.character_.level) as _battle_value;
+		if (battle_value == null)
+		{
+			battle_value = new _battle_value();
+		}
+		uint num2 = battle_value.battle_value;
+		if (num2 == 0)
+		{
+			num2 = 1u;
+		}
+		float num3 = (float)Character.cur_bv_value / (float)num2;
+		if (num3 > 1f)
+		{
+			num3 = 1f;
+		}
+		num3 *= 0.8f;
+		num3 += 0.2f;
+		num += (int)(162f * (1f - num3));
+		GUI.DrawTextureWithTexCoords(__BaseUI._rect(num, 29f, 165f * num3, 22f), texBattleValueBar, new Rect(1f - num3, 0f, 1f, 1f));
+		__BaseUI.Label(__BaseUI._rect(167f, 6f, 68f, 60f), string.Empty, battlevalue_mask);
+		__BaseUI.Label(__BaseUI._rect(num - 17, 19f, 34f, 38f), string.Empty, battlevalue_light);
+		battle_soul_pos = GUIUtility.GUIToScreenPoint(new Vector2((float)(num - 17 + 17) * __BaseUI._screenScale, 36f * __BaseUI._screenScale));
+		__BaseUI._fontNumber2.draw(__BaseUI._rect(39f, 31f, 153f, 19f), Character.cur_bv_value.ToString(), TextAnchor.UpperCenter);
+		int num4 = 0;
+		foreach (_ButtonMain item in btnTopRight)
+		{
+			if (item.Button(__BaseUI._rect(32 + num4 * 34, 70f, 32f, 32f)))
+			{
+				num4++;
+			}
+		}
+		__BaseUI.EndGroup();
+	}
+
+	public Rect getBtnRc()
+	{
+		return m_btnRc;
+	}
+
+	public Rect getCampaignRc()
+	{
+		return m_btnCampaign;
+	}
+
+	public Rect getAnecdoteRc()
+	{
+		return m_btnAnecdote;
+	}
+
+	private void draw_bottom_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnBottomRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 65, 75f, 75f));
+			if (item.name == "Capital")
+			{
+				Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(8f, 7f));
+				m_btnRc = new Rect(vector.x, vector.y, 59f, 59f);
+			}
+			else if (item.name == "Campaign")
+			{
+				Vector2 vector2 = GUIUtility.GUIToScreenPoint(new Vector2(8f, 7f));
+				m_btnCampaign = new Rect(vector2.x, vector2.y, 59f, 59f);
+			}
+			else if (item.name == "anecdote")
+			{
+				Vector2 vector3 = GUIUtility.GUIToScreenPoint(new Vector2(8f, 7f));
+				m_btnAnecdote = new Rect(vector3.x, vector3.y, 59f, 59f);
+			}
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f), rmg.LevelID == item.name))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private Rect _bottom_rect(int idx)
+	{
+		return ScreenRect._rect(803 - idx * 51, 543f, 44f, 52f);
+	}
+
+	public Rect get_bottom_rect(int idx)
+	{
+		int num = 0;
+		int num2 = 0;
+		foreach (_ButtonMain item in btnBottom)
+		{
+			if (item.checker == null || item.checker(item.name))
+			{
+				if (idx == num2)
+				{
+					return _bottom_rect(num);
+				}
+				num++;
+			}
+			num2++;
+		}
+		return new Rect(0f, 0f, 0f, 0f);
+	}
+
+	public Rect get_bottom_rect(string id)
+	{
+		for (int i = 0; i < _bottom_bar_names.Length; i++)
+		{
+			if (_bottom_bar_names[i, 0] == id)
+			{
+				return get_bottom_rect(i);
+			}
+		}
+		return new Rect(0f, 0f, 0f, 0f);
+	}
+
+	private void draw_bottom_bar()
+	{
+		float num = bottom_x;
+		bool flag = false;
+		bool flag2 = false;
+		float num2 = (float)Screen.width - bottom_bar_x * __BaseUI._screenScale;
+		float num3 = 350f * __BaseUI._screenScale;
+		float num4 = 0f;
+		float num5 = 0f;
+		bool flag3 = false;
+		foreach (_ButtonMain item in btnBottom)
+		{
+			float num6 = item.offset - 5f * __BaseUI._screenScale;
+			if (item.subWidth > 0f)
+			{
+				Rect position = __BaseUI._rectRB(num + item.subWidth + 40f, 73f, item.subWidth + 80f, 57f);
+				if (position.x >= num3 && position.x + position.width <= num2)
+				{
+					GUI.Label(position, string.Empty, bottomSubFrame);
+				}
+				num += item.subWidth;
+			}
+			if (item.Check())
+			{
+				num += num6;
+			}
+			if (item.state != _ButtonMain.STATE.NONE)
+			{
+				flag3 = true;
+			}
+		}
+		num = bottom_x;
+		foreach (_ButtonMain item2 in btnBottom)
+		{
+			float num7 = item2.offset - 5f * __BaseUI._screenScale;
+			if (item2.subWidth > 0f)
+			{
+				float num8 = (float)item2.subCount * item2.subOffset;
+				Rect rc = __BaseUI._rectRB(num + item2.subWidth + 10f, 73f, item2.subWidth + 20f, 57f);
+				float num9 = 35f;
+				__BaseUI.BeginGroup(rc);
+				foreach (_ButtonMain btnSub in item2.btnSubs)
+				{
+					Rect rect = __BaseUI._rect(num8 - num9 - btnSub.subOffset, 7f, 42f, 53f);
+					if (rect.x + rc.x + item2.subOffset * __BaseUI._screenScale > num2)
+					{
+						if (btnSub.Check())
+						{
+							num9 += item2.subOffset;
+						}
+						continue;
+					}
+					if (rect.x + rc.x < num3)
+					{
+						num4 = num;
+						break;
+					}
+					__BaseUI.BeginGroup(__BaseUI._rect(num8 - num9 - btnSub.subOffset, 0f, 57f, 60f));
+					if (btnSub.Button(__BaseUI._rect(0f, 7f, 42f, 53f)))
+					{
+						num9 += item2.subOffset;
+					}
+					__BaseUI.EndGroup();
+				}
+				__BaseUI.EndGroup();
+				num += item2.subWidth + 10f;
+			}
+			Rect rect2 = __BaseUI._rectRB(num + num7, 85f, 77f, 77f);
+			if (rect2.x + num7 > num2)
+			{
+				if (item2.Check())
+				{
+					num += num7;
+					flag2 = true;
+				}
+				continue;
+			}
+			if (item2.state == _ButtonMain.STATE.NONE && rect2.x < num3)
+			{
+				flag = true;
+				num4 = num;
+				break;
+			}
+			__BaseUI.BeginGroup(__BaseUI._rectRB(num + item2.offset, 92f, 92f, 84f));
+			if (item2.Button(__BaseUI._rect(12f, 15f, 54f, 66f)))
+			{
+				if (flag2 && num5 == 0f)
+				{
+					num5 = num;
+				}
+				num += num7;
+				if (item2.handled)
+				{
+					bool flag4 = false;
+					foreach (_ButtonMain item3 in btnBottom)
+					{
+						if (item2 != item3)
+						{
+							if (item2.expand && item3.expand)
+							{
+								item3.state = _ButtonMain.STATE.COLLASPING;
+								item3.expand = false;
+								flag4 = true;
+							}
+							item3.current = false;
+						}
+					}
+					if (flag4)
+					{
+						item2.state = _ButtonMain.STATE.NONE;
+					}
+					if (item2.expand)
+					{
+						item2.right_width = 0f;
+						float num10 = (float)item2.subCount * item2.subOffset - item2.subWidth;
+						Rect rect3 = __BaseUI._rectRB(bottom_x + num + num10, 0f, num + num10 - bottom_x, 0f);
+						if (rect3.width > num2 - num3)
+						{
+							item2.right_width = rect2.x + rect3.width - num2;
+						}
+					}
+				}
+			}
+			__BaseUI.EndGroup();
+		}
+		if (!flag3 && flag && !__BaseUI._btnPrev2.Button(bBtn: false, __BaseUI._rectRB(num4 + 15f, 80f, 31f, 67f), string.Empty))
+		{
+		}
+	}
+
+	private Rect _left_rect_local(int idx)
+	{
+		return new Rect(10f, 100 + idx * 27, 158f, 23f);
+	}
+
+	private Rect _left_rect(int idx)
+	{
+		return ScreenRect._rect(_left_rect_local(idx));
+	}
+
+	public Rect get_left_rect(string name)
+	{
+		return _left_rect_local(0);
+	}
+
+	private string exp_bar(string key)
+	{
+		return __BaseUI.format(key, new object[2]
+		{
+			Global.character_.experience,
+			Global.get_exp_require_character(Global.character_.level + 1)
+		});
+	}
+
+	private string stamina_bar(string key)
+	{
+		_buy_template buy_template = Global.get_buy_template(_buy_template.TYPE.STAMINA, Global.character_.stamina_buy_count + 1);
+		return __BaseUI.format(key, new object[4]
+		{
+			Global.character_.stamina,
+			100,
+			Global.character_.stamina_buy_count,
+			buy_template.gold
+		});
+	}
+
+	private string gold_bar(string key)
+	{
+		return __BaseUI.format(key, new object[1] { Global.character_.gold });
+	}
+
+	private string money_bar(string key)
+	{
+		return __BaseUI.format(key, new object[1] { Global.character_.money });
+	}
+
+	private string fans_bar(string key)
+	{
+		return __BaseUI.format(key, new object[1] { CapitalFriendUI.myfriend.fans_count });
+	}
+
+	private string flower_bar(string key)
+	{
+		return __BaseUI.format(key, new object[1] { CapitalFriendUI.myfriend.flower_count });
+	}
+
+	private string practice_bar(string key)
+	{
+		return __BaseUI.format(key, new object[1] { Global.character_.practice });
+	}
+
+	private string levelup_bar(string key)
+	{
+		return __BaseUI.get_string(key);
+	}
+
+	private string congzhi_bar(string key)
+	{
+		return __BaseUI.get_string(key);
+	}
+
+	private string gift_bar(string key)
+	{
+		return __BaseUI.get_string(key);
+	}
+
+	private string battlecd_bar(string key)
+	{
+		int num = 5 + Global.character_.battle_fail_count * 5;
+		if (num > 90)
+		{
+			num = 90;
+		}
+		return __BaseUI.format(key, new object[1] { Global.getStringTime(num) });
+	}
+
+	private void init_tooltip()
+	{
+		tt_owner = "MainUI";
+		m_tooltip_delegate.Clear();
+		m_tooltip_delegate.Add("exp_bar", exp_bar);
+		m_tooltip_delegate.Add("stamina_bar", stamina_bar);
+		m_tooltip_delegate.Add("gold_bar", gold_bar);
+		m_tooltip_delegate.Add("money_bar", money_bar);
+		m_tooltip_delegate.Add("fans_bar", fans_bar);
+		m_tooltip_delegate.Add("flower_bar", flower_bar);
+		m_tooltip_delegate.Add("battlecd_bar", battlecd_bar);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (m_tooltip_delegate.ContainsKey(tip))
+		{
+			string text = m_tooltip_delegate[tip](tip);
+			tooltipUI.ShowTooltipContent(tt_owner, text, 300, __BaseUI._fontSize);
+		}
+		else if (tip == "online")
+		{
+			string empty = string.Empty;
+			uint id = (uint)(Global.character_.OnlineGift.got + 1);
+			if (Global.getTemplate("online_awards_template", id) is _online_awards_template online_awards_template)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make((byte)online_awards_template.award1_type, 0, online_awards_template.award1_amout);
+				empty = empty + treasure.param[1] + treasure.desc;
+				if (online_awards_template.award2_type != -1)
+				{
+					treasure.make((byte)online_awards_template.award2_type, 0, online_awards_template.award2_amout);
+					string text2 = empty;
+					empty = text2 + "," + treasure.param[1] + treasure.desc;
+				}
+				if (online_awards_template.award3_type != -1)
+				{
+					treasure.make((byte)online_awards_template.award3_type, 0, online_awards_template.award3_amout);
+					empty = empty + treasure.param[1] + treasure.desc;
+				}
+				tooltipUI.ShowTooltipCommon2(empty, tt_owner, 300);
+			}
+		}
+		else if (tip.Contains("tip_general"))
+		{
+			int id2 = int.Parse(tip.Replace("tip_general", string.Empty));
+			tooltipUI.ShowTooltipGR(tt_owner, (uint)id2, null, locked: false);
+		}
+		else if (tip.Contains("tip_skill"))
+		{
+			uint num = uint.Parse(tip.Replace("tip_skill", string.Empty));
+			tooltipUI.ShowTooltipSkill(tt_owner, (ushort)num, string.Empty, string.Empty);
+		}
+		else if (tip.Contains("tip_etemp"))
+		{
+			byte mainid = byte.Parse(tip.Replace("tip_etemp", string.Empty));
+			Equipment item = new Equipment(mainid, 0);
+			tooltipUI.ShowTooltipItem(string.Empty, item);
+		}
+		else if (tip.Contains("tip_atemp"))
+		{
+			ushort id3 = ushort.Parse(tip.Replace("tip_atemp", string.Empty));
+			tooltipUI.ShowTooltipArtifacTemplate(string.Empty, id3);
+		}
+		else
+		{
+			tooltipUI.HideTooltip(string.Empty);
+		}
+	}
+
+	private void GoldOK(bool bOK, object[] objs)
+	{
+	}
+
+	private void OpenBuildingFunctionUI(int idbuilding)
+	{
+		switch (idbuilding)
+		{
+		case 10:
+			_main_char("Info");
+			break;
+		case 40:
+			_general_enchant();
+			break;
+		case 50:
+			_general_person();
+			break;
+		case 80:
+			_patrol();
+			break;
+		}
+	}
+
+	public void OpenBuildingUI()
+	{
+		Global.setGuideCheck("building", bCheck: false);
+		Global.setFirstCheck("building", bCheck: false);
+		BuildingUI component = GetComponent<BuildingUI>();
+		if (handle_sub_ui(component, "Building"))
+		{
+			Disable();
+			Hashtable hashtable = new Hashtable();
+			hashtable["subui"] = (__BaseUI.subui = "Building");
+			SendMessage("SubLoading", hashtable, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void draw_quest_trace()
+	{
+		first_quest = Global.character_.getFirstQuest();
+		if (first_quest == null)
+		{
+			return;
+		}
+		if (Global.bigui)
+		{
+			if (first_quest.condition_flag)
+			{
+				if (b_trace_complete.Button(bBtn: true, __BaseUI._rect(887f, 134f, 97f, 97f), string.Empty))
+				{
+					cs_finish_quest(first_quest.idquest);
+				}
+			}
+			else if (!b_trace_tbc.Button(bBtn: true, __BaseUI._rect(887f, 134f, 97f, 97f), string.Empty))
+			{
+			}
+			GUI.Label(__BaseUI._rect(880f, 207f, 103f, 20f), string.Empty, __BaseUI._tooltipStyle);
+			GUI.Label(__BaseUI._rect(880f, 207f, 103f, 20f), (Global.getTemplate("quest", first_quest.idquest) as _quest).name, trace_name);
+		}
+		else
+		{
+			if (b_traceweb.Button(IsEnable(), __BaseUI._rectR(190f, 70f, 178f, 34f), string.Empty) && first_quest.condition_flag)
+			{
+				cs_finish_quest(first_quest.idquest);
+			}
+			if (first_quest.condition_flag)
+			{
+				__BaseUI.Label(__BaseUI._rectR(169f, 72 - trace_ypos, 23f, 29f), string.Empty, traceweb_complete);
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rectR(169f, 72f, 23f, 29f), string.Empty, traceweb_tbc);
+			}
+			__BaseUI.Label(__BaseUI._rectR(125f, 79f, 100f, 18f), first_quest.name(), __BaseUI._textLeft, __BaseUI._clrYellowLight);
+		}
+	}
+
+	private void cs_finish_quest(uint idquest)
+	{
+		CSQuestFinish_0x108 cSQuestFinish_0x = new CSQuestFinish_0x108();
+		cSQuestFinish_0x.id = idquest;
+		RootUI.m_client.Send(264, cSQuestFinish_0x, sc_finish_quest, idquest);
+	}
+
+	private void sc_finish_quest(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCQuestFinish_0x108 sCQuestFinish_0x = JSProtoBuf.Serializer.Deserialize<SCQuestFinish_0x108>(stream);
+		if (!sCQuestFinish_0x.state)
+		{
+			return;
+		}
+		uint id = (uint)arg;
+		_quest quest = Global.getTemplate("quest", id) as _quest;
+		BonusGetUI bonusGetUI = BaseUI.GetBonusGetUI();
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (_quest_reward reward in quest.m_rewards)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(reward.reward_type, reward.param0, reward.param1);
+			list.Add(treasure);
+		}
+		bonusGetUI.SetBonus(rmg, this, list, Enable);
+		bonusGetUI.MyLoading();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (AssetName == "loading30")
+		{
+			BaseAsset.lds.change_bg(BaseAsset.LoadTexture(AssetName));
+		}
+		else if (AssetName == "loading0")
+		{
+			BaseAsset.lds.change_bg(BaseAsset.LoadTexture(AssetName));
+		}
+		else if (AssetName.Contains("face"))
+		{
+			int key = int.Parse(AssetName.Replace("face", string.Empty));
+			GUIStyle gUIStyle = new GUIStyle();
+			gUIStyle.normal.background = BaseAsset.LoadTexture(AssetName);
+			generalStys.Add(key, gUIStyle);
+		}
+		else if (AssetName.Contains("skill"))
+		{
+			int key2 = int.Parse(AssetName.Replace("skill", string.Empty));
+			GUIStyle gUIStyle2 = new GUIStyle();
+			gUIStyle2.normal.background = BaseAsset.LoadTexture(AssetName);
+			skillStys.Add(key2, gUIStyle2);
+		}
+		else if (AssetName.Contains("item"))
+		{
+			int key3 = int.Parse(AssetName.Replace("item", string.Empty));
+			GUIStyle gUIStyle3 = new GUIStyle();
+			gUIStyle3.normal.background = BaseAsset.LoadTexture(AssetName);
+			itemStys.Add(key3, gUIStyle3);
+		}
+	}
+
+	private bool event_state()
+	{
+		if (Global.character_.checkUI(41u) && (Global.character_.brawlinfo.phase == 2 || Global.character_.brawlinfo.phase == 3))
+		{
+			return true;
+		}
+		if (Global.character_.checkUI(22u) && Global.character_.members.ContainsKey(Global.character_.id) && Global.character_.members[Global.character_.id].sealdevil_flag > 0 && TimeUtil.Now > TimeUtil.ThisDay + 64800 && TimeUtil.Now < TimeUtil.ThisDay + 72000)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private bool act_state()
+	{
+		if (!Global.character_.checkUI(31u))
+		{
+			return false;
+		}
+		foreach (Activity_Reward value in Global.character_.act_rewards.Values)
+		{
+			if (!value.finished_flag)
+			{
+				return act_click_record;
+			}
+		}
+		return false;
+	}
+
+	private void checkCameraGUI()
+	{
+		if (camGUI == null)
+		{
+			GameObject gameObject = new GameObject("GUICamera");
+			gameObject.transform.parent = base.transform;
+			camGUI = gameObject.AddComponent<Camera>();
+			camGUI.enabled = false;
+			camGUI.orthographic = true;
+			camGUI.orthographicSize = 10f;
+			camGUI.cullingMask = 8192;
+			camGUI.clearFlags = CameraClearFlags.Nothing;
+			if (Camera.main != null)
+			{
+				Camera.main.cullingMask &= -8193;
+			}
+		}
+	}
+
+	private void show_battle_soul()
+	{
+		Logger.Log("show_battle_soul");
+		checkCameraGUI();
+		if (camGUI != null && battle_soul_effect == null)
+		{
+			battle_soul_effect = BaseAsset.Instantiate_mainAsset_OnScreen("battle_soul", camGUI, new Vector3(battle_soul_pos.x, battle_soul_pos.y, 50f));
+			if ((bool)battle_soul_effect)
+			{
+				battle_soul_effect.transform.parent = camGUI.transform;
+				BaseAsset.SetLayerRecursively(battle_soul_effect, 13);
+				UnityEngine.Object.Destroy(battle_soul_effect, 2f);
+			}
+		}
+	}
+
+	public static void sc_trial_maze_stamina_0x2B3(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCTrialMazeStaminaRefresh_0x2B3 sCTrialMazeStaminaRefresh_0x2B = JSProtoBuf.Serializer.Deserialize<SCTrialMazeStaminaRefresh_0x2B3>(stream);
+			if (sCTrialMazeStaminaRefresh_0x2B != null)
+			{
+				trial_maze_stamina = new TrialMazeStamina(sCTrialMazeStaminaRefresh_0x2B);
+			}
+		}
+	}
+
+	public static void update_trial_maze_stamina_change(int st, int refresh_timestamp)
+	{
+		if (trial_maze_stamina != null)
+		{
+			trial_maze_stamina.stamina = st;
+			if (refresh_timestamp > 0)
+			{
+				trial_maze_stamina.refresh_timestamp = refresh_timestamp;
+			}
+		}
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

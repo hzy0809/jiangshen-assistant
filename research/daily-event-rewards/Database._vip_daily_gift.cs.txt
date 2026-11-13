@@ -1,0 +1,45 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _vip_daily_gift
+{
+	public uint id;
+
+	public byte viplevel;
+
+	public byte treasure_type;
+
+	public int param0;
+
+	public int param1;
+
+	public void Set(_vip_daily_gift d)
+	{
+		id = d.id;
+		viplevel = d.viplevel;
+		treasure_type = d.treasure_type;
+		param0 = d.param0;
+		param1 = d.param1;
+	}
+
+	public void Set(db_vip_daily_gift d)
+	{
+		id = d.id;
+		viplevel = (byte)d.viplevel;
+		treasure_type = (byte)d.treasure_type;
+		param0 = d.param0;
+		param1 = d.param1;
+	}
+
+	public void Get(ref db_vip_daily_gift d)
+	{
+		d.id = id;
+		d.viplevel = viplevel;
+		d.treasure_type = treasure_type;
+		d.param0 = param0;
+		d.param1 = param1;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

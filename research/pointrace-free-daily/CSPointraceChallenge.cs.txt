@@ -1,0 +1,31 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSPointraceChallenge_0x465")]
+public class CSPointraceChallenge_0x465 : IExtensible
+{
+	private ulong _idother;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "idother", DataFormat = DataFormat.TwosComplement)]
+	public ulong idother
+	{
+		get
+		{
+			return _idother;
+		}
+		set
+		{
+			_idother = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

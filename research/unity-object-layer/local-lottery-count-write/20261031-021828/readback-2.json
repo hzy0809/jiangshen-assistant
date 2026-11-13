@@ -1,0 +1,10 @@
+{
+  "observed_at_utc": "2026-10-30T18:18:31.359555+00:00",
+  "count": 1,
+  "other_values": {
+    "level": 86,
+    "stamina": 20,
+    "gold": 450
+  },
+  "same_identity": true
+}

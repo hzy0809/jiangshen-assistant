@@ -1,0 +1,102 @@
+﻿[
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Protocol.cs",
+        "sha256":  "33693d74ed54a4de6232afd23915f38521cb33598b732b5a7a5f743af3c9964d"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\SharedDevelopmentContext.cs",
+        "sha256":  "6a222aaf28b2e735aac7d5b26b496cf55c1c93ee55493d4996f56901cc83a5bc"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRefreshGate.cs",
+        "sha256":  "348af803f6e9d9d11b8da95eaec7c9b3f48ef443be08a92e0ce5a199aae19a75"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyRefreshProof.cs",
+        "sha256":  "1c90636e096f2caa37747849588458833b4ee9be8dd38347e8689982df6a08aa"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\PlayerStateRefreshModel.cs",
+        "sha256":  "9b3bab0635c0dde4f6cf1d233109cf15a3fdfdaf4ab6448da9f055bd5c851e00"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPlayerSnapshot.cs",
+        "sha256":  "1a18e0bcf87d9454e1ee288290c5d878204007253c7c62da59dd66683004c20d"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\GuildWire.cs",
+        "sha256":  "c3deb6caa983a1a5b2910a7febe4a8c4d20174dedee518f3f3c9c5365f85aff9"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleLifecycle.cs",
+        "sha256":  "08b9890ba7cf5cf5c2ad10c76c2c32b2a7db6045c6e94ce8ca56709d7f204e3e"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleSettlement.cs",
+        "sha256":  "48748e3009ad43289e9384feff86631489061637269717dc3579fa737cbbff8a"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleReplyPreflight.cs",
+        "sha256":  "b17db6c7ef58479a67d982b90395132c50dcfbae7605b073fd2ba745ce1e7cf4"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\NativeBattleStartStore.cs",
+        "sha256":  "9cc99938c6b21a5133bc34cfcbcf05cb13ca32ea9b710154742cc7e168484e0c"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs",
+        "sha256":  "8e840ec3ccca27ee3640c01b03c428442edb45bd22ae1ec96ad079ebfaaeafad"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\BattleModeAdapterTestStubs.cs",
+        "sha256":  "84dd80c1729c2d5ddc5fb063abec322b493dae411f9bc7097399aca18e8f1017"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\BattleModeAdapterLaunchStub.cs",
+        "sha256":  "48158a956ef29b4fce85f1a87979e0b3d8ebdef61474029cd08c37fa007b9cd7"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\PointRaceBattleAdapterTests.cs",
+        "sha256":  "f4d23bb659a7f72fef042dcc76678b472c6e793da8c66493760dcbbf949b3f0a"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\PointRaceEntryTimeoutTests.cs",
+        "sha256":  "eb12382b800460e117061f571467aa86a8ecdbe4c980761822813dafd0a77c19"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\BattleReplyPreflightWire.cs",
+        "sha256":  "4c3ac0d6dada5a87ade5e9bd2cebbe7765e9f31be0c51c8cc4f633a3f44d8f3b"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\PointRaceReplyPreflightTests.cs",
+        "sha256":  "18a599e369448b2f9932961715e73b9a58a559c55c0be74d259ed3d41fbf0f66"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-skip\\PointraceUI.cs.txt",
+        "sha256":  "9ac4f64fb6b41c130a9c6046ec9aa5e0f713205b8037d6a701c632927fde3a22"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-skip\\BattleUI.cs.txt",
+        "sha256":  "9ebae0b1ffd8262b9a53e87ec1ddabf0a52898c3c1c0abe668940378d063f50b"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\research\\battle-skip\\game.net.tcp_client.cs.txt",
+        "sha256":  "67cd566a94a0eed11cf49ec294dec21d7bfbe89f1a26683adef66327d706a2e8"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\run-pointrace-battle-adapter.ps1",
+        "sha256":  "2ebf90c496783e5ee4623c2ebb267f5dbba0d02937c90798ff01bb3e4502c9da"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\pbdata.dll",
+        "sha256":  "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\protobuf-net.dll",
+        "sha256":  "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Ionic.Zlib.dll",
+        "sha256":  "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+    }
+]

@@ -1,0 +1,4552 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class FormationUI : BaseUI
+{
+	public struct form_coord
+	{
+		public int x;
+
+		public int y;
+	}
+
+	public struct formgeninfo
+	{
+		public long genid;
+
+		public int spot;
+
+		public int modx;
+
+		public int mody;
+
+		public int genspot;
+
+		public string genname;
+	}
+
+	private class FormationInfo
+	{
+		public List<int> dbspot = new List<int>();
+
+		public formgeninfo[,] formgenpos = new formgeninfo[4, 4];
+
+		public int level;
+
+		public string formationName = string.Empty;
+
+		public string description = string.Empty;
+
+		public int iconid;
+
+		public Texture2D icon;
+
+		public Texture2D name;
+
+		public int formid;
+
+		public int spotcount;
+
+		public long guid;
+
+		public bool currentform;
+
+		public _RadioStyle formicon = new _RadioStyle();
+
+		public bool changeflag;
+
+		public string desc;
+
+		public bool available;
+	}
+
+	public class ItemInfo
+	{
+		public long guid;
+
+		public string itemname = string.Empty;
+
+		public int type;
+
+		public long owner;
+
+		public string ownername = string.Empty;
+
+		public int iconid;
+
+		public Texture2D icon;
+
+		public int requir_level;
+
+		public Color name_color = new Color(1f, 1f, 1f, 1f);
+
+		public int enchant_level;
+
+		public int max_enchant_level;
+
+		public GUIStyle name_color_style = new GUIStyle();
+
+		public int idequipment_template;
+
+		public float param_attack;
+
+		public float param_defense;
+
+		public float param_spell;
+
+		public float param_troop;
+
+		public float addon_strength;
+
+		public float addon_leadership;
+
+		public float addon_power;
+
+		public int idspeciality;
+
+		public string spec_name = string.Empty;
+
+		public string spec_desc = string.Empty;
+
+		public string set_name = string.Empty;
+
+		public string set_desc = string.Empty;
+	}
+
+	private class PresetDuelOpponentGenInfo
+	{
+		public _general_template gen_temp;
+
+		public _army army;
+
+		public GUIStyle iconStyle = new GUIStyle();
+
+		public string tooltip = string.Empty;
+	}
+
+	private class PresetDuelOpponentFormInfo
+	{
+		public _formation_template form_temp;
+
+		public GUIStyle iconStyle = new GUIStyle();
+
+		public string tooltip = string.Empty;
+	}
+
+	public delegate bool delegate_OnAttack();
+
+	private const float hotanim_time = 0.2f;
+
+	private const int hotpanel_step = 66;
+
+	private delegate_OnAttack OnAttack;
+
+	private List<string> StartCode = new List<string>();
+
+	private bool isLoading;
+
+	private bool isVisible;
+
+	private string DefaultState = string.Empty;
+
+	private string substate = string.Empty;
+
+	private bool self_refresh;
+
+	private bool onfight;
+
+	private bool need_close;
+
+	private string subwindow = string.Empty;
+
+	private Dictionary<int, Rect> m_dicSpots = new Dictionary<int, Rect>();
+
+	private string RightPanel = string.Empty;
+
+	private bool m_bFromGuide;
+
+	private List<GeneralInfo> SquadGeneralInfo = new List<GeneralInfo>();
+
+	private List<GeneralInfo> PitchGenerals = new List<GeneralInfo>();
+
+	private List<GeneralInfo> BenchGenerals = new List<GeneralInfo>();
+
+	private List<GeneralInfo> EnemyGeneralInfo = new List<GeneralInfo>();
+
+	private int SquadSelect = -1;
+
+	private int CurFormSelect = -1;
+
+	private int drag_gen = -1;
+
+	private FormationInfo CharFormation;
+
+	private FormationInfo EnemyFormation = new FormationInfo();
+
+	private List<FormationInfo> AllFormation = new List<FormationInfo>();
+
+	public static bool setpvp;
+
+	private int pvpparam;
+
+	private bool setscout;
+
+	private long Campaignid;
+
+	private int Troopid;
+
+	private BattleLegion Legion;
+
+	private bool viewonly = true;
+
+	private TooltipUI tipui;
+
+	private MessageBox msgbox;
+
+	private Formation_Graph form_graph;
+
+	private Rect m_SecondGenRect = default(Rect);
+
+	private Rect m_FirstSpot = default(Rect);
+
+	private int m_spotindex;
+
+	private Rect m_skillRc = default(Rect);
+
+	private int leftpos;
+
+	private int targetpos;
+
+	private float basestep;
+
+	private bool opened;
+
+	private bool moving;
+
+	private GUIStyle switch_style;
+
+	private Dictionary<uint, Rect> m_dictSkill = new Dictionary<uint, Rect>();
+
+	private Dictionary<ushort, Rect> m_104rc = new Dictionary<ushort, Rect>();
+
+	private Rect m_openRc = default(Rect);
+
+	private bool tip_refresh;
+
+	private string cur_hottip = string.Empty;
+
+	public bool showCloseTip;
+
+	private object etc_data;
+
+	private Hashtable m_lastparam;
+
+	private Dictionary<int, Texture2D> icon_armys = new Dictionary<int, Texture2D>();
+
+	private Dictionary<int, Texture2D> icon_skills = new Dictionary<int, Texture2D>();
+
+	private int waitstate;
+
+	private FormationInfo waitform;
+
+	private int EnemySelect;
+
+	private bool tutorial_drag_flag_start;
+
+	private bool tutorial_drag_flag_end;
+
+	private Vector2 tutorial_mouse_pos;
+
+	private ushort leave_genid;
+
+	private Rect[] squad_pos = new Rect[16]
+	{
+		__BaseUI._rect(193f, 79f, 63f, 63f),
+		__BaseUI._rect(193f, 147f, 63f, 63f),
+		__BaseUI._rect(193f, 215f, 63f, 63f),
+		__BaseUI._rect(193f, 283f, 63f, 63f),
+		__BaseUI._rect(193f, 351f, 63f, 63f),
+		__BaseUI._rect(123f, 45f, 63f, 63f),
+		__BaseUI._rect(123f, 113f, 63f, 63f),
+		__BaseUI._rect(123f, 181f, 63f, 63f),
+		__BaseUI._rect(123f, 249f, 63f, 63f),
+		__BaseUI._rect(123f, 317f, 63f, 63f),
+		__BaseUI._rect(123f, 385f, 63f, 63f),
+		__BaseUI._rect(53f, 79f, 63f, 63f),
+		__BaseUI._rect(53f, 147f, 63f, 63f),
+		__BaseUI._rect(53f, 215f, 63f, 63f),
+		__BaseUI._rect(53f, 283f, 63f, 63f),
+		__BaseUI._rect(53f, 351f, 63f, 63f)
+	};
+
+	private bool hotpanel;
+
+	private string hotpanel_name = string.Empty;
+
+	private float hotpanel_timer;
+
+	private Rect m_saveRc = default(Rect);
+
+	private bool m_bShowSequence;
+
+	private uint custom_armyselect;
+
+	private uint custom_skillselect;
+
+	private List<uint> char_armys = new List<uint>();
+
+	private List<uint> char_skills = new List<uint>();
+
+	private int skilltip_side = -1;
+
+	private List<uint> skilltip;
+
+	private float skilltip_timer;
+
+	private uint cur_tipskill;
+
+	private Vector2 arrowpos;
+
+	private bool enemyarrow;
+
+	private bool setarrow;
+
+	private Dictionary<string, Rect> hotrects = new Dictionary<string, Rect>();
+
+	private Rect panel_rect;
+
+	private Dictionary<string, int> hotpanel_length = new Dictionary<string, int>();
+
+	private int hotpanel_startpos;
+
+	private int hotpanel_width;
+
+	private bool newhint_skill;
+
+	private bool newhint_armyskill;
+
+	private bool newhint_army;
+
+	private bool newhint_form;
+
+	private string armyskill_msg = string.Empty;
+
+	private uint armyskillhint;
+
+	private GeneralInfo cur_hottip_gen;
+
+	private int formequip_state;
+
+	private GUIStyle ui_icondi3 = new GUIStyle();
+
+	private GUIStyle[] ui_zi_wfxhs = new GUIStyle[2];
+
+	private GUIStyle ui_zhenxingdi_hong = new GUIStyle();
+
+	private GUIStyle ui_zhenxingdi_lan = new GUIStyle();
+
+	private GUIStyle ui_difangwujiang = new GUIStyle();
+
+	private GUIStyle ui_difangzhenxing = new GUIStyle();
+
+	private GUIStyle ui_shengyushijian = new GUIStyle();
+
+	private GUIStyle ui_timeFont = new GUIStyle();
+
+	private _ButtonStyle btnReady = new _ButtonStyle();
+
+	private float count_down_sec;
+
+	private List<PresetDuelOpponentGenInfo> duel_op_gen_list = new List<PresetDuelOpponentGenInfo>();
+
+	private List<PresetDuelOpponentFormInfo> duel_op_form_list = new List<PresetDuelOpponentFormInfo>();
+
+	private GUIStyle ui_zi15 = new GUIStyle();
+
+	private SCPresetDuel_0x2A8.FormGenInfo m_curPresetDuelFormGen;
+
+	public override void Start()
+	{
+		base.Start();
+		StartCode.Add("Formation");
+		StartCode.Add("NPCBattle");
+		StartCode.Add("PlayerBattle");
+		StartCode.Add("RaidBattle");
+		StartCode.Add("GuildWarBattle");
+		StartCode.Add("SkyTowerFormation");
+		StartCode.Add("PresetDuel");
+		StartCode.Add("Woodwar");
+		StartCode.Add("Ladder");
+		tipui = __BaseUI.GetTooltipUI();
+		msgbox = GameObject.Find("Root/RootUI").GetComponent<MessageBox>();
+		tt_owner = "FormationUI";
+		hotpanel_length.Add("form", 640);
+		hotpanel_length.Add("army", 376);
+		hotpanel_length.Add("skill", 442);
+	}
+
+	private void Update()
+	{
+		if (targetpos != leftpos)
+		{
+			float deltaTime = Time.deltaTime;
+			float num = ((targetpos <= leftpos) ? ((0f - basestep) * 4f) : (basestep * 4f));
+			float num2 = deltaTime * num;
+			if ((float)Math.Abs(targetpos - leftpos) < Math.Abs(num2))
+			{
+				leftpos = targetpos;
+				moving = false;
+				if (leftpos == 0)
+				{
+					opened = false;
+					switch_style = form_graph.toopen;
+				}
+				else
+				{
+					switch_style = form_graph.toclose;
+				}
+			}
+			else
+			{
+				leftpos += (int)num2;
+			}
+		}
+		if (skilltip_side != -1)
+		{
+			skilltip_timer += (float)Math.PI * Time.deltaTime;
+			if (skilltip_timer > (float)Math.PI)
+			{
+				skilltip_timer = 0f;
+			}
+		}
+		if (hotpanel_timer > 0f)
+		{
+			hotpanel_timer -= Time.deltaTime;
+			if (hotpanel_timer < 0f && !hotpanel)
+			{
+				hotpanel_name = string.Empty;
+				cur_hottip = string.Empty;
+			}
+		}
+	}
+
+	public bool isLeftOpened()
+	{
+		return opened;
+	}
+
+	public void get104Rc(out Dictionary<ushort, Rect> outDic)
+	{
+		outDic = m_104rc;
+	}
+
+	public Rect getOpenRc()
+	{
+		return m_openRc;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Sub;
+		if (need_close)
+		{
+			need_close = false;
+			OnClickClose();
+			return;
+		}
+		if (subwindow != string.Empty)
+		{
+			bool flag = IsEnable();
+			__BaseUI.my_enabled = false;
+		}
+		else
+		{
+			__BaseUI.my_enabled = IsEnable();
+		}
+		if (hotpanel && hotpanel_timer < 0f)
+		{
+			m_dictSkill.Clear();
+			foreach (KeyValuePair<string, Rect> hotrect in hotrects)
+			{
+				if (hotrect.Key.Contains("skill"))
+				{
+					uint key = uint.Parse(hotrect.Key.Replace("skill", string.Empty));
+					if (!m_dictSkill.ContainsKey(key))
+					{
+						m_dictSkill.Add(key, hotrect.Value);
+					}
+				}
+				if (!GUI.Button(hotrect.Value, string.Empty, __BaseUI.normalStyle))
+				{
+					continue;
+				}
+				if (!RootUI.check_mobile() || cur_hottip == hotrect.Key)
+				{
+					if (hotrect.Key.Contains("formation"))
+					{
+						int num = int.Parse(hotrect.Key.Replace("formation", string.Empty));
+						foreach (FormationInfo item in AllFormation)
+						{
+							if (item.guid == num && CharFormation.guid != num)
+							{
+								OnClickFormList(item);
+								Global.character_.removehint(1u, (uint)num);
+								checkallhint();
+							}
+						}
+					}
+					else if (hotrect.Key.Contains("army"))
+					{
+						uint num2 = uint.Parse(hotrect.Key.Replace("army", string.Empty));
+						if (num2 != Global.character_.form_generals_[0].idarmy_template)
+						{
+							custom_armyselect = num2;
+							foreach (uint char_skill in char_skills)
+							{
+								_skill skillTemplate = Global.getSkillTemplate(char_skill);
+								if (skillTemplate.limited_army == 0 || skillTemplate.limited_army == num2)
+								{
+									custom_skillselect = char_skill;
+									break;
+								}
+							}
+							Disable();
+							cs_mainchar_custom();
+							Global.character_.removehint(2u, num2);
+							tip_refresh = true;
+						}
+					}
+					else if (hotrect.Key.Contains("skill"))
+					{
+						uint num3 = uint.Parse(hotrect.Key.Replace("skill", string.Empty));
+						if (num3 != Global.character_.form_generals_[0].activeskill)
+						{
+							custom_armyselect = Global.character_.form_generals_[0].idarmy_template;
+							custom_skillselect = num3;
+							Disable();
+							cs_mainchar_custom();
+							Global.character_.removehint(3u, num3);
+							tip_refresh = true;
+						}
+					}
+					CloseHotPanel();
+					cur_hottip = string.Empty;
+				}
+				else
+				{
+					cur_hottip = hotrect.Key;
+				}
+			}
+			if (!GUI.Button(panel_rect, string.Empty, __BaseUI.normalStyle))
+			{
+			}
+		}
+		int num4 = 707 + leftpos + 33;
+		int num5 = 481;
+		if (RootUI.check_mobile())
+		{
+			num5 += 100;
+		}
+		GUI.BeginGroup(__BaseUI._rectC(num4 / 2, num5 / 2, num4, num5));
+		GUI.Box(new Rect(0f, 0f, num4, num5), new GUIContent(string.Empty, "Background"), __BaseUI.normalStyle);
+		if (hotpanel && GUI.Button(__BaseUI._rect(0f, 0f, num4, num5), string.Empty, __BaseUI.normalStyle))
+		{
+			CloseHotPanel();
+		}
+		if (opened)
+		{
+			DrawGenPanel();
+		}
+		GUI.BeginGroup(__BaseUI._rect(leftpos + 33, 0f, 707f, 481f));
+		GUI.Box(__BaseUI._rect(0f, 0f, 707f, 481f), string.Empty, __BaseUI._bgStyle);
+		if (!(RightPanel == "PresetDuel") && !(substate == "maze_enemy") && __BaseUI._btnCloseBig.Button(bBtn: true, __BaseUI._rect(563f, 9f, 132f, 41f), string.Empty))
+		{
+			need_close = true;
+			return;
+		}
+		__BaseUI.Label(__BaseUI._rect(9f, 9f, 150f, 41f), string.Empty, form_graph.title);
+		DrawMainPanel();
+		GUI.EndGroup();
+		if (RootUI.check_mobile())
+		{
+			GUI.BeginGroup(__BaseUI._rect(leftpos + 35, 478f, 702f, 100f));
+			DrawMobileTip();
+			GUI.EndGroup();
+		}
+		Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(0f, 101f));
+		m_openRc = new Rect(vector.x, vector.y, 41f, 275f);
+		if (form_graph.b_squad.Button(IsEnable() && !moving, __BaseUI._rect(0f, 101f, 41f, 275f), string.Empty))
+		{
+			if (opened)
+			{
+				targetpos = 0;
+				moving = true;
+			}
+			else
+			{
+				int num6 = 1;
+				if (Global.character_.form_generals_.Count > 11)
+				{
+					num6 = 3;
+				}
+				else if (Global.character_.form_generals_.Count > 5)
+				{
+					num6 = 2;
+				}
+				targetpos = 26 + 77 * num6;
+				basestep = targetpos;
+				moving = true;
+				opened = true;
+			}
+		}
+		__BaseUI.Label(__BaseUI._rect(8f, 169f, 39f, 132f), string.Empty, switch_style);
+		if (hotpanel)
+		{
+		}
+		switch (subwindow)
+		{
+		case "custom":
+			__BaseUI.my_enabled = IsEnable();
+			DrawCustom(num4, num5);
+			break;
+		}
+		__BaseUI.my_enabled = true;
+		GUI.EndGroup();
+		DrawDragGen();
+		GUI.Button(__BaseUI._rectC(num4 / 2, num5 / 2, num4, num5), new GUIContent(string.Empty, string.Empty), __BaseUI.normalStyle);
+		if (!RootUI.check_mobile())
+		{
+			drawTooltips();
+		}
+	}
+
+	public Rect GetSkillRc()
+	{
+		return m_skillRc;
+	}
+
+	public bool isSkillOpen()
+	{
+		return hotpanel && hotpanel_timer < 0f;
+	}
+
+	public Rect GetSkillDetailRc(uint id)
+	{
+		if (m_dictSkill.ContainsKey(id))
+		{
+			return m_dictSkill[id];
+		}
+		return new Rect(0f, 0f, 0f, 0f);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		if (tip.Contains("CharGeneral"))
+		{
+			ushort id = ushort.Parse(tip.Replace("CharGeneral", string.Empty));
+			tipui.ShowTooltipGeneral(tt_owner, id, tip_refresh);
+			if (tip_refresh)
+			{
+				tip_refresh = false;
+			}
+		}
+		else if (tip.Contains("EnemyNpcGen"))
+		{
+			int num = int.Parse(tip.Replace("EnemyNpcGen", string.Empty));
+			int i;
+			for (i = 0; i < EnemyGeneralInfo.Count && EnemyGeneralInfo[i].locx * 4 + EnemyGeneralInfo[i].locy != num; i++)
+			{
+			}
+			if (i < EnemyGeneralInfo.Count)
+			{
+				tipui.ShowTooltipGeneral(tt_owner, EnemyGeneralInfo[i]);
+			}
+		}
+		else if (tip.Contains("PlayerEnemyGen"))
+		{
+			long num2 = long.Parse(tip.Replace("PlayerEnemyGen", string.Empty));
+			int j;
+			for (j = 0; j < EnemyGeneralInfo.Count && EnemyGeneralInfo[j].guid != num2; j++)
+			{
+			}
+			if (j < EnemyGeneralInfo.Count)
+			{
+				tipui.ShowTooltipGeneral(tt_owner, EnemyGeneralInfo[j]);
+			}
+		}
+		else if (tip.Contains("formation"))
+		{
+			string text = tip.Replace("formation", string.Empty);
+			tipui.ShowTooltipCommon2(text, tt_owner, 340);
+		}
+		else if (tip.Contains("army"))
+		{
+			uint id2 = uint.Parse(tip.Replace("army", string.Empty));
+			TooltipArmy tta = tipui.make_TooltipArmy(id2, tt_owner);
+			tipui.ShowTooltipArmy(tta);
+		}
+		else if (tip.Contains("skill"))
+		{
+			uint num3 = uint.Parse(tip.Replace("skill", string.Empty));
+			__BaseUI.GetTooltipUI().ShowTooltipSkill(tt_owner, (ushort)num3, string.Empty, string.Empty);
+		}
+		else if (tip.Contains("score"))
+		{
+			uint num4 = uint.Parse(tip.Replace("score", string.Empty));
+			tipui.ShowTooltipCombatPoint(tt_owner, (ushort)num4);
+		}
+		else if (tip.Contains("common"))
+		{
+			string text2 = tip.Replace("common", string.Empty);
+			tipui.ShowTooltipCommon2(text2, tt_owner, 250);
+		}
+		else if (tip.StartsWith("DuelGeneral"))
+		{
+			string[] array = tip.Replace("DuelGeneral", string.Empty).Split(',');
+			if (array.Length == 2)
+			{
+				tipui.ShowTooltipGR_2(tt_owner, uint.Parse(array[0]), null, locked: false, uint.Parse(array[1]), PresetDuelUI.player_level, _generalbook: true);
+			}
+		}
+	}
+
+	private void OnClickSetCurrentForm()
+	{
+		Global.character_.restart_bvchange();
+		Global.character_.cur_form = CharFormation.formid;
+		waitstate = 2;
+		cs_formupdate(curform: true);
+	}
+
+	public void FormSubLoading()
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["subui"] = "Formation";
+		SubLoading(hashtable);
+	}
+
+	public void reopen()
+	{
+		SubLoading(m_lastparam);
+	}
+
+	public void SubLoading(Hashtable param)
+	{
+		m_lastparam = param;
+		if (!param.ContainsKey("subui") || !StartCode.Contains(param["subui"].ToString()))
+		{
+			return;
+		}
+		drag_gen = -1;
+		onfight = false;
+		OnClose = null;
+		substate = string.Empty;
+		if (param["subui"].ToString() == "Formation")
+		{
+			RightPanel = "GenInfo";
+			DefaultState = param["subui"].ToString();
+			viewonly = true;
+			if (param.ContainsKey("OnClose"))
+			{
+				OnClose = param["OnClose"] as delegate_OnClose;
+			}
+			InitNormalUI();
+		}
+		else if (param["subui"].ToString() == "NPCBattle")
+		{
+			RightPanel = "Enemy";
+			substate = param["substate"] as string;
+			DefaultState = param["subui"].ToString();
+			Campaignid = long.Parse(param["campaignid"].ToString());
+			Troopid = int.Parse(param["troopid"].ToString());
+			viewonly = (bool)param["viewonly"];
+			Logger.Log("viewonly" + viewonly);
+			if (param.ContainsKey("isguide"))
+			{
+				m_bFromGuide = (bool)param["isguide"];
+			}
+			etc_data = ((!param.ContainsKey("etc")) ? null : param["etc"]);
+			OnAttack = param["OnAttack"] as delegate_OnAttack;
+			InitBattleUI();
+		}
+		else if (param["subui"].ToString() == "RaidBattle")
+		{
+			RightPanel = "Enemy";
+			substate = "guild_raid";
+			DefaultState = "NPCBattle";
+			viewonly = (bool)param["viewonly"];
+		}
+		else if (param["subui"].ToString() == "GuildWarBattle")
+		{
+			RightPanel = "Enemy";
+			substate = "guild_war";
+			DefaultState = "PlayerBattle";
+			viewonly = (bool)param["viewonly"];
+		}
+		else if (param["subui"].ToString() == "PlayerBattle")
+		{
+			RightPanel = "Enemy";
+			DefaultState = param["subui"].ToString();
+			substate = param["substate"] as string;
+			viewonly = (bool)param["viewonly"];
+			Legion = param["legion"] as BattleLegion;
+			OnAttack = param["OnAttack"] as delegate_OnAttack;
+			OnClose = param["OnClose"] as delegate_OnClose;
+			InitBattleUI();
+		}
+		else if (param["subui"].ToString() == "SkyTowerFormation")
+		{
+			RightPanel = "GenInfo";
+			DefaultState = "Formation";
+			viewonly = true;
+			OnClose = param["OnClose"] as delegate_OnClose;
+			InitNormalUI();
+		}
+		else if (param["subui"].ToString() == "Woodwar")
+		{
+			RightPanel = "GenInfo";
+			DefaultState = "NPCBattle";
+			viewonly = false;
+			OnAttack = param["OnAttack"] as delegate_OnAttack;
+			OnClose = param["OnClose"] as delegate_OnClose;
+			InitNormalUI();
+		}
+		else if (param["subui"].ToString() == "PresetDuel")
+		{
+			RightPanel = "PresetDuel";
+			DefaultState = "Formation";
+			viewonly = false;
+			OnClose = param["OnClose"] as delegate_OnClose;
+			InitPresetDuel();
+		}
+		else if (param["subui"].ToString() == "Ladder")
+		{
+			RightPanel = "Ladder";
+			DefaultState = "PlayerBattle";
+			substate = param["substate"] as string;
+			viewonly = (bool)param["viewonly"];
+			Legion = param["legion"] as BattleLegion;
+			OnAttack = param["OnAttack"] as delegate_OnAttack;
+			OnClose = param["OnClose"] as delegate_OnClose;
+			InitBattleUI();
+		}
+		showCloseTip = false;
+	}
+
+	private void InitNormalUI()
+	{
+		InitialNormalInfo();
+		SetCurFormSelect(0);
+		AddAsset("ui_formation");
+		AddAsset("ui_duel");
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		isLoading = true;
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	private void InitBattleUI()
+	{
+		InitialNormalInfo();
+		InitEnemyInfo();
+		AddAsset("ui_formation");
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		isLoading = true;
+		CollectingStart(bCollecting: false);
+		StartLoading();
+		SetCurFormSelect(-1);
+	}
+
+	private void InitialNormalInfo()
+	{
+		InitFormInfo();
+		foreach (KeyValuePair<ushort, FormGeneral> item in Global.character_.form_generals_)
+		{
+			item.Value.CalcAllParam();
+			FormGeneral value = item.Value;
+			int idgeneral_template = value.idgeneral_template;
+			int idarmy_template = value.idarmy_template;
+			_general_template template = item.Value.template;
+			_army_template armytemplate = item.Value.armytemplate;
+			GeneralInfo generalInfo = new GeneralInfo();
+			if (value.isMainCharacter)
+			{
+				generalInfo.generalName = Global.character_.name;
+				generalInfo.faceid = Global.character_.icon;
+				generalInfo.base_strength = 80;
+				generalInfo.base_leadership = 80;
+				generalInfo.base_power = 80;
+			}
+			else
+			{
+				generalInfo.generalName = template.name;
+				generalInfo.faceid = template.icon;
+				generalInfo.base_strength = template.strength;
+				generalInfo.base_leadership = template.leadership;
+				generalInfo.base_power = template.power;
+			}
+			generalInfo.level = value.get_level();
+			generalInfo.guid = idgeneral_template;
+			generalInfo.armytype = armytemplate.name;
+			generalInfo.army_desc = armytemplate.desc_common;
+			generalInfo.nameclr = template.color;
+			generalInfo.armyspecname = string.Empty;
+			if (Global.getTemplate("speciality", armytemplate.spec1) is _speciality speciality)
+			{
+				generalInfo.armyspecname += speciality.name;
+			}
+			if (Global.getTemplate("speciality", armytemplate.spec2) is _speciality speciality2)
+			{
+				generalInfo.armyspecname = generalInfo.armyspecname + " " + speciality2.name;
+			}
+			if (Global.getTemplate("speciality", armytemplate.spec3) is _speciality speciality3)
+			{
+				generalInfo.armyspecname = generalInfo.armyspecname + " " + speciality3.name;
+			}
+			generalInfo.armyhp = (int)value.param.hp;
+			generalInfo.sizex = 1;
+			generalInfo.sizey = 1;
+			_skill skillTemplate = Global.getSkillTemplate(value.activeskill);
+			string[] array = skillTemplate.descpic.Split(',');
+			if (array[0] != "0")
+			{
+				generalInfo.skill_descpicid.Add("icon_shiyi_bar" + array[0]);
+			}
+			else
+			{
+				generalInfo.skill_descpicid.Add(string.Empty);
+			}
+			if (array[1] != "0")
+			{
+				generalInfo.skill_descpicid.Add("icon_shiyi_buff" + array[1]);
+			}
+			else
+			{
+				generalInfo.skill_descpicid.Add(string.Empty);
+			}
+			if (array[2] != "0")
+			{
+				generalInfo.skill_descpicid.Add("icon_shiyi_bar" + array[2]);
+			}
+			else
+			{
+				generalInfo.skill_descpicid.Add(string.Empty);
+			}
+			generalInfo.isBig = false;
+			generalInfo.skillname = skillTemplate.name;
+			generalInfo.skill_desc = skillTemplate.desc_common;
+			generalInfo.strength = value.param.strength - generalInfo.base_strength;
+			generalInfo.leadership = value.param.leadership - generalInfo.base_leadership;
+			generalInfo.power = value.param.power - generalInfo.base_power;
+			generalInfo.attack = (int)value.param.attack;
+			generalInfo.defence = (int)value.param.defense;
+			generalInfo.spell = (int)value.param.spell;
+			generalInfo.battle_score = value.battle_score;
+			generalInfo.tooltip = "CharGeneral" + generalInfo.guid;
+			SquadGeneralInfo.Add(generalInfo);
+		}
+		foreach (KeyValuePair<int, Formation> item2 in Global.character_.formations_)
+		{
+			int key = item2.Key;
+			_formation_template formation_template = Global.getTemplate("formation_template", (uint)key) as _formation_template;
+			FormationInfo formationInfo = new FormationInfo();
+			formationInfo.formationName = formation_template.name;
+			formationInfo.available = item2.Value.availability;
+			formationInfo.desc = formation_template.desc;
+			formationInfo.level = 1;
+			formationInfo.formid = key;
+			formationInfo.spotcount = item2.Value.spotnum;
+			formationInfo.guid = key;
+			formationInfo.currentform = ((Global.character_.cur_form == key) ? true : false);
+			formationInfo.iconid = formation_template.icon;
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					formationInfo.formgenpos[i, j].spot = 0;
+					formationInfo.formgenpos[i, j].genid = -2L;
+					formationInfo.formgenpos[i, j].modx = 0;
+					formationInfo.formgenpos[i, j].mody = 0;
+					formationInfo.formgenpos[i, j].genspot = 0;
+				}
+			}
+			formationInfo.dbspot.Add(formation_template.location1 - 1);
+			formationInfo.dbspot.Add(formation_template.location2 - 1);
+			formationInfo.dbspot.Add(formation_template.location3 - 1);
+			formationInfo.dbspot.Add(formation_template.location4 - 1);
+			formationInfo.dbspot.Add(formation_template.location5 - 1);
+			formationInfo.dbspot.Add(formation_template.location6 - 1);
+			formationInfo.dbspot.Add(formation_template.location7 - 1);
+			formationInfo.dbspot.Add(formation_template.location8 - 1);
+			foreach (int item3 in formationInfo.dbspot)
+			{
+				int num = item3 / 4;
+				int num2 = item3 % 4;
+				formationInfo.formgenpos[num, num2].spot = formationInfo.dbspot.IndexOf(item3) + 1;
+			}
+			for (int k = 0; k < item2.Value.spotgen.Count; k++)
+			{
+				int num3 = k;
+				long genid = item2.Value.spotgen[k];
+				int num4 = formationInfo.dbspot[k] / 4;
+				int num5 = formationInfo.dbspot[k] % 4;
+				formationInfo.formgenpos[num4, num5].genid = genid;
+				formationInfo.formgenpos[num4, num5].modx = 0;
+				formationInfo.formgenpos[num4, num5].mody = 0;
+				formationInfo.formgenpos[num4, num5].genspot = k + 1;
+			}
+			AllFormation.Add(formationInfo);
+			if (formationInfo.currentform)
+			{
+				CharFormation = formationInfo;
+			}
+		}
+		if (CharFormation == null)
+		{
+			CharFormation = AllFormation[0];
+			CharFormation.currentform = true;
+		}
+		InitialTeamData();
+	}
+
+	private void InitialTeamData()
+	{
+		PitchGenerals.Clear();
+		foreach (GeneralInfo item in SquadGeneralInfo)
+		{
+			bool flag = false;
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					if (!flag && item.guid == CharFormation.formgenpos[i, j].genid)
+					{
+						int index = CharFormation.formgenpos[i, j].genspot - 1;
+						item.locx = CharFormation.dbspot[index] / 4;
+						item.locy = CharFormation.dbspot[index] % 4;
+						item.modx = CharFormation.formgenpos[i, j].modx;
+						item.mody = CharFormation.formgenpos[i, j].mody;
+						PitchGenerals.Add(item);
+						flag = true;
+					}
+				}
+			}
+			if (!flag)
+			{
+				item.locx = 0;
+				item.locy = 0;
+				item.modx = 0;
+				item.modx = 0;
+			}
+		}
+		if (PitchGenerals.IndexOf(SquadGeneralInfo[0]) != -1)
+		{
+			CurFormSelect = 0;
+			SquadSelect = -1;
+			EnemySelect = -1;
+		}
+		else
+		{
+			SetCurFormSelect(-1);
+			SquadSelect = 0;
+			EnemySelect = -1;
+		}
+	}
+
+	private void SetupNormalAssetList()
+	{
+		for (int i = 0; i < SquadGeneralInfo.Count; i++)
+		{
+			AddAssetSub("face" + SquadGeneralInfo[i].faceid);
+		}
+	}
+
+	private void PrepGenFace()
+	{
+		for (int i = 0; i < SquadGeneralInfo.Count; i++)
+		{
+			string asset_name = "face" + SquadGeneralInfo[i].faceid;
+			if (SquadGeneralInfo[i].faceicon == null)
+			{
+				SquadGeneralInfo[i].faceicon = BaseAsset.LoadTexture(asset_name);
+			}
+		}
+	}
+
+	private void PrepGenSkill(GeneralInfo ginfo)
+	{
+		ginfo.skill_descpic.Clear();
+		foreach (string item in ginfo.skill_descpicid)
+		{
+			if (item == string.Empty)
+			{
+				ginfo.skill_descpic.Add(new Texture2D(0, 0));
+			}
+			else
+			{
+				ginfo.skill_descpic.Add(BaseAsset.was.GetAsset("ui_formation").Load(item) as Texture2D);
+			}
+		}
+	}
+
+	private void PrepEnemyFace()
+	{
+		for (int i = 0; i < EnemyGeneralInfo.Count; i++)
+		{
+			if (EnemyGeneralInfo[i].generalName != "nogeneral" && EnemyGeneralInfo[i].faceicon == null)
+			{
+				string text = "face" + EnemyGeneralInfo[i].faceid;
+				EnemyGeneralInfo[i].faceicon = BaseAsset.LoadTexture("face" + EnemyGeneralInfo[i].faceid);
+			}
+		}
+	}
+
+	private void _show()
+	{
+		if (!ShareUI.preped)
+		{
+			ShareUI.init(BaseAsset.was);
+		}
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_formation");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_duel");
+		form_graph = new Formation_Graph(BaseAsset.was);
+		if (RightPanel == "PresetDuel")
+		{
+			initDuelAsset(asset2);
+		}
+		if (substate == "ladder")
+		{
+			initLadderAsset(asset);
+		}
+		foreach (FormationInfo item in AllFormation)
+		{
+			item.formicon = form_graph.button_form[item.iconid - 1];
+			item.icon = asset.Load("icon_zhenxing" + item.iconid) as Texture2D;
+			item.name = asset.Load("zhenxing" + item.guid) as Texture2D;
+		}
+		for (int i = 0; i < SquadGeneralInfo.Count; i++)
+		{
+			PrepGenSkill(SquadGeneralInfo[i]);
+		}
+		SetupNormalAssetList();
+		if (DefaultState == "NPCBattle" || DefaultState == "PlayerBattle")
+		{
+			for (int j = 0; j < EnemyGeneralInfo.Count; j++)
+			{
+				if (EnemyGeneralInfo[j].generalName == "unknown")
+				{
+					EnemyGeneralInfo[j].faceicon = BaseAsset.was.GetAsset("ui_formation").Load("faceunknown") as Texture2D;
+				}
+			}
+			SetupEnemyAssetList();
+		}
+		switch_style = form_graph.toopen;
+		int num = 1;
+		if (SquadGeneralInfo.Count > 11)
+		{
+			num = 3;
+		}
+		else if (SquadGeneralInfo.Count > 5)
+		{
+			num = 2;
+		}
+		targetpos = 26 + 77 * num;
+		leftpos = targetpos;
+		switch_style = form_graph.toclose;
+		opened = true;
+		basestep = targetpos;
+		BaseAsset.lds.Hide();
+		LoadSTInfo();
+	}
+
+	public Rect GetSecondRect()
+	{
+		return m_SecondGenRect;
+	}
+
+	public Rect GetFirstSpot()
+	{
+		return m_FirstSpot;
+	}
+
+	private void DrawSquad()
+	{
+		int num = 29;
+		int num2 = 48;
+		int num3 = 46;
+		int num4 = 46;
+		int num5 = 55;
+		int num6 = 55;
+		List<Rect> list = new List<Rect>();
+		for (int i = 0; i < SquadGeneralInfo.Count; i++)
+		{
+			int num7 = i % 2;
+			int num8 = i / 2;
+			Rect rect = new Rect(num + num7 * num5, num2 + num8 * num6, num3, num4);
+			list.Add(rect);
+			GUI.Label(new Rect(rect.x - 3f, rect.y - 3f, num3 + 6, num4 + 6), string.Empty, ShareUI.commonframe2);
+			if (SquadGeneralInfo[i].faceicon == null)
+			{
+				GUI.Label(rect, new GUIContent(string.Empty, SquadGeneralInfo[i].tooltip), __BaseUI._icon_unkown);
+			}
+			else
+			{
+				GUI.Label(rect, new GUIContent(SquadGeneralInfo[i].faceicon, SquadGeneralInfo[i].tooltip), form_graph.bgstyle);
+			}
+			if (i == 1 && m_SecondGenRect == new Rect(0f, 0f, 0f, 0f))
+			{
+				m_SecondGenRect = rect;
+			}
+			if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition) && drag_gen == -1)
+			{
+				SquadGeneralInfo[i].preped = true;
+			}
+			if (subwindow == string.Empty && rect.Contains(Event.current.mousePosition) && PitchGenerals.IndexOf(SquadGeneralInfo[i]) == -1 && drag_gen == -1 && SquadGeneralInfo[i].preped && Event.current.type == EventType.MouseUp && SquadGeneralInfo[i].locx == 0 && SquadGeneralInfo[i].locy == 0)
+			{
+				SquadGeneralInfo[i].preped = false;
+				SquadSelect = i;
+				EnemySelect = -1;
+				SetCurFormSelect(-1);
+			}
+			if (subwindow == string.Empty && Event.current.type == EventType.MouseDrag && rect.Contains(Event.current.mousePosition) && PitchGenerals.IndexOf(SquadGeneralInfo[i]) == -1 && drag_gen == -1 && SquadGeneralInfo[i].preped)
+			{
+				SetCurFormSelect(-1);
+				SquadSelect = i;
+				EnemySelect = -1;
+				drag_gen = i;
+				SquadGeneralInfo[i].preped = false;
+			}
+			int num9 = (int)rect.x - 6;
+			int num10 = (int)rect.y - 6;
+			if (SquadSelect == i)
+			{
+				GUI.Label(new Rect(num9, num10, 68f, 68f), string.Empty, form_graph.selectframe1);
+			}
+			if (PitchGenerals.IndexOf(SquadGeneralInfo[i]) != -1)
+			{
+				GUI.Label(rect, string.Empty, ShareUI.unable1);
+			}
+		}
+	}
+
+	private void DrawDragGen()
+	{
+		int num = 56;
+		int num2 = 56;
+		if (Event.current.type == EventType.MouseUp && drag_gen != -1)
+		{
+			OnClickLeaveForm();
+			drag_gen = -1;
+		}
+		else if (tutorial_drag_flag_end)
+		{
+			OnClickLeaveForm();
+			drag_gen = -1;
+			tutorial_drag_flag_end = false;
+		}
+		if (Event.current.type == EventType.Repaint && drag_gen != -1)
+		{
+			int num3 = (int)Event.current.mousePosition.x - num / 2;
+			int num4 = (int)Event.current.mousePosition.y - num2 / 2;
+			Rect position = new Rect(num3, num4, num, num2);
+			if (SquadGeneralInfo[drag_gen].faceicon == null)
+			{
+				GUI.Label(position, string.Empty, __BaseUI._icon_unkown);
+			}
+			else
+			{
+				GUI.Label(position, SquadGeneralInfo[drag_gen].faceicon, form_graph.bgstyle);
+			}
+		}
+		else if (tutorial_drag_flag_start)
+		{
+			int num5 = (int)Event.current.mousePosition.x - num / 2;
+			int num6 = (int)Event.current.mousePosition.y - num2 / 2;
+			Rect position2 = new Rect(num5, num6, num, num2);
+			if (SquadGeneralInfo[drag_gen].faceicon == null)
+			{
+				GUI.Label(position2, string.Empty, __BaseUI._icon_unkown);
+			}
+			else
+			{
+				GUI.Label(position2, SquadGeneralInfo[drag_gen].faceicon, form_graph.bgstyle);
+			}
+		}
+	}
+
+	private void OnClickFormList(FormationInfo finfo)
+	{
+		Disable();
+		waitform = finfo;
+		waitstate = 1;
+		if (RightPanel != "PresetDuel")
+		{
+			cs_formupdate(curform: false);
+			return;
+		}
+		cs_preset_duel_set_form((uint)finfo.formid);
+		waitstate = 0;
+		CharFormation = waitform;
+		InitialPresetTeamData();
+		Enable();
+	}
+
+	private void cs_preset_duel_set_form(uint formid)
+	{
+		CSPresetDuel_0x2A8 cSPresetDuel_0x2A = PresetDuelUI.makeClientPkt();
+		cSPresetDuel_0x2A.action = 7u;
+		cSPresetDuel_0x2A.cur_form = formid;
+		RootUI.m_client.Send(680, cSPresetDuel_0x2A, null);
+	}
+
+	private void DrawForm()
+	{
+		int num = 29;
+		int num2 = 420;
+		int num3 = 36;
+		int num4 = 36;
+		int num5 = 0;
+		foreach (FormationInfo item in AllFormation)
+		{
+			bool flag = item.guid == CharFormation.guid;
+			GUIContent content = new GUIContent(string.Empty, "formation" + item.formationName + "\n" + item.desc);
+			if (item.available)
+			{
+				if (item.formicon.Button(!flag, __BaseUI._rect(num, num2, num3, num4), content) && !flag)
+				{
+					OnClickFormList(item);
+				}
+			}
+			else
+			{
+				GUI.Label(__BaseUI._rect(num, num2, num3, num4), content, form_graph.formlock);
+			}
+			num += 38;
+		}
+	}
+
+	private void DrawCurForm()
+	{
+		int num = 247;
+		int num2 = 84;
+		int num3 = 64;
+		int num4 = 64;
+		int num5 = 65;
+		int num6 = 65;
+		m_dicSpots.Clear();
+		int num7 = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				int num8 = num - i * num5;
+				int num9 = num2 + j * num6;
+				Rect rect = new Rect(num8, num9, num3, num4);
+				Rect rect2 = new Rect(num8 - 2, num9 - 2, num3 + 3, num4 + 3);
+				int spot = CharFormation.formgenpos[i, j].spot;
+				if (spot > 0 && spot <= CharFormation.spotcount)
+				{
+					GUI.Label(rect, string.Empty, form_graph.left_empty);
+					Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(rect.x, rect.y));
+					Rect value = new Rect(vector.x, vector.y, rect.width, rect.height);
+					m_dicSpots.Add(spot, value);
+					if ((m_FirstSpot == new Rect(0f, 0f, 0f, 0f) || m_spotindex > spot) && CharFormation.formgenpos[i, j].genid == 0L)
+					{
+						m_FirstSpot = rect;
+						m_spotindex = spot;
+					}
+				}
+				else if (spot > 0 && spot <= CharFormation.spotcount)
+				{
+				}
+				if (subwindow == string.Empty && drag_gen != -1 && rect2.Contains(Event.current.mousePosition) && Event.current.type == EventType.MouseUp)
+				{
+					OnClickCurFormSpot(i, j);
+					drag_gen = -1;
+				}
+				else if (subwindow == string.Empty && drag_gen != -1 && tutorial_drag_flag_end && rect2.Contains(tutorial_mouse_pos))
+				{
+					OnClickCurFormSpot(i, j);
+					drag_gen = -1;
+					tutorial_drag_flag_end = false;
+				}
+				int num10 = -1;
+				for (int k = 0; k < PitchGenerals.Count; k++)
+				{
+					if (PitchGenerals[k].guid == CharFormation.formgenpos[i, j].genid)
+					{
+						num10 = k;
+						break;
+					}
+				}
+				if (num10 > -1)
+				{
+					GeneralInfo generalInfo = PitchGenerals[num10];
+					num8 += 4;
+					num9 += 4;
+					int num11 = 56;
+					int num12 = 56;
+					Rect rect3 = new Rect(num8, num9, num11, num12);
+					if (drag_gen == -1 || SquadGeneralInfo[drag_gen].guid != generalInfo.guid)
+					{
+						if (generalInfo.faceicon == null)
+						{
+							GUI.Label(rect3, new GUIContent(string.Empty, generalInfo.tooltip), __BaseUI._icon_unkown);
+						}
+						else
+						{
+							GUI.Label(rect3, new GUIContent(generalInfo.faceicon, generalInfo.tooltip), form_graph.bgstyle);
+						}
+						num7++;
+						if (m_bShowSequence)
+						{
+							if (num7 < 10)
+							{
+								__BaseUI.Label(__BaseUI._rect(rect3.x + 45f, rect3.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7]);
+							}
+							else if (num7 < 100)
+							{
+								__BaseUI.Label(__BaseUI._rect(rect3.x + 45f, rect3.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7 % 10]);
+								__BaseUI.Label(__BaseUI._rect(rect3.x + 30f, rect3.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7 / 10]);
+							}
+						}
+					}
+					DrawEquipCheck(generalInfo.guid, rect3);
+					if (Event.current.type == EventType.MouseDown && drag_gen == -1 && rect3.Contains(Event.current.mousePosition))
+					{
+						generalInfo.preped = true;
+					}
+					if (subwindow == string.Empty && drag_gen == -1 && rect3.Contains(Event.current.mousePosition) && generalInfo.preped && Event.current.type == EventType.MouseUp)
+					{
+						generalInfo.preped = false;
+						SetCurFormSelect(-1);
+						SquadSelect = -1;
+						EnemySelect = -1;
+						OnClickCurFormSpot(i, j);
+					}
+					if (subwindow == string.Empty && Event.current.type == EventType.MouseDrag && drag_gen == -1 && rect3.Contains(Event.current.mousePosition) && generalInfo.preped)
+					{
+						generalInfo.preped = false;
+						drag_gen = SquadGeneralInfo.IndexOf(generalInfo);
+						SetCurFormSelect(num10);
+						SquadSelect = -1;
+						EnemySelect = -1;
+					}
+					if (CurFormSelect == num10 && drag_gen == -1)
+					{
+						GUI.Label(new Rect(rect3.x - 6f, rect3.y - 6f, 68f, 68f), string.Empty, form_graph.selectframe1);
+					}
+				}
+				if (skilltip_side != 1)
+				{
+					continue;
+				}
+				if (num10 > -1)
+				{
+					num8 -= 4;
+					num9 -= 4;
+				}
+				int item = i * 4 + j + 1;
+				if (skilltip.Contains((uint)item))
+				{
+					if (skilltip.IndexOf((uint)item) == 0)
+					{
+						DrawSkilltip(isEnemy: false, isTarget: true, num8 - 1, num9 - 1);
+					}
+					else
+					{
+						DrawSkilltip(isEnemy: false, isTarget: false, num8 - 1, num9 - 1);
+					}
+				}
+			}
+		}
+	}
+
+	private void DrawEquipCheck(long gid, Rect face_rect)
+	{
+		if (RightPanel == "PresetDuel")
+		{
+			return;
+		}
+		int num = 0;
+		ushort key = (ushort)gid;
+		if (!Global.character_.form_generals_.ContainsKey(key))
+		{
+			return;
+		}
+		FormGeneral formGeneral = Global.character_.form_generals_[key];
+		if (Global.character_.checkUI("general_enchant"))
+		{
+			if (formGeneral.equipments[0] == null)
+			{
+				__BaseUI.Label(__BaseUI._rect(face_rect.x + (float)num, face_rect.y + 42f, 14f, 14f), string.Empty, form_graph.equipcheck_weapon);
+				num += 14;
+			}
+			if (formGeneral.equipments[1] == null)
+			{
+				__BaseUI.Label(__BaseUI._rect(face_rect.x + (float)num, face_rect.y + 42f, 14f, 14f), string.Empty, form_graph.equipcheck_armor);
+				num += 14;
+			}
+		}
+		if (Global.character_.checkUI("general_talisman") && formGeneral.artifact == null)
+		{
+			__BaseUI.Label(__BaseUI._rect(face_rect.x + (float)num, face_rect.y + 42f, 14f, 14f), string.Empty, form_graph.equipcheck_artifact);
+			num += 14;
+		}
+		if (Global.character_.checkUI("amulet") && formGeneral.amulet == null)
+		{
+			__BaseUI.Label(__BaseUI._rect(face_rect.x + (float)num, face_rect.y + 42f, 14f, 14f), string.Empty, form_graph.equipcheck_amulet);
+		}
+	}
+
+	private void DrawGenInfo()
+	{
+		GeneralInfo generalInfo = ((CurFormSelect == -1) ? SquadGeneralInfo[SquadSelect] : PitchGenerals[CurFormSelect]);
+		__BaseUI.Label(__BaseUI._rect(350f, 66f, 331f, 301f), string.Empty, __BaseUI._boxnew9Style);
+		__BaseUI.Label(__BaseUI._rect(370f, 81f, 288f, 27f), string.Empty, __BaseUI._box20Style);
+		Color clr = __BaseUI.clrQuality(generalInfo.nameclr);
+		__BaseUI.Label(__BaseUI._rect(382f, 85f, 95f, 17f), generalInfo.generalName, __BaseUI._textNCenter, clr);
+		__BaseUI.Label(__BaseUI._rect(510f, 88f, 55f, 15f), string.Empty, form_graph.score);
+		__BaseUI.Label(__BaseUI._rect(577f, 85f, 58f, 17f), new GUIContent(generalInfo.battle_score.ToString(), "score" + generalInfo.guid), __BaseUI._numLeft, Color.white);
+		__BaseUI.Label(__BaseUI._rect(497f, 117f, 98f, 22f), string.Empty, __BaseUI._barStyle);
+		__BaseUI.Label(__BaseUI._rect(497f, 117f, 98f, 22f), generalInfo.skillname, __BaseUI._textNCenter, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(508f, 143f, 141f, 36f), generalInfo.skill_desc, form_graph.t_skilldesc, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(497f, 184f, 98f, 22f), string.Empty, __BaseUI._barStyle);
+		__BaseUI.Label(__BaseUI._rect(497f, 184f, 98f, 22f), generalInfo.armytype, __BaseUI._textNCenter, __BaseUI._clrYellow);
+		__BaseUI.Label(__BaseUI._rect(508f, 210f, 141f, 36f), generalInfo.army_desc, form_graph.t_skilldesc, __BaseUI._clrYellow);
+		GUI.Label(__BaseUI._rect(383f, 115f, 96f, 96f), generalInfo.faceicon, __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(383f, 115f, 96f, 96f), string.Empty, form_graph.face_mask);
+		if (drag_gen == -1 && generalInfo.guid != 0L && Global.character_.checkUI(16u) && form_graph.b_leave.Button(bBtn: true, __BaseUI._rect(392f, 225f, 80f, 22f), string.Empty))
+		{
+			Disable();
+			waitstate = 3;
+			leave_genid = (ushort)generalInfo.guid;
+			cs_formupdate(curform: false);
+		}
+		__BaseUI.Label(__BaseUI._rect(382f, 259f, 101f, 87f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(391f, 268f, 36f, 65f), string.Empty, form_graph.genparam1);
+		__BaseUI.Label(__BaseUI._rect(408f, 267f, 31f, 16f), generalInfo.base_strength.ToString(), __BaseUI._numRight, Color.white);
+		if (generalInfo.strength > 0)
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(442f, 267f, 31f, 16f), "+" + generalInfo.strength, __BaseUI._numLeft, __BaseUI._clrGreen);
+		}
+		string text = __BaseUI.get_string("tip_strength");
+		text = text.Replace(":num1:", (0.75 * (double)(generalInfo.base_strength + generalInfo.strength)).ToString());
+		text = text.Replace(":num2:", (0.25 * (double)(generalInfo.base_strength + generalInfo.strength)).ToString());
+		GUI.Label(__BaseUI._rect(391f, 267f, 82f, 16f), new GUIContent(string.Empty, "common" + text), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(408f, 294f, 31f, 16f), generalInfo.base_leadership.ToString(), __BaseUI._numRight, Color.white);
+		if (generalInfo.leadership > 0)
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(442f, 294f, 31f, 16f), "+" + generalInfo.leadership, __BaseUI._numLeft, __BaseUI._clrGreen);
+		}
+		text = __BaseUI.get_string("tip_leadership");
+		text = text.Replace(":num1:", (0.5 * (double)(generalInfo.base_leadership + generalInfo.leadership)).ToString());
+		text = text.Replace(":num2:", (0.5 * (double)(generalInfo.base_leadership + generalInfo.leadership)).ToString());
+		GUI.Label(__BaseUI._rect(391f, 294f, 82f, 16f), new GUIContent(string.Empty, "common" + text), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(408f, 321f, 31f, 16f), generalInfo.base_power.ToString(), __BaseUI._numRight, Color.white);
+		if (generalInfo.power > 0)
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(442f, 321f, 31f, 16f), "+" + generalInfo.power, __BaseUI._numLeft, __BaseUI._clrGreen);
+		}
+		text = __BaseUI.get_string("tip_power");
+		text = text.Replace(":num1:", (0.75 * (double)(generalInfo.base_power + generalInfo.power)).ToString());
+		text = text.Replace(":num2:", (0.25 * (double)(generalInfo.base_power + generalInfo.power)).ToString());
+		GUI.Label(__BaseUI._rect(391f, 321f, 82f, 16f), new GUIContent(string.Empty, "common" + text), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(499f, 259f, 157f, 87f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(512f, 269f, 27f, 67f), string.Empty, form_graph.genparam2);
+		__BaseUI.Label(__BaseUI._rect(554f, 268f, 55f, 17f), generalInfo.attack.ToString(), __BaseUI._numRight, Color.white);
+		GUI.Label(__BaseUI._rect(512f, 268f, 97f, 17f), new GUIContent(string.Empty, "common" + __BaseUI.get_string("tip_attack")), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(554f, 286f, 55f, 17f), generalInfo.defence.ToString(), __BaseUI._numRight, Color.white);
+		GUI.Label(__BaseUI._rect(512f, 286f, 97f, 17f), new GUIContent(string.Empty, "common" + __BaseUI.get_string("tip_defense")), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(554f, 304f, 55f, 17f), generalInfo.spell.ToString(), __BaseUI._numRight, Color.white);
+		GUI.Label(__BaseUI._rect(512f, 304f, 97f, 17f), new GUIContent(string.Empty, "common" + __BaseUI.get_string("tip_spell")), __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(554f, 322f, 55f, 17f), generalInfo.armyhp.ToString(), __BaseUI._numRight, Color.white);
+		GUI.Label(__BaseUI._rect(512f, 322f, 97f, 17f), new GUIContent(string.Empty, "common" + __BaseUI.get_string("tip_hp")), __BaseUI.normalStyle);
+	}
+
+	private void OnClickCurFormSpot(int i, int j)
+	{
+		if (!(RightPanel != "Equipment"))
+		{
+			return;
+		}
+		if (SquadSelect >= 0)
+		{
+			if (SquadGeneralInfo[SquadSelect].isBig)
+			{
+				return;
+			}
+			int pitchGenIndex = GetPitchGenIndex(i, j);
+			if (pitchGenIndex != -1 && PitchGenerals[pitchGenIndex].guid == 0L)
+			{
+				__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20246u), __BaseUI.load_str(20247u), rmg);
+				drag_gen = -1;
+				return;
+			}
+			GeneralInfo generalInfo = SquadGeneralInfo[SquadSelect];
+			if (pitchGenIndex == -1)
+			{
+				if (CharFormation.formgenpos[i, j].spot > 0 && CharFormation.formgenpos[i, j].spot <= CharFormation.spotcount)
+				{
+					generalInfo.locx = i;
+					generalInfo.locy = j;
+					PitchGenerals.Add(generalInfo);
+					SetCurFormSelect(PitchGenerals.Count - 1);
+					SetupCharFormGenPos(i, j, generalInfo.guid);
+					if (RightPanel != "PresetDuel")
+					{
+						Join_Form_Equipment_Check((ushort)generalInfo.guid);
+					}
+					SquadSelect = -1;
+					EnemySelect = -1;
+					int num = CharFormation.dbspot.IndexOf(i * 4 + j);
+				}
+			}
+			else
+			{
+				GeneralInfo generalInfo2 = PitchGenerals[pitchGenIndex];
+				PitchGenerals.RemoveAt(pitchGenIndex);
+				generalInfo.locx = generalInfo2.locx;
+				generalInfo.locy = generalInfo2.locy;
+				PitchGenerals.Add(generalInfo);
+				SetCurFormSelect(PitchGenerals.Count - 1);
+				generalInfo2.locx = 0;
+				generalInfo2.locy = 0;
+				RemoveCharFormGenPos(generalInfo2.guid);
+				SetupCharFormGenPos(generalInfo.locx, generalInfo.locy, generalInfo.guid);
+				Exchange_Equipment_Check((ushort)generalInfo2.guid, (ushort)generalInfo.guid);
+				SquadSelect = -1;
+				EnemySelect = -1;
+				int num2 = CharFormation.dbspot.IndexOf(generalInfo.locx * 4 + generalInfo.locy);
+			}
+		}
+		else if (CurFormSelect >= 0)
+		{
+			if (PitchGenerals[CurFormSelect].isBig || PitchGenerals[CurFormSelect].guid == CharFormation.formgenpos[i, j].genid)
+			{
+				return;
+			}
+			int pitchGenIndex2 = GetPitchGenIndex(i, j);
+			GeneralInfo generalInfo3 = PitchGenerals[CurFormSelect];
+			if (pitchGenIndex2 == -1)
+			{
+				if (CharFormation.formgenpos[i, j].spot > 0 && CharFormation.formgenpos[i, j].spot <= CharFormation.spotcount)
+				{
+					SetupCharFormGenPos(generalInfo3.locx, generalInfo3.locy, -1L);
+					SetupCharFormGenPos(i, j, generalInfo3.guid);
+					generalInfo3.locx = i;
+					generalInfo3.locy = j;
+					int num3 = CharFormation.dbspot.IndexOf(i * 4 + j);
+				}
+			}
+			else
+			{
+				int locx = PitchGenerals[pitchGenIndex2].locx;
+				int locy = PitchGenerals[pitchGenIndex2].locy;
+				int locx2 = generalInfo3.locx;
+				int locy2 = generalInfo3.locy;
+				if (!PitchGenerals[pitchGenIndex2].isBig)
+				{
+					PitchGenerals[pitchGenIndex2].locx = locx2;
+					PitchGenerals[pitchGenIndex2].locy = locy2;
+					SetupCharFormGenPos(locx2, locy2, PitchGenerals[pitchGenIndex2].guid);
+					generalInfo3.locx = locx;
+					generalInfo3.locy = locy;
+					SetupCharFormGenPos(locx, locy, generalInfo3.guid);
+				}
+				int num4 = CharFormation.dbspot.IndexOf(locx * 4 + locy);
+			}
+			SetCurFormSelect(CurFormSelect);
+		}
+		else
+		{
+			int k;
+			for (k = 0; k < PitchGenerals.Count && PitchGenerals[k].guid != CharFormation.formgenpos[i, j].genid; k++)
+			{
+			}
+			if (k < PitchGenerals.Count)
+			{
+				SetCurFormSelect(k);
+			}
+		}
+	}
+
+	public void GetGuideRect(out Dictionary<int, Rect> dicGuide)
+	{
+		dicGuide = m_dicSpots;
+	}
+
+	private int GetPitchGenIndex(int i, int j)
+	{
+		int k;
+		for (k = 0; k < PitchGenerals.Count && PitchGenerals[k].guid != CharFormation.formgenpos[i, j].genid; k++)
+		{
+		}
+		if (k < PitchGenerals.Count)
+		{
+			return k;
+		}
+		return -1;
+	}
+
+	private void ShowSubUI(string title)
+	{
+		switch (title)
+		{
+		case "Formation":
+		case "NPCBattle":
+			_show();
+			Visible();
+			isVisible = true;
+			if (substate == "maze_enemy")
+			{
+				Enable();
+			}
+			else
+			{
+				EnableAll();
+			}
+			break;
+		case "PlayerBattle":
+			_show();
+			Visible();
+			isVisible = true;
+			if (substate == "maze_enemy")
+			{
+				Enable();
+			}
+			else
+			{
+				EnableAll();
+			}
+			break;
+		}
+	}
+
+	private void OnClickClose()
+	{
+		if (RightPanel != "PresetDuel")
+		{
+			OnClickSetCurrentForm();
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "StrongHoldFormation")
+		{
+			StrongHoldFormationUI component = GameObject.Find("/StrongHoldFormation/StrongHoldFormationUI").GetComponent<StrongHoldFormationUI>();
+			component.freshgroup();
+		}
+		hotpanel = false;
+		hotpanel_timer = 0f;
+		isVisible = false;
+		base.Hide();
+		leftpos = 0;
+		targetpos = 0;
+		moving = false;
+		opened = false;
+		MainUI.SetSubUI(null);
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+		if (RightPanel != "PresetDuel")
+		{
+			SendMessage("BrawlFormationClose", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void InitFormInfo()
+	{
+		SquadGeneralInfo.Clear();
+		AllFormation.Clear();
+	}
+
+	private void OnClickLeaveForm()
+	{
+		if (CurFormSelect == -1)
+		{
+			return;
+		}
+		GeneralInfo generalInfo = PitchGenerals[CurFormSelect];
+		if (generalInfo.guid == 0L)
+		{
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20246u), __BaseUI.load_str(20247u), rmg);
+			drag_gen = -1;
+			return;
+		}
+		int locx = generalInfo.locx;
+		int locy = generalInfo.locy;
+		int num = CharFormation.dbspot.IndexOf(locx * 4 + locy);
+		if (num != -1)
+		{
+			SetupCharFormGenPos(locx, locy, -1L);
+			generalInfo.locx = 0;
+			generalInfo.locy = 0;
+			PitchGenerals.RemoveAt(CurFormSelect);
+			SetCurFormSelect(-1);
+			SquadSelect = drag_gen;
+			RemoveCharFormGenPos(generalInfo.guid);
+			Leave_Form_Equipment_Check((ushort)generalInfo.guid);
+		}
+	}
+
+	private void DrawEnemyCurForm()
+	{
+		int num = 395;
+		int num2 = 84;
+		int num3 = 64;
+		int num4 = 64;
+		int num5 = 65;
+		int num6 = 65;
+		int num7 = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (EnemyFormation.formgenpos[i, j].genid > 0 || EnemyFormation.formgenpos[i, j].genname == "unknown" || EnemyFormation.formgenpos[i, j].genname == "nogeneral")
+				{
+					int num8 = num + i * num5;
+					int num9 = num2 + j * num6;
+					Rect position = new Rect(num8, num9, num3, num4);
+					GUI.Label(position, string.Empty, form_graph.left_empty);
+					GeneralInfo generalInfo = new GeneralInfo();
+					foreach (GeneralInfo item2 in EnemyGeneralInfo)
+					{
+						if (item2.guid == EnemyFormation.formgenpos[i, j].genid && item2.locx * 4 + item2.locy == EnemyFormation.formgenpos[i, j].genspot)
+						{
+							generalInfo = item2;
+						}
+					}
+					Rect position2 = new Rect(num8 + 4, num9 + 4, 56f, 56f);
+					string empty = string.Empty;
+					empty = ((DefaultState == "NPCBattle") ? ("EnemyNpcGen" + EnemyFormation.formgenpos[i, j].genspot) : ((!(DefaultState == "PlayerBattle") || !(generalInfo.generalName != "unknown") || !(generalInfo.generalName != "nogeneral")) ? string.Empty : ("PlayerEnemyGen" + EnemyFormation.formgenpos[i, j].genid)));
+					if (generalInfo.generalName != "nogeneral")
+					{
+						if (Event.current.type == EventType.Repaint && position2.Contains(Event.current.mousePosition) && drag_gen == -1)
+						{
+							if (generalInfo.faceicon == null)
+							{
+								GUI.Label(position2, new GUIContent(string.Empty, empty), __BaseUI._icon_unkown);
+							}
+							else
+							{
+								GUI.Label(position2, new GUIContent(generalInfo.faceicon, empty), form_graph.bgstyle);
+							}
+						}
+						else if (generalInfo.faceicon == null)
+						{
+							GUI.Label(position2, string.Empty, __BaseUI._icon_unkown);
+						}
+						else
+						{
+							GUI.Label(position2, generalInfo.faceicon, form_graph.bgstyle);
+						}
+						num7++;
+						if (m_bShowSequence)
+						{
+							if (num7 < 10)
+							{
+								__BaseUI.Label(__BaseUI._rect(position2.x + 45f, position2.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7]);
+							}
+							else if (num7 < 100)
+							{
+								__BaseUI.Label(__BaseUI._rect(position2.x + 45f, position2.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7 % 10]);
+								__BaseUI.Label(__BaseUI._rect(position2.x + 30f, position2.y - 7f, 15f, 20f), string.Empty, form_graph.ui_shunxu[num7 / 10]);
+							}
+						}
+						if (GUI.Button(position2, string.Empty, __BaseUI.normalStyle))
+						{
+							SetEnemySelect(i, j, generalInfo);
+						}
+						if (EnemySelect == i * 4 + j)
+						{
+							__BaseUI.Label(__BaseUI._rect(position2.x - 6f, position2.y - 6f, 68f, 68f), string.Empty, form_graph.selectframe1);
+						}
+					}
+				}
+				if (skilltip_side != 0)
+				{
+					continue;
+				}
+				int item = i * 4 + j + 1;
+				if (skilltip.Contains((uint)item))
+				{
+					int num10 = num + i * num5;
+					int num11 = num2 + j * num6;
+					if (skilltip.IndexOf((uint)item) == 0)
+					{
+						DrawSkilltip(isEnemy: true, isTarget: true, num10 - 1, num11 - 1);
+					}
+					else
+					{
+						DrawSkilltip(isEnemy: true, isTarget: false, num10 - 1, num11 - 1);
+					}
+				}
+			}
+		}
+	}
+
+	private void InitEnemyInfo()
+	{
+		EnemyGeneralInfo.Clear();
+		EnemyFormation = new FormationInfo();
+		if (DefaultState == "NPCBattle")
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					EnemyFormation.formgenpos[i, j].genid = 0L;
+					EnemyFormation.formgenpos[i, j].spot = 0;
+					EnemyFormation.formgenpos[i, j].modx = 0;
+					EnemyFormation.formgenpos[i, j].mody = 0;
+					EnemyFormation.formgenpos[i, j].genspot = 0;
+				}
+			}
+			if (substate == "building_monster" || substate == "friend_monster")
+			{
+				Database.BuildingMonster buildingMonster = ((!(substate == "building_monster")) ? CapitalFriendUI.myfriend.building_monsters[(byte)Campaignid] : Global.character_.building_monsters[(byte)Campaignid]);
+				foreach (_character_building_monster_army army2 in buildingMonster.m_armys)
+				{
+					InitEnemyArmy(army2.idarmy, army2.army_name, (short)buildingMonster.level, army2.location, army2.captain);
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = buildingMonster.m_armys.Count;
+				for (int k = 0; k < 8; k++)
+				{
+					if (k < EnemyFormation.spotcount)
+					{
+						int location = buildingMonster.m_armys[k].location;
+						EnemyFormation.dbspot.Add(location);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "demon" || substate == "friend_demon")
+			{
+				Database.Demon demon = ((!(substate == "demon")) ? CapitalFriendUI.myfriend.m_demon : Global.character_.m_demon);
+				foreach (_character_demon_army army3 in demon.m_armys)
+				{
+					if (army3.soldier > 0)
+					{
+						GeneralInfo generalInfo = InitEnemyArmy(army3.idarmy, army3.army_name, demon.level, army3.location, army3.captain);
+						generalInfo.armyhp = army3.soldier;
+					}
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = demon.m_armys.Count;
+				for (int l = 0; l < 8; l++)
+				{
+					if (l < EnemyFormation.spotcount)
+					{
+						int location2 = demon.m_armys[l].location;
+						EnemyFormation.dbspot.Add(location2);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "divinity_troop")
+			{
+				Database.GodTroop godTroop = Global.character_.god_troops[Campaignid];
+				foreach (_god_troop_army item in godTroop.armys_)
+				{
+					InitEnemyArmy(item.idarmy, item.army_name, godTroop.level, item.location, item.captain);
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = godTroop.armys_.Count;
+				for (int m = 0; m < 8; m++)
+				{
+					if (m < EnemyFormation.spotcount)
+					{
+						int location3 = godTroop.armys_[m].location;
+						EnemyFormation.dbspot.Add(location3);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "trial_troop")
+			{
+				Database.TrialTroop trialTroop = Global.character_.trial_campaign.troops[Campaignid - 1];
+				foreach (_character_trial_army item2 in trialTroop.armys_)
+				{
+					if (item2.soldier > 0)
+					{
+						InitEnemyArmy(item2.idarmy, item2.army_name, trialTroop.level, item2.location, item2.captain, item2.soldier);
+					}
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = trialTroop.armys_.Count;
+				for (int n = 0; n < 8; n++)
+				{
+					if (n < EnemyFormation.spotcount)
+					{
+						int location4 = trialTroop.armys_[n].location;
+						EnemyFormation.dbspot.Add(location4);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "sealmonster_troop")
+			{
+				SealMonsterTroop sealMonsterTroop = Global.character_.sealmonsterinfo.m_troops[Campaignid - 1];
+				foreach (SealMonsterArmy army4 in sealMonsterTroop.m_armys)
+				{
+					InitEnemyArmy(army4.idarmy, army4.army_name, Global.character_.level, army4.location, army4.captain, army4.soldier);
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = sealMonsterTroop.m_armys.Count;
+				for (int num = 0; num < 8; num++)
+				{
+					if (num < EnemyFormation.spotcount)
+					{
+						int location5 = sealMonsterTroop.m_armys[num].location;
+						EnemyFormation.dbspot.Add(location5);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "spiritascend")
+			{
+				if (Global.getTemplate("spirit_ascend_campaign", (uint)Campaignid) is _spirit_ascend_campaign spirit_ascend_campaign && Global.getTemplate("campaign", spirit_ascend_campaign.idcampaign) is _campaign campaign)
+				{
+					_campaign_troop campaign_troop = campaign.m_troops[campaign.m_troopsArray[Troopid - 1]] as _campaign_troop;
+					foreach (SpiritAscendArmy item3 in Global.character_.spiritascend.spiritascendarmys[(uint)Troopid])
+					{
+						string text = string.Empty;
+						bool captain = false;
+						foreach (_campaign_troop_army army5 in campaign_troop.m_armys)
+						{
+							if (army5.location == item3.location)
+							{
+								text = army5.army_name;
+								captain = army5.captain;
+								break;
+							}
+						}
+						InitEnemyArmy(item3.idarmy, text, campaign_troop.level, item3.location, captain);
+					}
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = Global.character_.spiritascend.spiritascendarmys[(uint)Troopid].Count;
+				for (int num2 = 0; num2 < 8; num2++)
+				{
+					if (num2 < EnemyFormation.spotcount)
+					{
+						int location6 = Global.character_.spiritascend.spiritascendarmys[(uint)Troopid][num2].location;
+						EnemyFormation.dbspot.Add(location6);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "grave_troop")
+			{
+				GraveTroop graveTroop = Global.character_.grave_campaign.troops[Campaignid - 1];
+				foreach (_character_grave_army item4 in graveTroop.armys_)
+				{
+					if (item4.soldier > 0)
+					{
+						InitEnemyArmy(item4.idarmy, item4.army_name, graveTroop.level, item4.location, item4.captain, item4.soldier);
+					}
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = graveTroop.armys_.Count;
+				for (int num3 = 0; num3 < 8; num3++)
+				{
+					if (num3 < EnemyFormation.spotcount)
+					{
+						int location7 = graveTroop.armys_[num3].location;
+						EnemyFormation.dbspot.Add(location7);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "trial_boss")
+			{
+				_campaign campaign2 = Global.getTemplate("campaign", 125u) as _campaign;
+				_campaign_troop campaign_troop2 = campaign2.m_troops[(byte)Campaignid] as _campaign_troop;
+				foreach (_campaign_troop_army army6 in campaign_troop2.m_armys)
+				{
+					InitEnemyArmy(army6.idarmy, army6.army_name, campaign_troop2.level, army6.location, army6.captain);
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = campaign_troop2.m_armys.Count;
+				for (int num4 = 0; num4 < 8; num4++)
+				{
+					if (num4 < EnemyFormation.spotcount)
+					{
+						int location8 = campaign_troop2.m_armys[num4].location;
+						EnemyFormation.dbspot.Add(location8);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			else if (substate == "maze_enemy")
+			{
+				if (etc_data is Hashtable hashtable)
+				{
+					MazeEnemyTroop mazeEnemyTroop = hashtable["troop"] as MazeEnemyTroop;
+					uint num5 = (uint)hashtable["level"];
+					foreach (MazeEnemyArmy army7 in mazeEnemyTroop.armys)
+					{
+						InitEnemyArmy(army7.idarmy, army7.name, (short)num5, (byte)army7.location, army7.captain);
+					}
+					EnemyFormation.formationName = string.Empty;
+					EnemyFormation.level = 0;
+					EnemyFormation.spotcount = mazeEnemyTroop.armys.Count;
+					for (int num6 = 0; num6 < 8; num6++)
+					{
+						if (num6 < EnemyFormation.spotcount)
+						{
+							int location9 = (int)mazeEnemyTroop.armys[num6].location;
+							EnemyFormation.dbspot.Add(location9);
+						}
+						else
+						{
+							EnemyFormation.dbspot.Add(-1);
+						}
+					}
+				}
+			}
+			else
+			{
+				_campaign campaign3 = Global.getTemplate("campaign", (uint)Campaignid) as _campaign;
+				_campaign_troop campaign_troop3 = campaign3.m_troops[(byte)Troopid] as _campaign_troop;
+				short level = campaign_troop3.level;
+				if (substate == "fairy_festival")
+				{
+					level = Global.character_.level;
+				}
+				if (campaign3.idcampaign_type == 17)
+				{
+					if (Global.character_.campaignTalentArmys.ContainsKey(campaign3.id))
+					{
+						List<TalentArmy> list = Global.character_.campaignTalentArmys[campaign3.id];
+						for (int num7 = 0; num7 < list.Count; num7++)
+						{
+							if (list[num7].idtroop != campaign_troop3.idtroop)
+							{
+								continue;
+							}
+							_army army = Global.getTemplate("army", list[num7].idarmy) as _army;
+							bool captain2 = false;
+							string text2 = string.Empty;
+							foreach (_campaign_troop_army army8 in campaign_troop3.m_armys)
+							{
+								if (army8.location == list[num7].location)
+								{
+									captain2 = army8.captain;
+									text2 = army8.army_name;
+									break;
+								}
+							}
+							InitEnemyArmy(list[num7].idarmy, text2, level, list[num7].location, captain2);
+						}
+					}
+				}
+				else
+				{
+					foreach (_campaign_troop_army army9 in campaign_troop3.m_armys)
+					{
+						InitEnemyArmy(army9.idarmy, army9.army_name, level, army9.location, army9.captain);
+					}
+				}
+				EnemyFormation.formationName = string.Empty;
+				EnemyFormation.level = 0;
+				EnemyFormation.spotcount = campaign_troop3.m_armys.Count;
+				for (int num8 = 0; num8 < 8; num8++)
+				{
+					if (num8 < EnemyFormation.spotcount)
+					{
+						int location10 = campaign_troop3.m_armys[num8].location;
+						EnemyFormation.dbspot.Add(location10);
+					}
+					else
+					{
+						EnemyFormation.dbspot.Add(-1);
+					}
+				}
+			}
+			EnemyFormation.guid = 0L;
+			EnemyFormation.currentform = true;
+			EnemyFormation.iconid = 1;
+			SetCurFormSelect(0);
+		}
+		else
+		{
+			if (!(DefaultState == "PlayerBattle"))
+			{
+				return;
+			}
+			for (int num9 = 0; num9 < 4; num9++)
+			{
+				for (int num10 = 0; num10 < 4; num10++)
+				{
+					EnemyFormation.formgenpos[num9, num10].genid = 0L;
+					EnemyFormation.formgenpos[num9, num10].spot = 0;
+					EnemyFormation.formgenpos[num9, num10].modx = 0;
+					EnemyFormation.formgenpos[num9, num10].mody = 0;
+					EnemyFormation.formgenpos[num9, num10].genspot = 0;
+				}
+			}
+			if (!(substate == "nation") && !(substate == "ladder"))
+			{
+				return;
+			}
+			foreach (BattleGeneral gen in Legion.gens)
+			{
+				InitLegionArmy(gen);
+			}
+			EnemyFormation.formationName = string.Empty;
+			EnemyFormation.level = 0;
+			EnemyFormation.spotcount = Legion.gens.Count;
+			for (int num11 = 0; num11 < 8; num11++)
+			{
+				if (num11 < EnemyFormation.spotcount)
+				{
+					int spot = (int)Legion.gens[num11].spot;
+					EnemyFormation.dbspot.Add(spot);
+				}
+				else
+				{
+					EnemyFormation.dbspot.Add(-1);
+				}
+			}
+		}
+	}
+
+	private GeneralInfo InitEnemyArmy(uint idarmy, string name, short level, byte location, bool captain)
+	{
+		return InitEnemyArmy(idarmy, name, level, location, captain, -1);
+	}
+
+	public static void calc_init_rage(ref int rage, _speciality spec)
+	{
+		if (spec.effect1 == "spec_add_rage_before_battle" && rage < int.Parse(spec.effect1_param1))
+		{
+			rage = int.Parse(spec.effect1_param1);
+		}
+		if (spec.effect2 == "spec_add_rage_before_battle" && rage < int.Parse(spec.effect2_param1))
+		{
+			rage = int.Parse(spec.effect1_param2);
+		}
+		if (spec.effect3 == "spec_add_rage_before_battle" && rage < int.Parse(spec.effect3_param1))
+		{
+			rage = int.Parse(spec.effect1_param3);
+		}
+	}
+
+	private GeneralInfo InitEnemyArmy(uint idarmy, string name, short level, byte location, bool captain, int hp)
+	{
+		GeneralInfo generalInfo = InitByArmy(idarmy, name, level, location, captain, hp);
+		EnemyGeneralInfo.Add(generalInfo);
+		return generalInfo;
+	}
+
+	private GeneralInfo InitByArmy(uint idarmy, string name, short level, byte location, bool captain, int hp)
+	{
+		GeneralInfo generalInfo = new GeneralInfo();
+		generalInfo.generalName = name;
+		_army army = Global.getTemplate("army", idarmy) as _army;
+		generalInfo.level = level;
+		generalInfo.faceid = (int)army.icon;
+		generalInfo.guid = idarmy;
+		generalInfo.locx = location / 4;
+		generalInfo.locy = location % 4;
+		generalInfo.sizex = 1;
+		generalInfo.sizey = 1;
+		SetEnemyFormGenPos(generalInfo);
+		_army_template armyTemplate = Global.getArmyTemplate(army.idarmy_template);
+		generalInfo.armytype = armyTemplate.name;
+		if (hp == -1)
+		{
+			generalInfo.armyhp = calc_enemy_hp(army, level);
+		}
+		else
+		{
+			generalInfo.armyhp = hp;
+		}
+		generalInfo.army_desc = armyTemplate.desc_common;
+		_skill skillTemplate = Global.getSkillTemplate(army.activeskill);
+		generalInfo.skillid = army.activeskill;
+		if (skillTemplate != null)
+		{
+			generalInfo.skillname = skillTemplate.name;
+			string text = ((skillTemplate.rage_cast == skillTemplate.rage_consume) ? string.Format(__BaseUI.load_str(20245u), skillTemplate.rage_cast.ToString()) : string.Format(__BaseUI.load_str(20594u), skillTemplate.rage_cast.ToString(), skillTemplate.rage_consume.ToString()));
+			if (skillTemplate.rage_limit > 0)
+			{
+				generalInfo.skillname = skillTemplate.name + text;
+			}
+			generalInfo.skill_desc = skillTemplate.desc_common;
+		}
+		else
+		{
+			generalInfo.skillname = string.Empty;
+			generalInfo.skill_desc = string.Empty;
+		}
+		if (Global.getTemplate("speciality", army.spec1) is _speciality speciality)
+		{
+			generalInfo.str_genspec = generalInfo.str_genspec + "【" + speciality.name + "】";
+			generalInfo.genspecname = generalInfo.genspecname + speciality.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality);
+		}
+		if (Global.getTemplate("speciality", army.spec2) is _speciality speciality2)
+		{
+			generalInfo.str_genspec = generalInfo.str_genspec + "【" + speciality2.name + "】";
+			generalInfo.genspecname = generalInfo.genspecname + speciality2.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality2);
+		}
+		if (Global.getTemplate("speciality", army.spec3) is _speciality speciality3)
+		{
+			generalInfo.str_genspec = generalInfo.str_genspec + "【" + speciality3.name + "】";
+			generalInfo.genspecname = generalInfo.genspecname + speciality3.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality3);
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec1) is _speciality speciality4)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality4.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality4.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality4);
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec2) is _speciality speciality5)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality5.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality5.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality5);
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec3) is _speciality speciality6)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality6.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality6.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality6);
+		}
+		if (skillTemplate != null && generalInfo.init_rage > skillTemplate.rage_limit)
+		{
+			generalInfo.init_rage = skillTemplate.rage_limit;
+		}
+		return generalInfo;
+	}
+
+	private GeneralInfo InitLegionArmy(BattleGeneral d)
+	{
+		GeneralInfo generalInfo = new GeneralInfo();
+		generalInfo.generalName = d.name;
+		generalInfo.level = (int)d.level;
+		generalInfo.faceid = d.icon;
+		generalInfo.guid = d.armyid;
+		int spot = (int)d.spot;
+		generalInfo.locx = (spot - 1) / 4;
+		generalInfo.locy = (spot - 1) % 4;
+		generalInfo.sizex = 1;
+		generalInfo.sizey = 1;
+		SetEnemyFormGenPos(generalInfo);
+		_army_template armyTemplate = Global.getArmyTemplate(d.armyid);
+		generalInfo.armytype = armyTemplate.name;
+		generalInfo.armyhp = (int)d.start_hp;
+		generalInfo.army_desc = armyTemplate.desc_common;
+		_skill skillTemplate = Global.getSkillTemplate(d.skillid);
+		generalInfo.skillid = d.skillid;
+		if (skillTemplate != null)
+		{
+			generalInfo.skillname = skillTemplate.name;
+			string text = ((skillTemplate.rage_cast == skillTemplate.rage_consume) ? string.Format(__BaseUI.load_str(20245u), skillTemplate.rage_cast.ToString()) : string.Format(__BaseUI.load_str(20594u), skillTemplate.rage_cast.ToString(), skillTemplate.rage_consume.ToString()));
+			if (skillTemplate.rage_limit > 0)
+			{
+				generalInfo.skillname = skillTemplate.name + text;
+			}
+			generalInfo.skill_desc = skillTemplate.desc_common;
+		}
+		else
+		{
+			generalInfo.skillname = string.Empty;
+			generalInfo.skill_desc = string.Empty;
+		}
+		foreach (uint spec in d.specs)
+		{
+			if (Global.getTemplate("speciality", spec) is _speciality speciality)
+			{
+				generalInfo.str_genspec = generalInfo.str_genspec + "【" + speciality.name + "】";
+				generalInfo.genspecname = generalInfo.genspecname + speciality.name + " ";
+				calc_init_rage(ref generalInfo.init_rage, speciality);
+			}
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec1) is _speciality speciality2)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality2.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality2.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality2);
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec2) is _speciality speciality3)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality3.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality3.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality3);
+		}
+		if (Global.getTemplate("speciality", armyTemplate.spec3) is _speciality speciality4)
+		{
+			generalInfo.armyspecname_tt = generalInfo.armyspecname_tt + "【" + speciality4.name + "】";
+			generalInfo.armyspecname = generalInfo.armyspecname + speciality4.name + " ";
+			calc_init_rage(ref generalInfo.init_rage, speciality4);
+		}
+		if (skillTemplate != null && generalInfo.init_rage > skillTemplate.rage_limit)
+		{
+			generalInfo.init_rage = skillTemplate.rage_limit;
+		}
+		EnemyGeneralInfo.Add(generalInfo);
+		return generalInfo;
+	}
+
+	private void SetupEnemyAssetList()
+	{
+		for (int i = 0; i < EnemyGeneralInfo.Count; i++)
+		{
+			if (EnemyGeneralInfo[i].generalName != "unknown")
+			{
+				AddAssetSub("face" + EnemyGeneralInfo[i].faceid);
+			}
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		PrepGenFace();
+		if (DefaultState == "NPCBattle" || DefaultState == "PlayerBattle")
+		{
+			PrepEnemyFace();
+		}
+		if (AssetName.Contains("army"))
+		{
+			int key = int.Parse(AssetName.Replace("army", string.Empty));
+			icon_armys[key] = BaseAsset.LoadTexture(AssetName);
+		}
+		if (AssetName.Contains("skill"))
+		{
+			int key2 = int.Parse(AssetName.Replace("skill", string.Empty));
+			icon_skills[key2] = BaseAsset.LoadTexture(AssetName);
+		}
+		if (duel_op_gen_list == null)
+		{
+			return;
+		}
+		for (int i = 0; i < duel_op_gen_list.Count; i++)
+		{
+			if (duel_op_gen_list[i].gen_temp != null && duel_op_gen_list[i].iconStyle.normal.background == null && AssetName == "face" + duel_op_gen_list[i].gen_temp.icon)
+			{
+				duel_op_gen_list[i].iconStyle.normal.background = BaseAsset.LoadTexture("face" + duel_op_gen_list[i].gen_temp.icon);
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		m_SecondGenRect = new Rect(0f, 0f, 0f, 0f);
+		m_FirstSpot = new Rect(0f, 0f, 0f, 0f);
+		isLoading = false;
+		if (self_refresh)
+		{
+			PrepGenFace();
+			PrepEnemyFace();
+			self_refresh = false;
+			if (substate == "maze_enemy")
+			{
+				Enable();
+			}
+			else
+			{
+				EnableAll();
+			}
+		}
+		else if (DefaultState == "PlayerBattle" || substate == "guild_raid")
+		{
+			ShowSubUI(DefaultState);
+			BaseAsset.lds.Hide();
+		}
+		else
+		{
+			ShowSubUI(DefaultState);
+			BaseAsset.lds.Hide();
+		}
+		if (Global.character_.level <= 20)
+		{
+			m_bShowSequence = true;
+		}
+		else
+		{
+			m_bShowSequence = false;
+		}
+		Global.character_.pause_bvchange();
+	}
+
+	private void OnLoadFail()
+	{
+		isLoading = false;
+		BaseAsset.lds.Hide();
+		if (!(RightPanel == "Equipment") && !(substate == "guild_raid") && !(substate == "guild_war"))
+		{
+			if (!self_refresh)
+			{
+				SendMessage("LoadSubUIFail", DefaultState, SendMessageOptions.RequireReceiver);
+			}
+			else
+			{
+				OnOperationFailed();
+			}
+		}
+	}
+
+	private void PrepTooltipGeneral(GeneralInfo geninfo)
+	{
+		TooltipGeneral tooltipGeneral = new TooltipGeneral();
+		tooltipGeneral.name = geninfo.generalName;
+		tooltipGeneral.level = geninfo.level;
+		tooltipGeneral.armytype = geninfo.armytype;
+		tooltipGeneral.army_desc = geninfo.army_desc;
+		tooltipGeneral.gen_active_skill = geninfo.skillname;
+		tooltipGeneral.gen_speicalies = geninfo.str_genspec;
+		tooltipGeneral.owner = tt_owner;
+		tooltipGeneral.armyhp = geninfo.armyhp;
+		tooltipGeneral.army_spec = geninfo.armyspecname_tt;
+		tooltipGeneral.gen_skill_desc = geninfo.skill_desc;
+		tipui.ShowTooltipGeneral(tooltipGeneral);
+	}
+
+	private void SetupCharFormGenPos(int x, int y, long id)
+	{
+		CharFormation.formgenpos[x, y].genid = id;
+		CharFormation.formgenpos[x, y].modx = 0;
+		CharFormation.formgenpos[x, y].mody = 0;
+		int num = CharFormation.dbspot.IndexOf(x * 4 + y) + 1;
+		if (num > 0)
+		{
+			CharFormation.formgenpos[x, y].genspot = num;
+		}
+		else
+		{
+			CharFormation.formgenpos[x, y].genspot = 0;
+		}
+		if (RightPanel == "PresetDuel")
+		{
+			cs_preset_formation((int)id, (uint)num);
+		}
+	}
+
+	private void cs_preset_formation(int genid, uint spot)
+	{
+		CSPresetDuel_0x2A8 cSPresetDuel_0x2A = PresetDuelUI.makeClientPkt();
+		cSPresetDuel_0x2A.action = 7u;
+		cSPresetDuel_0x2A.form_gen = new CSPresetDuel_0x2A8.FormGen();
+		cSPresetDuel_0x2A.form_gen.idgen_temp = genid;
+		cSPresetDuel_0x2A.form_gen.location = spot;
+		if (genid >= 0)
+		{
+			for (int i = 0; i < m_curPresetDuelFormGen.general.Count; i++)
+			{
+				if (m_curPresetDuelFormGen.general[i].location == spot && m_curPresetDuelFormGen.general[i].idgen_temp != genid)
+				{
+					m_curPresetDuelFormGen.general[i].location = 0u;
+					break;
+				}
+			}
+			for (int j = 0; j < m_curPresetDuelFormGen.general.Count; j++)
+			{
+				if (m_curPresetDuelFormGen.general[j].idgen_temp == genid)
+				{
+					m_curPresetDuelFormGen.general[j].location = spot;
+					break;
+				}
+			}
+		}
+		else
+		{
+			for (int k = 0; k < m_curPresetDuelFormGen.general.Count; k++)
+			{
+				if (m_curPresetDuelFormGen.general[k].location == spot && m_curPresetDuelFormGen.general[k].idgen_temp != 0)
+				{
+					m_curPresetDuelFormGen.general[k].location = 0u;
+					break;
+				}
+			}
+		}
+		RootUI.m_client.Send(680, cSPresetDuel_0x2A, null);
+	}
+
+	private void SetupCharFormGenPosBig(int x, int y, GeneralInfo biggen)
+	{
+		int num = x + biggen.sizex;
+		int num2 = y + biggen.sizey;
+		int genspot = CharFormation.dbspot.IndexOf(biggen.locx * 4 + biggen.locy) + 1;
+		for (int i = x; i < num; i++)
+		{
+			for (int j = y; j < num2; j++)
+			{
+				CharFormation.formgenpos[i, j].genid = biggen.guid;
+				CharFormation.formgenpos[i, j].modx = biggen.modx;
+				CharFormation.formgenpos[i, j].mody = biggen.mody;
+				CharFormation.formgenpos[i, j].genspot = genspot;
+			}
+		}
+	}
+
+	private void RemoveCharFormGenPos(long genid)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (CharFormation.formgenpos[i, j].genid == genid)
+				{
+					CharFormation.formgenpos[i, j].genid = -1L;
+					CharFormation.formgenpos[i, j].modx = 0;
+					CharFormation.formgenpos[i, j].mody = 0;
+					CharFormation.formgenpos[i, j].genspot = 0;
+				}
+			}
+		}
+	}
+
+	private int GetFormSpot(int startx, int starty, int endx, int endy)
+	{
+		if (endx > 4 || endy > 4)
+		{
+			return 0;
+		}
+		for (int i = startx; i < endx; i++)
+		{
+			for (int j = starty; j < endy; j++)
+			{
+				if (CharFormation.formgenpos[i, j].spot > 0 && CharFormation.formgenpos[i, j].spot <= CharFormation.spotcount)
+				{
+					return CharFormation.formgenpos[i, j].spot;
+				}
+			}
+		}
+		return 0;
+	}
+
+	private bool CheckFormConflict(GeneralInfo geninfo, int startx, int starty, int endx, int endy)
+	{
+		for (int i = startx; i < endx; i++)
+		{
+			for (int j = starty; j < endy; j++)
+			{
+				if (CharFormation.formgenpos[i, j].genid == geninfo.guid)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private void SetEnemyFormGenPos(GeneralInfo ginfo)
+	{
+		int locx = ginfo.locx;
+		int locy = ginfo.locy;
+		int num = locx + ginfo.sizex;
+		int num2 = locy + ginfo.sizey;
+		for (int i = locx; i < num; i++)
+		{
+			for (int j = locy; j < num2; j++)
+			{
+				EnemyFormation.formgenpos[i, j].genid = ginfo.guid;
+				EnemyFormation.formgenpos[i, j].genspot = ginfo.locx * 4 + ginfo.locy;
+				EnemyFormation.formgenpos[i, j].genname = ginfo.generalName;
+			}
+		}
+	}
+
+	private void OnSelfRefresh(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			if (isVisible)
+			{
+				Disable();
+				self_refresh = true;
+				switch (DefaultState)
+				{
+				case "Formation":
+					break;
+				case "NPCBattle":
+					break;
+				case "PlayerBattle":
+					break;
+				}
+			}
+		}
+		else
+		{
+			Hide();
+			isVisible = false;
+			self_refresh = false;
+		}
+	}
+
+	private void OnOperationFailed()
+	{
+		if (isVisible)
+		{
+			BaseAsset.lds.Hide();
+			Disable();
+			MessageBox component = GameObject.Find("/Root/RootUI").GetComponent<MessageBox>();
+			string title = __BaseUI.load_str(20248u);
+			string message = __BaseUI.load_str(20249u);
+			component.setMessage(title, message, rmg, OnSelfRefresh, _bCancel: true);
+		}
+	}
+
+	public string CharFormationInfo()
+	{
+		string text = string.Empty;
+		for (int i = 0; i < CharFormation.dbspot.Count; i++)
+		{
+			int num = CharFormation.dbspot[i] / 4;
+			int num2 = CharFormation.dbspot[i] % 4;
+			long genid = CharFormation.formgenpos[num, num2].genid;
+			int modx = CharFormation.formgenpos[num, num2].modx;
+			int mody = CharFormation.formgenpos[num, num2].mody;
+			string text2 = text;
+			text = text2 + genid + ":" + modx + ":" + mody + " ";
+		}
+		return text.Substring(0, text.Length - 1);
+	}
+
+	public override void Hide()
+	{
+		if (isVisible)
+		{
+			OnClickClose();
+		}
+		else
+		{
+			base.Hide();
+		}
+		if (m_bFromGuide)
+		{
+			m_bFromGuide = false;
+			BaseUI.GetBattleGuideUI().Step();
+		}
+		if (BaseAsset.lds.GetCurUI() != null && BaseAsset.lds.GetCurUI().LevelID == "ConvoyFormation")
+		{
+			GameObject.Find("/ConvoyFormation").GetComponentInChildren<ConvoyFormationUI>().OnFormationUIClose();
+		}
+	}
+
+	private void Hide2()
+	{
+		base.Hide();
+	}
+
+	public void CloseByGuildUI()
+	{
+		if (substate == "guild_raid" || substate == "guild_war")
+		{
+			OnClickClose();
+		}
+	}
+
+	public void ShowScoutMessage(int param)
+	{
+		string title = "侦查结果";
+		string message = ((param < 40) ? "这次侦查你一无所获。（升级“千里眼”可以增加侦查效果）" : ((param < 45) ? "这次侦查只获得敌人阵型的少量信息。（升级“千里眼”可以增加侦查效果）" : ((param >= 60) ? "这次侦查获得敌人阵型的大量信息。（升级“千里眼”可以增加侦查效果）" : "这次侦查获得敌人阵型的部分信息。（升级“千里眼”可以增加侦查效果）")));
+		msgbox.setMessage(title, message, rmg);
+	}
+
+	public Texture2D get_gen_face(int id)
+	{
+		if (SquadGeneralInfo.Count > id)
+		{
+			return SquadGeneralInfo[id].faceicon;
+		}
+		return null;
+	}
+
+	public bool get_tutorial_state()
+	{
+		if (PitchGenerals.Count > 1 || PitchGenerals[0] != SquadGeneralInfo[0])
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public void tutorial_drag_start()
+	{
+		int num = 1;
+		SetCurFormSelect(-1);
+		SquadSelect = num;
+		drag_gen = num;
+		EnemySelect = -1;
+		SquadGeneralInfo[num].preped = false;
+		tutorial_drag_flag_start = true;
+	}
+
+	public void tutorial_drag_end(Vector2 mouse_pos)
+	{
+		tutorial_drag_flag_start = false;
+		tutorial_drag_flag_end = true;
+		tutorial_mouse_pos = mouse_pos;
+	}
+
+	private void cs_formupdate(bool curform)
+	{
+		CSFormationUpdate_0x12a cSFormationUpdate_0x12a = new CSFormationUpdate_0x12a();
+		cSFormationUpdate_0x12a.cur_formation = curform;
+		cSFormationUpdate_0x12a.formid = (uint)CharFormation.formid;
+		for (int i = 0; i < CharFormation.dbspot.Count; i++)
+		{
+			int num = CharFormation.dbspot[i] / 4;
+			int num2 = CharFormation.dbspot[i] % 4;
+			cSFormationUpdate_0x12a.genid.Add((int)CharFormation.formgenpos[num, num2].genid);
+		}
+		RootUI.m_client.Send(298, cSFormationUpdate_0x12a, sc_formupdate, curform);
+	}
+
+	private void sc_formupdate(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCFormationUpdate_0x12a sCFormationUpdate_0x12a = JSProtoBuf.Serializer.Deserialize<SCFormationUpdate_0x12a>(stream);
+		if (sCFormationUpdate_0x12a.state)
+		{
+			Global.character_.formations_[CharFormation.formid].spotgen.Clear();
+			foreach (int item2 in CharFormation.dbspot)
+			{
+				int num = item2 / 4;
+				int num2 = item2 % 4;
+				int item = (int)CharFormation.formgenpos[num, num2].genid;
+				Global.character_.formations_[CharFormation.formid].spotgen.Add(item);
+			}
+			if (waitstate == 1)
+			{
+				waitstate = 0;
+				CharFormation = waitform;
+				InitialTeamData();
+				Enable();
+			}
+			else if (waitstate == 2)
+			{
+				isVisible = false;
+				Global.character_.set_cur_form(CharFormation.formid);
+				waitstate = 0;
+				List<long> list = new List<long>();
+				foreach (GeneralInfo pitchGeneral in PitchGenerals)
+				{
+					list.Add(pitchGeneral.guid);
+				}
+				Global._change_formgen(list);
+				if (onfight)
+				{
+					bool flag = true;
+					if (substate == "guild_raid")
+					{
+						substate = string.Empty;
+					}
+					else if (DefaultState == "NPCBattle")
+					{
+						if (OnAttack != null)
+						{
+							flag = OnAttack();
+						}
+					}
+					else if (DefaultState == "PlayerBattle" && OnAttack != null)
+					{
+						flag = OnAttack();
+					}
+					if (flag)
+					{
+						Hide2();
+						MainUI.SetSubUI(null);
+					}
+					else
+					{
+						onfight = false;
+					}
+				}
+			}
+			else if (waitstate == 3)
+			{
+				waitstate = 0;
+				GeneralRecruitUI component = BaseUI.GetRootUI().GetComponent<GeneralRecruitUI>();
+				component.formgen_leave(leave_genid, insquad: false, ReInit);
+			}
+		}
+		else
+		{
+			msgbox.setMessage(string.Empty, sCFormationUpdate_0x12a.code, rmg);
+			Disable();
+			InitNormalUI();
+		}
+		if (SquadSelect != -1 && PitchGenerals.IndexOf(SquadGeneralInfo[SquadSelect]) != -1)
+		{
+			SetCurFormSelect(SquadSelect);
+		}
+		else if (EnemySelect != -1)
+		{
+			int num3 = EnemySelect / 4;
+			int num4 = EnemySelect % 4;
+			GeneralInfo generalInfo = null;
+			foreach (GeneralInfo item3 in EnemyGeneralInfo)
+			{
+				if (item3.guid == EnemyFormation.formgenpos[num3, num4].genid && item3.locx * 4 + item3.locy == EnemyFormation.formgenpos[num3, num4].genspot)
+				{
+					generalInfo = item3;
+				}
+			}
+			if (generalInfo != null)
+			{
+				SetEnemySelect(num3, num4, generalInfo);
+			}
+		}
+		if ((bool)arg)
+		{
+			Global.character_.change_bvscore();
+		}
+		RootUI component2 = BaseUI.GetRootUI().GetComponent<RootUI>();
+		component2.onFormationUpdate();
+	}
+
+	private uint total_socre()
+	{
+		uint num = 0u;
+		foreach (GeneralInfo pitchGeneral in PitchGenerals)
+		{
+			num += pitchGeneral.battle_score;
+		}
+		return num;
+	}
+
+	private uint total_initiative()
+	{
+		float num = 0f;
+		foreach (GeneralInfo pitchGeneral in PitchGenerals)
+		{
+			num += Global.character_.form_generals_[(ushort)pitchGeneral.guid].param.initiative;
+		}
+		return (uint)num;
+	}
+
+	private void DrawGenPanel()
+	{
+		int num = 1;
+		int num2 = 5;
+		if (SquadGeneralInfo.Count > 11)
+		{
+			num = 3;
+			num2 = 16;
+		}
+		else if (SquadGeneralInfo.Count > 5)
+		{
+			num = 2;
+			num2 = 11;
+		}
+		int num3 = 36 + num * 69;
+		int num4 = (3 - num) * 69;
+		__BaseUI.Label(__BaseUI._rect(33f, 0f, num3, 481f), string.Empty, form_graph.squad_box);
+		__BaseUI.BeginGroup(__BaseUI._rect(0f, -25f, 10000f, 10000f));
+		for (int i = 0; i < num2; i++)
+		{
+			__BaseUI.Label(__BaseUI._rect(squad_pos[i].x - (float)num4, squad_pos[i].y, 63f, 63f), string.Empty, form_graph.squad_slot);
+			if (i < SquadGeneralInfo.Count)
+			{
+				Rect position = __BaseUI._rect(squad_pos[i].x + 3f - (float)num4, squad_pos[i].y + 3f, 56f, 56f);
+				Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(position.x, position.y));
+				m_104rc[(ushort)SquadGeneralInfo[i].guid] = new Rect(vector.x, vector.y, position.width, position.height);
+				if (SquadGeneralInfo[i].faceicon == null)
+				{
+					GUI.Label(position, new GUIContent(string.Empty, SquadGeneralInfo[i].tooltip), __BaseUI._icon_unkown);
+				}
+				else
+				{
+					GUI.Label(position, new GUIContent(SquadGeneralInfo[i].faceicon, SquadGeneralInfo[i].tooltip), __BaseUI.normalStyle);
+				}
+				if (Event.current.type == EventType.MouseDown && position.Contains(Event.current.mousePosition) && drag_gen == -1)
+				{
+					SquadGeneralInfo[i].preped = true;
+				}
+				if (position.Contains(Event.current.mousePosition) && PitchGenerals.IndexOf(SquadGeneralInfo[i]) == -1 && drag_gen == -1 && SquadGeneralInfo[i].preped && Event.current.type == EventType.MouseUp && SquadGeneralInfo[i].locx == 0 && SquadGeneralInfo[i].locy == 0)
+				{
+					SquadGeneralInfo[i].preped = false;
+					SquadSelect = i;
+					SetCurFormSelect(-1);
+					EnemySelect = -1;
+				}
+				if (subwindow == string.Empty && Event.current.type == EventType.MouseDrag && position.Contains(Event.current.mousePosition) && PitchGenerals.IndexOf(SquadGeneralInfo[i]) == -1 && drag_gen == -1 && SquadGeneralInfo[i].preped)
+				{
+					SetCurFormSelect(-1);
+					SquadSelect = i;
+					drag_gen = i;
+					SquadGeneralInfo[i].preped = false;
+					EnemySelect = -1;
+				}
+				int num5 = (int)position.x - 6;
+				int num6 = (int)position.y - 6;
+				if (SquadSelect == i)
+				{
+					GUI.Label(new Rect(num5, num6, 68f, 68f), string.Empty, form_graph.selectframe1);
+				}
+				if (PitchGenerals.IndexOf(SquadGeneralInfo[i]) != -1)
+				{
+					GUI.Label(position, string.Empty, ShareUI.unable1);
+				}
+			}
+		}
+		__BaseUI.EndGroup();
+		if (form_graph.button_kuaisuxuanjiang.Button(bBtn: true, __BaseUI._rect(104 - (3 - num) * 69 / 2, 430f, 98f, 30f), string.Empty))
+		{
+			if (RightPanel != "PresetDuel")
+			{
+				OnClickSetCurrentForm();
+			}
+			hotpanel = false;
+			hotpanel_timer = 0f;
+			isVisible = false;
+			base.Hide();
+			leftpos = 0;
+			targetpos = 0;
+			moving = false;
+			opened = false;
+			MainUI.SetSubUI(null);
+			GeneralSwitchUI component = BaseUI.GetRootUI().GetComponent<GeneralSwitchUI>();
+			if (MainUI.handle_sub_ui(component, string.Empty))
+			{
+				component.MyLoading(this);
+			}
+		}
+	}
+
+	public Rect getSaveRc()
+	{
+		return m_saveRc;
+	}
+
+	private void DrawMainPanel()
+	{
+		__BaseUI.Label(__BaseUI._rect(29f, 59f, 309f, 309f), string.Empty, form_graph.left_panel);
+		__BaseUI.Label(__BaseUI._rect(77f, 46f, 92f, 17f), string.Empty, form_graph.ui_zi_shunxu);
+		if (m_bShowSequence)
+		{
+			if (GUI.Button(__BaseUI._rect(49f, 42f, 23f, 23f), string.Empty, form_graph.ui_xuanze))
+			{
+				m_bShowSequence = false;
+			}
+		}
+		else if (GUI.Button(__BaseUI._rect(49f, 42f, 23f, 23f), string.Empty, form_graph.ui_weixuan))
+		{
+			m_bShowSequence = true;
+		}
+		DrawCurForm();
+		__BaseUI.Label(__BaseUI._rect(177f, 15f, 352f, 36f), string.Empty, __BaseUI._box15Style);
+		__BaseUI.Label(__BaseUI._rect(218f, 26f, 75f, 13f), string.Empty, form_graph.total_score);
+		__BaseUI.ShadowLabel(__BaseUI._rect(296f, 24f, 73f, 17f), total_socre().ToString(), __BaseUI._textLeft, Color.white);
+		if (RightPanel == "PresetDuel")
+		{
+			__BaseUI.Label(__BaseUI._rect(400f, 18f, 78f, 29f), string.Empty, ui_zi_wfxhs[PresetDuelUI.order[PresetDuelUI.player_index]]);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(388f, 26f, 56f, 15f), string.Empty, form_graph.first_blood);
+			__BaseUI.ShadowLabel(__BaseUI._rect(466f, 24f, 73f, 17f), total_initiative().ToString(), __BaseUI._textLeft, Color.white);
+			if (substate == "ladder" && RightPanel != "ladder")
+			{
+				__BaseUI.Label(__BaseUI._rect(380f, 52f, 79f, 18f), string.Empty, ui_zi15);
+				__BaseUI.Label(__BaseUI._rect(460f, 51f, 100f, 20f), (Legion.initiative - 1).ToString(), __BaseUI._numNLeft, __BaseUI._clrGreen, __BaseUI._fontSize);
+			}
+		}
+		switch (RightPanel)
+		{
+		case "GenInfo":
+			DrawGenInfo();
+			break;
+		case "Enemy":
+			GUI.Label(new Rect(372f, 59f, 309f, 309f), string.Empty, form_graph.right_panel);
+			DrawEnemyCurForm();
+			break;
+		case "PresetDuel":
+			drawOpponentPanel();
+			break;
+		case "Ladder":
+			drawLadderOpponentPanel();
+			break;
+		}
+		Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(480f, 416f));
+		m_saveRc = new Rect(vector.x, vector.y, 96f, 46f);
+		if (RightPanel == "PresetDuel")
+		{
+			__BaseUI.Label(__BaseUI._rect(435f, 368f, 176f, 21f), string.Empty, ui_shengyushijian);
+			if (PresetDuelUI.CountDown < 10)
+			{
+				__BaseUI.Label(__BaseUI._rect(510f, 360f, 50f, 30f), "0" + PresetDuelUI.CountDown, ui_timeFont);
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(510f, 360f, 50f, 30f), PresetDuelUI.CountDown, ui_timeFont);
+			}
+			if (btnReady.Button(bBtn: true, new Rect(453f, 398f, 146f, 36f), string.Empty))
+			{
+				cs_preset_duel_formation_confirm();
+			}
+		}
+		else if (viewonly)
+		{
+			if (showCloseTip)
+			{
+				__BaseUI.DrawArea(new Rect(453f, 398f, 146f, 36f), __BaseUI.load_str(760u), ArrowFace.Down);
+			}
+			if (form_graph.b_save.Button(IsEnable(), new Rect(453f, 398f, 146f, 36f), string.Empty))
+			{
+				OnClickClose();
+				return;
+			}
+		}
+		else if (form_graph.b_fight.Button(IsEnable(), new Rect(453f, 398f, 146f, 36f), string.Empty))
+		{
+			onfight = true;
+			OnClickSetCurrentForm();
+			return;
+		}
+		DrawHotPanel();
+		if (skilltip_side != -1 && RightPanel == "Enemy")
+		{
+			DrawSkilltipArrow();
+		}
+	}
+
+	private void cs_preset_duel_formation_confirm()
+	{
+		Disable();
+		CSPresetDuel_0x2A8 cSPresetDuel_0x2A = PresetDuelUI.makeClientPkt();
+		cSPresetDuel_0x2A.action = 7u;
+		cSPresetDuel_0x2A.pick_confirm = true;
+		RootUI.m_client.Send(680, cSPresetDuel_0x2A, null);
+	}
+
+	private int calc_enemy_hp(_army info, int level)
+	{
+		uint soldier = info.soldier;
+		float soldier_add = info.soldier_add;
+		int spec_add = 0;
+		int spec_perc = 0;
+		calc_onespec_effect(info.spec1, ref spec_add, ref spec_perc);
+		calc_onespec_effect(info.spec2, ref spec_add, ref spec_perc);
+		calc_onespec_effect(info.spec3, ref spec_add, ref spec_perc);
+		return (int)((info.soldier_add * (float)level + (float)info.soldier + (float)spec_add) * (100f + (float)spec_perc) / 100f);
+	}
+
+	private void calc_spec_hpeffect(string effect, ref int spec_add, ref int spec_perc, string param)
+	{
+		if (effect == "spec_hp")
+		{
+			spec_add += int.Parse(param);
+		}
+		else if (effect == "spec_hp_perc")
+		{
+			spec_perc += int.Parse(param);
+		}
+	}
+
+	private void calc_onespec_effect(ushort specid, ref int spec_add, ref int spec_perc)
+	{
+		if (specid > 0)
+		{
+			_speciality speciality = Global.getTemplate("speciality", specid) as _speciality;
+			calc_spec_hpeffect(speciality.effect1, ref spec_add, ref spec_perc, speciality.effect1_param1);
+			calc_spec_hpeffect(speciality.effect2, ref spec_add, ref spec_perc, speciality.effect2_param1);
+			calc_spec_hpeffect(speciality.effect3, ref spec_add, ref spec_perc, speciality.effect3_param1);
+		}
+	}
+
+	private void DrawCustom(int oldx, int oldy)
+	{
+		int num = 479;
+		int num2 = 464;
+		GUI.BeginGroup(__BaseUI._rect((oldx - num) / 2, (oldy - num2) / 2, num, num2));
+		GUI.Box(__BaseUI._rect(0f, 0f, num, num2), new GUIContent(string.Empty, "Background"), __BaseUI._frame3Style);
+		__BaseUI.Label(__BaseUI._rect(123f, 11f, 226f, 36f), string.Empty, __BaseUI._box15Style);
+		__BaseUI.Label(__BaseUI._rect(26f, 45f, 431f, 105f), string.Empty, __BaseUI._box4Style);
+		__BaseUI.Label(__BaseUI._rect(24f, 159f, 433f, 224f), string.Empty, __BaseUI._box13Style);
+		__BaseUI.Label(__BaseUI._rect(181f, 23f, 109f, 15f), string.Empty, form_graph.customtitle);
+		int num3 = 54;
+		foreach (uint char_army in char_armys)
+		{
+			__BaseUI.Label(__BaseUI._rect(num3, 61f, 74f, 74f), string.Empty, __BaseUI._icon4Style);
+			_army_template armyTemplate = Global.getArmyTemplate(char_army);
+			int icon = armyTemplate.icon;
+			if (icon_armys.ContainsKey(icon) && icon_armys[icon] != null)
+			{
+				GUI.Label(__BaseUI._rect(num3 + 9, 70f, 56f, 56f), new GUIContent(icon_armys[icon], "army" + char_army), __BaseUI.normalStyle);
+				if (GUI.Button(__BaseUI._rect(num3 + 9, 70f, 56f, 56f), string.Empty, __BaseUI.normalStyle) && Global.character_.army_types.ContainsKey((ushort)char_army))
+				{
+					custom_armyselect = char_army;
+					custom_skillselect = 0u;
+				}
+				if (custom_armyselect == char_army)
+				{
+					__BaseUI.Label(new Rect(num3 + 3, 64f, 68f, 68f), string.Empty, form_graph.selectframe1);
+				}
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(num3, 61f, 74f, 74f), string.Empty, __BaseUI._icon_unkown);
+			}
+			num3 += 100;
+		}
+		num3 = 43;
+		int num4 = 173;
+		int num5 = 0;
+		foreach (uint char_skill in char_skills)
+		{
+			_skill skillTemplate = Global.getSkillTemplate(char_skill);
+			if (skillTemplate.limited_army != custom_armyselect)
+			{
+				continue;
+			}
+			if (custom_skillselect == 0)
+			{
+				custom_skillselect = char_skill;
+			}
+			int icon2 = Global.getSkillTemplate(char_skill).icon;
+			__BaseUI.Label(__BaseUI._rect(num3, num4, 74f, 74f), string.Empty, __BaseUI._icon4Style);
+			if (icon_skills.ContainsKey(icon2) && icon_skills[icon2] != null)
+			{
+				GUI.Label(__BaseUI._rect(num3 + 9, num4 + 9, 56f, 56f), new GUIContent(icon_skills[icon2], "skill" + char_skill), __BaseUI.normalStyle);
+				if (GUI.Button(__BaseUI._rect(num3 + 9, num4 + 9, 56f, 56f), string.Empty, __BaseUI.normalStyle))
+				{
+					custom_skillselect = char_skill;
+				}
+				if (custom_skillselect == char_skill)
+				{
+					__BaseUI.Label(new Rect(num3 + 3, num4 + 3, 68f, 68f), string.Empty, form_graph.selectframe1);
+				}
+			}
+			if (num5 % 5 == 4)
+			{
+				num3 = 43;
+				num4 += 101;
+			}
+			else
+			{
+				num3 += 80;
+			}
+			num5++;
+		}
+		for (int i = num5; i < 10; i++)
+		{
+			__BaseUI.Label(__BaseUI._rect(num3, num4, 74f, 74f), string.Empty, __BaseUI._icon4Style);
+			__BaseUI.Label(__BaseUI._rect(num3 + 9, num4 + 9, 56f, 56f), string.Empty, form_graph.skilllock);
+			if (i % 5 == 4)
+			{
+				num3 = 43;
+				num4 += 101;
+			}
+			else
+			{
+				num3 += 80;
+			}
+		}
+		if (__BaseUI._btnOK.Button(bBtn: true, __BaseUI._rect(122f, 390f, 102f, 52f), string.Empty))
+		{
+			if (custom_armyselect != Global.character_.form_generals_[0].armytemplate.id || custom_skillselect != Global.character_.form_generals_[0].activeskill)
+			{
+				if (custom_skillselect != 0)
+				{
+					Disable();
+					cs_mainchar_custom();
+				}
+			}
+			else
+			{
+				subwindow = string.Empty;
+			}
+		}
+		if (__BaseUI._btnCancel2.Button(bBtn: true, __BaseUI._rect(260f, 390f, 102f, 52f), string.Empty))
+		{
+			subwindow = string.Empty;
+		}
+		GUI.EndGroup();
+	}
+
+	private void LoadSTInfo()
+	{
+		char_armys.Clear();
+		char_skills.Clear();
+		icon_armys.Clear();
+		icon_skills.Clear();
+		foreach (ushort key in Global.character_.army_types.Keys)
+		{
+			_army_template armyTemplate = Global.getArmyTemplate(key);
+			char_armys.Add(key);
+			AddAssetSub("army" + armyTemplate.icon);
+		}
+		foreach (ushort key2 in Global.character_.skills.Keys)
+		{
+			char_skills.Add(key2);
+			AddAssetSub("skill" + Global.getSkillTemplate(key2).icon);
+		}
+		foreach (uint item in Global.character_.unavailable_army_type)
+		{
+			char_armys.Add(item);
+		}
+		foreach (uint item2 in Global.character_.unavailable_skill)
+		{
+			char_skills.Add(item2);
+		}
+		checkallhint();
+		custom_armyselect = Global.character_.form_generals_[0].armytemplate.id;
+		custom_skillselect = Global.character_.form_generals_[0].activeskill;
+	}
+
+	private void cs_mainchar_custom()
+	{
+		CSCustomMainChar_0x152 cSCustomMainChar_0x = new CSCustomMainChar_0x152();
+		cSCustomMainChar_0x.armyid = custom_armyselect;
+		cSCustomMainChar_0x.skillid = custom_skillselect;
+		RootUI.m_client.Send(338, cSCustomMainChar_0x, sc_mainchar_custom);
+		MainCharCustom();
+	}
+
+	private void sc_mainchar_custom(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCCustomMainChar_0x152 sCCustomMainChar_0x = JSProtoBuf.Serializer.Deserialize<SCCustomMainChar_0x152>(stream);
+		if (sCCustomMainChar_0x.state)
+		{
+		}
+		checkallhint();
+		Enable();
+	}
+
+	private void MainCharCustom()
+	{
+		FormGeneral formGeneral = Global.character_.form_generals_[0];
+		formGeneral.idarmy_template = (ushort)custom_armyselect;
+		formGeneral.armytemplate = Global.getArmyTemplate(custom_armyselect);
+		formGeneral.activeskill = (ushort)custom_skillselect;
+		formGeneral.activeskillinfo = Global.getSkillTemplate(formGeneral.activeskill);
+		formGeneral.armyspeclist.Clear();
+		if (formGeneral.armytemplate != null)
+		{
+			if (formGeneral.armytemplate.spec1 != 0)
+			{
+				formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec1) as _speciality);
+			}
+			if (formGeneral.armytemplate.spec2 != 0)
+			{
+				formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec2) as _speciality);
+			}
+			if (formGeneral.armytemplate.spec3 != 0)
+			{
+				formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec3) as _speciality);
+			}
+		}
+		formGeneral.CalcAllParam();
+		foreach (GeneralInfo item in SquadGeneralInfo)
+		{
+			if (item.guid == 0L)
+			{
+				_army_template armytemplate = formGeneral.armytemplate;
+				item.armytype = armytemplate.name;
+				item.army_desc = armytemplate.desc_common;
+				item.armyspecname = string.Empty;
+				if (Global.getTemplate("speciality", armytemplate.spec1) is _speciality speciality)
+				{
+					item.armyspecname += speciality.name;
+				}
+				if (Global.getTemplate("speciality", armytemplate.spec2) is _speciality speciality2)
+				{
+					item.armyspecname = item.armyspecname + " " + speciality2.name;
+				}
+				if (Global.getTemplate("speciality", armytemplate.spec3) is _speciality speciality3)
+				{
+					item.armyspecname = item.armyspecname + " " + speciality3.name;
+				}
+				item.armyhp = (int)formGeneral.param.hp;
+				_skill activeskillinfo = formGeneral.activeskillinfo;
+				item.skillname = activeskillinfo.name;
+				item.skill_desc = activeskillinfo.desc_common;
+				item.skill_descpicid.Clear();
+				string[] array = activeskillinfo.descpic.Split(',');
+				if (array[0] != "0")
+				{
+					item.skill_descpicid.Add("icon_shiyi_bar" + array[0]);
+				}
+				else
+				{
+					item.skill_descpicid.Add(string.Empty);
+				}
+				if (array[1] != "0")
+				{
+					item.skill_descpicid.Add("icon_shiyi_buff" + array[1]);
+				}
+				else
+				{
+					item.skill_descpicid.Add(string.Empty);
+				}
+				if (array[2] != "0")
+				{
+					item.skill_descpicid.Add("icon_shiyi_bar" + array[2]);
+				}
+				else
+				{
+					item.skill_descpicid.Add(string.Empty);
+				}
+				item.strength = formGeneral.param.strength - item.base_strength;
+				item.leadership = formGeneral.param.leadership - item.base_leadership;
+				item.power = formGeneral.param.power - item.base_power;
+				item.attack = (int)formGeneral.param.attack;
+				item.defence = (int)formGeneral.param.defense;
+				item.spell = (int)formGeneral.param.spell;
+				item.battle_score = formGeneral.battle_score;
+				PrepGenSkill(item);
+			}
+		}
+		subwindow = string.Empty;
+		SetCurFormSelect(0);
+	}
+
+	private void SetCurFormSelect(int index)
+	{
+		CurFormSelect = index;
+		if (index == -1)
+		{
+			skilltip_side = -1;
+		}
+		else if (!(DefaultState != "NPCBattle") && index != -1)
+		{
+			SetFormSkill(0u, index);
+		}
+	}
+
+	private void SetFormSkill(uint skillid, int index)
+	{
+		if (index == -1)
+		{
+			return;
+		}
+		if (skillid == 0)
+		{
+			skillid = Global.character_.form_generals_[(ushort)PitchGenerals[index].guid].activeskill;
+		}
+		uint attacker_location = (uint)(PitchGenerals[index].locx * 4 + PitchGenerals[index].locy + 1);
+		List<uint> attacker_legions = new List<uint>();
+		List<uint> list = new List<uint>();
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (EnemyFormation.formgenpos[i, j].genid > 0)
+				{
+					list.Add((uint)(i * 4 + j + 1));
+				}
+			}
+		}
+		cur_tipskill = skillid;
+		int target_side = 0;
+		List<uint> list2 = FormationTargetSelector.SelectTargets(skillid, attacker_location, attacker_legions, list, ref target_side);
+		if (target_side == -1 || list2.Count == 0)
+		{
+			skilltip_side = -1;
+			return;
+		}
+		skilltip_side = 0;
+		skilltip = list2;
+		skilltip_timer = 0f;
+		setarrow = true;
+		EnemySelect = -1;
+	}
+
+	private void DrawSkilltip(bool isEnemy, bool isTarget, int x, int y)
+	{
+		if (drag_gen != -1)
+		{
+			return;
+		}
+		Color backgroundColor = GUI.backgroundColor;
+		GUI.backgroundColor = new Color(backgroundColor.a, backgroundColor.g, backgroundColor.b, Mathf.Sin(skilltip_timer));
+		if (isEnemy)
+		{
+			if (isTarget)
+			{
+				__BaseUI.Label(__BaseUI._rect(x, y, 66f, 66f), string.Empty, form_graph.skilltip2);
+				if (setarrow)
+				{
+					arrowpos = new Vector2(x, y);
+					enemyarrow = true;
+					setarrow = false;
+				}
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(x, y, 66f, 66f), string.Empty, form_graph.skilltip1);
+			}
+		}
+		else if (isTarget)
+		{
+			__BaseUI.Label(__BaseUI._rect(x, y, 66f, 66f), string.Empty, form_graph.skilltip4);
+			if (setarrow)
+			{
+				arrowpos = new Vector2(x, y);
+				enemyarrow = false;
+				setarrow = false;
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(x, y, 66f, 66f), string.Empty, form_graph.skilltip3);
+		}
+		GUI.backgroundColor = backgroundColor;
+	}
+
+	private void DrawSkilltipArrow()
+	{
+		if (drag_gen == -1)
+		{
+			int num = 20;
+			if (enemyarrow)
+			{
+				__BaseUI.Label(__BaseUI._rect(arrowpos.x - 61f - (float)num * (1f - Mathf.Sin(skilltip_timer)), arrowpos.y + 13f, 75f, 36f), string.Empty, form_graph.skilltip_arrow1);
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(arrowpos.x + 61f + (float)num * (1f - Mathf.Sin(skilltip_timer)), arrowpos.y + 13f, 75f, 36f), string.Empty, form_graph.skilltip_arrow2);
+			}
+		}
+	}
+
+	private void SetEnemySelect(int x, int y, GeneralInfo ginfo)
+	{
+		uint skillid = ginfo.skillid;
+		cur_hottip_gen = ginfo;
+		uint attacker_location = (uint)(x * 4 + y + 1);
+		List<uint> attacker_legions = new List<uint>();
+		List<uint> list = new List<uint>();
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				if (CharFormation.formgenpos[i, j].genid >= 0)
+				{
+					list.Add((uint)(i * 4 + j + 1));
+				}
+			}
+		}
+		int target_side = 0;
+		List<uint> list2 = FormationTargetSelector.SelectTargets(skillid, attacker_location, attacker_legions, list, ref target_side);
+		if (target_side == -1 || list2.Count == 0)
+		{
+			SetCurFormSelect(-1);
+			skilltip_side = -1;
+			EnemySelect = x * 4 + y;
+			SquadSelect = -1;
+		}
+		else
+		{
+			SetCurFormSelect(-1);
+			skilltip_side = 1;
+			skilltip = list2;
+			skilltip_timer = 0f;
+			setarrow = true;
+			EnemySelect = x * 4 + y;
+			SquadSelect = -1;
+		}
+	}
+
+	public int _getGenInSpot(int spot)
+	{
+		if (CharFormation == null)
+		{
+			return -2;
+		}
+		int num = CharFormation.dbspot[spot - 1] / 4;
+		int num2 = CharFormation.dbspot[spot - 1] % 4;
+		return (int)CharFormation.formgenpos[num, num2].genid;
+	}
+
+	private void CloseHotPanel()
+	{
+		hotpanel = false;
+		hotpanel_timer = 0.2f;
+	}
+
+	private void OpenHotPanel(string name, int startpos)
+	{
+		if (name == "skill" || name == "army")
+		{
+			SetCurFormSelect(0);
+			if (SquadSelect != -1)
+			{
+				SquadSelect = -1;
+			}
+		}
+		hotpanel = true;
+		hotpanel_name = name;
+		hotpanel_timer = 0.2f;
+		hotpanel_startpos = startpos;
+		hotpanel_width = hotpanel_length[name];
+		switch (name)
+		{
+		case "skill":
+			cur_hottip = name + Global.character_.form_generals_[0].activeskill;
+			break;
+		case "army":
+			cur_hottip = name + Global.character_.form_generals_[0].idarmy_template;
+			break;
+		case "form":
+			cur_hottip = "formation" + CharFormation.formid;
+			break;
+		}
+	}
+
+	private void DrawHotPanel()
+	{
+		if (hotpanel_name == "skill")
+		{
+			DrawHotPanelContent();
+		}
+		Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(249f, 374f));
+		m_skillRc = new Rect(vector.x, vector.y, 92f, 92f);
+		if (hotpanel_name != "form" && hotpanel_name != "army")
+		{
+			GUI.Label(__BaseUI._rect(249f, 374f, 92f, 92f), new GUIContent(string.Empty, "skill" + Global.character_.form_generals_[0].activeskill), __BaseUI.normalStyle);
+		}
+		if (form_graph.b_hotkey.Button(bBtn: true, __BaseUI._rect(249f, 374f, 92f, 92f), string.Empty) && !hotpanel)
+		{
+			OpenHotPanel("skill", 249);
+		}
+		__BaseUI.Label(__BaseUI._rect(268f, 400f, 54f, 54f), string.Empty, form_graph.hotkey_iconpanel);
+		int icon = Global.character_.form_generals_[0].activeskillinfo.icon;
+		if (icon_skills.ContainsKey(icon))
+		{
+			GUI.Label(__BaseUI._rect(271f, 403f, 48f, 48f), icon_skills[icon], __BaseUI.normalStyle);
+		}
+		__BaseUI.Label(__BaseUI._rect(259f, 383f, 67f, 24f), string.Empty, form_graph.hotkey_skill);
+		if (newhint_skill)
+		{
+			__BaseUI.Label(__BaseUI._rect(301f, 403f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+		}
+		if (newhint_skill && hotpanel_name != "skill")
+		{
+			Rect rc = __BaseUI.DrawArrowMessage(__BaseUI._rect(268f, 400f, 54f, 54f), ArrowFace.Down, (int)__BaseUI.normalStyle.CalcSize(new GUIContent(armyskill_msg)).x);
+			__BaseUI.Label(rc, armyskill_msg, __BaseUI._textNCenter, __BaseUI._clrMsg);
+		}
+		if (hotpanel_name == "army")
+		{
+			DrawHotPanelContent();
+		}
+		if (hotpanel_name != "form")
+		{
+			GUI.Label(__BaseUI._rect(139f, 374f, 92f, 92f), new GUIContent(string.Empty, "army" + Global.character_.form_generals_[0].idarmy_template), __BaseUI.normalStyle);
+		}
+		if (form_graph.b_hotkey.Button(bBtn: true, __BaseUI._rect(139f, 374f, 92f, 92f), string.Empty) && !hotpanel)
+		{
+			OpenHotPanel("army", 139);
+		}
+		__BaseUI.Label(__BaseUI._rect(158f, 400f, 54f, 54f), string.Empty, form_graph.hotkey_iconpanel);
+		icon = Global.character_.form_generals_[0].armytemplate.icon;
+		if (icon_armys.ContainsKey(icon))
+		{
+			GUI.Label(__BaseUI._rect(161f, 403f, 48f, 48f), icon_armys[icon], __BaseUI.normalStyle);
+		}
+		__BaseUI.Label(__BaseUI._rect(149f, 382f, 70f, 25f), string.Empty, form_graph.hotkey_army);
+		if (newhint_army)
+		{
+			__BaseUI.Label(__BaseUI._rect(191f, 403f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+		}
+		else if (newhint_armyskill && hotpanel_name != "army")
+		{
+			Rect rc2 = __BaseUI.DrawArrowMessage(__BaseUI._rect(158f, 400f, 54f, 54f), ArrowFace.Down, (int)__BaseUI.normalStyle.CalcSize(new GUIContent(armyskill_msg)).x);
+			__BaseUI.Label(rc2, armyskill_msg, __BaseUI._textNCenter, __BaseUI._clrMsg);
+		}
+		if (hotpanel_name == "form")
+		{
+			DrawHotPanelContent();
+		}
+		GUI.Label(__BaseUI._rect(29f, 374f, 92f, 92f), new GUIContent(string.Empty, "formation" + CharFormation.formationName + "\n" + CharFormation.desc), __BaseUI.normalStyle);
+		if (form_graph.b_hotkey.Button(bBtn: true, __BaseUI._rect(29f, 374f, 92f, 92f), string.Empty) && !hotpanel)
+		{
+			OpenHotPanel("form", 29);
+		}
+		__BaseUI.Label(__BaseUI._rect(48f, 400f, 54f, 54f), string.Empty, form_graph.hotkey_iconpanel);
+		GUI.Label(__BaseUI._rect(51f, 403f, 48f, 48f), CharFormation.icon, __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(54f, 383f, 45f, 23f), string.Empty, form_graph.hotkey_form);
+		if (newhint_form)
+		{
+			__BaseUI.Label(__BaseUI._rect(81f, 403f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+		}
+	}
+
+	private void DrawHotPanelContent()
+	{
+		float num;
+		if (hotpanel)
+		{
+			num = ((!(hotpanel_timer < 0f)) ? ((float)hotpanel_length[hotpanel_name] * (1f - hotpanel_timer / 0.2f)) : ((float)hotpanel_length[hotpanel_name]));
+			if (num > 92f)
+			{
+				__BaseUI.Label(__BaseUI._rect(hotpanel_startpos, 374f, num, 92f), string.Empty, form_graph.hotpanel);
+			}
+		}
+		else
+		{
+			num = ((!(hotpanel_timer < 0f)) ? ((float)hotpanel_length[hotpanel_name] * (hotpanel_timer / 0.2f)) : 0f);
+			if (num > 92f)
+			{
+				__BaseUI.Label(__BaseUI._rect(hotpanel_startpos, 374f, num, 92f), string.Empty, form_graph.hotpanel);
+			}
+		}
+		Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(hotpanel_startpos + 92, 374f));
+		panel_rect = new Rect(vector.x, vector.y, num - 92f, 92f);
+		GUI.BeginGroup(__BaseUI._rect(hotpanel_startpos + 92 - 100, 274f, num - 92f + 200f, 192f));
+		hotrects.Clear();
+		float num2 = num - (float)hotpanel_length[hotpanel_name];
+		if (hotpanel_name == "form")
+		{
+			foreach (FormationInfo item in AllFormation)
+			{
+				Rect position = __BaseUI._rect(num2 + 109f, 129f, 48f, 48f);
+				if (num2 + 109f < 100f)
+				{
+					break;
+				}
+				if (item.available)
+				{
+					__BaseUI.Label(__BaseUI._rect(num2 + 100f, 111f, 66f, 18f), item.formationName, __BaseUI._textNCenter, __BaseUI._clrYellowDark);
+					GUI.Label(position, new GUIContent(item.icon, "formation" + item.formationName + "\n" + item.desc), __BaseUI.normalStyle);
+					vector = GUIUtility.GUIToScreenPoint(new Vector2(position.x, position.y));
+					hotrects.Add("formation" + item.guid, new Rect(vector.x, vector.y, 48f, 48f));
+					if (item == CharFormation)
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 141f, 129f, 16f, 16f), string.Empty, form_graph.cur_select);
+					}
+					else if (!position.Contains(Event.current.mousePosition) && (!cur_hottip.Contains("formation") || !(cur_hottip == "formation" + item.guid)))
+					{
+						GUI.Label(position, string.Empty, ShareUI.unable1);
+					}
+					if (Global.character_.check_hint(1u, (uint)item.formid))
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 134f, 129f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+					}
+				}
+				else
+				{
+					GUI.Label(position, string.Empty, form_graph.formlock);
+				}
+				num2 += 66f;
+			}
+		}
+		else if (hotpanel_name == "army")
+		{
+			foreach (uint char_army in char_armys)
+			{
+				Rect rect = __BaseUI._rect(num2 + 109f, 129f, 48f, 48f);
+				if (num2 + 109f < 100f)
+				{
+					break;
+				}
+				if (Global.character_.army_types.ContainsKey((ushort)char_army))
+				{
+					_army_template armyTemplate = Global.getArmyTemplate(char_army);
+					__BaseUI.Label(__BaseUI._rect(num2 + 100f, 111f, 66f, 18f), armyTemplate.name, __BaseUI._textNCenter, __BaseUI._clrGreen);
+					int icon = armyTemplate.icon;
+					if (icon_armys.ContainsKey(icon) && icon_armys[icon] != null)
+					{
+						GUI.Label(rect, new GUIContent(icon_armys[icon], "army" + char_army), __BaseUI.normalStyle);
+					}
+					vector = GUIUtility.GUIToScreenPoint(new Vector2(rect.x, rect.y));
+					hotrects.Add("army" + char_army, new Rect(vector.x, vector.y, 48f, 48f));
+					if (char_army == Global.character_.form_generals_[0].idarmy_template)
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 141f, 129f, 16f, 16f), string.Empty, form_graph.cur_select);
+					}
+					else if (!rect.Contains(Event.current.mousePosition) && (!cur_hottip.Contains("army") || !(cur_hottip == "army" + armyTemplate.id)))
+					{
+						GUI.Label(rect, string.Empty, ShareUI.unable1);
+					}
+					if (Global.character_.check_hint(2u, char_army))
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 134f, 129f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+					}
+					else if (newhint_armyskill && armyskillhint == char_army && char_army != Global.character_.form_generals_[0].idarmy_template && hotpanel_timer < 0f)
+					{
+						Rect rc = __BaseUI.DrawArrowMessage(rect, ArrowFace.Down, (int)__BaseUI.normalStyle.CalcSize(new GUIContent(armyskill_msg)).x);
+						__BaseUI.Label(rc, armyskill_msg, __BaseUI._textNCenter, __BaseUI._clrMsg);
+					}
+				}
+				else
+				{
+					GUI.Label(rect, string.Empty, form_graph.formlock);
+				}
+				num2 += 66f;
+			}
+		}
+		else if (hotpanel_name == "skill")
+		{
+			uint num3 = Global.character_.form_generals_[0].activeskill;
+			foreach (uint char_skill in char_skills)
+			{
+				_skill skillTemplate = Global.getSkillTemplate(char_skill);
+				if (skillTemplate.limited_army != 0 && skillTemplate.limited_army != Global.character_.form_generals_[0].idarmy_template)
+				{
+					continue;
+				}
+				Rect position2 = __BaseUI._rect(num2 + 109f, 129f, 48f, 48f);
+				if (num2 + 109f < 100f)
+				{
+					break;
+				}
+				if (Global.character_.skills.ContainsKey((ushort)char_skill))
+				{
+					__BaseUI.Label(__BaseUI._rect(num2 + 100f, 111f, 66f, 18f), skillTemplate.name, __BaseUI._textNCenter, __BaseUI._clrCyanLight);
+					if (icon_skills.ContainsKey(skillTemplate.icon) && icon_skills[skillTemplate.icon] != null)
+					{
+						GUI.Label(position2, new GUIContent(icon_skills[skillTemplate.icon], "skill" + char_skill), __BaseUI.normalStyle);
+					}
+					vector = GUIUtility.GUIToScreenPoint(new Vector2(position2.x, position2.y));
+					hotrects.Add("skill" + char_skill, new Rect(vector.x, vector.y, 48f, 48f));
+					if (char_skill == Global.character_.form_generals_[0].activeskill)
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 141f, 129f, 16f, 16f), string.Empty, form_graph.cur_select);
+					}
+					else if (position2.Contains(Event.current.mousePosition))
+					{
+						num3 = skillTemplate.id;
+					}
+					else if (!cur_hottip.Contains("skill") || !(cur_hottip == "skill" + skillTemplate.id))
+					{
+						GUI.Label(position2, string.Empty, ShareUI.unable1);
+					}
+					if (Global.character_.check_hint(3u, char_skill))
+					{
+						__BaseUI.Label(__BaseUI._rect(num2 + 134f, 129f, 29f, 29f), string.Empty, __BaseUI._markNewStyle);
+					}
+				}
+				else
+				{
+					GUI.Label(position2, string.Empty, form_graph.formlock);
+				}
+				num2 += 66f;
+			}
+			if (num3 != cur_tipskill)
+			{
+				SetFormSkill(num3, 0);
+			}
+		}
+		GUI.EndGroup();
+	}
+
+	public void checkallhint()
+	{
+		newhint_form = (newhint_army = (newhint_skill = false));
+		armyskillhint = 0u;
+		foreach (FormationInfo item in AllFormation)
+		{
+			if (item.available && Global.character_.check_hint(1u, (uint)item.formid))
+			{
+				newhint_form = true;
+				break;
+			}
+		}
+		foreach (ushort key in Global.character_.army_types.Keys)
+		{
+			if (Global.character_.check_hint(2u, key))
+			{
+				newhint_army = true;
+				break;
+			}
+		}
+		foreach (ushort key2 in Global.character_.skills.Keys)
+		{
+			if (!Global.character_.check_hint(3u, key2))
+			{
+				continue;
+			}
+			_skill skillTemplate = Global.getSkillTemplate(key2);
+			_army_template armyTemplate = Global.getArmyTemplate((uint)skillTemplate.limited_army);
+			if (Global.character_.form_generals_[0].idarmy_template != skillTemplate.limited_army)
+			{
+				newhint_armyskill = true;
+				armyskillhint = (uint)skillTemplate.limited_army;
+				armyskill_msg = __BaseUI.load_str(20251u, armyTemplate.name, skillTemplate.name);
+				continue;
+			}
+			if (newhint_armyskill)
+			{
+				newhint_armyskill = false;
+			}
+			if (Global.character_.form_generals_[0].activeskill != key2)
+			{
+				newhint_skill = true;
+			}
+			armyskill_msg = __BaseUI.load_str(21250u, skillTemplate.name);
+		}
+	}
+
+	private void DrawMobileTip()
+	{
+		if (cur_hottip != string.Empty)
+		{
+			if (cur_hottip.Contains("skill"))
+			{
+				DrawMobileTip_Skill();
+			}
+			else if (cur_hottip.Contains("army"))
+			{
+				DrawMobileTip_Army();
+			}
+			else if (cur_hottip.Contains("formation"))
+			{
+				DrawMobileTip_Form();
+			}
+			return;
+		}
+		GeneralInfo generalInfo = null;
+		if (EnemySelect >= 0)
+		{
+			generalInfo = cur_hottip_gen;
+		}
+		else if (CurFormSelect >= 0)
+		{
+			generalInfo = PitchGenerals[CurFormSelect];
+		}
+		else if (SquadSelect >= 0)
+		{
+			generalInfo = SquadGeneralInfo[SquadSelect];
+		}
+		if (generalInfo != null)
+		{
+			DrawMobileTip_Gen(generalInfo);
+		}
+	}
+
+	private void DrawMobileTip_Skill()
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 378f, 100f), string.Empty, __BaseUI._tooltipStyle);
+		int id = int.Parse(cur_hottip.Replace("skill", string.Empty));
+		_skill skillTemplate = Global.getSkillTemplate((uint)id);
+		if (skillTemplate != null)
+		{
+			if (icon_skills.ContainsKey(skillTemplate.icon))
+			{
+				GUI.Label(__BaseUI._rect(23f, 23f, 56f, 56f), icon_skills[skillTemplate.icon], __BaseUI.normalStyle);
+			}
+			__BaseUI.Label(__BaseUI._rect(90f, 20f, 200f, 16f), skillTemplate.name, __BaseUI._textLeft, Color.white);
+			__BaseUI.Label(__BaseUI._rect(90f, 40f, 250f, 32f), skillTemplate.desc_detail, form_graph.t_skilldesc);
+		}
+	}
+
+	private void DrawMobileTip_Army()
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 378f, 100f), string.Empty, __BaseUI._tooltipStyle);
+		int id = int.Parse(cur_hottip.Replace("army", string.Empty));
+		_army_template armyTemplate = Global.getArmyTemplate((uint)id);
+		if (icon_armys.ContainsKey(armyTemplate.icon))
+		{
+			GUI.Label(__BaseUI._rect(23f, 23f, 56f, 56f), icon_armys[armyTemplate.icon], __BaseUI.normalStyle);
+		}
+		__BaseUI.Label(__BaseUI._rect(90f, 20f, 200f, 16f), armyTemplate.name, __BaseUI._textLeft, Color.white);
+		string text = TooltipUI.make_ArmySpecString(armyTemplate);
+		if (text == string.Empty)
+		{
+			text = __BaseUI.load_str(20252u);
+		}
+		__BaseUI.Label(__BaseUI._rect(90f, 40f, 250f, 16f), text, __BaseUI._textLeft, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(90f, 60f, 250f, 16f), armyTemplate.desc_detail, form_graph.t_skilldesc);
+	}
+
+	private void DrawMobileTip_Form()
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 378f, 100f), string.Empty, __BaseUI._tooltipStyle);
+		int num = int.Parse(cur_hottip.Replace("formation", string.Empty));
+		FormationInfo formationInfo = null;
+		foreach (FormationInfo item in AllFormation)
+		{
+			if (item.guid == num)
+			{
+				formationInfo = item;
+				break;
+			}
+		}
+		if (formationInfo != null)
+		{
+			GUI.Label(__BaseUI._rect(23f, 23f, 56f, 56f), formationInfo.icon, __BaseUI.normalStyle);
+			__BaseUI.Label(__BaseUI._rect(90f, 20f, 200f, 16f), formationInfo.formationName, __BaseUI._textLeft, Color.white);
+			__BaseUI.Label(__BaseUI._rect(90f, 40f, 250f, 32f), formationInfo.desc, form_graph.t_skilldesc);
+		}
+	}
+
+	private void DrawMobileTip_Gen(GeneralInfo gen)
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 702f, 100f), string.Empty, __BaseUI._tooltipStyle);
+		GUI.Label(__BaseUI._rect(23f, 23f, 56f, 56f), gen.faceicon, __BaseUI.normalStyle);
+		__BaseUI.Label(__BaseUI._rect(90f, 20f, 100f, 16f), gen.generalName, __BaseUI._textLeft, Color.white);
+		__BaseUI.Label(__BaseUI._rect(90f, 40f, 50f, 16f), __BaseUI.load_str(20253u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(140f, 40f, 100f, 16f), gen.level.ToString(), __BaseUI._textLeft, Color.white);
+		__BaseUI.Label(__BaseUI._rect(90f, 60f, 50f, 16f), __BaseUI.load_str(20254u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(140f, 60f, 50f, 16f), gen.armyhp.ToString(), __BaseUI._textLeft, Color.white);
+		__BaseUI.Label(__BaseUI._rect(210f, 20f, 70f, 16f), __BaseUI.load_str(20255u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(280f, 20f, 200f, 16f), gen.armytype, __BaseUI._textLeft, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(210f, 40f, 70f, 16f), __BaseUI.load_str(20256u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(280f, 40f, 200f, 16f), gen.armyspecname, __BaseUI._textLeft, __BaseUI._clrGreen);
+		__BaseUI.Label(__BaseUI._rect(210f, 60f, 70f, 16f), __BaseUI.load_str(20257u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(280f, 60f, 200f, 16f), gen.skillname, __BaseUI._textLeft, __BaseUI._clrGreen);
+		float x = __BaseUI._textLeft.CalcSize(new GUIContent(gen.armyspecname)).x;
+		int num = ((!(x < 100f)) ? (300 + (int)x) : 400);
+		__BaseUI.Label(__BaseUI._rect(num, 20f, 200f, 16f), __BaseUI.load_str(20258u), __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		__BaseUI.Label(__BaseUI._rect(num, 40f, 250f, 48f), gen.skill_desc, form_graph.t_skilldesc, Color.white);
+	}
+
+	private void ReInit(bool op)
+	{
+		if (op)
+		{
+			leave_genid = 0;
+			InitialNormalInfo();
+			foreach (FormationInfo item in AllFormation)
+			{
+				item.formicon = form_graph.button_form[item.iconid - 1];
+				item.icon = BaseAsset.was.GetAsset("ui_formation").Load("icon_zhenxing" + item.iconid) as Texture2D;
+				item.name = BaseAsset.was.GetAsset("ui_formation").Load("zhenxing" + item.guid) as Texture2D;
+			}
+			PrepGenFace();
+		}
+		Enable();
+	}
+
+	private void Leave_Form_Equipment_Check(ushort id)
+	{
+		if (!(RightPanel == "PresetDuel") && Global.character_.form_generals_.ContainsKey(id))
+		{
+			FormGeneral formGeneral = Global.character_.form_generals_[id];
+			if (formGeneral.equipments[0] != null || formGeneral.equipments[1] != null || formGeneral.artifact != null)
+			{
+				Disable();
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(769u), rmg, OnComfirmRemoveEquip, _bCancel: true, new object[1] { formGeneral });
+			}
+		}
+	}
+
+	private void OnComfirmRemoveEquip(bool bOK, object[] args)
+	{
+		formequip_state = 0;
+		if (bOK)
+		{
+			FormGeneral formGeneral = args[0] as FormGeneral;
+			cs_removeallequip(formGeneral.idgeneral_template, continue_equip: false);
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	public void Join_Form_Equipment_Check(ushort id)
+	{
+		if (!(RightPanel == "PresetDuel") && Global.character_.form_generals_.ContainsKey(id))
+		{
+			FormGeneral formGeneral = Global.character_.form_generals_[id];
+			if (formGeneral.equipments[0] == null || formGeneral.equipments[1] == null || formGeneral.artifact == null)
+			{
+				Disable();
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(770u), rmg, OnComfirmAutoEquip, _bCancel: true, new object[1] { formGeneral });
+			}
+		}
+	}
+
+	private void OnComfirmAutoEquip(bool bOK, object[] args)
+	{
+		formequip_state = 0;
+		if (bOK)
+		{
+			FormGeneral formGeneral = args[0] as FormGeneral;
+			cs_autoequiop(formGeneral.idgeneral_template, continue_artifact: true);
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	public void Exchange_Equipment_Check(ushort leaveid, ushort joinid)
+	{
+		if (RightPanel == "PresetDuel" || !Global.character_.form_generals_.ContainsKey(leaveid))
+		{
+			return;
+		}
+		FormGeneral formGeneral = Global.character_.form_generals_[leaveid];
+		if (Global.character_.form_generals_.ContainsKey(joinid))
+		{
+			FormGeneral formGeneral2 = Global.character_.form_generals_[joinid];
+			if (formGeneral2.equipments[0] == null || formGeneral2.equipments[1] == null || formGeneral2.artifact == null || formGeneral2.amulet == null)
+			{
+				Disable();
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(771u), rmg, OnComfirmAutoExchange, _bCancel: true, new object[2] { formGeneral, formGeneral2 });
+			}
+		}
+	}
+
+	public void OnComfirmAutoExchange(bool bOK, object[] args)
+	{
+		formequip_state = 0;
+		if (bOK)
+		{
+			FormGeneral formGeneral = args[0] as FormGeneral;
+			FormGeneral formGeneral2 = args[1] as FormGeneral;
+			cs_removeallequip(formGeneral.idgeneral_template, continue_equip: true);
+			cs_autoequiop(formGeneral2.idgeneral_template, continue_artifact: true);
+			cs_swapamulet(formGeneral2, formGeneral);
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void FormEquipEnd()
+	{
+		if (formequip_state > 0)
+		{
+			formequip_state--;
+		}
+		if (formequip_state > 0)
+		{
+			return;
+		}
+		foreach (GeneralInfo item in SquadGeneralInfo)
+		{
+			FormGeneral formGeneral = Global.character_.form_generals_[(ushort)item.guid];
+			item.attack = (int)formGeneral.param.attack;
+			item.defence = (int)formGeneral.param.defense;
+			item.spell = (int)formGeneral.param.spell;
+			item.armyhp = (int)formGeneral.param.hp;
+			item.battle_score = formGeneral.battle_score;
+		}
+		formequip_state = 0;
+		Enable();
+	}
+
+	private void cs_autoequiop(ushort id, bool continue_artifact)
+	{
+		CSAutoEquipGeneral_0x186 cSAutoEquipGeneral_0x = new CSAutoEquipGeneral_0x186();
+		cSAutoEquipGeneral_0x.genid = id;
+		formequip_state++;
+		RootUI.m_client.Send(390, cSAutoEquipGeneral_0x, sc_autoequip, continue_artifact);
+	}
+
+	private void sc_autoequip(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCAutoEquipGeneral_0x186 sCAutoEquipGeneral_0x = JSProtoBuf.Serializer.Deserialize<SCAutoEquipGeneral_0x186>(stream);
+		if (sCAutoEquipGeneral_0x.state)
+		{
+			FormGeneral formGeneral = Global.character_.form_generals_[(ushort)sCAutoEquipGeneral_0x.genid];
+			if (formGeneral.equipments[0] != null)
+			{
+				formGeneral.equipments[0].idgeneral_template = ushort.MaxValue;
+				formGeneral.equipments[0] = null;
+			}
+			if (formGeneral.equipments[1] != null)
+			{
+				formGeneral.equipments[1].idgeneral_template = ushort.MaxValue;
+				formGeneral.equipments[1] = null;
+			}
+			if (formGeneral.artifact != null)
+			{
+				formGeneral.artifact.idgeneral_template = ushort.MaxValue;
+				formGeneral.artifact = null;
+			}
+			if (sCAutoEquipGeneral_0x.weaponid != 0 && Global.character_.equipments.ContainsKey((byte)sCAutoEquipGeneral_0x.weaponid))
+			{
+				formGeneral.equipments[0] = Global.character_.equipments[(byte)sCAutoEquipGeneral_0x.weaponid];
+				formGeneral.equipments[0].idgeneral_template = formGeneral.idgeneral_template;
+			}
+			if (sCAutoEquipGeneral_0x.armorid != 0 && Global.character_.equipments.ContainsKey((byte)sCAutoEquipGeneral_0x.armorid))
+			{
+				formGeneral.equipments[1] = Global.character_.equipments[(byte)sCAutoEquipGeneral_0x.armorid];
+				formGeneral.equipments[1].idgeneral_template = formGeneral.idgeneral_template;
+			}
+			if ((bool)arg)
+			{
+				EquipmentUI component = BaseUI.GetRootUI().GetComponent<EquipmentUI>();
+				component.OnFormEquipEnd = FormEquipEnd;
+				formequip_state++;
+				component.cs_equip_auto_artifact(formGeneral.idgeneral_template);
+			}
+			FormEquipEnd();
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void cs_removeallequip(ushort genid, bool continue_equip)
+	{
+		CSRemoveAllEquip_0x185 cSRemoveAllEquip_0x = new CSRemoveAllEquip_0x185();
+		cSRemoveAllEquip_0x.genid = genid;
+		formequip_state++;
+		RootUI.m_client.Send(389, cSRemoveAllEquip_0x, sc_removeallequip, continue_equip);
+	}
+
+	private void sc_removeallequip(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCRemoveAllEquip_0x185 sCRemoveAllEquip_0x = JSProtoBuf.Serializer.Deserialize<SCRemoveAllEquip_0x185>(stream);
+		if (sCRemoveAllEquip_0x.state)
+		{
+			FormGeneral formGeneral = Global.character_.form_generals_[(ushort)sCRemoveAllEquip_0x.genid];
+			if (formGeneral.equipments[0] != null)
+			{
+				formGeneral.equipments[0].idgeneral_template = ushort.MaxValue;
+				formGeneral.equipments[0] = null;
+			}
+			if (formGeneral.equipments[1] != null)
+			{
+				formGeneral.equipments[1].idgeneral_template = ushort.MaxValue;
+				formGeneral.equipments[1] = null;
+			}
+			if (formGeneral.artifact != null)
+			{
+				formGeneral.artifact.idgeneral_template = ushort.MaxValue;
+				formGeneral.artifact = null;
+			}
+		}
+		FormEquipEnd();
+	}
+
+	private void cs_swapamulet(FormGeneral genjoin, FormGeneral genleave)
+	{
+		AmuletUI component = BaseUI.GetRootUI().GetComponent<AmuletUI>();
+		if (genleave.amulet != null)
+		{
+			formequip_state++;
+			component.OnFormEquipEnd = FormEquipEnd;
+			component.cs_amulet_swap_0x4D1(genleave.amulet, genjoin.idgeneral_template, 0, bForce: false, bNoDis: true);
+		}
+	}
+
+	private void initDuelAsset(AssetBundle ui_duel)
+	{
+		__BaseUI._boxnew9Style.border = new RectOffset(24, 24, 24, 24);
+		ui_icondi3.normal.background = ui_duel.Load("ui_icondi3") as Texture2D;
+		ui_icondi3.border = new RectOffset(24, 24, 24, 24);
+		ui_zi_wfxhs[0] = new GUIStyle();
+		ui_zi_wfxhs[0].normal.background = ui_duel.Load("ui_zi_wfxs") as Texture2D;
+		ui_zi_wfxhs[1] = new GUIStyle();
+		ui_zi_wfxhs[1].normal.background = ui_duel.Load("ui_zi_wfhs") as Texture2D;
+		ui_zhenxingdi_hong.normal.background = ui_duel.Load("ui_zhenxingdi_hong") as Texture2D;
+		ui_zhenxingdi_lan.normal.background = ui_duel.Load("ui_zhenxingdi_lan") as Texture2D;
+		ui_difangwujiang.normal.background = ui_duel.Load("ui_difangwujiang") as Texture2D;
+		ui_difangzhenxing.normal.background = ui_duel.Load("ui_difangzhenxing") as Texture2D;
+		ui_shengyushijian.normal.background = ui_duel.Load("ui_shengyushijian") as Texture2D;
+		ui_timeFont.font = __BaseUI.GetFontCache().NumFont;
+		ui_timeFont.fontSize = 30;
+		ui_timeFont.normal.textColor = new Color(1f, 1f, 1f);
+		btnReady.make(ui_duel, "button_zhunbeijiuxu");
+		PrepPresetDuelFormAsset();
+	}
+
+	private void initLadderAsset(AssetBundle uibundle)
+	{
+		ui_zi15.normal.background = uibundle.Load("ui_zi15") as Texture2D;
+	}
+
+	private void drawOpponentPanel()
+	{
+		float num = 320f;
+		float num2 = 300f;
+		__BaseUI.BeginGroup(__BaseUI._rect(360f, 60f, num, num2));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, num, num), string.Empty, __BaseUI._boxnew9Style);
+		__BaseUI.Label(__BaseUI._rectCT(64.5f, 20f, 129f, 14f), string.Empty, ui_difangwujiang);
+		for (int i = 0; i < 8; i++)
+		{
+			float num3 = (num - 280f) / 2f + (float)(i % 4 * 70);
+			float num4 = 35 + i / 4 * 65;
+			if (i < duel_op_gen_list.Count)
+			{
+				GUI.Label(__BaseUI._rect(num3 + 7f, num4 + 7f, 56f, 56f), new GUIContent(string.Empty, duel_op_gen_list[i].tooltip), duel_op_gen_list[i].iconStyle);
+			}
+			__BaseUI.Label(__BaseUI._rect(num3, num4, 70f, 70f), string.Empty, ui_icondi3);
+		}
+		__BaseUI.Label(__BaseUI._rectCT(64.5f, 180f, 129f, 14f), string.Empty, ui_difangzhenxing);
+		__BaseUI.Label(__BaseUI._rectCT(84f, 200f, 79f, 80f), string.Empty, ui_zhenxingdi_lan);
+		GUI.Label(__BaseUI._rectCT(76f, 210f, 60f, 60f), new GUIContent(string.Empty, duel_op_form_list[0].tooltip), duel_op_form_list[0].iconStyle);
+		__BaseUI.Label(__BaseUI._rectCT(-5f, 200f, 79f, 80f), string.Empty, ui_zhenxingdi_hong);
+		GUI.Label(__BaseUI._rectCT(-13f, 210f, 60f, 60f), new GUIContent(string.Empty, duel_op_form_list[1].tooltip), duel_op_form_list[1].iconStyle);
+		__BaseUI.EndGroup();
+	}
+
+	private void drawLadderOpponentPanel()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rect(372f, 59f, 309f, 309f));
+		GUI.Label(__BaseUI._rect(0f, 0f, 309f, 309f), string.Empty, form_graph.right_panel2);
+		for (int i = 0; i < EnemyGeneralInfo.Count; i++)
+		{
+			GeneralInfo generalInfo = EnemyGeneralInfo[i];
+			string tooltip = string.Empty;
+			if (generalInfo.generalName != "unknown" && generalInfo.generalName != "nogeneral")
+			{
+				tooltip = "PlayerEnemyGen" + generalInfo.guid;
+			}
+			int num = 39 + 86 * (i % 3);
+			int num2 = 63 + 73 * (i / 3);
+			Rect position = new Rect(num, num2, 56f, 56f);
+			if (generalInfo.generalName != "nogeneral")
+			{
+				if (generalInfo.faceicon == null)
+				{
+					GUI.Label(position, new GUIContent(string.Empty, tooltip), __BaseUI._icon_unkown);
+				}
+				else
+				{
+					GUI.Label(position, new GUIContent(generalInfo.faceicon, tooltip), form_graph.bgstyle);
+				}
+			}
+			else if (generalInfo.faceicon == null)
+			{
+				GUI.Label(position, string.Empty, __BaseUI._icon_unkown);
+			}
+			else
+			{
+				GUI.Label(position, generalInfo.faceicon, form_graph.bgstyle);
+			}
+		}
+		__BaseUI.EndGroup();
+	}
+
+	private void InitPresetDuel()
+	{
+		InitPresetDuelInfo();
+		AddAsset("ui_formation");
+		AddAsset("ui_duel");
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		isLoading = true;
+		CollectingStart(bCollecting: false);
+		StartLoading();
+		SetCurFormSelect(-1);
+	}
+
+	private void InitPresetDuelInfo()
+	{
+		InitFormInfo();
+		m_curPresetDuelFormGen = ((PresetDuelUI.player_index != 0) ? PresetDuelUI.form_gen1 : PresetDuelUI.form_gen0);
+		SquadSelect = 0;
+		foreach (SCPresetDuel_0x2A8.General item in m_curPresetDuelFormGen.general)
+		{
+			if (Global.getTemplate("army", item.idarmy) is _army army)
+			{
+				GeneralInfo generalInfo = InitByArmy(army.id, army.name, (short)PresetDuelUI.player_level, 0, captain: false, -1);
+				_general_template general_template = Global.getTemplate("general_template", item.idgen_temp) as _general_template;
+				_army_template army_template = Global.getTemplate("army_template", army.idarmy_template) as _army_template;
+				generalInfo.guid = item.idgen_temp;
+				if (item.idgen_temp == 0)
+				{
+					generalInfo.generalName = Global.character_.name;
+					generalInfo.faceid = Global.character_.icon;
+				}
+				else if (general_template != null)
+				{
+					generalInfo.generalName = general_template.name;
+					generalInfo.faceid = general_template.icon;
+				}
+				if (item.idgen_temp == 0)
+				{
+					generalInfo.tooltip = "CharGeneral0";
+				}
+				else
+				{
+					generalInfo.tooltip = "DuelGeneral" + item.idgen_temp + "," + item.idarmy;
+				}
+				SquadGeneralInfo.Add(generalInfo);
+			}
+		}
+		for (int i = 0; i < m_curPresetDuelFormGen.idformation.Count; i++)
+		{
+			int num = (int)m_curPresetDuelFormGen.idformation[i];
+			_formation_template formation_template = Global.getTemplate("formation_template", (uint)num) as _formation_template;
+			FormationInfo formationInfo = new FormationInfo();
+			formationInfo.formationName = formation_template.name;
+			formationInfo.available = true;
+			formationInfo.desc = formation_template.desc;
+			formationInfo.level = 1;
+			formationInfo.formid = num;
+			formationInfo.spotcount = 8;
+			formationInfo.guid = num;
+			formationInfo.currentform = false;
+			formationInfo.iconid = formation_template.icon;
+			for (int j = 0; j < 4; j++)
+			{
+				for (int k = 0; k < 4; k++)
+				{
+					formationInfo.formgenpos[j, k].spot = 0;
+					formationInfo.formgenpos[j, k].genid = -2L;
+					formationInfo.formgenpos[j, k].modx = 0;
+					formationInfo.formgenpos[j, k].mody = 0;
+					formationInfo.formgenpos[j, k].genspot = 0;
+				}
+			}
+			formationInfo.dbspot.Add(formation_template.location1 - 1);
+			formationInfo.dbspot.Add(formation_template.location2 - 1);
+			formationInfo.dbspot.Add(formation_template.location3 - 1);
+			formationInfo.dbspot.Add(formation_template.location4 - 1);
+			formationInfo.dbspot.Add(formation_template.location5 - 1);
+			formationInfo.dbspot.Add(formation_template.location6 - 1);
+			formationInfo.dbspot.Add(formation_template.location7 - 1);
+			formationInfo.dbspot.Add(formation_template.location8 - 1);
+			foreach (int item2 in formationInfo.dbspot)
+			{
+				int num2 = item2 / 4;
+				int num3 = item2 % 4;
+				formationInfo.formgenpos[num2, num3].spot = formationInfo.dbspot.IndexOf(item2) + 1;
+			}
+			AllFormation.Add(formationInfo);
+			if (m_curPresetDuelFormGen.cur_form == (uint)i)
+			{
+				CharFormation = formationInfo;
+			}
+		}
+		if (CharFormation == null)
+		{
+			CharFormation = AllFormation[0];
+			CharFormation.currentform = true;
+		}
+		InitialPresetTeamData();
+		duel_op_gen_list.Clear();
+		SCPresetDuel_0x2A8.FormGenInfo formGenInfo = ((PresetDuelUI.player_index != 0) ? PresetDuelUI.form_gen0 : PresetDuelUI.form_gen1);
+		for (int l = 0; l < formGenInfo.general.Count - 1; l++)
+		{
+			PresetDuelOpponentGenInfo presetDuelOpponentGenInfo = new PresetDuelOpponentGenInfo();
+			presetDuelOpponentGenInfo.gen_temp = Global.getTemplate("general_template", formGenInfo.general[l + 1].idgen_temp) as _general_template;
+			presetDuelOpponentGenInfo.army = Global.getTemplate("army", formGenInfo.general[l + 1].idarmy) as _army;
+			presetDuelOpponentGenInfo.tooltip = "DuelGeneral" + formGenInfo.general[l + 1].idgen_temp + "," + formGenInfo.general[l + 1].idarmy;
+			if (presetDuelOpponentGenInfo.gen_temp != null)
+			{
+				AddAssetSub("face" + presetDuelOpponentGenInfo.gen_temp.icon);
+			}
+			duel_op_gen_list.Add(presetDuelOpponentGenInfo);
+		}
+		duel_op_form_list.Clear();
+		for (int m = 0; m < formGenInfo.idformation.Count; m++)
+		{
+			PresetDuelOpponentFormInfo presetDuelOpponentFormInfo = new PresetDuelOpponentFormInfo();
+			presetDuelOpponentFormInfo.form_temp = Global.getTemplate("formation_template", formGenInfo.idformation[m]) as _formation_template;
+			if (presetDuelOpponentFormInfo.form_temp != null)
+			{
+				presetDuelOpponentFormInfo.tooltip = "formation" + presetDuelOpponentFormInfo.form_temp.name + "\n" + presetDuelOpponentFormInfo.form_temp.desc;
+			}
+			duel_op_form_list.Add(presetDuelOpponentFormInfo);
+		}
+	}
+
+	private void InitialPresetTeamData()
+	{
+		PitchGenerals.Clear();
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				CharFormation.formgenpos[i, j].genid = -2L;
+			}
+		}
+		for (int k = 0; k < m_curPresetDuelFormGen.general.Count; k++)
+		{
+			GeneralInfo generalInfo = SquadGeneralInfo[k];
+			if (m_curPresetDuelFormGen.general[k].location != 0)
+			{
+				int num = (int)(m_curPresetDuelFormGen.general[k].location - 1);
+				long genid = m_curPresetDuelFormGen.general[k].idgen_temp;
+				int num2 = CharFormation.dbspot[num] / 4;
+				int num3 = CharFormation.dbspot[num] % 4;
+				CharFormation.formgenpos[num2, num3].genid = genid;
+				CharFormation.formgenpos[num2, num3].modx = 0;
+				CharFormation.formgenpos[num2, num3].mody = 0;
+				CharFormation.formgenpos[num2, num3].genspot = num + 1;
+				generalInfo.locx = CharFormation.dbspot[num] / 4;
+				generalInfo.locy = CharFormation.dbspot[num] % 4;
+				generalInfo.modx = CharFormation.formgenpos[num2, num3].modx;
+				generalInfo.mody = CharFormation.formgenpos[num2, num3].mody;
+				PitchGenerals.Add(generalInfo);
+			}
+			else
+			{
+				generalInfo.locx = 0;
+				generalInfo.locy = 0;
+				generalInfo.modx = 0;
+				generalInfo.modx = 0;
+			}
+		}
+		if (PitchGenerals.IndexOf(SquadGeneralInfo[0]) != -1)
+		{
+			CurFormSelect = 0;
+			SquadSelect = -1;
+			EnemySelect = -1;
+		}
+		else
+		{
+			SetCurFormSelect(-1);
+			SquadSelect = 0;
+			EnemySelect = -1;
+		}
+	}
+
+	private void PrepPresetDuelFormAsset()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_formation");
+		for (int i = 0; i < duel_op_form_list.Count; i++)
+		{
+			duel_op_form_list[i].iconStyle.normal.background = asset.Load("icon_zhenxing" + duel_op_form_list[i].form_temp.icon) as Texture2D;
+		}
+	}
+}

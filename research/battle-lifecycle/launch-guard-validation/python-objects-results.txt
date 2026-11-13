@@ -1,0 +1,215 @@
+======================================================================
+FAIL: test_business_claim_permanently_retires_startup_cancel_capability (tests.test_objects.ControllerTests.test_business_claim_permanently_retires_startup_cancel_capability)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 439, in test_business_claim_permanently_retires_startup_cancel_capability
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_campaign_owner_blocks_manual_actions_rebind_and_second_owner (tests.test_objects.ControllerTests.test_campaign_owner_blocks_manual_actions_rebind_and_second_owner)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 326, in test_campaign_owner_blocks_manual_actions_rebind_and_second_owner
+    client, token = self.campaign_ready()
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 318, in campaign_ready
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_campaign_pause_gate_returns_before_admitted_io_and_blocks_next (tests.test_objects.ControllerTests.test_campaign_pause_gate_returns_before_admitted_io_and_blocks_next)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 340, in test_campaign_pause_gate_returns_before_admitted_io_and_blocks_next
+    client, token = self.campaign_ready()
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 318, in campaign_ready
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_campaign_pause_still_observes_and_heartbeats_without_gui_events_consumption (tests.test_objects.ControllerTests.test_campaign_pause_still_observes_and_heartbeats_without_gui_events_consumption)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 382, in test_campaign_pause_still_observes_and_heartbeats_without_gui_events_consumption
+    client, token = self.campaign_ready()
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 318, in campaign_ready
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_campaign_requires_current_character_identity (tests.test_objects.ControllerTests.test_campaign_requires_current_character_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 395, in test_campaign_requires_current_character_identity
+    self.ready()
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_campaign_subscription_is_independent_bounded_and_identity_checked (tests.test_objects.ControllerTests.test_campaign_subscription_is_independent_bounded_and_identity_checked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 364, in test_campaign_subscription_is_independent_bounded_and_identity_checked
+    client, token = self.campaign_ready()
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 318, in campaign_ready
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_close_is_async_stops_component_and_blocks_new_work (tests.test_objects.ControllerTests.test_close_is_async_stops_component_and_blocks_new_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 265, in test_close_is_async_stops_component_and_blocks_new_work
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_close_pending_operation_with_ledger_error_still_settles_unknown (tests.test_objects.ControllerTests.test_close_pending_operation_with_ledger_error_still_settles_unknown)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 276, in test_close_pending_operation_with_ledger_error_still_settles_unknown
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_first_request_os_error_immediately_stops_more_bridge_polling (tests.test_objects.ControllerTests.test_first_request_os_error_immediately_stops_more_bridge_polling)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 299, in test_first_request_os_error_immediately_stops_more_bridge_polling
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_live_client_connect_refusal_keeps_state_and_exposes_exact_reason (tests.test_objects.ControllerTests.test_live_client_connect_refusal_keeps_state_and_exposes_exact_reason)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 400, in test_live_client_connect_refusal_keeps_state_and_exposes_exact_reason
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_normalized_action_result_contains_only_current_verified_restoration (tests.test_objects.ControllerTests.test_normalized_action_result_contains_only_current_verified_restoration)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 191, in test_normalized_action_result_contains_only_current_verified_restoration
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_stale_connection_capability_cannot_cancel_replacement_attempt (tests.test_objects.ControllerTests.test_stale_connection_capability_cannot_cancel_replacement_attempt)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 418, in test_stale_connection_capability_cannot_cancel_replacement_attempt
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_state_failure_invalidates_old_stats_and_verification_gate (tests.test_objects.ControllerTests.test_state_failure_invalidates_old_stats_and_verification_gate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 173, in test_state_failure_invalidates_old_stats_and_verification_gate
+    self.ready()
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_stop_during_action_requests_one_stop_without_retry (tests.test_objects.ControllerTests.test_stop_during_action_requests_one_stop_without_retry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 207, in test_stop_during_action_requests_one_stop_without_retry
+    client = self.ready()
+             ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_stopping_keeps_passive_monitor_and_allows_clean_reconnect (tests.test_objects.ControllerTests.test_stopping_keeps_passive_monitor_and_allows_clean_reconnect)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 180, in test_stopping_keeps_passive_monitor_and_allows_clean_reconnect
+    first = self.ready()
+            ^^^^^^^^^^^^
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+======================================================================
+FAIL: test_unbind_detaches_but_controller_can_bind_again (tests.test_objects.ControllerTests.test_unbind_detaches_but_controller_can_bind_again)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 255, in test_unbind_detaches_but_controller_can_bind_again
+    self.ready()
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 160, in ready
+    eventually(lambda: self.controller.can_verify)
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_objects.py", line 24, in eventually
+    raise AssertionError("condition did not settle")
+AssertionError: condition did not settle
+
+----------------------------------------------------------------------
+Ran 24 tests in 24.202s
+
+FAILED (failures=16)

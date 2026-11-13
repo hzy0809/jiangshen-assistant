@@ -1,0 +1,14 @@
+using System.Collections.Generic;
+using Database;
+
+public class BuildingType : _building_type
+{
+	public _RadioStyle btnStyle = new _RadioStyle();
+
+	public List<BuildingTemplate> buildings = new List<BuildingTemplate>();
+
+	public BuildingType(_building_type d)
+	{
+		Set(d);
+	}
+}

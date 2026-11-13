@@ -1,0 +1,1156 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using AnimMaps;
+using Database;
+using UnityEngine;
+using game.net.data.StoC;
+
+public class BattleResultUI : __BaseUI
+{
+	public static readonly string[] battle_lvl_names = new string[11]
+	{
+		"ui_zhandou_wanbai", "ui_zhandou_dabai", "ui_zhandou_shibai", "ui_zhandou_xiaobai", "ui_zhandou_xibai", "ui_zhandou_pingju", "ui_zhandou_xiansheng", "ui_zhandou_xiaosheng", "ui_zhandou_shengli", "ui_zhandou_dasheng",
+		"ui_zhandou_wansheng"
+	};
+
+	private RootMessenger m_prevUI;
+
+	private GUIStyle bgStyle = new GUIStyle();
+
+	private Texture2D texBoard;
+
+	private Texture2D[] texResults = new Texture2D[11];
+
+	private Texture2D tianfuup;
+
+	private Texture2D texStar;
+
+	private Texture2D texFrame;
+
+	private Texture2D texFrameGray;
+
+	private Texture2D texMask;
+
+	private Texture2D texMaskGray;
+
+	private Texture2D iconExp;
+
+	private Texture2D iconSoul;
+
+	private Texture2D[] texShadows = new Texture2D[2];
+
+	private GUIStyle boxStyle = new GUIStyle();
+
+	private Texture2D[,] texBars = new Texture2D[3, 3];
+
+	private Texture2D texLevelOver;
+
+	private _ButtonStyle btnStar = new _ButtonStyle();
+
+	private _ButtonStyle btnTalisman = new _ButtonStyle();
+
+	private GUIStyle hoverStar = new GUIStyle();
+
+	private GUIStyle hoverTalisman = new GUIStyle();
+
+	private _ButtonStyle btnChest = new _ButtonStyle();
+
+	private _ButtonStyle btnClose = new _ButtonStyle();
+
+	private _ButtonStyle btnUP = new _ButtonStyle();
+
+	private _ButtonStyle Btn_choujiang = new _ButtonStyle();
+
+	private _ButtonStyle Btn_lingqu = new _ButtonStyle();
+
+	private GUIStyle hoverUP = new GUIStyle();
+
+	private GUIStyle textYellow = new GUIStyle();
+
+	private GUIStyle textGreen = new GUIStyle();
+
+	private GUIStyle textYellow2 = new GUIStyle();
+
+	private GUIStyle textGreen2 = new GUIStyle();
+
+	private GUIStyle textBlue = new GUIStyle();
+
+	private _RadioStyle itemStyle = new _RadioStyle();
+
+	private AnimMapsMgr m_anim_maps = AnimMapsMgrFactory.create();
+
+	private AnimEffect levelup_effect;
+
+	private float height;
+
+	private bool m_bShowVisible;
+
+	private bool m_bCampaign;
+
+	private byte m_troopID;
+
+	private int m_iTreasureCount;
+
+	private string m_defenderName = string.Empty;
+
+	private string mine_ui = string.Empty;
+
+	private string mine_msg = string.Empty;
+
+	public int m_battleLevel;
+
+	public bool m_bBattleRank;
+
+	public int m_battleRank;
+
+	public List<_Treasure> m_vctBonuses;
+
+	private string m_message = string.Empty;
+
+	private DateTime m_startTime;
+
+	private int m_iHintChest = -1;
+
+	private int m_expStart;
+
+	private int m_expGet;
+
+	private int m_expGetShow;
+
+	private float m_expRequire;
+
+	private bool m_expLevelUp;
+
+	private int m_expLevel;
+
+	private int m_soulStart;
+
+	private int m_soulGet;
+
+	private int m_soulGetShow;
+
+	private float m_soulRequire;
+
+	private float tianfu_soul;
+
+	private int m_reputationStart;
+
+	private int m_reputationGet;
+
+	private int m_reputationGetShow;
+
+	private float m_reputationRequire;
+
+	private int m_barCount;
+
+	private float m_barHeight;
+
+	private int m_bonusCount;
+
+	private float m_bonusHeight;
+
+	public bool m_bNotIgnoreGold;
+
+	private ScenarioSection myss = new ScenarioSection();
+
+	private ScenarioSection ss1 = new ScenarioSection();
+
+	private ScenarioSection ss2 = new ScenarioSection();
+
+	private int bonus_scrollid;
+
+	private Texture2D texTitle;
+
+	private ScenarioSection desc = new ScenarioSection();
+
+	private Vector2 texSize = Vector2.zero;
+
+	private bool autoClose;
+
+	private DateTime closeTime = DateTime.Now;
+
+	private GUIStyle sty_addtotreasury = new GUIStyle();
+
+	private ChristmasLotteryItemTemplate m_clit;
+
+	private bool[] level_star = new bool[4];
+
+	private List<int> m_reputationList;
+
+	private bool m_move_y;
+
+	private int _general_get_id;
+
+	public override void Start()
+	{
+		base.Start();
+		bonus_scrollid = ScrollControl.RegisterInfo();
+	}
+
+	private void Update()
+	{
+		m_anim_maps.update();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (m_move_y)
+		{
+			Rect rc = __BaseUI._rectC(210f, height / 2f, 420f, height);
+			rc.y -= 100f;
+			if (!BeginGUI(rc, __BaseUI.UIDepth_BattleResult, bgStyle, null))
+			{
+				return;
+			}
+		}
+		else if (!BeginGUI(420f, height, __BaseUI.UIDepth_BattleResult, bgStyle, null))
+		{
+			return;
+		}
+		showResult2();
+		m_anim_maps.draw();
+		EndGUI(hasClose: false);
+	}
+
+	private void showResult2()
+	{
+		if (mine_ui == "skytower")
+		{
+			myss.draw(__BaseUI._rect(55f, 20f, w, 16f), __BaseUI._textLeft);
+		}
+		else if (texTitle != null)
+		{
+			GUI.DrawTexture(__BaseUI._rectCT(texSize.x / 2f, 20f, texSize.x, texSize.y), texTitle);
+		}
+		else
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(0f, 20f, w, 16f), m_message, __BaseUI._textCenter, __BaseUI._clrYellowLight, 14);
+		}
+		TimeSpan timeSpan = DateTime.Now - m_startTime;
+		float num = 45f;
+		if (texTitle != null)
+		{
+			num += texSize.y;
+		}
+		if (desc != null)
+		{
+			desc.draw(__BaseUI._rect(45f, 20f + texSize.y + 5f, desc.height, desc.width), __BaseUI._textNLeft);
+			num += desc.height;
+		}
+		switch (mine_ui)
+		{
+		case "skytower":
+			if (mine_msg != string.Empty)
+			{
+				num = 95f;
+				ss1.draw(__BaseUI._rect(75f, 50f, 300f, 15f), __BaseUI._textLeft);
+				ss2.draw(__BaseUI._rect(90f, 70f, 300f, 15f), __BaseUI._textLeft);
+			}
+			else
+			{
+				num = 55f;
+			}
+			break;
+		}
+		if (m_barHeight > 0f)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(23f, 45f, w - 46f, m_barHeight));
+			GUI.Label(__BaseUI._rect(0f, 0f, w - 46f, m_barHeight), string.Empty, __BaseUI._boxnew10Style);
+			num = 0f;
+			float num2 = (float)(timeSpan.TotalSeconds / 1.0);
+			if (num2 > 1f)
+			{
+				num2 = 1f;
+			}
+			if (m_expGet > 0)
+			{
+				__BaseUI.BeginGroup(__BaseUI._rect(48f, num, 300f, 80f));
+				drawExpBars(num2, (float)timeSpan.TotalSeconds);
+				__BaseUI.EndGroup();
+				num += 35f;
+			}
+			if (m_soulGet > 0)
+			{
+				__BaseUI.BeginGroup(__BaseUI._rect(48f, num, 300f, 80f));
+				drawSoulBars(num2, (float)timeSpan.TotalSeconds);
+				__BaseUI.EndGroup();
+			}
+			__BaseUI.EndGroup();
+			num = 45f + m_barHeight + 20f;
+		}
+		if (m_bonusHeight > 0f)
+		{
+			int num3 = 66;
+			int num4 = ((m_bonusCount > 10) ? 330 : ((int)m_bonusHeight));
+			Rect position = __BaseUI._rect(23f, num, w - 46f, num4);
+			Rect contentRect = __BaseUI._rect(0f, 0f, w - 66f, m_bonusHeight);
+			GUI.Label(position, string.Empty, __BaseUI._boxnew10Style);
+			Vector2 scrollpos = ScrollControl.infos[bonus_scrollid].scrollpos;
+			scrollpos = GUIHacks.BeginScrollView(position, scrollpos, contentRect, useHorizontal: false, m_bonusCount > 5, new GUIStyle(), __BaseUI._vertScroll1[0], num3, 0, bonus_scrollid);
+			ScrollControl.infos[bonus_scrollid].scrollpos = scrollpos;
+			int num5 = 0;
+			int num6 = 0;
+			foreach (_Treasure vctBonuse in m_vctBonuses)
+			{
+				if (vctBonuse.isBaseTreasure())
+				{
+					num5++;
+					continue;
+				}
+				if (!((float)((num6 / 2 + 1) * num3) < scrollpos.y) && !((float)(num6 / 2 * num3) > scrollpos.y + (float)num4))
+				{
+					if (m_bonusCount == 1)
+					{
+						__BaseUI.BeginGroup(__BaseUI._rect(90 + 175 * (num6 % 2), 10 + num6 / 2 * 66, 200f, 90f));
+					}
+					else
+					{
+						__BaseUI.BeginGroup(__BaseUI._rect(18 + 175 * (num6 % 2), 10 + num6 / 2 * 66, 200f, 90f));
+					}
+					__BaseUI.Box(__BaseUI._rect(38f, 7f, 150f, 44f), texShadows[1]);
+					GUI.Label(__BaseUI._rect(4f, 4f, 50f, 50f), string.Empty, __BaseUI._icondiStyle);
+					TextAnchor alignment = __BaseUI.normalStyle.alignment;
+					__BaseUI.normalStyle.alignment = TextAnchor.MiddleCenter;
+					GUI.Label(__BaseUI._rect(4f, 4f, 50f, 50f), new GUIContent(vctBonuse.texIcon, "bonus" + num5), __BaseUI.normalStyle);
+					__BaseUI.normalStyle.alignment = alignment;
+					if (vctBonuse.name == "general" || vctBonuse.name == "gem" || vctBonuse.name == "amulet" || vctBonuse.name == "special_gem" || vctBonuse.type == 53)
+					{
+						__BaseUI.Label(__BaseUI._rect(80f, 19f, 200f, 20f), vctBonuse.strParam[0], __BaseUI._textNLeft, vctBonuse.clr);
+					}
+					else if (vctBonuse.name == "equipment")
+					{
+						__BaseUI.Label(__BaseUI._rect(80f, 9f, 200f, 20f), vctBonuse.strParam[0], __BaseUI._textNLeft, vctBonuse.clr);
+						__BaseUI.Label(__BaseUI._rect(80f, 29f, 200f, 20f), "x" + vctBonuse.strParam[1], __BaseUI._textNLeft, __BaseUI._clrCyan);
+					}
+					else if (vctBonuse.type == 64)
+					{
+						_building building = Global.getTemplate("building", (uint)vctBonuse.param[0]) as _building;
+						__BaseUI.Label(__BaseUI._rect(80f, 9f, 200f, 20f), building.name + vctBonuse.strParam[0], __BaseUI._textNLeft, vctBonuse.clr);
+						__BaseUI.Label(__BaseUI._rect(80f, 29f, 200f, 20f), "+" + vctBonuse.strParam[1], __BaseUI._textNLeft, __BaseUI._clrCyan);
+					}
+					else
+					{
+						__BaseUI.Label(__BaseUI._rect(80f, 9f, 200f, 20f), vctBonuse.strParam[0], __BaseUI._textNLeft, vctBonuse.clr);
+						__BaseUI.Label(__BaseUI._rect(80f, 29f, 200f, 20f), "+" + vctBonuse.strParam[1], __BaseUI._textNLeft, __BaseUI._clrCyan);
+					}
+					if (vctBonuse.add_to_treasury)
+					{
+						__BaseUI.Label(__BaseUI._rect(3f, 38f, 52f, 16f), string.Empty, sty_addtotreasury);
+					}
+					__BaseUI.EndGroup();
+				}
+				num6++;
+				num5++;
+			}
+			GUIHacks.EndScrollView();
+		}
+		switch (mine_ui)
+		{
+		case "":
+			if (autoClose)
+			{
+				if (closeTime < DateTime.Now || Input.GetMouseButtonUp(0))
+				{
+					Hide();
+					if (OnClose != null)
+					{
+						OnClose();
+					}
+					else if (m_prevUI != null)
+					{
+						m_prevUI.ToEnable();
+					}
+				}
+			}
+			else if (__BaseUI._btnOK.Button(bBtn: true, __BaseUI._rectB(w / 2f - 49f, 50f, 98f, 30f), string.Empty))
+			{
+				Hide();
+				if (OnClose != null)
+				{
+					OnClose();
+				}
+				else if (m_prevUI != null)
+				{
+					m_prevUI.ToEnable();
+				}
+			}
+			break;
+		case "skytower":
+			if (mine_msg != string.Empty)
+			{
+				if (Btn_choujiang.Button(bBtn: true, __BaseUI._rectB(w / 2f - 49f, 50f, 98f, 30f), string.Empty))
+				{
+					Hide();
+					if (OnClose != null)
+					{
+						OnClose();
+					}
+					else if (m_prevUI != null)
+					{
+						m_prevUI.ToEnable();
+					}
+				}
+			}
+			else if (Btn_lingqu.Button(bBtn: true, __BaseUI._rectB(w / 2f - 49f, 50f, 98f, 30f), string.Empty))
+			{
+				Hide();
+				if (OnClose != null)
+				{
+					OnClose();
+				}
+				else if (m_prevUI != null)
+				{
+					m_prevUI.ToEnable();
+				}
+			}
+			break;
+		}
+		if (m_clit == null)
+		{
+			return;
+		}
+		int num7 = (int)(m_clit.specialitemfreetimes - Global.character_.christmasEvent.lottery_times);
+		if (num7 > 0)
+		{
+			__BaseUI.Label(__BaseUI._rectB(w / 2f - 49f - 25f, 100f, 98f, 30f), __BaseUI.load_str(35006u, num7), __BaseUI._textCenter);
+			if (m_clit.treasure != null && m_clit.treasure.texIcon != null)
+			{
+				GUI.DrawTexture(__BaseUI._rectB(w / 2f - 25f + 49f, 115f, 50f, 50f), m_clit.treasure.texIcon);
+				GUI.Label(__BaseUI._rectB(w / 2f - 25f + 49f, 115f, 50f, 50f), new GUIContent(string.Empty, "christmas"), __BaseUI.normalStyle);
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		if (tip.Contains("bonus"))
+		{
+			int index = int.Parse(tip.Replace("bonus", string.Empty));
+			m_vctBonuses[index].PrepTooltip();
+		}
+		else if (tip.Contains("christmas"))
+		{
+			m_clit.treasure.PrepTooltip();
+		}
+	}
+
+	private void drawExpBars(float ratio, float ts)
+	{
+		__BaseUI.Box(__BaseUI._rect(2f, 12f, 296f, 36f), texShadows[0]);
+		GUI.DrawTexture(__BaseUI._rect(5f, 14f, 29f, 29f), iconExp);
+		float num = (float)m_expStart + (float)m_expGetShow * ratio;
+		GUI.Label(__BaseUI._rect(50f, 22f, 196f, 16f), string.Empty, boxStyle);
+		if (num >= m_expRequire || m_expLevel >= Global.PLAYER_LEVEL_MAX)
+		{
+			GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f, 10f), texBars[0, 0]);
+			if (m_expLevel < Global.PLAYER_LEVEL_MAX)
+			{
+				GUI.DrawTexture(__BaseUI._rect(108f, 22f, 59f, 16f), texBars[0, 1]);
+				if (!m_expLevelUp)
+				{
+					m_expLevelUp = true;
+					levelup_effect.Visible();
+				}
+			}
+			else
+			{
+				GUI.DrawTexture(__BaseUI._rect(108f, 22f, 59f, 16f), texLevelOver);
+			}
+		}
+		else
+		{
+			GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f * (num / m_expRequire), 10f), texBars[0, 0]);
+			GUIUtility.RotateAroundPivot(8f * ts, new Vector2(53f + 190f * (num / m_expRequire), 30f));
+			GUI.DrawTexture(__BaseUI._rect(53f + 190f * (num / m_expRequire) - 30f, 0f, 60f, 60f), texBars[0, 2]);
+			GUIUtility.RotateAroundPivot(-8f * ts, new Vector2(53f + 190f * (num / m_expRequire), 30f));
+			if (m_expGet > 0)
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(93f, 22f, 100f, 16f), "+" + (int)((float)m_expGet * ratio), __BaseUI._numLeft, __BaseUI._clrWhite);
+			}
+		}
+	}
+
+	private void drawSoulBars(float ratio, float ts)
+	{
+		__BaseUI.Box(__BaseUI._rect(2f, 12f, 296f, 36f), texShadows[0]);
+		GUI.DrawTexture(__BaseUI._rect(5f, 14f, 29f, 29f), iconSoul);
+		GUI.Label(__BaseUI._rect(50f, 22f, 196f, 16f), string.Empty, boxStyle);
+		float num = (float)m_soulStart + (float)m_soulGetShow * ratio;
+		float num2 = Global.character_.practice;
+		float num3 = 0f;
+		bool flag = false;
+		for (int i = 1001; i <= 1004; i++)
+		{
+			_army_star_start army_star_start = Global.getTemplate("army_star_start", (uint)i) as _army_star_start;
+			int start_id = army_star_start.start_id;
+			int max_id = army_star_start.max_id;
+			int num4 = (max_id - start_id + 1) / 10;
+			int num5 = 0;
+			if (army_star_start != null)
+			{
+				if (Global.character_.armystars.ContainsKey((ushort)i))
+				{
+					num5 = Global.character_.armystars[(ushort)i];
+				}
+				_army_star army_star = Global.getTemplate("army_star", (uint)((num5 + start_id <= max_id) ? (num5 + start_id) : max_id)) as _army_star;
+				if (num5 == num4 * 10)
+				{
+					level_star[i - 1001] = false;
+				}
+				else
+				{
+					level_star[i - 1001] = true;
+				}
+				num3 = ((!(num3 > (float)army_star.practice)) ? ((float)army_star.practice) : num3);
+			}
+		}
+		if (Global.character_.star_tech < 196)
+		{
+			if (num >= m_soulRequire)
+			{
+				GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f, 10f), texBars[1, 0]);
+				if (Global.character_.star_tech >= 196)
+				{
+					GUI.DrawTexture(__BaseUI._rect(108f, 22f, 59f, 16f), tianfuup);
+				}
+				else
+				{
+					GUI.DrawTexture(__BaseUI._rect(108f, 22f, 59f, 16f), texBars[1, 1]);
+				}
+				if (!Global.character_.checkUI("army_star"))
+				{
+					return;
+				}
+				if (Global.character_.campaigns_.ContainsKey(57) && !Global.character_.campaigns_[57].finished)
+				{
+					Rect btnRc = __BaseUI._rect(258f, 14f, 29f, 29f);
+					btnRc.x += __BaseUI._rcCur.x;
+					btnRc.y += __BaseUI._rcCur.y;
+					RootBase.ShowDrawArea(btnRc, __BaseUI.load_str(21232u), ArrowFace.Left);
+				}
+				if (btnUP.Button(bBtn: true, __BaseUI._rect(258f, 14f, 29f, 29f), string.Empty))
+				{
+					DelegateFunc.MainUI_army_star();
+					if (OnClose != null)
+					{
+						RootBase.add_UIFunc(OnClose, bFront: true);
+					}
+					Hide();
+				}
+				float num6 = ts - (float)((int)(ts / 2f) * 2) - 1f;
+				if (num6 < 0f)
+				{
+					num6 = 0f - num6;
+				}
+				GUI.backgroundColor = new Color(1f, 1f, 1f, num6);
+				GUI.Label(__BaseUI._rect(255f, 11f, 35f, 35f), string.Empty, hoverUP);
+				GUI.backgroundColor = Color.white;
+			}
+			else
+			{
+				GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f * (num / m_soulRequire), 10f), texBars[1, 0]);
+				GUIUtility.RotateAroundPivot(8f * ts, new Vector2(53f + 190f * (num / m_soulRequire), 30f));
+				GUI.DrawTexture(__BaseUI._rect(53f + 190f * (num / m_soulRequire) - 30f, 0f, 60f, 60f), texBars[1, 2]);
+				GUIUtility.RotateAroundPivot(-8f * ts, new Vector2(53f + 190f * (num / m_soulRequire), 30f));
+				if (m_soulGet > 0)
+				{
+					__BaseUI.OutlinedLabel(__BaseUI._rect(93f, 22f, 100f, 16f), "+" + (int)((float)m_soulGet * ratio), __BaseUI._numLeft, __BaseUI._clrWhite);
+				}
+			}
+			return;
+		}
+		for (int j = 0; j < 4; j++)
+		{
+			if (level_star[j])
+			{
+				flag = true;
+				break;
+			}
+		}
+		if (num2 >= num3)
+		{
+			GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f, 10f), texBars[1, 0]);
+			if (!flag)
+			{
+				return;
+			}
+			GUI.DrawTexture(__BaseUI._rect(108f, 22f, 59f, 16f), tianfuup);
+			if (!Global.character_.checkUI("genius_ui"))
+			{
+				return;
+			}
+			if (btnUP.Button(bBtn: true, __BaseUI._rect(258f, 14f, 29f, 29f), string.Empty))
+			{
+				DelegateFunc.MainUI_genius_ui();
+				if (OnClose != null)
+				{
+					RootBase.add_UIFunc(OnClose, bFront: true);
+				}
+				Hide();
+			}
+			float num7 = ts - (float)((int)(ts / 2f) * 2) - 1f;
+			if (num7 < 0f)
+			{
+				num7 = 0f - num7;
+			}
+			GUI.backgroundColor = new Color(1f, 1f, 1f, num7);
+			GUI.Label(__BaseUI._rect(255f, 11f, 35f, 35f), string.Empty, hoverUP);
+			GUI.backgroundColor = Color.white;
+		}
+		else
+		{
+			GUI.DrawTexture(__BaseUI._rect(53f, 25f, 190f * (num2 / num3), 10f), texBars[1, 0]);
+			GUIUtility.RotateAroundPivot(8f * ts, new Vector2(53f + 190f * (num2 / num3), 30f));
+			GUI.DrawTexture(__BaseUI._rect(53f + 190f * (num2 / num3) - 30f, 0f, 60f, 60f), texBars[1, 2]);
+			GUIUtility.RotateAroundPivot(-8f * ts, new Vector2(53f + 190f * (num2 / num3), 30f));
+			if (m_soulGet > 0)
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(93f, 22f, 100f, 16f), "+" + (int)((float)m_soulGet * ratio), __BaseUI._numLeft, __BaseUI._clrWhite);
+			}
+		}
+	}
+
+	private void drawReputationBars(float ratio, float ts)
+	{
+		GUI.Label(__BaseUI._rect(0f, 20f, 220f, 26f), string.Empty, __BaseUI._barStyle);
+		GUI.DrawTexture(__BaseUI._rect(12f, 22f, 23f, 23f), __BaseUI._iconReputation);
+		GUI.Label(__BaseUI._rect(37f, 26f, 176f, 14f), string.Empty, boxStyle);
+		float num = (float)m_reputationStart + (float)m_reputationGetShow * ratio;
+		if (num >= m_reputationRequire)
+		{
+			GUI.DrawTexture(__BaseUI._rect(40f, 29f, 170f, 8f), texBars[2, 0]);
+			GUI.DrawTexture(__BaseUI._rect(95f, 25f, 59f, 16f), texBars[2, 1]);
+			if (Global.character_.checkUI("general_talisman"))
+			{
+				float num2 = ts - (float)((int)(ts / 2f) * 2) - 1f;
+				if (num2 < 0f)
+				{
+					num2 = 0f - num2;
+				}
+				GUI.backgroundColor = new Color(1f, 1f, 1f, num2);
+				GUI.Label(__BaseUI._rect(230f, 10f, 29f, 29f), string.Empty, hoverUP);
+				GUI.backgroundColor = Color.white;
+			}
+		}
+		else
+		{
+			float num3 = num / m_reputationRequire;
+			GUI.DrawTexture(__BaseUI._rect(40f, 29f, 170f * num3, 8f), texBars[2, 0]);
+			GUIUtility.RotateAroundPivot(8f * ts, new Vector2(40f + 170f * num3, 33f));
+			GUI.DrawTexture(__BaseUI._rect(40f + 170f * num3 - 30f, 3f, 60f, 60f), texBars[2, 2]);
+			GUIUtility.RotateAroundPivot(-8f * ts, new Vector2(40f + 170f * num3, 33f));
+			if (m_reputationGet > 0)
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(80f, 25f, 100f, 16f), "+" + (int)((float)m_reputationGet * ratio), __BaseUI._numLeft, __BaseUI._clrWhite);
+			}
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_battleresult");
+		AddAsset("ui_battle");
+		AddAsset("ui_effect");
+		if (m_vctBonuses != null)
+		{
+			foreach (_Treasure vctBonuse in m_vctBonuses)
+			{
+				AddAsset(vctBonuse.getIconName(), bForce: false);
+			}
+		}
+		if (m_clit != null && m_clit.treasure != null)
+		{
+			AddAsset(m_clit.treasure.getIconName());
+		}
+		CollectingStart(bCollecting: false);
+		m_bShowVisible = id == "nocollecting";
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		PrepareLoading("nocollecting");
+		StartLoading();
+	}
+
+	public override void Hide()
+	{
+		base.Hide();
+		m_clit = null;
+	}
+
+	protected override void Show()
+	{
+		if (m_bShowVisible)
+		{
+			myVisible();
+			BaseAsset.lds.Hide();
+			Enable();
+			m_bShowVisible = false;
+		}
+		if (m_vctBonuses != null)
+		{
+			foreach (_Treasure vctBonuse in m_vctBonuses)
+			{
+				if (vctBonuse.texIcon == null || vctBonuse.name == "general_card")
+				{
+					vctBonuse.setTexIcon(BaseAsset.LoadTexture(vctBonuse.getIconName()));
+				}
+			}
+		}
+		if (m_clit != null && m_clit.treasure != null)
+		{
+			m_clit.treasure.setTexIcon(BaseAsset.LoadTexture(m_clit.treasure.getIconName()));
+		}
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_battleresult");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_battle");
+		tianfuup = asset.Load("ui_leveupzi4") as Texture2D;
+		bgStyle.normal.background = asset.Load("ui_di") as Texture2D;
+		bgStyle.border = new RectOffset(30, 40, 30, 30);
+		texBoard = asset.Load("ui_fankui_di3") as Texture2D;
+		for (int i = 0; i < 11; i++)
+		{
+			texResults[i] = asset2.Load(battle_lvl_names[i]) as Texture2D;
+		}
+		texStar = asset.Load("ui_pinfen_star3") as Texture2D;
+		texFrame = asset.Load("ui_bar1") as Texture2D;
+		texFrameGray = asset.Load("ui_fankui_di6") as Texture2D;
+		texMask = asset.Load("ui_fankui_di2") as Texture2D;
+		texMaskGray = asset.Load("ui_fankui_di5") as Texture2D;
+		boxStyle.normal.background = asset.Load("ui_bar2") as Texture2D;
+		boxStyle.border = new RectOffset(10, 10, 5, 5);
+		texBars[0, 0] = asset.Load("ui_tiao1") as Texture2D;
+		texBars[0, 1] = asset.Load("ui_leveupzi1") as Texture2D;
+		texBars[0, 2] = asset.Load("ui_lights1") as Texture2D;
+		texBars[1, 0] = asset.Load("ui_tiao2") as Texture2D;
+		texBars[1, 1] = asset.Load("ui_leveupzi2") as Texture2D;
+		texBars[1, 2] = asset.Load("ui_lights2") as Texture2D;
+		texBars[2, 0] = asset.Load("ui_tiao3") as Texture2D;
+		texBars[2, 1] = asset.Load("ui_leveupzi3") as Texture2D;
+		texBars[2, 2] = asset.Load("ui_lights3") as Texture2D;
+		texLevelOver = asset.Load("ui_zi6") as Texture2D;
+		texShadows[0] = asset.Load("ui_shadowbar1") as Texture2D;
+		texShadows[1] = asset.Load("ui_shadowbar2") as Texture2D;
+		iconExp = asset.Load("ui_exp_min") as Texture2D;
+		iconSoul = asset.Load("ui_zhanhun_min") as Texture2D;
+		btnTalisman.make(asset, "button_fankui_fabao", unable: false);
+		btnStar.make(asset, "button_fankui_xingling", unable: false);
+		hoverStar.normal.background = asset.Load("button_fankui_xingling_hover") as Texture2D;
+		hoverTalisman.normal.background = asset.Load("button_fankui_fabao_hover") as Texture2D;
+		btnChest.make(asset, "button_fankui_choujiang", unable: false);
+		btnClose.make(asset, "button_fankui_guanbi", unable: false);
+		btnUP.make(asset, "button_lvup", unable: false);
+		hoverUP.normal.background = asset.Load("button_lvup_light") as Texture2D;
+		Btn_choujiang.make(asset, "button_choujiang");
+		Btn_lingqu.make(asset, "button_lingqu");
+		textYellow.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		textYellow.fontSize = 16;
+		textYellow.fontStyle = FontStyle.Bold;
+		textGreen.normal.textColor = new Color(0.6f, 1f, 0f, 1f);
+		textGreen.fontSize = 16;
+		textGreen.fontStyle = FontStyle.Bold;
+		textYellow2.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		textYellow2.fontStyle = FontStyle.Bold;
+		textGreen2.normal.textColor = new Color(0.6f, 1f, 0f, 1f);
+		textGreen2.font = __BaseUI.ArialFont;
+		textBlue.normal.textColor = new Color(0.8f, 1f, 1f, 1f);
+		itemStyle = __BaseUI._labelRadio;
+		itemStyle.selectStyle.alignment = TextAnchor.MiddleCenter;
+		itemStyle.selectStyle.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		itemStyle.selectStyle.hover.textColor = new Color(1f, 1f, 0.8f, 1f);
+		itemStyle.normalStyle.alignment = TextAnchor.MiddleCenter;
+		itemStyle.normalStyle.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		itemStyle.selectedStyle.alignment = TextAnchor.MiddleCenter;
+		itemStyle.selectedStyle.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		if (m_iHintChest == -1)
+		{
+			m_iHintChest = m_anim_maps.Add(asset, "button_fankui_choujiang_lights", 1, 0.06, new Rect(503f, 272f, 64f, 64f), _chest_first_check, null, screen_scale: false, 0.3f);
+		}
+		sty_addtotreasury.normal.background = asset.Load("ui_zi2") as Texture2D;
+		AssetBundle asset3 = BaseAsset.was.GetAsset("ui_effect");
+		if (levelup_effect == null)
+		{
+			levelup_effect = base.gameObject.AddComponent<AnimEffect>();
+			levelup_effect.MyLoading(asset3, "ui_effect1_di", "ui_effect1", null);
+		}
+		if (autoClose)
+		{
+			closeTime = DateTime.Now.AddSeconds(5.0);
+		}
+	}
+
+	private bool _chest_first_check()
+	{
+		return (m_iTreasureCount > 0 && !(lastTooltip == "chest") && !Input.GetMouseButton(0)) ? true : false;
+	}
+
+	public void setBattleRank(int battle_rank)
+	{
+		m_bBattleRank = true;
+		m_battleRank = battle_rank;
+	}
+
+	public void setCampaign(byte troopID)
+	{
+		m_troopID = troopID;
+		m_bCampaign = true;
+	}
+
+	private void makeBars()
+	{
+		if (m_reputationList == null)
+		{
+			m_reputationList = new List<int>();
+			Hashtable templates = Global.getTemplates("artifact_template");
+			foreach (DictionaryEntry item in templates)
+			{
+				_artifact_template artifact_template = (_artifact_template)item.Value;
+				if (artifact_template.canbuy == 1)
+				{
+					m_reputationList.Add((item.Value as _artifact_template).reputation);
+				}
+			}
+			m_reputationList.Sort((int _a, int _b) => _a.CompareTo(_b));
+		}
+		m_expStart = Global.character_.experience;
+		m_soulStart = Global.character_.practice;
+		m_expGet = 0;
+		m_soulGet = 0;
+		m_expLevelUp = false;
+		m_expRequire = Global.character_.getExpRequire();
+		m_expLevel = Global.character_.level;
+		m_soulRequire = Global.character_.NextStarTechPractice;
+		tianfu_soul = (m_barCount = 0);
+		m_bonusCount = 0;
+		if (mine_msg != string.Empty)
+		{
+			height = 160f;
+		}
+		else
+		{
+			height = 110f;
+		}
+		if (m_vctBonuses != null)
+		{
+			foreach (_Treasure vctBonuse in m_vctBonuses)
+			{
+				if (vctBonuse.name == "experience")
+				{
+					if (m_expGet == 0)
+					{
+						m_barCount++;
+					}
+					m_expGet += vctBonuse.param[1];
+				}
+				else if (vctBonuse.name == "practice")
+				{
+					if (m_soulGet == 0)
+					{
+						m_barCount++;
+					}
+					m_soulGet += vctBonuse.param[1];
+				}
+				else
+				{
+					m_bonusCount++;
+				}
+			}
+		}
+		if ((float)m_expGet > m_expRequire - (float)m_expStart)
+		{
+			m_expGetShow = (int)(m_expRequire - (float)m_expStart);
+		}
+		else
+		{
+			m_expGetShow = m_expGet;
+		}
+		if ((float)m_soulGet > m_soulRequire - (float)m_soulStart)
+		{
+			m_soulGetShow = (int)(m_soulRequire - (float)m_soulStart);
+		}
+		else
+		{
+			m_soulGetShow = m_soulGet;
+		}
+		if (m_soulGetShow < 0)
+		{
+			m_soulGetShow = 0;
+		}
+		if (m_barCount > 0)
+		{
+			m_barHeight = 30f;
+			m_barHeight += m_barCount * 30 + (m_barCount - 1) * 10;
+		}
+		else
+		{
+			m_barHeight = 0f;
+		}
+		if (m_bonusCount > 0)
+		{
+			m_bonusHeight = 30f;
+			m_bonusHeight += (float)(Math.Ceiling((float)m_bonusCount / 2f) * 50.0 + (Math.Ceiling((float)m_bonusCount / 2f) - 1.0) * 16.0);
+		}
+		else
+		{
+			m_bonusHeight = 0f;
+		}
+		if (m_barHeight > 0f && m_bonusHeight > 0f)
+		{
+			height += 20f;
+		}
+		if (m_bonusCount <= 10)
+		{
+			height += m_barHeight + m_bonusHeight;
+		}
+		else
+		{
+			height += m_barHeight + 330f;
+		}
+		if (texTitle != null)
+		{
+			height += texSize.y;
+		}
+		if (desc != null)
+		{
+			height += desc.height;
+		}
+		if (m_clit != null)
+		{
+			height += 60f;
+		}
+		if (autoClose)
+		{
+			height -= 40f;
+		}
+	}
+
+	public void setBonus(List<_Treasure> vctBonuses)
+	{
+		m_vctBonuses = vctBonuses;
+		texTitle = null;
+		desc = null;
+		texSize = Vector2.zero;
+		autoClose = false;
+		makeBars();
+		PrepareLoading(string.Empty);
+		StartLoading();
+	}
+
+	public void Set(string msg, List<Treasure> bonuses, delegate_OnClose onClose)
+	{
+		List<_Treasure> list = null;
+		if (bonuses != null)
+		{
+			list = new List<_Treasure>();
+			foreach (Treasure bonuse in bonuses)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make(bonuse);
+				list.Add(treasure);
+			}
+		}
+		Set(null, string.Empty, msg, 0, 0, list, onClose);
+	}
+
+	public void Set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, delegate_OnClose onClose, Texture2D _tex, string _str, Vector2 _size, bool _autoClose)
+	{
+		Set(prevUI, defenderName, msg, lvl, iTreasureCount, vctBonuses, onClose, _tex, _str, _size, _autoClose, move_y: false);
+	}
+
+	public void Set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, delegate_OnClose onClose, Texture2D _tex, string _str, Vector2 _size, bool _autoClose, bool move_y)
+	{
+		m_move_y = move_y;
+		m_prevUI = prevUI;
+		m_bCampaign = false;
+		m_defenderName = defenderName;
+		m_battleLevel = lvl;
+		m_bBattleRank = false;
+		m_battleRank = 0;
+		m_iTreasureCount = iTreasureCount;
+		OnClose = onClose;
+		m_vctBonuses = vctBonuses;
+		m_message = msg;
+		mine_ui = string.Empty;
+		mine_msg = string.Empty;
+		if (msg == string.Empty)
+		{
+			m_message = __BaseUI.load_str(20085u);
+		}
+		texTitle = _tex;
+		texSize = _size;
+		if (_str != string.Empty)
+		{
+			desc = new ScenarioSection();
+			desc.setParams(280);
+			desc.makes_string(_str, __BaseUI._textNLeft);
+		}
+		else
+		{
+			desc = null;
+		}
+		autoClose = _autoClose;
+		makeBars();
+	}
+
+	public void Set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, delegate_OnClose onClose)
+	{
+		Set(prevUI, defenderName, msg, lvl, iTreasureCount, vctBonuses, onClose, null, string.Empty, Vector2.zero, _autoClose: false, move_y: false);
+	}
+
+	public void Set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, delegate_OnClose onClose, ChristmasLotteryItemTemplate clit)
+	{
+		m_clit = clit;
+		Set(prevUI, defenderName, msg, lvl, iTreasureCount, vctBonuses, onClose, null, string.Empty, Vector2.zero, _autoClose: false, move_y: false);
+	}
+
+	public void Set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, delegate_OnClose onClose, string mineUI, int floor, int level)
+	{
+		texTitle = null;
+		desc = null;
+		texSize = Vector2.zero;
+		autoClose = false;
+		m_prevUI = prevUI;
+		m_bCampaign = false;
+		m_defenderName = defenderName;
+		m_battleLevel = lvl;
+		m_bBattleRank = false;
+		m_battleRank = 0;
+		m_iTreasureCount = iTreasureCount;
+		OnClose = onClose;
+		m_vctBonuses = vctBonuses;
+		m_message = msg;
+		string empty = string.Empty;
+		int finished_boss_num = (int)Global.character_.skytower.finished_boss_num;
+		string data = string.Empty;
+		string data2 = string.Empty;
+		if (finished_boss_num == 0 && floor >= 1)
+		{
+			empty = string.Format(__BaseUI.load_str(21033u), level, floor);
+			mine_msg = string.Empty;
+		}
+		else if (floor == 10)
+		{
+			empty = string.Format(__BaseUI.load_str(21032u), level);
+			if (finished_boss_num == 2)
+			{
+				mine_msg = string.Format(__BaseUI.load_str(21034u), __BaseUI.load_str(21035u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+				data = string.Format(__BaseUI.load_str(21063u), __BaseUI.load_str(21035u));
+				data2 = string.Format(__BaseUI.load_str(21064u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+			}
+			else
+			{
+				mine_msg = string.Format(__BaseUI.load_str(21034u), __BaseUI.load_str((uint)(403 + finished_boss_num)), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+				data = string.Format(__BaseUI.load_str(21063u), __BaseUI.load_str((uint)(403 + finished_boss_num)));
+				data2 = string.Format(__BaseUI.load_str(21064u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+			}
+		}
+		else
+		{
+			empty = string.Format(__BaseUI.load_str(21031u), level, floor);
+			if (finished_boss_num == 2)
+			{
+				mine_msg = string.Format(__BaseUI.load_str(21034u), __BaseUI.load_str(21035u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+				data = string.Format(__BaseUI.load_str(21063u), __BaseUI.load_str(21035u));
+				data2 = string.Format(__BaseUI.load_str(21064u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+			}
+			else
+			{
+				mine_msg = string.Format(__BaseUI.load_str(21034u), __BaseUI.load_str((uint)(403 + finished_boss_num)), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+				data = string.Format(__BaseUI.load_str(21063u), __BaseUI.load_str((uint)(403 + finished_boss_num)));
+				data2 = string.Format(__BaseUI.load_str(21064u), __BaseUI.load_str(403 + Global.character_.skytower.lottery_rank));
+			}
+		}
+		mine_ui = mineUI;
+		myss.font_size = 16;
+		myss.makes_string(empty, __BaseUI._textLeft);
+		ss1.font_size = __BaseUI._fontSize;
+		ss1.makes_string(data, __BaseUI._textLeft);
+		ss2.font_size = __BaseUI._fontSize;
+		ss2.makes_string(data2, __BaseUI._textLeft);
+		makeBars();
+	}
+
+	public void myVisible()
+	{
+		m_startTime = DateTime.Now;
+		Visible();
+		Enable();
+		if (m_vctBonuses != null)
+		{
+			if (Global.character_.gold < 0)
+			{
+				List<_Treasure> list = new List<_Treasure>();
+				foreach (_Treasure vctBonuse in m_vctBonuses)
+				{
+					if (vctBonuse.name == "gold")
+					{
+						if (!m_bNotIgnoreGold)
+						{
+							list.Add(vctBonuse);
+						}
+						else if (Global.character_.gold < 0)
+						{
+							Global.character_.gold += vctBonuse.param[1];
+							vctBonuse.bAdd = false;
+						}
+					}
+				}
+				foreach (_Treasure item in list)
+				{
+					m_vctBonuses.Remove(item);
+				}
+			}
+			m_bNotIgnoreGold = false;
+			foreach (_Treasure vctBonuse2 in m_vctBonuses)
+			{
+				if (vctBonuse2.param[1] > 0)
+				{
+					__BaseUI.drawStateBubble(vctBonuse2.name + vctBonuse2.param[1]);
+					if (vctBonuse2.bAdd)
+					{
+						_treasure_type treasureTypeTemplate = Global.getTreasureTypeTemplate(vctBonuse2.type);
+						if (treasureTypeTemplate.type == 2)
+						{
+							int param = (vctBonuse2.type << 8) | vctBonuse2.param[0];
+							if (vctBonuse2.add_to_treasury)
+							{
+								Global.character_.addParamToTreasury(vctBonuse2.type, vctBonuse2.param[0], vctBonuse2.param[1]);
+							}
+							else
+							{
+								Global.character_.addParam("material", param, vctBonuse2.param[1]);
+							}
+						}
+						else if (vctBonuse2.add_to_treasury)
+						{
+							Global.character_.addParamToTreasury(vctBonuse2.type, vctBonuse2.param[0], vctBonuse2.param[1]);
+						}
+						else
+						{
+							Global.character_.addParam(vctBonuse2.name, vctBonuse2.param[0], vctBonuse2.param[1]);
+						}
+					}
+				}
+				if (vctBonuse2.name == "general")
+				{
+					_general_get_id = vctBonuse2.param[0];
+					RootBase.add_UIFunc(GeneralGet);
+				}
+			}
+		}
+		if (m_iTreasureCount > 0)
+		{
+			Global.character_.treasure_count = (byte)m_iTreasureCount;
+			Global.character_.treasure_filter_count = 0;
+			Global.character_.treasure_filter = false;
+		}
+	}
+
+	private void GeneralGet()
+	{
+		SpecialGetUI component = GameObject.Find("Root/RootUI").GetComponent<SpecialGetUI>();
+		component.ShowSPGet_General((uint)_general_get_id);
+	}
+}

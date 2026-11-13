@@ -1,0 +1,176 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCPointraceChallenge_0x465")]
+public class SCPointraceChallenge_0x465 : IExtensible
+{
+	private uint _result;
+
+	private bool _iswin = false;
+
+	private uint _rank = 0u;
+
+	private byte[] _report = null;
+
+	private PointraceReport _pointrace_report = null;
+
+	private db_character_cooldown _cooldown = null;
+
+	private PointraceChallengers _challengers = null;
+
+	private uint _gold_consume = 0u;
+
+	private uint _point = 0u;
+
+	private ulong _idother = 0uL;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "rank", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint rank
+	{
+		get
+		{
+			return _rank;
+		}
+		set
+		{
+			_rank = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "pointrace_report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public PointraceReport pointrace_report
+	{
+		get
+		{
+			return _pointrace_report;
+		}
+		set
+		{
+			_pointrace_report = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "cooldown", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public db_character_cooldown cooldown
+	{
+		get
+		{
+			return _cooldown;
+		}
+		set
+		{
+			_cooldown = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "challengers", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public PointraceChallengers challengers
+	{
+		get
+		{
+			return _challengers;
+		}
+		set
+		{
+			_challengers = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "gold_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint gold_consume
+	{
+		get
+		{
+			return _gold_consume;
+		}
+		set
+		{
+			_gold_consume = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = false, Name = "point", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint point
+	{
+		get
+		{
+			return _point;
+		}
+		set
+		{
+			_point = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = false, Name = "idother", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idother
+	{
+		get
+		{
+			return _idother;
+		}
+		set
+		{
+			_idother = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

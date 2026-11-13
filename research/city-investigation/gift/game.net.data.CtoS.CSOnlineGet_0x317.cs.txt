@@ -1,0 +1,18 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSOnlineGet_0x317")]
+public class CSOnlineGet_0x317 : IExtensible
+{
+	private IExtension extensionObject;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

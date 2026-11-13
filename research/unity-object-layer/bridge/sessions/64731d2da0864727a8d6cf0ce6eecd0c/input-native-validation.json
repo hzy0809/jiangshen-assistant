@@ -1,0 +1,100 @@
+{
+  "status": "PASS",
+  "scope": "offline PE/export/seal + saved independent synthetic receipts",
+  "game_access": false,
+  "payload_sha256": "c951dfabcd7d9ae3d2a5f823262461c55339e15aa6e68f39266393e4620111af",
+  "artifacts": [
+    {
+      "file": "bridge_selftest.dll",
+      "machine": "0x014c",
+      "sha256": "889d45051528958dbd082bf1fa2e4beded68e2c9e49be0a5a46bea3ef3a9bcc7",
+      "exports": [
+        "JSB_Arm",
+        "JSB_Cancel",
+        "JSB_Close",
+        "JSB_Fire",
+        "JSB_HookProc@12",
+        "JSB_ReadStatus"
+      ],
+      "import_dlls": [
+        "USER32.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "KERNEL32.dll",
+        "api-ms-win-crt-environment-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-time-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": "bridge_selftest.exe",
+      "machine": "0x014c",
+      "sha256": "a3ae595ba79984be3b6ccc1a5633c9fa7f9517391460ff12bf1f21eb337e0d17",
+      "exports": [],
+      "import_dlls": [
+        "USER32.dll",
+        "api-ms-win-crt-convert-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "KERNEL32.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-environment-l1-1-0.dll",
+        "api-ms-win-crt-time-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": "bridge.dll",
+      "machine": "0x014c",
+      "sha256": "c9f3d09be295c1acc82f122320899c6a984d8f543e4ba48adb1349985f5c6577",
+      "exports": [
+        "JSB_Arm",
+        "JSB_Cancel",
+        "JSB_Close",
+        "JSB_Fire",
+        "JSB_HookProc@12",
+        "JSB_ReadStatus"
+      ],
+      "import_dlls": [
+        "USER32.dll",
+        "ADVAPI32.dll",
+        "api-ms-win-crt-private-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "KERNEL32.dll",
+        "api-ms-win-crt-environment-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-time-l1-1-0.dll"
+      ]
+    },
+    {
+      "file": "bridge_host.exe",
+      "machine": "0x014c",
+      "sha256": "bb5c6b7b666d801582a63f5b75e31e38b5ca1a1e798c56d4c5d4a452f8d4402b",
+      "exports": [],
+      "import_dlls": [
+        "USER32.dll",
+        "api-ms-win-crt-convert-l1-1-0.dll",
+        "api-ms-win-crt-heap-l1-1-0.dll",
+        "api-ms-win-crt-runtime-l1-1-0.dll",
+        "api-ms-win-crt-stdio-l1-1-0.dll",
+        "api-ms-win-crt-string-l1-1-0.dll",
+        "KERNEL32.dll",
+        "api-ms-win-crt-math-l1-1-0.dll",
+        "api-ms-win-crt-environment-l1-1-0.dll",
+        "api-ms-win-crt-time-l1-1-0.dll"
+      ]
+    }
+  ],
+  "synthetic_pid": 55860,
+  "synthetic_tid": 33320,
+  "unverified": [
+    "live Mono API execution",
+    "Unity Update readiness",
+    "UI action",
+    "game cleanup"
+  ]
+}

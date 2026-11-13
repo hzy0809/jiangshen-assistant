@@ -1,0 +1,181 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class OnlineAwardsUI : BaseUI
+{
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle nullStyle = new GUIStyle();
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle xianStyle = new GUIStyle();
+
+	private GUIStyle brownStyle = new GUIStyle();
+
+	private GUIStyle ui_zaixianjiangli = new GUIStyle();
+
+	private GUIStyle ui_jiangli = new GUIStyle();
+
+	private GUIStyle ui_lingqujiangli = new GUIStyle();
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		SetupNormalAssetList();
+	}
+
+	private void SetupNormalAssetList()
+	{
+		AddAsset("ui_online");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_online");
+		xianStyle.normal.background = asset.Load("zaixianjiangli_xian") as Texture2D;
+		brownStyle.normal.textColor = new Color(0.9254902f, 0.7372549f, 29f / 51f, 1f);
+		brownStyle.alignment = TextAnchor.MiddleCenter;
+		ui_zaixianjiangli.normal.background = asset.Load("zaixianjiangli") as Texture2D;
+		ui_jiangli.normal.background = asset.Load("ui_jiangli") as Texture2D;
+		ui_lingqujiangli.normal.background = asset.Load("ui_lingqujiangli") as Texture2D;
+		Visible();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(430f, 250f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, ui_zaixianjiangli);
+			__BaseUI.Label(_CalcRect(19, 56, 92, 92, 319, 133), string.Empty, __BaseUI._boxnew2Style);
+			__BaseUI.Label(__BaseUI._rect(258f, 82f, 31f, 17f), string.Empty, ui_jiangli);
+			__BaseUI.Label(__BaseUI._rect(59f, 82f, 59f, 17f), string.Empty, ui_lingqujiangli);
+			if (Global.getTemplate("online_awards_template", (uint)(Global.character_.OnlineGift.got + 1)) is _online_awards_template online_awards_template)
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(51f, 115f, 112f, 16f), __BaseUI.load_str(20429u, online_awards_template.time), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				drawAward(online_awards_template.award1_type, online_awards_template.award1_amout, new Vector2(250f, 113f));
+				drawAward(online_awards_template.award2_type, online_awards_template.award2_amout, new Vector2(250f, 138f));
+				drawAward(online_awards_template.award3_type, online_awards_template.award3_amout, new Vector2(250f, 163f));
+			}
+		}
+		if (EndGUI())
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void drawAward(int typeid, int amount, Vector2 pos)
+	{
+		if (typeid != -1)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make((byte)typeid, 1, amount);
+			switch (treasure.name)
+			{
+			case "money":
+				GUI.Label(__BaseUI._rect(pos.x + 5f, pos.y + 2f, 18f, 16f), string.Empty, __BaseUI._moneyIcon);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 30f, pos.y + 1f, 33f, 16f), __BaseUI.load_str(20282u), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 70f, pos.y + 1f, 60f, 16f), "+" + amount, 1, Color.black, __BaseUI._numLeft, __BaseUI._clrGreen);
+				break;
+			case "gold":
+				GUI.Label(__BaseUI._rect(pos.x + 5f, pos.y + 2f, 18f, 16f), string.Empty, __BaseUI._goldIcon);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 30f, pos.y + 1f, 33f, 16f), __BaseUI.load_str(20281u), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 70f, pos.y + 1f, 60f, 16f), "+" + amount, 1, Color.black, __BaseUI._numLeft, __BaseUI._clrGreen);
+				break;
+			case "experience":
+				GUI.Label(__BaseUI._rect(pos.x + 3f, pos.y + 4f, 22f, 11f), string.Empty, __BaseUI._expIcon);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 30f, pos.y + 1f, 33f, 16f), __BaseUI.load_str(20395u), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 70f, pos.y + 1f, 60f, 16f), "+" + amount, 1, Color.black, __BaseUI._numLeft, __BaseUI._clrGreen);
+				break;
+			case "stamina":
+				GUI.Label(__BaseUI._rect(pos.x + 7f, pos.y + 3f, 14f, 14f), string.Empty, __BaseUI._energyIcon);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 30f, pos.y + 1f, 33f, 16f), __BaseUI.load_str(20430u), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 70f, pos.y + 1f, 60f, 16f), "+" + amount, 1, Color.black, __BaseUI._numLeft, __BaseUI._clrGreen);
+				break;
+			case "enchant_stone":
+				GUI.DrawTexture(__BaseUI._rect(pos.x + 7f, pos.y + 3f, 14f, 14f), __BaseUI._iconEnchant);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 18f, pos.y + 1f, 50f, 16f), __BaseUI.load_str(419u), 1, Color.black, __BaseUI._textCenter, __BaseUI._clrYellow);
+				__BaseUI.OutlinedLabel(__BaseUI._rect(pos.x + 70f, pos.y + 1f, 60f, 16f), "+" + amount, 1, Color.black, __BaseUI._numLeft, __BaseUI._clrGreen);
+				break;
+			}
+		}
+	}
+
+	public void cs_online_get()
+	{
+		CSOnlineGet_0x317 pkt = new CSOnlineGet_0x317();
+		RootUI.m_client.Send(791, pkt, sc_online_get);
+	}
+
+	public void sc_online_get(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCOnlineGet_0x317 sCOnlineGet_0x = JSProtoBuf.Serializer.Deserialize<SCOnlineGet_0x317>(stream);
+		switch (sCOnlineGet_0x.operate)
+		{
+		case SCOnlineGet_0x317.Operate.OK:
+		{
+			List<_Treasure> list = new List<_Treasure>();
+			for (int i = 0; i < sCOnlineGet_0x.type_id.Count; i++)
+			{
+				if (sCOnlineGet_0x.type_id[i] != -1)
+				{
+					_Treasure treasure = new _Treasure();
+					treasure.make((byte)sCOnlineGet_0x.type_id[i], 0, (int)sCOnlineGet_0x.amount[i]);
+					list.Add(treasure);
+					__BaseUI.drawStateBubble(treasure.name + sCOnlineGet_0x.amount[i]);
+				}
+			}
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+			battleResultUI.MyLoading();
+			MainUI.set_online_showTip(tip: true);
+			Global.character_.OnlineGift.got++;
+			Global.character_.OnlineGift.setNextTime();
+			break;
+		}
+		case SCOnlineGet_0x317.Operate.Error:
+		{
+			_online_awards_template online_awards_template = Global.getTemplate("online_awards_template", (uint)(Global.character_.OnlineGift.got + 1)) as _online_awards_template;
+			MainUI.set_online_showTip(tip: false);
+			if (online_awards_template != null)
+			{
+				MyLoading();
+				return;
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20430u), rmg);
+			break;
+		}
+		}
+		MainUI.SetSubUI(null);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

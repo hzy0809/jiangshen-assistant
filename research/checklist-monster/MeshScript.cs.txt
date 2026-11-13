@@ -1,0 +1,216 @@
+using UnityEngine;
+
+public class MeshScript : __BaseUI
+{
+	protected bool bBright;
+
+	protected bool ShowTooltip;
+
+	protected bool m_bHover;
+
+	public override void Start()
+	{
+	}
+
+	private void Update()
+	{
+	}
+
+	public override void Resume()
+	{
+	}
+
+	public void VisibleMesh()
+	{
+		base.enabled = true;
+		if (base.collider != null)
+		{
+			base.collider.enabled = true;
+		}
+		BoxCollider component = GetComponent<BoxCollider>();
+		if (component != null)
+		{
+			component.enabled = true;
+		}
+	}
+
+	public void HideMesh()
+	{
+		base.enabled = false;
+		if (base.collider != null)
+		{
+			base.collider.enabled = false;
+		}
+		BoxCollider component = GetComponent<BoxCollider>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+	}
+
+	private void OnMouseEnter()
+	{
+		MyMouseEnter();
+	}
+
+	private void OnMouseExit()
+	{
+		MyMouseExit();
+	}
+
+	private void OnMouseDown()
+	{
+		ShowTooltip = false;
+		TooltipUI.setTooltip(this, string.Empty);
+		MyMouseDown();
+	}
+
+	private void OnMouseUp()
+	{
+		MyMouseUp();
+	}
+
+	private void OnMouseOver()
+	{
+		MyMouseOver();
+	}
+
+	protected virtual void MyMouseEnter()
+	{
+		if (bBright)
+		{
+			return;
+		}
+		Renderer[] componentsInChildren = GetComponentsInChildren<Renderer>();
+		Renderer[] array = componentsInChildren;
+		foreach (Renderer renderer in array)
+		{
+			if (renderer.materials == null)
+			{
+				continue;
+			}
+			Material[] materials = renderer.materials;
+			foreach (Material material in materials)
+			{
+				if (!material.shader.name.Contains("Particles") && material.HasProperty("_Color"))
+				{
+					Color color = material.color;
+					color.r *= 2f;
+					color.g *= 1.8f;
+					color.b *= 1.4f;
+					material.color = color;
+				}
+			}
+		}
+		bBright = true;
+	}
+
+	protected virtual void MyMouseExit()
+	{
+		if (!bBright)
+		{
+			return;
+		}
+		Renderer[] componentsInChildren = GetComponentsInChildren<Renderer>();
+		Renderer[] array = componentsInChildren;
+		foreach (Renderer renderer in array)
+		{
+			if (renderer.materials == null)
+			{
+				continue;
+			}
+			Material[] materials = renderer.materials;
+			foreach (Material material in materials)
+			{
+				if (!material.shader.name.Contains("Particles") && material.HasProperty("_Color"))
+				{
+					Color color = material.color;
+					color.r /= 2f;
+					color.g /= 1.8f;
+					color.b /= 1.4f;
+					material.color = color;
+				}
+			}
+		}
+		bBright = false;
+	}
+
+	protected virtual void MyMouseDown()
+	{
+	}
+
+	protected virtual void MyMouseUp()
+	{
+	}
+
+	protected virtual void MyMouseOver()
+	{
+	}
+
+	public void Select(bool bSelect)
+	{
+		float b = ((!bSelect) ? 1 : 2);
+		Renderer[] componentsInChildren = GetComponentsInChildren<Renderer>();
+		Renderer[] array = componentsInChildren;
+		foreach (Renderer renderer in array)
+		{
+			if (renderer.materials == null)
+			{
+				continue;
+			}
+			Material[] materials = renderer.materials;
+			foreach (Material material in materials)
+			{
+				if (!material.shader.name.Contains("Particles"))
+				{
+					Color color = material.color;
+					color.r = (color.g = (color.b = b));
+					material.color = color;
+				}
+			}
+		}
+	}
+
+	protected void checkHover(Rect rc, string script_name)
+	{
+		Vector2 point = new Vector2(Input.mousePosition.x - __BaseUI._rcCur.x, (float)Screen.height - Input.mousePosition.y - __BaseUI._rcCur.y);
+		bool flag = false;
+		if (rc.Contains(point))
+		{
+			flag = true;
+			if (Input.GetMouseButton(0))
+			{
+				flag = false;
+			}
+		}
+		if (flag == m_bHover)
+		{
+			return;
+		}
+		m_bHover = flag;
+		if (flag)
+		{
+			MyMouseEnter();
+			return;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		int layerMask = 1024;
+		bool flag2 = true;
+		if (Physics.Raycast(ray, out var hitInfo, 1000f, layerMask))
+		{
+			MeshScript meshScript = hitInfo.transform.GetComponent(script_name) as MeshScript;
+			if (meshScript != this)
+			{
+				flag2 = false;
+			}
+		}
+		else
+		{
+			flag2 = false;
+		}
+		if (!flag2)
+		{
+			MyMouseExit();
+		}
+	}
+}

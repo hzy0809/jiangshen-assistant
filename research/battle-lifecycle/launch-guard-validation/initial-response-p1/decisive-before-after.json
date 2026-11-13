@@ -1,0 +1,196 @@
+{
+  "outer_before": [
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 29688,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"3e6f194578694bd59a6c3b4e268bde62\",\"command_seq\":1,\"operation_id\":\"c61d6e4388404ceca9a355d3b915077d\",\"mode\":\"Campaign\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 1 7 2",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"3e6f194578694bd59a6c3b4e268bde62\",\"command_seq\":1,\"operation_id\":\"c61d6e4388404ceca9a355d3b915077d\",\"mode\":\"Campaign\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 40744,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"817044066cea4671a80693308a50164f\",\"command_seq\":1,\"operation_id\":\"7b89de110a954d7aaf8e14561fac3067\",\"mode\":\"FriendBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 1 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"817044066cea4671a80693308a50164f\",\"command_seq\":1,\"operation_id\":\"7b89de110a954d7aaf8e14561fac3067\",\"mode\":\"FriendBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_invalid_compressed_report_is_blocked_before_any_native_mutation",
+      "pid": 52116,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"ce9ba1d51bb84fa7a93e2d877e77bd94\",\"command_seq\":1,\"operation_id\":\"7dc568b2149a428585afb66c812bcf1f\",\"mode\":\"OwnBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 1 0 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"ce9ba1d51bb84fa7a93e2d877e77bd94\",\"command_seq\":1,\"operation_id\":\"7dc568b2149a428585afb66c812bcf1f\",\"mode\":\"OwnBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_own_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 36960,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"b9b6b1597c62488ca10acf4b30339cd1\",\"command_seq\":1,\"operation_id\":\"6b443b75f4c3420bb5500e952b112c75\",\"mode\":\"OwnBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 1 0 0",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"b9b6b1597c62488ca10acf4b30339cd1\",\"command_seq\":1,\"operation_id\":\"6b443b75f4c3420bb5500e952b112c75\",\"mode\":\"OwnBuildingMonster\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1"
+      ]
+    }
+  ],
+  "outer_after": [
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 35668,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"7a929ef6691f490dab6a46e2260e3394\",\"command_seq\":1,\"operation_id\":\"1a172ce9e5a5432e949a2ff84d2ab7b5\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_campaign_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"7a929ef6691f490dab6a46e2260e3394\",\"command_seq\":1,\"operation_id\":\"1a172ce9e5a5432e949a2ff84d2ab7b5\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_campaign_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_embedded_inner_target_b_cannot_be_cached_or_applied_for_a",
+      "pid": 16676,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"a900a09554964101bc9f7fb43eef091c\",\"command_seq\":1,\"operation_id\":\"eb8ec67c4bf5417f8346b3e2d4250a9b\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_embedded_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":0,\"response_embedded_present\":true,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"a900a09554964101bc9f7fb43eef091c\",\"command_seq\":1,\"operation_id\":\"eb8ec67c4bf5417f8346b3e2d4250a9b\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_embedded_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":0,\"response_embedded_present\":true,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 4184,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"1621eb57e820431c86f1e2c13f993e5e\",\"command_seq\":1,\"operation_id\":\"f781afebec214f40a11b26c82323a306\",\"mode\":\"FriendBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_friend_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"1621eb57e820431c86f1e2c13f993e5e\",\"command_seq\":1,\"operation_id\":\"f781afebec214f40a11b26c82323a306\",\"mode\":\"FriendBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_friend_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_invalid_compressed_report_is_blocked_before_any_native_mutation",
+      "pid": 40192,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"ee8b576a71e44dcfb0d916615f47cef2\",\"command_seq\":1,\"operation_id\":\"ee7b27ed8cc44b4c8a65da3420f48631\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_initial_reply_unknown:ZlibException:Bad state (invalid stored block lengths)\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"target-echo\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"ee8b576a71e44dcfb0d916615f47cef2\",\"command_seq\":1,\"operation_id\":\"ee7b27ed8cc44b4c8a65da3420f48631\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_initial_reply_unknown:ZlibException:Bad state (invalid stored block lengths)\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"target-echo\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_own_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 25044,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"a77c8ae274864dcc975334fc4a517cfa\",\"command_seq\":1,\"operation_id\":\"70456915b27741ec819d5e99e159e7cf\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_monster_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"a77c8ae274864dcc975334fc4a517cfa\",\"command_seq\":1,\"operation_id\":\"70456915b27741ec819d5e99e159e7cf\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_monster_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":true,\"response_result\":0,\"response_embedded_present\":false,\"response_embedded_verified\":false,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    }
+  ],
+  "embedded_before": [
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 15024,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"806d676c85984483b6b0af4de183da47\",\"command_seq\":1,\"operation_id\":\"5dbaba81e5e04eb0bd3e87013fab143b\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_campaign_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"806d676c85984483b6b0af4de183da47\",\"command_seq\":1,\"operation_id\":\"5dbaba81e5e04eb0bd3e87013fab143b\",\"mode\":\"Campaign\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_campaign_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_embedded_inner_target_b_cannot_be_cached_or_applied_for_a",
+      "pid": 40840,
+      "evidence": [
+        "MUTATIONS 1 0 7 1",
+        "EMBEDDED 7:2",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"9070896632734a969bf2f66f1d2257bb\",\"command_seq\":1,\"operation_id\":\"46a51500e88347649224f7c546be90d8\",\"mode\":\"Campaign\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":true,\"response_binding\":\"campaign-and-target-echo\",\"response_result_present\":false,\"response_result\":0,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1",
+        "MUTATIONS 1 1 7 1",
+        "EMBEDDED 7:2",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"9070896632734a969bf2f66f1d2257bb\",\"command_seq\":1,\"operation_id\":\"46a51500e88347649224f7c546be90d8\",\"mode\":\"Campaign\",\"state\":\"REQUEST_OBSERVED\",\"reason\":\"\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":true,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":true,\"response_binding\":\"campaign-and-target-echo\",\"response_result_present\":false,\"response_result\":0,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 1"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 34584,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"70d0e98688694cab9adb3bc9e710032c\",\"command_seq\":1,\"operation_id\":\"f6ea642a1285430cbe5418347ceb08f8\",\"mode\":\"FriendBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_friend_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"70d0e98688694cab9adb3bc9e710032c\",\"command_seq\":1,\"operation_id\":\"f6ea642a1285430cbe5418347ceb08f8\",\"mode\":\"FriendBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_friend_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_invalid_compressed_report_is_blocked_before_any_native_mutation",
+      "pid": 7184,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"e70a171d0a3f43dd80f78058a030efb7\",\"command_seq\":1,\"operation_id\":\"a782f6edf3c043e8bd8b5f03fa599408\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_initial_reply_unknown:ZlibException:Bad state (invalid stored block lengths)\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"target-echo\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"e70a171d0a3f43dd80f78058a030efb7\",\"command_seq\":1,\"operation_id\":\"a782f6edf3c043e8bd8b5f03fa599408\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_initial_reply_unknown:ZlibException:Bad state (invalid stored block lengths)\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"target-echo\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    },
+    {
+      "test": "tests.test_battle_launch.BattleLaunchRaceTests.test_own_building_request_a_valid_response_b_is_blocked_before_stock",
+      "pid": 51144,
+      "evidence": [
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"f0b6dfa9a87149918249cfa062f754bf\",\"command_seq\":1,\"operation_id\":\"c5b8e214108345ada962871ec45be74e\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_monster_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0",
+        "MUTATIONS 0 0 0 0",
+        "EMBEDDED none",
+        "STATE {\"interface\":\"named-event-launch-fence-v1\",\"epoch\":\"f0b6dfa9a87149918249cfa062f754bf\",\"command_seq\":1,\"operation_id\":\"c5b8e214108345ada962871ec45be74e\",\"mode\":\"OwnBuildingMonster\",\"state\":\"UNKNOWN\",\"reason\":\"battle_launch_monster_response_target_mismatch\",\"formation_update_attempted\":true,\"battle_launch_invoked\":true,\"battle_request_observed\":true,\"initial_response_applied\":false,\"report_transferred\":false,\"nonreport_callback_returned\":false,\"nonreport_result\":null,\"response_validated\":false,\"response_binding\":\"unvalidated\",\"response_result_present\":false,\"response_result\":null,\"unresolved\":true,\"formation_callback_returned\":true}",
+        "COUNTS 1 1 1 0"
+      ]
+    }
+  ]
+}

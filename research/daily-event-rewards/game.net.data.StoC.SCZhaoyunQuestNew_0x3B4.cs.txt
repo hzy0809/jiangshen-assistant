@@ -1,0 +1,144 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCZhaoyunQuestNew_0x3B4")]
+public class SCZhaoyunQuestNew_0x3B4 : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error
+	}
+
+	private Operate _operate;
+
+	private uint _step;
+
+	private bool _insquad = false;
+
+	private uint _weaponid = 0u;
+
+	private uint _armorid = 0u;
+
+	private uint _artifactid = 0u;
+
+	private uint _amuletid = 0u;
+
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "step", DataFormat = DataFormat.TwosComplement)]
+	public uint step
+	{
+		get
+		{
+			return _step;
+		}
+		set
+		{
+			_step = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "insquad", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool insquad
+	{
+		get
+		{
+			return _insquad;
+		}
+		set
+		{
+			_insquad = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "weaponid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint weaponid
+	{
+		get
+		{
+			return _weaponid;
+		}
+		set
+		{
+			_weaponid = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "armorid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint armorid
+	{
+		get
+		{
+			return _armorid;
+		}
+		set
+		{
+			_armorid = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "artifactid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint artifactid
+	{
+		get
+		{
+			return _artifactid;
+		}
+		set
+		{
+			_artifactid = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "amuletid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint amuletid
+	{
+		get
+		{
+			return _amuletid;
+		}
+		set
+		{
+			_amuletid = value;
+		}
+	}
+
+	[ProtoMember(8, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

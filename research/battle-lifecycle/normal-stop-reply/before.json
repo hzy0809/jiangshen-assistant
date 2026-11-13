@@ -1,0 +1,22 @@
+[
+  {
+    "path": "native\\unity_bridge\\managed\\DailyArenaBattleModel.cs",
+    "sha256": "a94ac78735157e1f1830de42b7f7724db5f4dc49718510d65fe9728d849055e4"
+  },
+  {
+    "path": "native\\unity_bridge\\managed\\DailyPointRaceModel.cs",
+    "sha256": "c1574dbcbd0192839703da0efed42232702077e16f4bd5d0db85a01e3e755390"
+  },
+  {
+    "path": "native\\unity_bridge\\managed\\DailyMonsterModel.cs",
+    "sha256": "14a8f4416a1973d87d961b619d89c343a3b1e5d5aae9185b7e4db27d98fbf04f"
+  },
+  {
+    "path": "native\\unity_bridge\\managed\\DailyScriptAdapter.cs",
+    "sha256": "ba94a2b847421b6be2762276a7f9914c5e4d703d9fdfd4f3de09f2f49bbf6cc6"
+  },
+  {
+    "path": "native\\unity_bridge\\tests\\BattleModeAdapterTestStubs.cs",
+    "sha256": "359f344df40e2baaca97a1b654a0f8c61ffc75d3a0e33d71a43beaf32cc5fd6f"
+  }
+]

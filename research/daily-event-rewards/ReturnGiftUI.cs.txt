@@ -1,0 +1,239 @@
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using JxFunc;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class ReturnGiftUI : BaseUI
+{
+	private GUIStyle ui_hgzi1 = new GUIStyle();
+
+	private GUIStyle ui_hgzi2 = new GUIStyle();
+
+	private GUIStyle ui_hgzi3 = new GUIStyle();
+
+	private GUIStyle ui_hgzi4 = new GUIStyle();
+
+	private GUIStyle ui_bg_huiguilb = new GUIStyle();
+
+	private _ButtonStyle btnGet = new _ButtonStyle();
+
+	private _ButtonStyle btnClose = new _ButtonStyle();
+
+	private _ButtonStyle btnActivate = new _ButtonStyle();
+
+	private bool mCanSendMsg = true;
+
+	private _return_gift mReturnGift;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		AddAsset("ui_returngift");
+		DisableAll();
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_returngift");
+		ui_hgzi1.normal.background = asset.Load("ui_hgzi1") as Texture2D;
+		ui_hgzi2.normal.background = asset.Load("ui_hgzi2") as Texture2D;
+		ui_hgzi3.normal.background = asset.Load("ui_hgzi3") as Texture2D;
+		ui_hgzi4.normal.background = asset.Load("ui_hgzi4") as Texture2D;
+		ui_bg_huiguilb.normal.background = asset.Load("ui_bg_huiguilb") as Texture2D;
+		btnGet.make(asset, "button_lingqujl");
+		btnClose.make(asset, "button_guanbi");
+		btnActivate.make(asset, "button_ljjihuo");
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (BeginGUI(686f, 420f, __BaseUI.UIDepth_Sub, ui_bg_huiguilb, null))
+		{
+			drawMain();
+			if (btnClose.Button(bBtn: true, __BaseUI._rect(620f, 20f, 27f, 32f), string.Empty))
+			{
+				MainUI.SetSubUI(null);
+			}
+			if (!EndGUI(hasClose: false))
+			{
+			}
+		}
+	}
+
+	private void drawMain()
+	{
+		drawOne(10, 135f, 48f);
+		drawOne(20, 130f, 83f);
+		drawOne(35, 120f, 153f);
+		drawOne(45, 110f, 223f);
+		drawOne(55, 100f, 293f);
+		mReturnGift = Global.getTemplate("return_gift", 60u) as _return_gift;
+		if (mReturnGift != null)
+		{
+			__BaseUI.Label(__BaseUI._rect(160f, 326f, 100f, 30f), "+ " + BaseFunc.greaterThanTenThousand(mReturnGift.type1_param1), __BaseUI._numLeft, 14, __BaseUI._clrWhite);
+		}
+		drawStatus();
+		float num = 135f;
+		float num2 = 48f;
+		foreach (KeyValuePair<byte, int> return_gift in Global.character_.return_gifts)
+		{
+			__BaseUI.Label(__BaseUI._rect(num, num2, 260f, 50f), new GUIContent(string.Empty, "tips" + return_gift.Key), __BaseUI._textLeft, __BaseUI._clrWhite);
+			num -= 5f;
+			num2 += 35f;
+		}
+		if (Global.character_.return_gift)
+		{
+			__BaseUI.Label(__BaseUI._rect(40f, 370f, 247f, 21f), string.Empty, ui_hgzi2);
+			if (btnGet.Button(bBtn: true, __BaseUI._rect(320f, 360f, 110f, 36f), string.Empty))
+			{
+				if (Global.character_.return_gift_red_count == 0)
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21537u), BaseAsset.lds.GetCurUI());
+				}
+				else
+				{
+					cs_return_gift_0x809();
+				}
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(30f, 370f, 266f, 21f), string.Empty, ui_hgzi1);
+			if (btnActivate.Button(bBtn: true, __BaseUI._rect(320f, 360f, 110f, 36f), string.Empty))
+			{
+				Global.IEExplore("http://js.xd.com/old-player-card", "normal");
+			}
+		}
+	}
+
+	private void drawOne(byte lv, float x, float y)
+	{
+		mReturnGift = Global.getTemplate("return_gift", lv) as _return_gift;
+		if (mReturnGift != null)
+		{
+			GUIStyle bonusSmallIcon = Global.getBonusSmallIcon(mReturnGift.treasure_type1, (int)mReturnGift.type1_param0);
+			if (bonusSmallIcon.normal.background != null)
+			{
+				__BaseUI.Label(__BaseUI._rect(x, y, bonusSmallIcon.normal.background.width, bonusSmallIcon.normal.background.height), string.Empty, bonusSmallIcon);
+				__BaseUI.Label(__BaseUI._rect(x + 25f, y - 2f, 100f, 30f), "+ " + BaseFunc.greaterThanTenThousand(mReturnGift.type1_param1), __BaseUI._numLeft, 14, __BaseUI._clrWhite);
+			}
+			if (mReturnGift.treasure_type2 != 0)
+			{
+				bonusSmallIcon = Global.getBonusSmallIcon(mReturnGift.treasure_type2, (int)mReturnGift.type2_param0);
+				__BaseUI.Label(__BaseUI._rect(x + 80f, y, bonusSmallIcon.normal.background.width, bonusSmallIcon.normal.background.height), string.Empty, bonusSmallIcon);
+				__BaseUI.Label(__BaseUI._rect(x + 105f, y - 2f, 100f, 30f), "+ " + BaseFunc.greaterThanTenThousand(mReturnGift.type2_param1), __BaseUI._numLeft, 14, __BaseUI._clrWhite);
+			}
+		}
+	}
+
+	private void drawStatus()
+	{
+		float num = 295f;
+		float num2 = 50f;
+		using IEnumerator<KeyValuePair<byte, int>> enumerator = Global.character_.return_gifts.GetEnumerator();
+		while (enumerator.MoveNext())
+		{
+			switch (enumerator.Current.Value)
+			{
+			case -1:
+				__BaseUI.Label(__BaseUI._rect(num - 5f, num2 + 1f, 59f, 18f), string.Empty, ui_hgzi4);
+				break;
+			case 0:
+				__BaseUI.Label(__BaseUI._rect(num, num2, 48f, 20f), string.Empty, ui_hgzi3);
+				break;
+			case 1:
+				__BaseUI.Label(__BaseUI._rect(num + 10f, num2 - 3f, 27f, 26f), string.Empty, __BaseUI._gou);
+				break;
+			}
+			num -= 5f;
+			num2 += 35f;
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		if (!tip.StartsWith("tips"))
+		{
+			return;
+		}
+		byte id = byte.Parse(tip.Replace("tips", string.Empty));
+		_Treasure treasure = new _Treasure();
+		_treasure_type treasure_type = null;
+		_treasure_type treasure_type2 = null;
+		_return_gift return_gift = Global.getTemplate("return_gift", id) as _return_gift;
+		switch (return_gift.treasure_type1)
+		{
+		case 0:
+			__BaseUI.GetTooltipUI().ShowTooltipGR("ReturnGift", return_gift.type1_param0, null, locked: false);
+			return;
+		case 54:
+		case 60:
+			treasure.make(return_gift.treasure_type1, (int)return_gift.type1_param0, (int)return_gift.type1_param1);
+			treasure.PrepTooltip();
+			return;
+		}
+		treasure_type = Global.getTemplate("treasure_type", return_gift.treasure_type1) as _treasure_type;
+		if (return_gift.treasure_type2 == 0)
+		{
+			__BaseUI.GetTooltipUI().ShowTooltipCommon(treasure_type.desc + " + " + return_gift.type1_param1, "ReturnGift");
+			return;
+		}
+		treasure_type2 = Global.getTemplate("treasure_type", return_gift.treasure_type2) as _treasure_type;
+		__BaseUI.GetTooltipUI().ShowTooltipCommon(treasure_type.desc + " + " + return_gift.type1_param1 + ", " + treasure_type2.desc + " + " + return_gift.type2_param1, "ReturnGift");
+	}
+
+	private void cs_return_gift_0x809()
+	{
+		if (mCanSendMsg)
+		{
+			mCanSendMsg = false;
+			CSReturnGift_0x809 pkt = new CSReturnGift_0x809();
+			RootUI.m_client.Send(2057, pkt, sc_return_gift_0x809);
+		}
+	}
+
+	private void sc_return_gift_0x809(MemoryStream stream, object arg)
+	{
+		mCanSendMsg = true;
+		if (stream == null)
+		{
+			return;
+		}
+		SCReturnGift_0x809 sCReturnGift_0x = JSProtoBuf.Serializer.Deserialize<SCReturnGift_0x809>(stream);
+		if (sCReturnGift_0x.isOk)
+		{
+			Global.character_.return_gift_status = (short)sCReturnGift_0x.return_gift_status;
+			Global.character_.calcReturnGiftRedCount();
+			List<_Treasure> list = new List<_Treasure>();
+			foreach (Treasure bonu in sCReturnGift_0x.bonus)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make(bonu);
+				list.Add(treasure);
+			}
+			if (list.Count > 0)
+			{
+				BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+				battleResultUI.setBonus(list);
+				battleResultUI.MyLoading();
+			}
+		}
+		EnableAll();
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

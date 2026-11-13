@@ -1,0 +1,23 @@
+﻿{"scenario":"pointrace_reply_wrong_opponent_blocked","status":"PASS","checks":9}
+{"scenario":"pointrace_reply_premium_blocked","status":"PASS","checks":9}
+{"scenario":"pointrace_reply_wire_and_identity_negatives","status":"PASS","checks":234}
+{"scenario":"pointrace_reply_original_stream_and_defaults","status":"PASS","checks":26}
+{"scenario":"pointrace_reply_report_mutation_unknown","status":"PASS","checks":7}
+{"scenario":"pointrace_win_settled_original_scene","status":"PASS","checks":17}
+{"scenario":"pointrace_loss_then_natural_next","status":"PASS","checks":16}
+{"scenario":"pointrace_duplicate_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_timeout_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_rejection_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_replaced_target_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_foreign_callback_blocks","status":"PASS","checks":8}
+{"scenario":"pointrace_stop_pending","status":"PASS","checks":8}
+{"scenario":"pointrace_guard_denial_no_stock_start","status":"PASS","checks":6}
+{"scenario":"pointrace_entry_callback_distinct_wait","status":"PASS","checks":8}
+{"scenario":"pointrace_entry_timeout_stock_cleanup_unknown","status":"FAIL","error":"System.Exception: verified home is cleanup only, never reopen\u000d\u000a   \u5728 PointRaceBattleAdapterTests.Check(Boolean value, String why)\u000d\u000a   \u5728 PointRaceBattleAdapterTests.EntryTimeoutSafeReturn()\u000d\u000a   \u5728 PointRaceBattleAdapterTests.Main()"}
+{"scenario":"pointrace_entry_timeout_return_safety_negatives","status":"PASS","checks":77}
+{"scenario":"pointrace_entry_timeout_queued_return_rechecked","status":"PASS","checks":11}
+{"scenario":"pointrace_entry_timeout_stop_pause_win","status":"PASS","checks":22}
+{"scenario":"pointrace_entry_timeout_late_native_callback","status":"PASS","checks":12}
+{"scenario":"pointrace_entry_timeout_incomplete_return","status":"PASS","checks":11}
+{"scenario":"pointrace_entry_callback_normal_path","status":"PASS","checks":7}
+{"status":"FAIL","scenarios":22,"failed":1,"checks":535,"scope":"production PointRace adapter and settlement; fake client/Unity and instrumented launch-guard substitute; no actual IPC or guard race","game_access":false}

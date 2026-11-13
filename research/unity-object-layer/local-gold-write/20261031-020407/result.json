@@ -1,0 +1,13 @@
+{
+  "status": "REFUSED_NO_WRITE",
+  "pid": 12844,
+  "target_gold": 20000,
+  "write_attempts": 0,
+  "started_at_utc": "2026-10-30T18:04:07.162708+00:00",
+  "receipt_dir": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\local-gold-write\\20261031-020407",
+  "scope": "One four-byte client gold write; no game method, input, request, or file modification",
+  "gold_before": 450,
+  "gold_address": "0x22b07054",
+  "error": "Refusal: Gold memory page is not already writable data",
+  "completed_at_utc": "2026-10-30T18:04:07.295354+00:00"
+}

@@ -1,0 +1,16 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSReputationSalary_0x333")]
+public class CSReputationSalary_0x333 : IExtensible
+{
+	private IExtension extensionObject;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

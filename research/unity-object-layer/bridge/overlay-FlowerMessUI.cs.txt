@@ -1,0 +1,437 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class FlowerMessUI : BaseUI
+{
+	public class FMUI
+	{
+		public _ButtonStyle btn_style;
+
+		public object arg;
+
+		public callbackOnBtn func;
+
+		public float cpos;
+
+		public float targetpos;
+
+		public int num;
+
+		public int id;
+
+		public FMUI(_ButtonStyle bs, int count, object a, callbackOnBtn f, int idx)
+		{
+			arg = a;
+			num = count;
+			cpos = 500f;
+			func = f;
+			btn_style = bs;
+			id = idx;
+		}
+
+		public FMUI(_ButtonStyle bs, object a, callbackOnBtn f)
+		{
+			btn_style = bs;
+			arg = a;
+			func = f;
+			cpos = 500f;
+		}
+	}
+
+	public class RobMsg
+	{
+		public ConvoyReport convoyReport;
+
+		public callbackOnBtn func;
+
+		public float curPosX;
+
+		public float targetPosX;
+
+		public RobMsg(ConvoyReport _cr, callbackOnBtn f)
+		{
+			convoyReport = _cr;
+			func = f;
+			curPosX = 500f;
+		}
+	}
+
+	public delegate void callbackOnBtn(object arg);
+
+	public static bool need_show = true;
+
+	private List<FMUI> Fm = new List<FMUI>();
+
+	private string temps = string.Empty;
+
+	private int tempa;
+
+	public List<RobMsg> RobMsgs = new List<RobMsg>();
+
+	private Dictionary<int, int> removeList = new Dictionary<int, int>();
+
+	private bool showFM;
+
+	private GUIStyle xianhua1 = new GUIStyle();
+
+	private GUIStyle xianhua2 = new GUIStyle();
+
+	private GUIStyle xianhua3 = new GUIStyle();
+
+	private GUIStyle ui_frame = new GUIStyle();
+
+	private Texture2D tex1;
+
+	private Texture2D tex2;
+
+	private Texture2D tex3;
+
+	private _ButtonStyle btn_hulue = new _ButtonStyle();
+
+	private _ButtonStyle btn_flower = new _ButtonStyle();
+
+	private _ButtonStyle btn_rob = new _ButtonStyle();
+
+	private _ButtonStyle btn_ok = new _ButtonStyle();
+
+	private bool fc;
+
+	private int remain = 5;
+
+	private int idx;
+
+	private bool rm;
+
+	private _ButtonStyle replayBtn = new _ButtonStyle();
+
+	private _ButtonStyle closeBtn = new _ButtonStyle();
+
+	private ScenarioSection ss = new ScenarioSection();
+
+	public void ADDFM(FMUI f)
+	{
+		Fm.Add(f);
+	}
+
+	public void addRobMsg(RobMsg rm)
+	{
+		RobMsgs.Add(rm);
+	}
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = false;
+	}
+
+	public void Prep(string id)
+	{
+		AddAsset("ui_flowermess");
+		AddAsset("zhucheng_huaban");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_flowermess");
+		btn_flower.make(asset, "button_xianhua");
+		btn_hulue.make(asset, "button_hulue");
+		btn_ok.make(asset, "button_queding_new");
+		__BaseUI.init_lable(asset, "ui_xianhua1", ref xianhua1);
+		__BaseUI.init_lable(asset, "ui_xianhua2", ref xianhua2);
+		__BaseUI.init_lable(asset, "ui_xianhua3", ref xianhua3);
+		__BaseUI.init_lable(asset, "ui_di", ref ui_frame);
+		ui_frame.border = new RectOffset(50, 50, 50, 50);
+		tex1 = asset.Load("button_xianhua_normal") as Texture2D;
+		tex2 = asset.Load("button_youjian_normal") as Texture2D;
+		btn_rob.make(asset, "button_zhandou");
+		tex3 = asset.Load("button_zhandou_normal") as Texture2D;
+		Fm.Clear();
+		for (int i = 0; i < Global.character_.FlowerEvents.Count; i++)
+		{
+			if (!Global.character_.FlowerEvents[i].isread)
+			{
+				FMUI f = new FMUI(getbtn(), (int)Global.character_.FlowerEvents[i].param, Global.character_.FlowerEvents[i].name, CallbackOnClickPending, Global.character_.FlowerEvents[i].id);
+				ADDFM(f);
+			}
+		}
+		showFM = false;
+		RobMsgs.Clear();
+		foreach (ConvoyReport convoyReport in Global.character_.convoy.convoyReports)
+		{
+			RobMsg robMsg = new RobMsg(convoyReport, null);
+			addRobMsg(robMsg);
+		}
+		replayBtn.make(asset, "button_chongbo");
+		closeBtn.make(asset, "button_guanbi");
+		Enable();
+		Visible();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.StartsWith("flowermess:"))
+		{
+			string s = tip.Substring("flowermess:".Length);
+			int num = int.Parse(s);
+			if (num < Fm.Count)
+			{
+				if (Fm[num].btn_style == btn_flower)
+				{
+					string text = __BaseUI.load_str(20242u, Fm[num].arg.ToString(), Fm[num].num);
+					tooltipUI.ShowTooltipContent(string.Empty, text, 200, 14);
+				}
+				else
+				{
+					string text2 = __BaseUI.load_str(20243u, Fm[num].arg.ToString());
+					tooltipUI.ShowTooltipContent(string.Empty, text2, 200, 14);
+				}
+			}
+		}
+		else if (tip.StartsWith("robMsg:"))
+		{
+			int index = int.Parse(tip.Replace("robMsg:", string.Empty));
+			tooltipUI.ShowTooltipContent(string.Empty, __BaseUI.load_str(20846u, RobMsgs[index].convoyReport.other_name), 200, 14);
+		}
+	}
+
+	private void Update()
+	{
+		if (Fm.Count > 0)
+		{
+			for (int i = 0; i < Fm.Count; i++)
+			{
+				Fm[i].cpos = Mathf.MoveTowards(Fm[i].cpos, Fm[i].targetpos, 30f);
+			}
+		}
+		for (int j = 0; j < RobMsgs.Count; j++)
+		{
+			RobMsgs[j].curPosX = Mathf.MoveTowards(RobMsgs[j].curPosX, RobMsgs[j].targetPosX, 30f);
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		__BaseUI.my_enabled = IsEnable();
+		int num = Screen.width / 2 - 120;
+		int num2 = 0;
+		if (BaseAsset.lds.GetCurUI() != null && BaseAsset.lds.GetCurUI().LevelID == "Convoy")
+		{
+			num2 = 100;
+		}
+		int num3 = Screen.height - (200 + num2);
+		if (BaseAsset.lds != null && BaseAsset.lds.GetCurUI() != null && (BaseAsset.lds.IsBattling() || BaseAsset.lds.GetCurUI().LevelID == "SealDevil"))
+		{
+			return;
+		}
+		__BaseUI.BeginGroup(__BaseUI._rect(num, num3, Screen.width, 150f));
+		for (int i = 0; i < Math.Min(5, RobMsgs.Count); i++)
+		{
+			RobMsgs[i].targetPosX = i * 55 + 10;
+			if (btn_rob.Button(IsEnable(), __BaseUI._rect(RobMsgs[i].curPosX, 45f, 48f, 48f), new GUIContent(string.Empty, "robMsg:" + i)))
+			{
+				idx = i;
+				rm = true;
+				List<ulong> list = new List<ulong>();
+				list.Add(RobMsgs[i].convoyReport.idbattle_report);
+				cs_convoy_del_report(list);
+				RootBase._drawBubble(__BaseUI._rect((float)num + RobMsgs[i].curPosX, num3 + 20, 55f, 55f), tex3, 0.5f, null);
+			}
+		}
+		remain = ((5 - RobMsgs.Count > 0) ? (5 - RobMsgs.Count) : 0);
+		if (BaseAsset.lds.GetCurUI() != null && BaseAsset.lds.GetCurUI().LevelID == "Capital" && Fm.Count > 0)
+		{
+			showFM = true;
+			for (int j = 0; j < Math.Min(Fm.Count, remain); j++)
+			{
+				Fm[j].targetpos = (5 - remain + j) * 55 + 10;
+				if (Fm[j].btn_style.Button(IsEnable(), __BaseUI._rect(Fm[j].cpos, 45f, 48f, 48f), new GUIContent(string.Empty, "flowermess:" + j)))
+				{
+					Fm[j].func(Fm[j].arg);
+					if (Fm[j].btn_style == btn_flower)
+					{
+						temps = Fm[j].arg.ToString();
+						fc = true;
+						tempa = Fm[j].num;
+						cs_buddy_click_flower((uint)Fm[j].id);
+						RootBase._drawBubble(__BaseUI._rect((float)num + Fm[j].cpos, num3 + 20, 55f, 55f), tex1, 0.5f, null);
+					}
+					else
+					{
+						RootBase._drawBubble(__BaseUI._rect((float)num + Fm[j].cpos, num3 + 20, 55f, 55f), tex2, 0.5f, null);
+						Fm.Remove(Fm[j]);
+					}
+				}
+			}
+		}
+		if (showFM && RobMsgs.Count < 5)
+		{
+			if (Fm.Count + RobMsgs.Count > 1 && btn_hulue.Button(IsEnable(), __BaseUI._rect(10f, 20f, 80f, 22f), string.Empty))
+			{
+				List<ulong> list2 = new List<ulong>();
+				for (int k = 0; k < RobMsgs.Count; k++)
+				{
+					list2.Add(RobMsgs[k].convoyReport.idbattle_report);
+				}
+				cs_convoy_del_report(list2);
+				RobMsgs.RemoveRange(0, RobMsgs.Count);
+				Global.character_.convoy.convoyReports.RemoveRange(0, Global.character_.convoy.convoyReports.Count);
+				int num4 = Math.Min(remain, Fm.Count);
+				Fm.RemoveRange(0, num4);
+				for (int l = 0; l < num4; l++)
+				{
+					Global.character_.FlowerEvents[l].isread = true;
+				}
+				SCBuddyIgnoreAll_0x35A pkt = new SCBuddyIgnoreAll_0x35A();
+				RootUI.m_client.Send(858, pkt, null);
+			}
+		}
+		else if (RobMsgs.Count > 1 && btn_hulue.Button(IsEnable(), __BaseUI._rect(10f, 20f, 80f, 22f), string.Empty))
+		{
+			int num5 = ((RobMsgs.Count <= 5) ? RobMsgs.Count : 5);
+			List<ulong> list3 = new List<ulong>();
+			for (int m = 0; m < num5; m++)
+			{
+				list3.Add(RobMsgs[m].convoyReport.idbattle_report);
+			}
+			cs_convoy_del_report(list3);
+			RobMsgs.RemoveRange(0, num5);
+			Global.character_.convoy.convoyReports.RemoveRange(0, num5);
+		}
+		__BaseUI.EndGroup();
+		DrawClickFlower(temps);
+		if (rm)
+		{
+			DrawClickRob(idx);
+		}
+		__BaseUI.my_enabled = true;
+		foreach (int value in removeList.Values)
+		{
+			RobMsgs.RemoveAt(value);
+			Global.character_.convoy.convoyReports.RemoveAt(value);
+		}
+		removeList.Clear();
+		drawTooltips();
+	}
+
+	private void DrawClickFlower(string name)
+	{
+		if (fc)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectC(169f, 68f, 338f, 136f));
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 338f, 136f), string.Empty, ui_frame);
+			Vector2 vector = __BaseUI._textLeft.CalcSize(new GUIContent(name));
+			__BaseUI.Label(__BaseUI._rect(143f, 45f, vector.x, 15f), name, __BaseUI._textLeft, __BaseUI._clrGreen);
+			switch (tempa)
+			{
+			case 1:
+				__BaseUI.Label(__BaseUI._rect(10f, 10f, 132f, 132f), string.Empty, xianhua1);
+				__BaseUI.Label(__BaseUI._rect(143f + vector.x, 45f, 162f, 15f), __BaseUI.load_str(20244u, tempa), __BaseUI._textLeft, __BaseUI._clrWhite);
+				break;
+			case 9:
+				__BaseUI.Label(__BaseUI._rect(10f, 10f, 132f, 132f), string.Empty, xianhua2);
+				__BaseUI.Label(__BaseUI._rect(143f + vector.x, 45f, 162f, 15f), __BaseUI.load_str(20244u, tempa), __BaseUI._textLeft, __BaseUI._clrWhite);
+				break;
+			case 99:
+				__BaseUI.Label(__BaseUI._rect(10f, 10f, 132f, 132f), string.Empty, xianhua3);
+				__BaseUI.Label(__BaseUI._rect(143f + vector.x, 45f, 162f, 15f), __BaseUI.load_str(20244u, tempa), __BaseUI._textLeft, __BaseUI._clrWhite);
+				break;
+			}
+			if (btn_ok.Button(IsEnable(), __BaseUI._rect(176f, 80f, 98f, 30f), string.Empty))
+			{
+				fc = false;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	public void DrawClickRob(int idx)
+	{
+		if (rm)
+		{
+			ss.setParams(200, 200, __BaseUI._fontSize);
+			ss.makes_string(__BaseUI.load_str(20827u, RobMsgs[idx].convoyReport.other_name, RobMsgs[idx].convoyReport.money), __BaseUI._textNLeft);
+			__BaseUI.BeginGroup(__BaseUI._rectC(150f, 80f, 300f, 160f));
+			GUI.Box(__BaseUI._rect(0f, 0f, 300f, 160f), string.Empty, __BaseUI.normalStyle);
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 300f, 160f), string.Empty, ui_frame);
+			ss.draw(__BaseUI._rect(80f, 50f, 200f, 200f), __BaseUI._textNLeft);
+			if (replayBtn.Button(bBtn: true, __BaseUI._rect(40f, 110f, 98f, 30f), string.Empty))
+			{
+				GameObject.Find("/Convoy/ConvoyUI").GetComponent<ConvoyUI>().CheckReport(RobMsgs[idx].convoyReport);
+				removeList.Add(idx, idx);
+				rm = false;
+			}
+			if (closeBtn.Button(bBtn: true, __BaseUI._rect(160f, 110f, 98f, 30f), string.Empty))
+			{
+				removeList.Add(idx, idx);
+				rm = false;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	public void cs_buddy_click_flower(uint id)
+	{
+		CSBuddyClickFlower_0x359 cSBuddyClickFlower_0x = new CSBuddyClickFlower_0x359();
+		cSBuddyClickFlower_0x.eventid = id;
+		RootUI.m_client.Send(857, cSBuddyClickFlower_0x, sc_buddy_click_flower, id);
+	}
+
+	public void cs_convoy_del_report(List<ulong> idlist)
+	{
+		CSConvoyDelReport_0x375 cSConvoyDelReport_0x = new CSConvoyDelReport_0x375();
+		foreach (ulong item in idlist)
+		{
+			cSConvoyDelReport_0x.idlist.Add(item);
+		}
+		RootUI.m_client.Send(885, cSConvoyDelReport_0x, null);
+	}
+
+	public void sc_buddy_click_flower(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		uint num = (uint)arg;
+		SCBuddyClickFlower_0x359 sCBuddyClickFlower_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyClickFlower_0x359>(stream);
+		if (sCBuddyClickFlower_0x.operate != SCBuddyClickFlower_0x359.Operate.OK)
+		{
+			return;
+		}
+		foreach (EventTimeline flowerEvent in Global.character_.FlowerEvents)
+		{
+			if (flowerEvent.id == num)
+			{
+				flowerEvent.isread = true;
+				break;
+			}
+		}
+		for (int i = 0; i < Fm.Count; i++)
+		{
+			if (Fm[i].id == num)
+			{
+				Fm.Remove(Fm[i]);
+				break;
+			}
+		}
+	}
+
+	public void CallbackOnClickPending(object arg)
+	{
+		DrawClickFlower((string)arg);
+	}
+
+	public _ButtonStyle getbtn()
+	{
+		return btn_flower;
+	}
+}

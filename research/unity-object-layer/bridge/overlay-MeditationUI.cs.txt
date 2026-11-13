@@ -1,0 +1,128 @@
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class MeditationUI : BaseUI
+{
+	public static bool toshow;
+
+	public static bool waitflag;
+
+	private _ButtonStyle b_med = new _ButtonStyle();
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = false;
+	}
+
+	private void Update()
+	{
+	}
+
+	public void SubLoading(bool showui)
+	{
+		if (waitflag || !(BaseAsset.lds.GetCurUI() != null))
+		{
+			return;
+		}
+		switch (BaseAsset.lds.GetCurUI().LevelID)
+		{
+		case "Brawl":
+		case "SealDevil":
+			return;
+		}
+		if (!BaseAsset.lds.isVisible() && !BaseAsset.lds.IsBattling() && (showui || (int)TimeUtil.Now - Global.character_.meditation_start >= 60))
+		{
+			toshow = true;
+			AddAsset("ui_meditation");
+			CollectingStart(bCollecting: false);
+			StartLoading();
+		}
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_meditation");
+		b_med.make(asset, "tga_di");
+		Visible();
+		Enable();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(__BaseUI._rectRB(366f, 217f, 279f, 112f), __BaseUI.UIDepth_Main);
+		if (b_med.Button(bBtn: true, __BaseUI._rect(0f, 0f, 279f, 112f), string.Empty))
+		{
+			Disable();
+			cs_getexp();
+		}
+		int num = (int)(TimeUtil.Now - Global.character_.meditation_start);
+		if (Global.character_.VIPLEVEL < 2 && num > 28800)
+		{
+			num = 28800;
+		}
+		else if (Global.character_.VIPLEVEL >= 2 && num > 86400)
+		{
+			num = 86400;
+		}
+		int num2 = (Global.getTemplate("meditation_exp", (uint)Global.character_.level) as _meditation_exp).exp * (num / 60);
+		__BaseUI.Label(__BaseUI._rect(157f, 33f, 98f, 23f), num2 + __BaseUI.get_string("med_exp"), __BaseUI._textNLeft, __BaseUI._clrYellow);
+		__BaseUI.Label(__BaseUI._rect(157f, 61f, 98f, 23f), Global.getStringTime(num), __BaseUI._textNLeft, __BaseUI._clrGreen);
+		EndGUI(hasClose: false);
+	}
+
+	private void cs_getexp()
+	{
+		CSMeditationEnd_0x15b pkt = new CSMeditationEnd_0x15b();
+		RootUI.m_client.Send(347, pkt, null);
+	}
+
+	public void sc_getexp(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCMeditationEnd_0x15b sCMeditationEnd_0x15b = JSProtoBuf.Serializer.Deserialize<SCMeditationEnd_0x15b>(stream);
+		if (sCMeditationEnd_0x15b.exp != 0)
+		{
+			Global.character_.addExp((int)sCMeditationEnd_0x15b.exp, bGeneral: true);
+			if (IsVisible())
+			{
+				RootBase._drawBubble((int)sCMeditationEnd_0x15b.exp, __BaseUI._rectRB(260f, 180f, 200f, 30f), __BaseUI._iconExp, 1f, -5f, -20f);
+			}
+		}
+		Global.character_.meditation_start = 0u;
+		toshow = false;
+		Hide();
+	}
+
+	private void OnResume()
+	{
+		EnableAll();
+	}
+
+	public void StartMeditation(bool showui)
+	{
+		if (Global.character_.checkUI(1u))
+		{
+			CSMeditationStart_0x15c pkt = new CSMeditationStart_0x15c();
+			RootUI.m_client.Send(348, pkt, sc_medstart, showui);
+		}
+	}
+
+	private void sc_medstart(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCMeditationStart_0x15c sCMeditationStart_0x15c = JSProtoBuf.Serializer.Deserialize<SCMeditationStart_0x15c>(stream);
+			Global.character_.meditation_start = sCMeditationStart_0x15c.med_starts;
+			SubLoading((bool)arg);
+		}
+	}
+}

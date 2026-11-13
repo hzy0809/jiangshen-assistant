@@ -1,0 +1,362 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class Building : _character_building
+{
+	public static readonly float _step = 10f;
+
+	public _building data;
+
+	public BuildingProduct product;
+
+	public Texture2D texIcon;
+
+	public GameObject root;
+
+	public GameObject rootMesh;
+
+	public GameObject mesh;
+
+	public GameObject[,] masks;
+
+	public List<BuildingProduct> m_products = new List<BuildingProduct>();
+
+	public bool notbuild;
+
+	public ScenarioSection ssDesc;
+
+	public static GameObject root_buildings;
+
+	public bool automatic => data.automatic == 3;
+
+	public uint bits
+	{
+		get
+		{
+			BuildingIsland island = Global.getIsland(idisland);
+			uint num = 0u;
+			for (int i = 0; i < data.area; i++)
+			{
+				for (int j = 0; j < data.area; j++)
+				{
+					num |= (uint)(1 << j + x + (y + i) * island.width);
+				}
+			}
+			return num;
+		}
+	}
+
+	public int ConsumeCount
+	{
+		get
+		{
+			int num = 0;
+			if (data.gold_consume != 0)
+			{
+				num++;
+			}
+			if (data.wood_consume != 0)
+			{
+				num++;
+			}
+			if (data.mine_consume != 0)
+			{
+				num++;
+			}
+			if (data.mana_consume != 0)
+			{
+				num++;
+			}
+			return num;
+		}
+	}
+
+	public Building(db_character_building d, bool bFriend)
+	{
+		Set(d);
+		data = Global.getTemplate("building", idbuilding) as _building;
+		foreach (_building_product product in data.m_products)
+		{
+			BuildingProduct item = new BuildingProduct(product);
+			m_products.Add(item);
+			if (product.id == idproduct)
+			{
+				this.product = item;
+			}
+		}
+		m_products.Sort((BuildingProduct a, BuildingProduct b) => (a.gold_consume != b.gold_consume) ? a.gold_consume.CompareTo(b.gold_consume) : a.time.CompareTo(b.time));
+		if (!bFriend)
+		{
+			BuildingIsland island = Global.getIsland(idisland);
+			if (island != null)
+			{
+				island.buildingBits |= bits;
+			}
+		}
+	}
+
+	public Building()
+	{
+	}
+
+	public Building(_building d)
+	{
+		idbuilding = d.id;
+		data = d;
+		foreach (_building_product product in data.m_products)
+		{
+			BuildingProduct item = new BuildingProduct(product);
+			m_products.Add(item);
+			if (product.id == idproduct)
+			{
+				this.product = item;
+			}
+		}
+		m_products.Sort((BuildingProduct a, BuildingProduct b) => (a.gold_consume != b.gold_consume) ? a.gold_consume.CompareTo(b.gold_consume) : a.time.CompareTo(b.time));
+	}
+
+	public int goldConsume(int ts)
+	{
+		int result = 0;
+		if (automatic)
+		{
+			if (product != null)
+			{
+				int num = 3600;
+				if (ts < num)
+				{
+					num = ts;
+				}
+				result = (int)Math.Ceiling((float)(num * product.mana_output) * 0.5f / (float)product.time);
+			}
+		}
+		else
+		{
+			result = (int)Math.Ceiling((float)ts / 1800f);
+		}
+		return result;
+	}
+
+	public int goldmanaConsume(int mana)
+	{
+		return (int)Math.Ceiling((double)mana / 2.0);
+	}
+
+	public void setProduct(byte _idproduct)
+	{
+		idproduct = _idproduct;
+		product = null;
+		foreach (BuildingProduct product in m_products)
+		{
+			if (product.id == idproduct)
+			{
+				this.product = product;
+				break;
+			}
+		}
+	}
+
+	public bool canBuild()
+	{
+		if (idisland == 0)
+		{
+			return false;
+		}
+		BuildingIsland island = Global.getIsland(idisland);
+		BuildingArea buildingArea = Global.character_.building_areas[island.idarea];
+		if (!buildingArea.unlocked)
+		{
+			return false;
+		}
+		if (x + data.area - 1 >= island.width || y + data.area - 1 >= island.height)
+		{
+			return false;
+		}
+		if ((bits & island.buildingBits) != 0)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool canProduce()
+	{
+		if (notbuild)
+		{
+			return false;
+		}
+		if (build_time > TimeUtil.Now || cd_time > TimeUtil.Now || product != null)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool isProducing()
+	{
+		if (notbuild)
+		{
+			return false;
+		}
+		if (build_time <= TimeUtil.Now && product != null && start_time + product.time > TimeUtil.Now)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public bool canHarvest()
+	{
+		if (notbuild)
+		{
+			return false;
+		}
+		if (product == null)
+		{
+			return false;
+		}
+		if ((automatic && start_time + 3600 > TimeUtil.Now) || (!automatic && start_time + product.time > TimeUtil.Now))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public Vector3 makePos(Vector3 p)
+	{
+		return new Vector3(p.x + ((float)(int)x + (float)(int)data.area / 2f) * _step, p.y + 0.05f, p.z + ((float)(int)y + (float)(int)data.area / 2f) * _step);
+	}
+
+	public void setColor()
+	{
+		if (masks == null)
+		{
+			return;
+		}
+		for (int i = 0; i < data.area; i++)
+		{
+			for (int j = 0; j < data.area; j++)
+			{
+				if (!(masks[j, i] != null))
+				{
+					continue;
+				}
+				Color color = new Color(1f, 0f, 0f, 0.5f);
+				if (idisland > 0)
+				{
+					BuildingIsland island = Global.getIsland(idisland);
+					BuildingArea buildingArea = Global.character_.building_areas[island.idarea];
+					if (buildingArea.unlocked && x + j < island.width && y + i < island.height && (island.buildingBits & (1 << x + j + (y + i) * island.width)) == 0L)
+					{
+						color = new Color(0f, 1f, 0f, 0.5f);
+					}
+				}
+				masks[j, i].renderer.material.color = color;
+			}
+		}
+	}
+
+	public void playAnim()
+	{
+		if (!(mesh == null))
+		{
+			DelegateFunc.Building_playAnim(mesh, this);
+		}
+	}
+
+	public void makeObject()
+	{
+		if (root == null && root_buildings != null)
+		{
+			root = new GameObject();
+			root.name = data.name;
+			root.transform.parent = root_buildings.transform;
+			rootMesh = new GameObject();
+			rootMesh.name = "rootMesh";
+			rootMesh.transform.parent = root.transform;
+		}
+		makeMesh();
+	}
+
+	public void makeMesh()
+	{
+		if (mesh != null)
+		{
+			UnityEngine.Object.Destroy(mesh);
+			mesh = null;
+		}
+		WebAssetsManager component = GameObject.Find("/AssetManager").GetComponent<WebAssetsManager>();
+		AssetBundle assetBundle = ((build_time == 0) ? component.GetAsset(data.model_name) : ((data.area != 1) ? component.GetAsset("capital0/zc_jianzao02") : component.GetAsset("capital0/zc_jianzao01")));
+		if (assetBundle != null && rootMesh != null)
+		{
+			rootMesh.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+			mesh = UnityEngine.Object.Instantiate(assetBundle.mainAsset) as GameObject;
+			mesh.transform.parent = rootMesh.transform;
+			BuildingIsland island = Global.getIsland(idisland);
+			if (island != null)
+			{
+				root.transform.position = makePos(island.pos);
+			}
+			if (idbuilding == 37 || idbuilding == 38 || idbuilding == 39)
+			{
+				root.transform.position = new Vector3(root.transform.position.x, root.transform.position.y, root.transform.position.z - 5f);
+			}
+			if (data.type != 1)
+			{
+				mesh.transform.localPosition = Vector3.zero;
+			}
+			rootMesh.transform.eulerAngles = new Vector3(0f, (float)(360 * rotation) / 255f, 0f);
+			DelegateFunc.Building_makeMesh(mesh, this);
+			BaseAsset.SetLayerRecursively(mesh, 10);
+		}
+	}
+
+	public void makeMasks()
+	{
+		WebAssetsManager component = GameObject.Find("/AssetManager").GetComponent<WebAssetsManager>();
+		if (data.area > 0)
+		{
+			masks = new GameObject[data.area, data.area];
+		}
+		for (int i = 0; i < data.area; i++)
+		{
+			for (int j = 0; j < data.area; j++)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(component.GetAsset("capital0/box").mainAsset) as GameObject;
+				gameObject.transform.parent = root.transform;
+				gameObject.transform.localPosition = new Vector3(((float)j - (float)(data.area - 1) / 2f) * _step, 0f, ((float)i - (float)(data.area - 1) / 2f) * _step);
+				gameObject.transform.localScale = new Vector3(_step, 0.01f, _step);
+				gameObject.renderer.material.color = new Color(0f, 1f, 0f, 0.5f);
+				masks[j, i] = gameObject;
+			}
+		}
+		setColor();
+	}
+
+	public bool Raycast(Ray ray, out RaycastHit hit, float dist)
+	{
+		if (mesh.collider != null && mesh.collider.Raycast(ray, out hit, dist))
+		{
+			return true;
+		}
+		if (masks != null)
+		{
+			for (int i = 0; i < data.area; i++)
+			{
+				for (int j = 0; j < data.area; j++)
+				{
+					if (masks[j, i] != null && masks[j, i].collider != null && masks[j, i].collider.Raycast(ray, out hit, dist))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		hit = default(RaycastHit);
+		return false;
+	}
+}

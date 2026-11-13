@@ -1,0 +1,3058 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class RootUI : BaseUI
+{
+	public delegate void dele_InitTcpEndFunc();
+
+	public const string ClientVersion = "v1_25";
+
+	private const float med_timer = 120f;
+
+	public static tcp_base m_client;
+
+	public static dele_InitTcpEndFunc OnInitEnd;
+
+	private RootMessenger level_rmg;
+
+	private DateTime m_prevTime = DateTime.Now;
+
+	private bool m_bRefreshResource;
+
+	private static bool m_bRefreshCharacter;
+
+	private static bool m_bRefreshFive;
+
+	private DateTime m_timeLimit;
+
+	private int m_iTimeSleep;
+
+	private AnimatedBannerMgr m_bannerAnim = new AnimatedBannerMgr();
+
+	private AntiAddictedUI anti_addict_ui;
+
+	private DateTime last_esc;
+
+	private int QuitCount = 2;
+
+	private int EscCount;
+
+	private Hashtable anim_effects = new Hashtable();
+
+	private float med_countdown = 120f;
+
+	private float playtimer = 60f;
+
+	private RootMessenger last_rmg;
+
+	public bool openLauncherAfterQuit = true;
+
+	private bool show_setup_warning_on_quit;
+
+	private bool warning_showed;
+
+	private string new_setup_path = string.Empty;
+
+	public static void HandleExchangeParam(ExchangeParam param)
+	{
+		RootBase._drawStateBubble("money" + (param.money64 - Global.character_.money));
+		Global.character_.money = param.money64;
+		RootBase._drawStateBubble("money" + (param.gold - Global.character_.gold));
+		Global.character_.gold = param.gold;
+		Global.character_.exchange.today_times = param.times;
+	}
+
+	public static void reconnect_full()
+	{
+		tcp_base.connection_state = tcp_base.CONNECTION_STATE.OK;
+	}
+
+	public static void reconnect_fast()
+	{
+		tcp_base.connection_state = tcp_base.CONNECTION_STATE.WAIT;
+		Global.m_client.TryConnect(reconnect_back);
+	}
+
+	public static void reconnect_back(bool state)
+	{
+		if (state)
+		{
+			Logger.Log("reconnect_back true");
+			LoginUI.cs_user_reconnect();
+		}
+		else
+		{
+			Logger.Log("reconnect_back false");
+			tcp_base.connection_state = tcp_base.CONNECTION_STATE.PREPARE;
+			RetryConnectUI.tryconnect_timer = (float)(11 - RetryConnectUI.retry_count) * 1f;
+		}
+	}
+
+	public static void InitTcp(dele_InitTcpEndFunc func)
+	{
+		OnInitEnd = func;
+		m_client = Global.m_client;
+		m_client.delegate_lostFunc = connect_lost;
+		try
+		{
+			m_client.TryConnect(AddHandler);
+		}
+		catch
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, "Connect Failed", null);
+		}
+	}
+
+	public static void AddHandler(bool state)
+	{
+		if (state)
+		{
+			RootBase.AddHandler(state);
+			m_client.handler_add(6, sc_fcm_0x06, null, -1f);
+			m_client.handler_add(35, sc_player_refresh_0x23, null, -1f);
+			m_client.handler_add(36, sc_player_refresh_fiveclock_0x24, null, -1f);
+			m_client.handler_add(64, sc_player_reconnect_confirm_0x40, null, -1f);
+			m_client.handler_add(1164, sc_building_monster_refresh_0x48c, null, -1f);
+			m_client.handler_add(544, sc_chatmessage_0x220, null, -1f);
+			m_client.handler_add(853, sc_buddy_be_sent_flower, null, -1f);
+			m_client.handler_add(914, sc_weekend_lottery_other_player, null, -1f);
+			m_client.handler_add(864, sc_show_flower, null, -1f);
+			m_client.handler_add(325, handleBrawlPhase, null, -1f);
+			m_client.handler_add(327, handleBrawlReport, null, -1f);
+			m_client.handler_add(354, handleBrawlRecord, null, -1f);
+			BuddyUI component = BaseUI.GetRootUI().GetComponent<BuddyUI>();
+			m_client.handler_add(807, component.handleNewMessage, null, -1f);
+			GuildUI_3 component2 = BaseUI.GetRootUI().GetComponent<GuildUI_3>();
+			m_client.handler_add(343, component2.handleTree, null, -1f);
+			m_client.handler_add(365, handelSealDevilFullUpdate, null, -1f);
+			m_client.handler_add(368, handleSealDevilMember, null, -1f);
+			m_client.handler_add(370, handleSealDevilReport, null, -1f);
+			MeditationUI component3 = BaseUI.GetRootUI().GetComponent<MeditationUI>();
+			m_client.handler_add(347, component3.sc_getexp, null, -1f);
+			m_client.handler_add(382, handle_genqueststart, null, -1f);
+			m_client.handler_add(387, handle_brawlcheckui, null, -1f);
+			m_client.handler_add(624, sc_achievement_change, null, -1f);
+			m_client.handler_add(1536, CraftUI.sc_crosscraft_info_0x600, null, -1f);
+			m_client.handler_add(1546, CraftUI.sc_crosscraft_status_0x60A, null, -1f);
+			m_client.handler_add(1547, CraftUI.sc_crosscraft_playersupportresult_0x60B, null, -1f);
+			m_client.handler_add(1552, NationUI.sc_crossnation_info_0x610, null, -1f);
+			m_client.handler_add(1561, NationUI.sc_crossnation_status_0x619, null, -1f);
+			m_client.handler_add(1585, CraftWorldUI.sc_worldcraft_info_0x631, null, -1f);
+			m_client.handler_add(1594, CraftWorldUI.sc_worldcraft_status_0x63A, null, -1f);
+			m_client.handler_add(1595, CraftWorldUI.sc_worldcraft_playersupportresult_0x63B, null, -1f);
+			m_client.handler_add(1600, TeamFightUI.sc_crossteamfight_info_0x640, null, -1f);
+			m_client.handler_add(1609, TeamFightUI.sc_crossteamfight_status_0x649, null, -1f);
+			m_client.handler_add(1615, TeamFightUI.sc_crossteamfight_0x64F, null, -1f);
+			m_client.handler_add(545, handle_sealdevil_msg, null, -1f);
+			m_client.handler_add(881, sc_convoy_be_robbed, null, -1f);
+			m_client.handler_add(875, ConvoyFormationUI.sc_convoy_start, null, -1f);
+			m_client.handler_add(546, BaseUI.GetRootUI().sc_nationwar_broadcast_result, null, -1f);
+			m_client.handler_add(673, BaseUI.GetRootUI().GetComponent<SimpleDuelUI>().sc_duel_reply, null, -1f);
+			m_client.handler_add(674, BaseUI.GetRootUI().GetComponent<SimpleDuelUI>().sc_duel_invite_repost, null, -1f);
+			m_client.handler_add(2051, BaseUI.GetRootUI().GetComponent<RechargeUI>().sc_recharge_activity_refresh_all_0x803, null, -1f);
+			m_client.handler_add(680, GameObject.Find("/PresetDuel/PresetDuelUI").GetComponent<PresetDuelUI>().sc_preset_duel, null, -1f);
+			m_client.handler_add(691, MainUI.sc_trial_maze_stamina_0x2B3, null, -1f);
+			m_client.handler_add(920, sc_groupon_server_refresh, null, -1f);
+			m_client.handler_add(954, sc_newbie_info_update, null, -1f);
+			m_client.handler_add(958, sc_gift_bag_open, null, -1f);
+			m_client.handler_add(959, debug_newbie_state_change, null, -1f);
+			m_client.handler_add(963, sc_cost_times_record, null, -1f);
+			m_client.handler_add(980, sc_craft_world_bet_open, null, -1f);
+			m_client.handler_add(982, sc_craft_world_bet_win_info, null, -1f);
+			m_client.handler_add(985, sc_hero_statue_clear, null, -1f);
+			m_client.handler_add(1867, LadderUI.sc_cross_ladder_status_0x74B, null, -1f);
+			m_client.handler_add(1868, LadderUI.sc_cross_ladder_info_0x74C, null, -1f);
+			m_client.handler_add(1870, LadderUI.sc_cross_ladder_change_0x74E, null, -1f);
+			m_client.handler_add(1871, LadderUI.sc_cross_ladder_rankings_change_0x74F, null, -1f);
+			m_client.handler_add(1873, LadderUI.sc_cross_ladder_refresh_five_0x751, null, -1f);
+			m_client.handler_add(1880, RechargeUI.sc_consume_rank_change_0x758, null, -1f);
+			m_client.handler_add(80, sc_word_abused, null, -1f);
+			if (OnInitEnd != null)
+			{
+				OnInitEnd();
+				OnInitEnd = null;
+			}
+		}
+		else
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, "Connect Failed", null);
+		}
+	}
+
+	public static void connect_lost()
+	{
+		if (tcp_base.connection_state == tcp_base.CONNECTION_STATE.OK)
+		{
+			tcp_base.connection_state = tcp_base.CONNECTION_STATE.PREPARE;
+			Logger.Log("rootUI connect_lost");
+			LoadScreen component = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+			if (component.GetCurUI() != null)
+			{
+				component.GetCurUI().ToDisable();
+			}
+			if (RetryConnectUI.phase != 2)
+			{
+				BaseUI.GetRootUI().GetComponent<RetryConnectUI>().Myloading();
+			}
+			else
+			{
+				RetryConnectUI.RetryFailed();
+			}
+		}
+	}
+
+	public static void QuitApplication()
+	{
+		Application.ExternalCall("RefreshUnity");
+		Application.Quit();
+	}
+
+	public void tempDebugUI()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		CampaignUI component = GameObject.Find("/TalentCampaign/TalentCampaignUI").GetComponent<CampaignUI>();
+		component.setCampaign(57, bDebug: false);
+		RootMessenger component2 = GameObject.Find("/TalentCampaign").GetComponent<RootMessenger>();
+		component2.LevelStart();
+		level_rmg = component2;
+		BaseAsset.lds.SetCurUI(component2);
+		MainUI.SetSubUI(null);
+	}
+
+	public void openMazeDebugUI(ushort id)
+	{
+		if (Global.character_.gm)
+		{
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component = GameObject.Find("/TrialMaze").GetComponent<RootMessenger>();
+			component.GetComponentInChildren<MazeDebugUI>().SetLayoutId(id);
+			component.GetComponentInChildren<MazeDebugUI>().first_visible = true;
+			component.GetComponentInChildren<MazeUI>().first_visible = false;
+			component.LevelStart();
+			level_rmg = component;
+			BaseAsset.lds.SetCurUI(component);
+		}
+	}
+
+	public override void Awake()
+	{
+		base.Awake();
+		if (Application.platform == RuntimePlatform.OSXWebPlayer)
+		{
+			Global.m_client = new tcp_socket();
+		}
+		else
+		{
+			Global.m_client = new tcp_client();
+		}
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+		last_esc = DateTime.Now;
+		Logger.Log("root start");
+		base.gameObject.AddComponent<ArmyStarRefineUI>();
+		base.gameObject.AddComponent<AmuletUI>();
+		base.gameObject.AddComponent<AmuletDisassemblyUI>();
+		base.gameObject.AddComponent<GeneralSelectUI>();
+		base.gameObject.AddComponent<GemTrainUI>();
+		base.gameObject.AddComponent<SecretShopUI>();
+		base.gameObject.AddComponent<BattleReportMgrUI>();
+		base.gameObject.AddComponent<GeneralQuestUI>();
+		base.gameObject.AddComponent<WoodWarUI>();
+		base.gameObject.AddComponent<GeniusUI>();
+		base.gameObject.AddComponent<DivineGeneralTrainUI>();
+		base.gameObject.AddComponent<DivineGeneralPowerUI>();
+		base.gameObject.AddComponent<DivineGeneralSelect>();
+		base.gameObject.AddComponent<DivineGeneralRecruitUI>();
+		base.gameObject.AddComponent<FavoriteUI>();
+		base.gameObject.AddComponent<BattleValueUI>();
+		base.gameObject.AddComponent<BattleValueCompareUI>();
+		base.gameObject.AddComponent<CraftReportUI>();
+		base.gameObject.AddComponent<CraftMatchReportUI>();
+		base.gameObject.AddComponent<CraftSupportUI>();
+		base.gameObject.AddComponent<CraftMySupportUI>();
+		base.gameObject.AddComponent<CraftCostRankingUI>();
+		base.gameObject.AddComponent<CraftCalendarUI>();
+		base.gameObject.AddComponent<CraftWorldCalendarUI>();
+		base.gameObject.AddComponent<SpiritUI_2>();
+		base.gameObject.AddComponent<BonusListUI>();
+		base.gameObject.AddComponent<SpiritBuySkillUI>();
+		base.gameObject.AddComponent<ConvoyAutoUI>();
+		base.gameObject.AddComponent<FlowerMessUI>().first_visible = false;
+		base.gameObject.AddComponent<FameHallUI>();
+		base.gameObject.AddComponent<ChestRoomUI>();
+		base.gameObject.AddComponent<ChestTotemBaseUI>();
+		base.gameObject.AddComponent<ChestTotemUI>();
+		base.gameObject.AddComponent<ChestLotUI>();
+		base.gameObject.AddComponent<EightGraphicUI>();
+		base.gameObject.AddComponent<SkyTowerUI>();
+		base.gameObject.AddComponent<SkyTowerLotteryUI>();
+		base.gameObject.AddComponent<RuneComposeUI>();
+		base.gameObject.AddComponent<EquipmentForgeBatchUI>();
+		base.gameObject.AddComponent<DarkironExchangeUI>();
+		base.gameObject.AddComponent<GeneralBookUI>();
+		base.gameObject.AddComponent<FestivalLotteryUI>();
+		base.gameObject.AddComponent<AnniversaryLotteryUI>();
+		base.gameObject.AddComponent<DuelSelectUI>();
+		base.gameObject.AddComponent<SimpleDuelUI>();
+		base.gameObject.AddComponent<PresetDuelPrepareUI>();
+		anti_addict_ui = GetComponent<AntiAddictedUI>();
+		base.gameObject.AddComponent<EquipmentReinforceUI>();
+		base.gameObject.AddComponent<ArtifactDowngradeUI>();
+		base.gameObject.AddComponent<TalentUI>();
+		base.gameObject.AddComponent<NewSystemTipUI>();
+		base.gameObject.AddComponent<LoginMessageUI>();
+		base.gameObject.AddComponent<TimeLimitMessageUI>();
+		base.gameObject.AddComponent<ShopSelectorUI>();
+		base.gameObject.AddComponent<ShopDiamondUI>();
+		base.gameObject.AddComponent<DailyRankingUI>();
+		base.gameObject.AddComponent<ArenaSelectUI>();
+		base.gameObject.AddComponent<PointraceViewUI>();
+		base.gameObject.AddComponent<PointracePhoneLeftUI>();
+		base.gameObject.AddComponent<SecretaryUI>();
+		base.gameObject.AddComponent<AnecdoteModeSelectUI>();
+		base.gameObject.AddComponent<WeekendLotteryUI>();
+		base.gameObject.AddComponent<MazeSelectUI>();
+		base.gameObject.AddComponent<RetryConnectUI>();
+		base.gameObject.AddComponent<FirstOrderBonusUI>();
+		base.gameObject.AddComponent<SignInUI>();
+		base.gameObject.AddComponent<ArtifactForgeUI>();
+		base.gameObject.AddComponent<TeamFightSignUI>();
+		base.gameObject.AddComponent<TeamFightShopUI>();
+		base.gameObject.AddComponent<ClubUI>();
+		base.gameObject.AddComponent<GeneralUpgradeUI>();
+		base.gameObject.AddComponent<GeneralUpgradeInfoUI>();
+		base.gameObject.AddComponent<GeneralUpgradeInjectUI>();
+		base.gameObject.AddComponent<ReturnGiftUI>();
+		base.gameObject.AddComponent<BuildingUpUI>();
+		base.gameObject.AddComponent<BuildGatherCDUI>();
+		base.gameObject.AddComponent<BuildingUpTitleUI>();
+		base.gameObject.AddComponent<RechargeUI>();
+		base.gameObject.AddComponent<TechTreeUI>();
+		base.gameObject.AddComponent<FirstRechargeUI>();
+		base.gameObject.AddComponent<MobileBindUI>();
+		base.gameObject.AddComponent<FriendLotteryUI>().first_visible = false;
+		base.gameObject.AddComponent<GeneralSwitchUI>().first_visible = false;
+		base.gameObject.AddComponent<StrongHoldFinalUI>();
+		base.gameObject.AddComponent<StrongHoldScoreUI>();
+		base.gameObject.AddComponent<VipWealUI>();
+		base.gameObject.AddComponent<StrongHoldExplainUI>();
+		base.gameObject.AddComponent<StrongHoldLevelUI>();
+		base.gameObject.AddComponent<StrongHoldZjUI>();
+		base.gameObject.AddComponent<DaliyTargetUI>();
+		base.gameObject.AddComponent<BuddyListAddUI>();
+		base.gameObject.AddComponent<HeroStatueUI>();
+		base.gameObject.AddComponent<SpecialItemShopUI>();
+		base.gameObject.AddComponent<TechBookCopyUI>();
+		base.gameObject.AddComponent<ChristmasUI>();
+		base.gameObject.AddComponent<SpiritUI_3>();
+		base.gameObject.AddComponent<SpiritSkillUpgradeUI>();
+		base.gameObject.AddComponent<SpiritFairyUI>();
+		base.gameObject.AddComponent<ChineseNewYearUI>();
+		base.gameObject.AddComponent<SpiritFairyGatherUI>();
+		base.gameObject.AddComponent<BetUI>();
+		base.gameObject.AddComponent<TreasuryUI>();
+		base.gameObject.AddComponent<RescueUI>();
+		base.gameObject.AddComponent<LakeTempleFormationUI>();
+		base.gameObject.AddComponent<AmuletForgeUI>();
+		base.gameObject.AddComponent<GodListUI>();
+		base.gameObject.AddComponent<GodListTrainUI>();
+		base.gameObject.AddComponent<GodListResourceUI>();
+		base.gameObject.AddComponent<GodListChengJiuUI>();
+		base.gameObject.AddComponent<LakeTempleWishGodUI>();
+		base.gameObject.AddComponent<SpiritExchangeUI>();
+		base.gameObject.AddComponent<GraveBonusUI>();
+		base.gameObject.AddComponent<ArtifactZhiHengUI>();
+		base.gameObject.AddComponent<DianJiangTaiUI>();
+		base.gameObject.AddComponent<GeneralShengJieLotteryUI>();
+		base.gameObject.AddComponent<GeneralShengJieUI>();
+		base.gameObject.AddComponent<GeneralShengJieLotteryResultUI>();
+		base.gameObject.AddComponent<GeneralShengJieParamUI>();
+		base.gameObject.AddComponent<GeneralShengJieAllParamUI>();
+		base.gameObject.AddComponent<ZhenYaoTaUI>();
+		base.gameObject.AddComponent<TechTreeBuycdUI>();
+		base.gameObject.AddComponent<IconUI>();
+		base.gameObject.AddComponent<InspectUI>();
+		base.gameObject.AddComponent<RemindTitleMsg>();
+		base.gameObject.AddComponent<ItemNoticeUI>();
+		base.gameObject.AddComponent<PackGeneralShopUI>();
+		base.gameObject.AddComponent<OneGeneralShopBuyUI>();
+		base.gameObject.AddComponent<ChristmasLotteryShopBuyUI>();
+		GameObject.Find("/Debug/DebugUI").AddComponent<DebugSkillUI>();
+		BaseAsset.IncrAssetRef("ui_effect");
+		BaseAsset.IncrAssetRef("ui_scenario");
+		GameObject gameObject = new GameObject("SealMonster");
+		RootMessenger rootMessenger = gameObject.AddComponent<RootMessenger>();
+		rootMessenger.LevelID = "SealMonster";
+		GameObject gameObject2 = new GameObject("SealMonsterUI");
+		gameObject2.transform.parent = gameObject.transform;
+		SealMonsterUI sealMonsterUI = gameObject2.AddComponent<SealMonsterUI>();
+		sealMonsterUI.first_visible = true;
+		gameObject2.AddComponent<FormationUI>();
+		gameObject2.AddComponent<LocalMessenger>();
+		gameObject2.AddComponent<BuildingUI>();
+		gameObject2.AddComponent<GiftUI>();
+		MainUI mainUI = gameObject2.AddComponent<MainUI>();
+		mainUI.first_visible = true;
+		GameObject gameObject3 = new GameObject("StrongHold");
+		RootMessenger rootMessenger2 = gameObject3.AddComponent<RootMessenger>();
+		rootMessenger2.LevelID = "StrongHold";
+		GameObject gameObject4 = new GameObject("StrongHoldUI");
+		gameObject4.transform.parent = gameObject3.transform;
+		StrongHoldUI strongHoldUI = gameObject4.AddComponent<StrongHoldUI>();
+		strongHoldUI.first_visible = true;
+		gameObject4.AddComponent<FormationUI>();
+		gameObject4.AddComponent<LocalMessenger>();
+		gameObject4.AddComponent<BuildingUI>();
+		gameObject4.AddComponent<GiftUI>();
+		MainUI mainUI2 = gameObject4.AddComponent<MainUI>();
+		base.gameObject.AddComponent<AssaultShopUI>();
+		GameObject gameObject5 = new GameObject("SpiritAscend");
+		RootMessenger rootMessenger3 = gameObject5.AddComponent<RootMessenger>();
+		rootMessenger3.LevelID = "SpiritAscend";
+		GameObject gameObject6 = new GameObject("SpiritAscendUI");
+		gameObject6.transform.parent = gameObject5.transform;
+		SpiritAscendCampaignUI spiritAscendCampaignUI = gameObject6.AddComponent<SpiritAscendCampaignUI>();
+		spiritAscendCampaignUI.first_visible = true;
+		gameObject6.AddComponent<FormationUI>();
+		gameObject6.AddComponent<LocalMessenger>();
+		MainUI mainUI3 = gameObject6.AddComponent<MainUI>();
+		mainUI3.first_visible = true;
+		GameObject gameObject7 = new GameObject("RescueFormation");
+		RootMessenger rootMessenger4 = gameObject7.AddComponent<RootMessenger>();
+		rootMessenger4.LevelID = "RescueFormation";
+		GameObject gameObject8 = new GameObject("RescureFormationUI");
+		gameObject8.transform.parent = gameObject7.transform;
+		RescureFormationUI rescureFormationUI = gameObject8.AddComponent<RescureFormationUI>();
+		rescureFormationUI.first_visible = true;
+		gameObject8.AddComponent<FormationUI>();
+		gameObject8.AddComponent<LocalMessenger>();
+		MainUI mainUI4 = gameObject8.AddComponent<MainUI>();
+		mainUI4.first_visible = true;
+		GameObject gameObject9 = new GameObject("TalentCampaign");
+		RootMessenger rootMessenger5 = gameObject9.AddComponent<RootMessenger>();
+		rootMessenger5.LevelID = "TalentCampaign";
+		GameObject gameObject10 = new GameObject("TalentCampaignUI");
+		gameObject10.transform.parent = gameObject9.transform;
+		gameObject10.AddComponent<FormationUI>();
+		gameObject10.AddComponent<LocalMessenger>();
+		gameObject10.AddComponent<BuildingUI>();
+		gameObject10.AddComponent<GiftUI>();
+		CampaignUI campaignUI = gameObject10.AddComponent<CampaignUI>();
+		campaignUI.first_visible = true;
+		gameObject10.AddComponent<CampaignTroopUI>();
+		gameObject10.AddComponent<CampaignChapterUI>();
+		gameObject10.AddComponent<CampaignChapterClearUI>();
+		TalentCampaignUI talentCampaignUI = gameObject10.AddComponent<TalentCampaignUI>();
+		talentCampaignUI.first_visible = true;
+		MainUI mainUI5 = gameObject10.AddComponent<MainUI>();
+		mainUI5.first_visible = true;
+		GameObject gameObject11 = new GameObject("Craft");
+		RootMessenger rootMessenger6 = gameObject11.AddComponent<RootMessenger>();
+		rootMessenger6.LevelID = "Craft";
+		GameObject gameObject12 = new GameObject("CraftUI");
+		gameObject12.transform.parent = gameObject11.transform;
+		CraftUI craftUI = gameObject12.AddComponent<CraftUI>();
+		craftUI.first_visible = true;
+		gameObject12.AddComponent<FormationUI>();
+		gameObject12.AddComponent<LocalMessenger>();
+		gameObject12.AddComponent<GiftUI>();
+		gameObject12.AddComponent<CraftRuleUI>();
+		MainUI mainUI6 = gameObject12.AddComponent<MainUI>();
+		mainUI6.first_visible = false;
+		GameObject gameObject13 = new GameObject("CraftWorld");
+		RootMessenger rootMessenger7 = gameObject13.AddComponent<RootMessenger>();
+		rootMessenger7.LevelID = "CraftWorld";
+		GameObject gameObject14 = new GameObject("CraftWorldUI");
+		gameObject14.transform.parent = gameObject13.transform;
+		CraftWorldUI craftWorldUI = gameObject14.AddComponent<CraftWorldUI>();
+		craftWorldUI.first_visible = true;
+		gameObject14.AddComponent<FormationUI>();
+		gameObject14.AddComponent<LocalMessenger>();
+		gameObject14.AddComponent<GiftUI>();
+		gameObject14.AddComponent<CraftRuleUI>();
+		MainUI mainUI7 = gameObject14.AddComponent<MainUI>();
+		mainUI7.first_visible = false;
+		GameObject gameObject15 = new GameObject("Nation");
+		RootMessenger rootMessenger8 = gameObject15.AddComponent<RootMessenger>();
+		rootMessenger8.LevelID = "Nation";
+		GameObject gameObject16 = new GameObject("NationUI");
+		gameObject16.transform.parent = gameObject15.transform;
+		NationUI nationUI = gameObject16.AddComponent<NationUI>();
+		nationUI.first_visible = true;
+		gameObject16.AddComponent<FormationUI>();
+		gameObject16.AddComponent<LocalMessenger>();
+		gameObject16.AddComponent<GiftUI>();
+		gameObject16.AddComponent<NationOpponentUI>();
+		gameObject16.AddComponent<NationCommandUI>();
+		gameObject16.AddComponent<NationCardUI>();
+		gameObject16.AddComponent<NationCardMakeUI>();
+		gameObject16.AddComponent<NationMapUI>();
+		gameObject16.AddComponent<NationProfileUI>();
+		gameObject16.AddComponent<NationIllustrationUI>();
+		gameObject16.AddComponent<NationDailyQuestUI>();
+		gameObject16.AddComponent<NationEventUI>();
+		gameObject16.AddComponent<NationPhantomUI>();
+		gameObject16.AddComponent<NationPhantomCallUI>();
+		gameObject16.AddComponent<NationSummonsUI>();
+		gameObject16.AddComponent<NationCityPlayerListUI>();
+		gameObject16.AddComponent<NationExchangeUI>();
+		gameObject16.AddComponent<NationSpecialEventUI>();
+		gameObject16.AddComponent<NationGoldUI>();
+		gameObject16.AddComponent<NationBattltReportUI>();
+		gameObject16.AddComponent<NationSummaryUI>();
+		gameObject16.AddComponent<NationUnifyUI>();
+		gameObject16.AddComponent<NationPointsUI>();
+		MainUI mainUI8 = gameObject16.AddComponent<MainUI>();
+		mainUI8.first_visible = true;
+		base.gameObject.AddComponent<NationPreviewUI>();
+		GameObject gameObject17 = new GameObject("Ladder");
+		RootMessenger rootMessenger9 = gameObject17.AddComponent<RootMessenger>();
+		rootMessenger9.LevelID = "Ladder";
+		GameObject gameObject18 = new GameObject("LadderUI");
+		gameObject18.transform.parent = gameObject17.transform;
+		LadderUI ladderUI = gameObject18.AddComponent<LadderUI>();
+		ladderUI.first_visible = true;
+		gameObject18.AddComponent<FormationUI>();
+		gameObject18.AddComponent<LadderRankingsUI>();
+		gameObject18.AddComponent<LadderReportUI>();
+		gameObject18.AddComponent<LadderRuleUI>();
+		gameObject18.AddComponent<LadderPlayerDataUI>();
+		MainUI mainUI9 = gameObject18.AddComponent<MainUI>();
+		mainUI9.first_visible = true;
+		GameObject gameObject19 = new GameObject("TeamFight");
+		RootMessenger rootMessenger10 = gameObject19.AddComponent<RootMessenger>();
+		rootMessenger10.LevelID = "TeamFight";
+		GameObject gameObject20 = new GameObject("TeamFightUI");
+		gameObject20.transform.parent = gameObject19.transform;
+		TeamFightUI teamFightUI = gameObject20.AddComponent<TeamFightUI>();
+		teamFightUI.first_visible = true;
+		gameObject20.AddComponent<FormationUI>();
+		gameObject20.AddComponent<LocalMessenger>();
+		gameObject20.AddComponent<GiftUI>();
+		gameObject20.AddComponent<TeamFightCommandUI>();
+		gameObject20.AddComponent<TeamFightMapUI>();
+		gameObject20.AddComponent<TeamFightProfileUI>();
+		gameObject20.AddComponent<TeamFightRankListUI>();
+		gameObject20.AddComponent<TeamFightBattltReportUI>();
+		gameObject20.AddComponent<TeamFightCityPlayerListUI>();
+		gameObject20.AddComponent<TeamFightProfileUI>();
+		GameObject gameObject21 = new GameObject("Convoy");
+		RootMessenger rootMessenger11 = gameObject21.AddComponent<RootMessenger>();
+		rootMessenger11.LevelID = "Convoy";
+		GameObject gameObject22 = new GameObject("ConvoyUI");
+		gameObject22.transform.parent = gameObject21.transform;
+		ConvoyUI convoyUI = gameObject22.AddComponent<ConvoyUI>();
+		convoyUI.first_visible = true;
+		gameObject22.AddComponent<LocalMessenger>();
+		gameObject22.AddComponent<GiftUI>();
+		gameObject22.AddComponent<ConvoyRankingUI>();
+		MainUI mainUI10 = gameObject22.AddComponent<MainUI>();
+		mainUI10.first_visible = true;
+		GameObject gameObject23 = new GameObject("ConvoyFormation");
+		RootMessenger rootMessenger12 = gameObject23.AddComponent<RootMessenger>();
+		rootMessenger12.LevelID = "ConvoyFormation";
+		GameObject gameObject24 = new GameObject("ConvoyFormationUI");
+		gameObject24.transform.parent = gameObject23.transform;
+		ConvoyFormationUI convoyFormationUI = gameObject24.AddComponent<ConvoyFormationUI>();
+		convoyFormationUI.first_visible = true;
+		gameObject24.AddComponent<LocalMessenger>();
+		gameObject24.AddComponent<ConvoyGuardSelectUI>();
+		GameObject gameObject25 = new GameObject("SkyTower");
+		RootMessenger rootMessenger13 = gameObject25.AddComponent<RootMessenger>();
+		rootMessenger13.LevelID = "SkyTower";
+		GameObject gameObject26 = new GameObject("SkyTowerUI");
+		gameObject26.transform.parent = gameObject25.transform;
+		SkyTowerFormationUI skyTowerFormationUI = gameObject26.AddComponent<SkyTowerFormationUI>();
+		skyTowerFormationUI.first_visible = true;
+		gameObject26.AddComponent<LocalMessenger>();
+		GameObject gameObject27 = new GameObject("EarthPavilionFormation");
+		RootMessenger rootMessenger14 = gameObject27.AddComponent<RootMessenger>();
+		rootMessenger14.LevelID = "EarthPavilionFormation";
+		GameObject gameObject28 = new GameObject("EarthPavilionFormationUI");
+		gameObject28.transform.parent = gameObject27.transform;
+		EarthPavilionFormationUI earthPavilionFormationUI = gameObject28.AddComponent<EarthPavilionFormationUI>();
+		earthPavilionFormationUI.first_visible = true;
+		gameObject28.AddComponent<LocalMessenger>();
+		MainUI mainUI11 = gameObject28.AddComponent<MainUI>();
+		GameObject gameObject29 = new GameObject("LakeTempleFormation");
+		RootMessenger rootMessenger15 = gameObject29.AddComponent<RootMessenger>();
+		rootMessenger15.LevelID = "LakeTempleFormation";
+		GameObject gameObject30 = new GameObject("LakeTempleFormationUI");
+		gameObject30.transform.parent = gameObject29.transform;
+		LakeTempleFormationUI lakeTempleFormationUI = gameObject30.AddComponent<LakeTempleFormationUI>();
+		lakeTempleFormationUI.first_visible = true;
+		gameObject30.AddComponent<LocalMessenger>();
+		MainUI mainUI12 = gameObject30.AddComponent<MainUI>();
+		mainUI12.first_visible = true;
+		GameObject gameObject31 = new GameObject("ZhenYaoTaFormation");
+		RootMessenger rootMessenger16 = gameObject31.AddComponent<RootMessenger>();
+		rootMessenger16.LevelID = "ZhenYaoTaFormation";
+		GameObject gameObject32 = new GameObject("ZhenYaoTaFormationUI");
+		gameObject32.transform.parent = gameObject31.transform;
+		ZhenYaoTaFormationUI zhenYaoTaFormationUI = gameObject32.AddComponent<ZhenYaoTaFormationUI>();
+		zhenYaoTaFormationUI.first_visible = true;
+		gameObject32.AddComponent<LocalMessenger>();
+		MainUI mainUI13 = gameObject32.AddComponent<MainUI>();
+		mainUI13.first_visible = true;
+		GameObject gameObject33 = new GameObject("GeneralStar");
+		RootMessenger rootMessenger17 = gameObject33.AddComponent<RootMessenger>();
+		rootMessenger17.LevelID = "GeneralStar";
+		GameObject gameObject34 = new GameObject("GeneralStarUI");
+		gameObject34.transform.parent = gameObject33.transform;
+		GeneralStarUI generalStarUI = gameObject34.AddComponent<GeneralStarUI>();
+		generalStarUI.first_visible = true;
+		gameObject34.AddComponent<LocalMessenger>();
+		gameObject34.AddComponent<GeneralStarGenSelectUI>();
+		GameObject gameObject35 = new GameObject("GeneralBookFormation");
+		RootMessenger rootMessenger18 = gameObject35.AddComponent<RootMessenger>();
+		rootMessenger18.LevelID = "GeneralBookFormation";
+		GameObject gameObject36 = new GameObject("GeneralBookFormationUI");
+		gameObject36.transform.parent = gameObject35.transform;
+		GeneralBookFormationUI generalBookFormationUI = gameObject36.AddComponent<GeneralBookFormationUI>();
+		generalBookFormationUI.first_visible = true;
+		gameObject36.AddComponent<LocalMessenger>();
+		GameObject gameObject37 = new GameObject("StrongHoldFormation");
+		RootMessenger rootMessenger19 = gameObject37.AddComponent<RootMessenger>();
+		rootMessenger19.LevelID = "StrongHoldFormation";
+		GameObject gameObject38 = new GameObject("StrongHoldFormationUI");
+		gameObject38.transform.parent = gameObject37.transform;
+		StrongHoldFormationUI strongHoldFormationUI = gameObject38.AddComponent<StrongHoldFormationUI>();
+		strongHoldFormationUI.first_visible = true;
+		gameObject38.AddComponent<LocalMessenger>();
+		MainUI mainUI14 = gameObject38.AddComponent<MainUI>();
+		GameObject gameObject39 = new GameObject("PresetDuel");
+		RootMessenger rootMessenger20 = gameObject39.AddComponent<RootMessenger>();
+		rootMessenger20.LevelID = "PresetDuel";
+		GameObject gameObject40 = new GameObject("PresetDuelUI");
+		gameObject40.transform.parent = gameObject39.transform;
+		gameObject40.AddComponent<LocalMessenger>();
+		gameObject40.AddComponent<PresetDuelUI>().first_visible = true;
+		gameObject40.AddComponent<SequenceSelectUI>();
+		gameObject40.AddComponent<PresetDuelGeneralSelectUI>();
+		gameObject40.AddComponent<DiceUI>();
+		gameObject40.AddComponent<FormationSelectUI>();
+		gameObject40.AddComponent<SequenceResultUI>();
+		GameObject.Find("/Share/ShareUI").GetComponent<DBLoaderUI>().first_visible = true;
+		GameObject gameObject41 = GameObject.Find("/Battle/BattleUI");
+		gameObject41.AddComponent<BattleNormalResultUI>();
+		gameObject41.AddComponent<BattleTopUI>();
+		gameObject41.AddComponent<BattleSpiritTopUI>();
+		gameObject41.AddComponent<BattleWoodwarTopUI>();
+		gameObject41.AddComponent<BattleWoodwarResultUI>();
+		gameObject41.AddComponent<BattleNationResultUI>();
+		gameObject41.AddComponent<BattleConvoyResultUI>();
+		gameObject41.AddComponent<BattleTeamFightResultUI>();
+		GameObject gameObject42 = new GameObject("TrialMaze");
+		RootMessenger rootMessenger21 = gameObject42.AddComponent<RootMessenger>();
+		rootMessenger21.LevelID = "TrialMaze";
+		GameObject gameObject43 = new GameObject("TrialMazeUI");
+		gameObject43.transform.parent = gameObject42.transform;
+		gameObject43.AddComponent<LocalMessenger>();
+		MazeUI mazeUI = gameObject43.AddComponent<MazeUI>();
+		mazeUI.first_visible = true;
+		gameObject43.AddComponent<MazeDiceUI>();
+		gameObject43.AddComponent<MazeChanceUI>();
+		gameObject43.AddComponent<MazeMammonUI>();
+		gameObject43.AddComponent<MazeAttackUI>();
+		gameObject43.AddComponent<MazeWorshipUI>();
+		MazeDebugUI mazeDebugUI = gameObject43.AddComponent<MazeDebugUI>();
+		mazeDebugUI.first_visible = false;
+		base.gameObject.AddComponent<MazeSelectUI>();
+		GameObject gameObject44 = new GameObject("PointRace");
+		RootMessenger rootMessenger22 = gameObject44.AddComponent<RootMessenger>();
+		rootMessenger22.LevelID = "PointRace";
+		GameObject gameObject45 = new GameObject("PointRaceUI");
+		gameObject45.transform.parent = gameObject44.transform;
+		PointraceUI pointraceUI = gameObject45.AddComponent<PointraceUI>();
+		pointraceUI.first_visible = true;
+		gameObject45.AddComponent<FormationUI>();
+		gameObject45.AddComponent<LocalMessenger>();
+		gameObject45.AddComponent<GiftUI>();
+		gameObject45.AddComponent<PointraceChestUI>();
+		gameObject45.AddComponent<PointraceReportUI>();
+		MainUI mainUI15 = gameObject45.AddComponent<MainUI>();
+		mainUI15.first_visible = true;
+		VipUI component = BaseUI.GetRootUI().GetComponent<VipUI>();
+		component.m_vipweal = load_vipweal;
+		EnchantUI component2 = BaseUI.GetRootUI().GetComponent<EnchantUI>();
+		component2.e_coin = Coin;
+	}
+
+	private void load_vipweal()
+	{
+		VipWealUI component = BaseUI.GetRootUI().GetComponent<VipWealUI>();
+		if (MainUI.handle_sub_ui(component, "vipweal"))
+		{
+			component.MyLoading();
+		}
+	}
+
+	private void Update()
+	{
+		if (m_client != null)
+		{
+			m_client.Run();
+		}
+		TimeUtil.Update();
+		update_UIFuncs();
+		if (Input.GetMouseButton(0))
+		{
+			med_countdown = 120f;
+		}
+		else
+		{
+			med_countdown -= Time.deltaTime;
+		}
+		if (Global.character_.meditation_start == 0)
+		{
+			MeditationUI component = BaseUI.GetRootUI().GetComponent<MeditationUI>();
+			if (med_countdown < 0f)
+			{
+				component.StartMeditation(showui: false);
+				med_countdown = 120f;
+			}
+			else if (component.IsVisible())
+			{
+				component.Hide();
+			}
+		}
+		if (Global.character_.meditation_start != 0)
+		{
+			MeditationUI component2 = BaseUI.GetRootUI().GetComponent<MeditationUI>();
+			if (!component2.IsVisible())
+			{
+				component2.SubLoading(showui: false);
+			}
+		}
+		if (Input.GetKeyDown("escape"))
+		{
+			if ((DateTime.Now - last_esc).TotalSeconds < 1.0)
+			{
+				EscCount++;
+			}
+			else
+			{
+				EscCount = 1;
+			}
+			last_esc = DateTime.Now;
+			if (EscCount < QuitCount)
+			{
+				MainUI.SetSubUI(null);
+			}
+		}
+		RootBase.Update();
+		m_bannerAnim.Update();
+		if (BaseAsset.lds != null && BaseAsset.lds.IsBattling())
+		{
+			m_bannerAnim.Clear();
+		}
+		if (Global.m_bInit)
+		{
+			if ((DateTime.Now - m_prevTime).TotalSeconds > 30.0)
+			{
+				m_prevTime = DateTime.Now;
+			}
+			if (Global.character_.next_stamina_time <= TimeUtil.Now && !m_bRefreshCharacter)
+			{
+				m_bRefreshCharacter = true;
+				CSPlayerRefresh_0x23 pkt = new CSPlayerRefresh_0x23();
+				m_client.Send(35, pkt, null);
+			}
+			if (Global.character_.next_resource_time <= TimeUtil.Now && !m_bRefreshFive)
+			{
+				m_bRefreshFive = true;
+				CSPlayerRefreshFiveClock_0x24 pkt2 = new CSPlayerRefreshFiveClock_0x24();
+				m_client.Send(36, pkt2, null);
+			}
+			if (playtimer >= 0f)
+			{
+				playtimer -= Time.deltaTime;
+				return;
+			}
+			playtimer = 60f;
+			PlayerPrefs.SetString("LastStart", DateTime.Now.ToString());
+		}
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+	}
+
+	private void sc_nationwar_broadcast_result(MemoryStream stream, object obj)
+	{
+		SCNationWarBroadcastResult_0x222 sCNationWarBroadcastResult_0x = JSProtoBuf.Serializer.Deserialize<SCNationWarBroadcastResult_0x222>(stream);
+		if (sCNationWarBroadcastResult_0x != null)
+		{
+			if (sCNationWarBroadcastResult_0x.result == 1)
+			{
+				Global.character_.gold -= sCNationWarBroadcastResult_0x.gold_cost;
+				__BaseUI.drawStateBubble("gold-" + sCNationWarBroadcastResult_0x.gold_cost);
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(82u), rmg);
+			}
+		}
+	}
+
+	private void cs_capital_enter(RootMessenger rmg)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		BaseAsset.lds.Visible();
+		RootMessenger component = GameObject.Find("/Capital").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	private void cs_capital_friend_enter(RootMessenger rmg)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		BaseAsset.lds.Visible();
+		Logger.Log("capital friend enter 1");
+		RootMessenger component = GameObject.Find("/CapitalFriend").GetComponent<RootMessenger>();
+		Logger.Log("capital friend enter 2");
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	private void cs_sealdevil_enter(RootMessenger rmg)
+	{
+		sealdevil_enter();
+	}
+
+	private void cs_convoy_enter(RootMessenger rmg)
+	{
+		convoy_enter();
+	}
+
+	public void cs_campaign_enter(ushort idcampaign, RootMessenger _rmg)
+	{
+		__BaseUI.UICount_Visible++;
+		__BaseUI.cuis.Add("cs_campaign_enter");
+		CSCampaignEnter_0x401 cSCampaignEnter_0x = new CSCampaignEnter_0x401();
+		cSCampaignEnter_0x.idcampaign = idcampaign;
+		m_client.Send(1025, cSCampaignEnter_0x, sc_campaign_enter, _rmg);
+		Logger.Log("cs_campaign_enter");
+	}
+
+	public void cs_assault_stronghold_load(uint idlevel)
+	{
+		CSAssaultStrongholdLoad_0x3AC cSAssaultStrongholdLoad_0x3AC = new CSAssaultStrongholdLoad_0x3AC();
+		cSAssaultStrongholdLoad_0x3AC.idlevel = idlevel;
+		m_client.Send(940, cSAssaultStrongholdLoad_0x3AC, sc_assault_stronghold_load);
+	}
+
+	private void sc_assault_stronghold_load(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCAssaultStrongholdLoad_0x3AC sCAssaultStrongholdLoad_0x3AC = JSProtoBuf.Serializer.Deserialize<SCAssaultStrongholdLoad_0x3AC>(stream);
+		if (sCAssaultStrongholdLoad_0x3AC.result != 1)
+		{
+			return;
+		}
+		if (sCAssaultStrongholdLoad_0x3AC.assaultstronghold != null)
+		{
+			Global.character_.assaultstronghold.Set(sCAssaultStrongholdLoad_0x3AC.assaultstronghold);
+			if (BaseAsset.lds.GetCurUI().LevelID == "StrongHold")
+			{
+				for (ushort num = 0; num < Global.character_.assaultstronghold.troops.Count; num++)
+				{
+					AssaultStrongholdTroop assaultStrongholdTroop = Global.character_.assaultstronghold.troops[num];
+					if (assaultStrongholdTroop.mesh != null)
+					{
+						UnityEngine.Object.Destroy(assaultStrongholdTroop.mesh);
+					}
+					if (assaultStrongholdTroop.arrow_mesh != null)
+					{
+						UnityEngine.Object.Destroy(assaultStrongholdTroop.arrow_mesh);
+					}
+				}
+			}
+			Global.character_.assaultstronghold.troops.Clear();
+			foreach (db_character_assault_stronghold_troop item2 in sCAssaultStrongholdLoad_0x3AC.assaultstrongholdtroop)
+			{
+				AssaultStrongholdTroop assaultStrongholdTroop2 = new AssaultStrongholdTroop();
+				assaultStrongholdTroop2.Set(item2);
+				Global.character_.assaultstronghold.troops.Add(assaultStrongholdTroop2.id, assaultStrongholdTroop2);
+				if (Global.getTemplate("assault_stronghold_monster", assaultStrongholdTroop2.idmonster) is _assault_stronghold_monster assault_stronghold_monster)
+				{
+					for (int i = 0; i < assault_stronghold_monster.wave; i++)
+					{
+						AssaultStrongholdWaveTroop item = new AssaultStrongholdWaveTroop();
+						Global.character_.assaultstronghold.troops[assaultStrongholdTroop2.id].wavetroops.Add(item);
+					}
+				}
+			}
+			foreach (db_character_assault_stronghold_troop_army item3 in sCAssaultStrongholdLoad_0x3AC.assaultstrongholdtrooparmy)
+			{
+				AssaultStrongholdTroopArmy assaultStrongholdTroopArmy = new AssaultStrongholdTroopArmy();
+				assaultStrongholdTroopArmy.Set(item3);
+				if (Global.character_.assaultstronghold.troops.ContainsKey(assaultStrongholdTroopArmy.idtroop) && Global.character_.assaultstronghold.troops[assaultStrongholdTroopArmy.idtroop].wavetroops.Count >= assaultStrongholdTroopArmy.idwave)
+				{
+					Global.character_.assaultstronghold.troops[assaultStrongholdTroopArmy.idtroop].wavetroops[assaultStrongholdTroopArmy.idwave - 1].armys.Add(assaultStrongholdTroopArmy);
+				}
+			}
+			Global.character_.assaultstronghold.gens.Clear();
+			foreach (db_character_assault_stronghold_gen item4 in sCAssaultStrongholdLoad_0x3AC.assaultstrongholdgen)
+			{
+				AssaultStrongholdGeneral assaultStrongholdGeneral = new AssaultStrongholdGeneral();
+				assaultStrongholdGeneral.Set(item4);
+				Global.character_.assaultstronghold.gens.Add(assaultStrongholdGeneral);
+			}
+		}
+		Global.character_.assault_stamina = sCAssaultStrongholdLoad_0x3AC.stamina;
+		if (Global.character_.assaultstronghold.idtroop_battling != -1)
+		{
+			BaseUI.GetRootUI().StrongHoldFormation_enter((uint)Global.character_.assaultstronghold.idtroop_battling, Global.character_.assaultstronghold.troops[(ushort)Global.character_.assaultstronghold.idtroop_battling].idmonster);
+			return;
+		}
+		RootMessenger component = GameObject.Find("/StrongHold").GetComponent<RootMessenger>();
+		if (BaseAsset.lds.GetCurUI().LevelID == "StrongHold")
+		{
+			for (ushort num2 = 0; num2 < Global.character_.assaultstronghold.troops.Count; num2++)
+			{
+				AssaultStrongholdTroop assaultStrongholdTroop3 = Global.character_.assaultstronghold.troops[num2];
+				if (assaultStrongholdTroop3.mesh != null)
+				{
+					UnityEngine.Object.Destroy(assaultStrongholdTroop3.mesh);
+				}
+				if (assaultStrongholdTroop3.arrow_mesh != null)
+				{
+					UnityEngine.Object.Destroy(assaultStrongholdTroop3.arrow_mesh);
+				}
+			}
+			StrongHoldUI component2 = GameObject.Find("/StrongHold/StrongHoldUI").GetComponent<StrongHoldUI>();
+			component2.RefreshMesh();
+		}
+		else
+		{
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			component.LevelStart();
+			level_rmg = component;
+			BaseAsset.lds.SetCurUI(component);
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void load_stronghold()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/StrongHold").GetComponent<RootMessenger>();
+		StrongHoldUI component2 = GameObject.Find("/StrongHold/StrongHoldUI").GetComponent<StrongHoldUI>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		MainUI.SetSubUI(null);
+	}
+
+	public void load_spiritascend(ushort id, string level, RootMessenger rmg)
+	{
+		if (!rmg || !(rmg.LevelID == level))
+		{
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component = GameObject.Find("/SpiritAscend").GetComponent<RootMessenger>();
+			SpiritAscendCampaignUI component2 = GameObject.Find("/SpiritAscend/SpiritAscendUI").GetComponent<SpiritAscendCampaignUI>();
+			component2.id_spirit_ascend_campaign = id;
+			component.LevelStart();
+			level_rmg = component;
+			BaseAsset.lds.SetCurUI(component);
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void default_campaign()
+	{
+		if (last_rmg.LevelID != "Campaign")
+		{
+			cs_campaign_enter(70, last_rmg);
+		}
+	}
+
+	private void sc_campaign_enter(MemoryStream stream, object arg)
+	{
+		__BaseUI.UICount_Visible--;
+		__BaseUI.cuis.Remove("cs_campaign_enter");
+		if (stream == null)
+		{
+			return;
+		}
+		SCCampaignEnter_0x401 sCCampaignEnter_0x = JSProtoBuf.Serializer.Deserialize<SCCampaignEnter_0x401>(stream);
+		RootMessenger rootMessenger = arg as RootMessenger;
+		if (!(Global.getTemplate("campaign", sCCampaignEnter_0x.idcampaign) is _campaign campaign))
+		{
+			last_rmg = rootMessenger;
+			__BaseUI.GetMessageBox().setMessage(string.Empty, "战役尚未开放，请用网页登陆", rootMessenger, default_campaign);
+			return;
+		}
+		if (campaign.idcampaign_type == 0)
+		{
+			Global.character_.idcampaign = (ushort)sCCampaignEnter_0x.idcampaign;
+		}
+		if (sCCampaignEnter_0x.campaigns.Count > 0)
+		{
+			foreach (game.net.data.StoC.Campaign campaign2 in sCCampaignEnter_0x.campaigns)
+			{
+				Global.character_.addCampaign(campaign2);
+			}
+		}
+		else if (sCCampaignEnter_0x.campaign != null)
+		{
+			Global.character_.addCampaign(sCCampaignEnter_0x.campaign);
+		}
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		if (campaign.idcampaign_type == 0)
+		{
+			CampaignUI component = GameObject.Find("/Campaign/CampaignUI").GetComponent<CampaignUI>();
+			component.setCampaign((ushort)sCCampaignEnter_0x.idcampaign, bDebug: false);
+			RootMessenger component2 = GameObject.Find("/Campaign").GetComponent<RootMessenger>();
+			component2.LevelStart();
+			level_rmg = component2;
+			BaseAsset.lds.SetCurUI(component2);
+		}
+		else if (campaign.idcampaign_type == 2 || campaign.idcampaign_type == 4)
+		{
+			CampaignUI component3 = GameObject.Find("/Anecdote/AnecdoteUI").GetComponent<CampaignUI>();
+			component3.setCampaign((ushort)sCCampaignEnter_0x.idcampaign, bDebug: false);
+			RootMessenger component4 = GameObject.Find("/Anecdote").GetComponent<RootMessenger>();
+			AnecdoteUI component5 = GameObject.Find("/Anecdote/AnecdoteUI").GetComponent<AnecdoteUI>();
+			component5.setCampaign(Global.character_.campaigns_[(ushort)sCCampaignEnter_0x.idcampaign]);
+			component4.LevelStart();
+			level_rmg = component4;
+			BaseAsset.lds.SetCurUI(component4);
+		}
+		else if (campaign.idcampaign_type == 12 || campaign.idcampaign_type == 13 || campaign.idcampaign_type == 14)
+		{
+			CampaignUI component6 = GameObject.Find("/Fairy/FairyUI").GetComponent<CampaignUI>();
+			component6.setCampaign((ushort)sCCampaignEnter_0x.idcampaign, bDebug: false);
+			RootMessenger component7 = GameObject.Find("/Fairy").GetComponent<RootMessenger>();
+			FairyUI component8 = GameObject.Find("/Fairy/FairyUI").GetComponent<FairyUI>();
+			component8.setCampaign(Global.character_.campaigns_[(ushort)sCCampaignEnter_0x.idcampaign]);
+			component7.LevelStart();
+			level_rmg = component7;
+			BaseAsset.lds.SetCurUI(component7);
+		}
+		else if (campaign.idcampaign_type == 17)
+		{
+			Global.character_.handleTalentArmy(sCCampaignEnter_0x.nextarmys, campaign.id);
+			CampaignUI component9 = GameObject.Find("/TalentCampaign/TalentCampaignUI").GetComponent<CampaignUI>();
+			component9.setCampaign((ushort)sCCampaignEnter_0x.idcampaign, bDebug: false);
+			RootMessenger component10 = GameObject.Find("/TalentCampaign").GetComponent<RootMessenger>();
+			component10.LevelStart();
+			level_rmg = component10;
+			BaseAsset.lds.SetCurUI(component10);
+		}
+		Logger.Log("sc_campaign_enter");
+		BgLoadPrep(sCCampaignEnter_0x.idcampaign);
+		EnableAll();
+	}
+
+	private void BgLoadPrep(uint id)
+	{
+		WebAssetBGLoader component = BaseAsset.was.GetComponent<WebAssetBGLoader>();
+		if (!(component != null))
+		{
+			return;
+		}
+		component.BgLoadPrep((int)id);
+		if (Global.character_.campaigns_.ContainsKey((ushort)id))
+		{
+			foreach (ushort next_campaign in Global.character_.campaigns_[(ushort)id].m_next_campaigns)
+			{
+				component.BgLoadPrep(next_campaign);
+			}
+		}
+		if (id == 70)
+		{
+			component.BgLoadPrep(999);
+		}
+	}
+
+	public void cs_pointrace_enter(RootMessenger _rmg, delegate_OnClose _onClose)
+	{
+		DisableAll();
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/PointRace").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		PointraceUI component2 = GameObject.Find("/PointRace/PointRaceUI").GetComponent<PointraceUI>();
+	}
+
+	public void cs_divinity_enter(RootMessenger _rmg, delegate_OnClose _onClose)
+	{
+		DisableAll();
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Divinity").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		DivinityUI component2 = GameObject.Find("/Divinity/DivinityUI").GetComponent<DivinityUI>();
+		component2.setOnclose(_onClose);
+	}
+
+	public void cs_sealmonster_enter(RootMessenger _rmg)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/SealMonster").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void cs_divinity_enter(RootMessenger _rmg)
+	{
+		cs_divinity_enter(_rmg, null);
+	}
+
+	public void startTrial()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Trial").GetComponent<RootMessenger>();
+		TrialLevelUI component2 = GameObject.Find("/Trial/TrialUI").GetComponent<TrialLevelUI>();
+		component2.Destroy();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		MainUI.SetSubUI(null);
+	}
+
+	public void startGrave(ushort graveid)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Grave").GetComponent<RootMessenger>();
+		GraveLevelUI component2 = GameObject.Find("/Grave/GraveUI").GetComponent<GraveLevelUI>();
+		component2.graveid = graveid;
+		component2.Destroy();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		MainUI.SetSubUI(null);
+	}
+
+	public void startGraveChest(ushort graveid)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/GraveChest").GetComponent<RootMessenger>();
+		GraveChestUI component2 = GameObject.Find("/GraveChest/GraveChestUI").GetComponent<GraveChestUI>();
+		component2.graveid = graveid;
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+		MainUI.SetSubUI(null);
+	}
+
+	public void startStrongHold(uint idlevel)
+	{
+		cs_assault_stronghold_load(idlevel);
+	}
+
+	private void ScenarioEnd()
+	{
+		Global.character_.scenarios_.RemoveAt(0);
+		level_rmg.ToEnable();
+	}
+
+	private void VersionOK()
+	{
+		BaseAsset.lds.GetCurUI().ToEnable();
+	}
+
+	private void update_UIFuncs()
+	{
+		if (BaseAsset.lds.isVisible())
+		{
+			return;
+		}
+		CampaignTroop campaignTroop = Global.character_.getCampaign(70)?.troops_[1];
+		if (LoginMessageUI.need_show && __BaseUI.UICount_Visible == 0 && campaignTroop != null && campaignTroop.killed)
+		{
+			if (!LoginMessageUI.isshowing)
+			{
+				LoginMessageUI component = GetComponent<LoginMessageUI>();
+				component.MyLoading();
+				LoginMessageUI.isshowing = true;
+			}
+		}
+		else if (FlowerMessUI.need_show)
+		{
+			GetComponent<FlowerMessUI>().Prep(string.Empty);
+			FlowerMessUI.need_show = false;
+		}
+		else
+		{
+			if ((anti_addict_ui != null && anti_addict_ui.HasMessage) || !(level_rmg != null) || __BaseUI.UICount_Visible != 0 || BaseAsset.lds.isVisible())
+			{
+				return;
+			}
+			Hashtable templates = Global.getTemplates("client_version");
+			if (Global.character_.client_version < templates.Count)
+			{
+				BaseAsset.lds.GetCurUI().ToDisable();
+				_client_version client_version = templates[(uint)templates.Count] as _client_version;
+				string text = "#b=1版本#c=99FF00" + client_version.version + "\n\n#b=0#c=FFFFFF";
+				text += Global.getText(client_version.idtext);
+				__BaseUI.GetMessageBox().setRect(new Rect(0f, 0f, 450f, 400f));
+				__BaseUI.GetMessageBox().setMessage("版本更新", text, null, VersionOK);
+				Global.character_.client_version = (ushort)client_version.id;
+				CSPlayerClientVersion_0x25 pkt = new CSPlayerClientVersion_0x25();
+				m_client.Send(37, pkt, null);
+			}
+			else if (Global.character_.scenarios_.Count > 0)
+			{
+				if (!PlayScenario(Global.character_.scenarios_[0], ScenarioEnd))
+				{
+					Global.character_.scenarios_.RemoveAt(0);
+				}
+			}
+			else if (RootBase.vctUIFuncs.Count > 0)
+			{
+				delegate_OnClose delegate_OnClose = RootBase.vctUIFuncs[0];
+				RootBase.vctUIFuncs.RemoveAt(0);
+				delegate_OnClose();
+			}
+			else
+			{
+				CraftUI.trialWarning(Global.craft_);
+				CraftUI.trialWarningTactic(Global.craft_tactic);
+			}
+		}
+	}
+
+	public bool PlayScenario(uint idscenario, delegate_OnClose onClose)
+	{
+		if (Global.getTemplate("scenario", idscenario) is _scenario d)
+		{
+			level_rmg.ToDisable();
+			BaseAsset.lds.Visible_sub();
+			Scenario s = new Scenario(d);
+			ScenarioUI component = GetComponent<ScenarioUI>();
+			component.setScenario(s, level_rmg, onClose);
+			return true;
+		}
+		Logger.Log("scenario " + idscenario + "not found ");
+		return false;
+	}
+
+	public void addAnimEffect(string name, AssetBundle bundle, string image_di, string image_effect)
+	{
+		AnimEffect animEffect = base.gameObject.AddComponent<AnimEffect>();
+		animEffect.MyLoading(bundle, image_di, image_effect, null);
+		anim_effects[name] = animEffect;
+	}
+
+	public AnimEffect getAnimEffect(string name)
+	{
+		if (anim_effects.ContainsKey(name))
+		{
+			return anim_effects[name] as AnimEffect;
+		}
+		return null;
+	}
+
+	public void drawAnimBanner(BaseUI ui, float y, float alltime, Texture2D _icon, ScenarioSection _desc, Texture2D _di, TextAlignment align)
+	{
+		m_bannerAnim.addFrameAnimation(ui, y, alltime, _icon, _desc, _di, align);
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = -100;
+		RootBase.Draw();
+		m_bannerAnim.Draw();
+		if (Global.character_.gm)
+		{
+			GUI.Label(new Rect(Screen.width - 30, Screen.height - 160, 100f, 20f), __BaseUI.UICount_Visible.ToString());
+			if (__BaseUI.cuis.Count > 0)
+			{
+				for (int i = 0; i < __BaseUI.cuis.Count; i++)
+				{
+					__BaseUI.Label(new Rect(Screen.width - 220, Screen.height - 180 - i * 20, 200f, 20f), __BaseUI.cuis[i], __BaseUI._numNRight, Color.white);
+				}
+			}
+		}
+		if (Global.character_.festival_lottery.isFestivalLotteryOpen(3u) && TimeUtil.Now - Global.character_.last_login + Global.character_.online_seconds >= 3600 && Global.character_.online_times_got == 0 && !RootBase.wlosended)
+		{
+			RootBase.cs_weekend_lottery_online();
+		}
+	}
+
+	public RootMessenger GetLevel()
+	{
+		return level_rmg;
+	}
+
+	public void LoadLevel(string level, RootMessenger rmg)
+	{
+		if (!rmg || !(rmg.LevelID == level))
+		{
+			Logger.Log("load level " + level);
+			switch (level)
+			{
+			case "Campaign":
+				cs_campaign_enter(0, rmg);
+				break;
+			case "Capital":
+				cs_capital_enter(rmg);
+				BgLoadPrep(999u);
+				break;
+			case "CapitalFriend":
+				cs_capital_friend_enter(rmg);
+				break;
+			case "SealDevil":
+				cs_sealdevil_enter(rmg);
+				break;
+			case "Convoy":
+				cs_convoy_enter(rmg);
+				break;
+			case "PointRace":
+				cs_pointrace_enter(rmg, OnClose);
+				break;
+			case "TrialMaze":
+			{
+				BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+				RootMessenger component = GameObject.Find("/TrialMaze").GetComponent<RootMessenger>();
+				component.GetComponentInChildren<MazeUI>().first_visible = true;
+				component.GetComponentInChildren<MazeDebugUI>().first_visible = false;
+				component.LevelStart();
+				level_rmg = component;
+				BaseAsset.lds.SetCurUI(component);
+				break;
+			}
+			case "StrongHold":
+				load_stronghold();
+				break;
+			}
+		}
+	}
+
+	private void OtherUserLoginOK(bool bOK, object[] objs)
+	{
+		Application.ExternalCall("RegisterURL");
+	}
+
+	public void OtherUserLogin(string error)
+	{
+		MessageBox component = GetComponent<MessageBox>();
+		RootMessenger curUI = BaseAsset.lds.GetCurUI();
+		if ((bool)curUI)
+		{
+			curUI.ToDisable();
+		}
+		if (error == "other_user")
+		{
+			component.setMessage(string.Empty, "你已用其他账号登录，请重新登录", curUI, OtherUserLoginOK, _bCancel: false);
+		}
+		else if (error == "other_login")
+		{
+			component.setMessage(string.Empty, "有用户从别处登录，请重新登录", curUI, OtherUserLoginOK, _bCancel: false);
+		}
+		else
+		{
+			component.setMessage(string.Empty, "请重新登录", curUI, OtherUserLoginOK, _bCancel: false);
+		}
+		__BaseUI.GetMessageBox().setDepth(-300);
+	}
+
+	public void Command(string command, BaseUI owner)
+	{
+		StartCoroutine(command, owner);
+	}
+
+	public void brawl_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Brawl").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void sealdevil_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/SealDevil").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void battle_enter()
+	{
+		battle_enter(fslds: true);
+	}
+
+	public void battle_enter(bool fslds)
+	{
+		MainUI.SetSubUI(null);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		RootMessenger curUI = BaseAsset.lds.GetCurUI();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		RootMessenger rootMessenger = battleUI.get_rmg();
+		rootMessenger.LevelStart(_bLoadScreen: false);
+	}
+
+	public void sealmonster_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/SealMonster").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void craft_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Craft").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void craft_world_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/CraftWorld").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void ladder_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Ladder").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void nation_enter()
+	{
+		NationUI component = GameObject.Find("/Nation/NationUI").GetComponent<NationUI>();
+		if (!component.enabled)
+		{
+			BaseAsset.lds.Visible();
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component2 = GameObject.Find("/Nation").GetComponent<RootMessenger>();
+			BaseAsset.lds.Visible();
+			component2.LevelStart();
+			level_rmg = component2;
+			BaseAsset.lds.SetCurUI(component2);
+		}
+		else
+		{
+			component.RollToTargetCity();
+			component.ApplyPendingSummon();
+		}
+	}
+
+	public void teamfight_enter()
+	{
+		TeamFightUI teamFightUI = BaseUI.GetTeamFightUI();
+		if (!teamFightUI.enabled)
+		{
+			BaseAsset.lds.Visible();
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component = GameObject.Find("/TeamFight").GetComponent<RootMessenger>();
+			BaseAsset.lds.Visible();
+			component.LevelStart();
+			level_rmg = component;
+			BaseAsset.lds.SetCurUI(component);
+		}
+	}
+
+	public void convoy_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/Convoy").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void convoy_formation_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/ConvoyFormation").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void general_book_formation_enter(uint id, string label, int bookgid)
+	{
+		GeneralBookFormationUI component = GameObject.Find("/GeneralBookFormation/GeneralBookFormationUI").GetComponent<GeneralBookFormationUI>();
+		component.SetTroopid(id);
+		component.SetLabelGeneral(label, bookgid);
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component2 = GameObject.Find("/GeneralBookFormation").GetComponent<RootMessenger>();
+		component2.LevelStart();
+		level_rmg = component2;
+		BaseAsset.lds.SetCurUI(component2);
+	}
+
+	public void rescue_formation_enter(uint id)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RescureFormationUI component = GameObject.Find("/RescueFormation/RescureFormationUI").GetComponent<RescureFormationUI>();
+		component.Setmyquestid(id);
+		RootMessenger component2 = GameObject.Find("/RescueFormation").GetComponent<RootMessenger>();
+		component2.LevelStart();
+		level_rmg = component2;
+		BaseAsset.lds.SetCurUI(component2);
+	}
+
+	public void StrongHoldFormation_enter(uint id, int idmonster)
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		StrongHoldFormationUI component = GameObject.Find("/StrongHoldFormation/StrongHoldFormationUI").GetComponent<StrongHoldFormationUI>();
+		component.SetTroopid(id, Global.character_.assaultstronghold.wave, idmonster);
+		RootMessenger component2 = GameObject.Find("/StrongHoldFormation").GetComponent<RootMessenger>();
+		component2.LevelStart();
+		level_rmg = component2;
+		BaseAsset.lds.SetCurUI(component2);
+	}
+
+	public void BattleView(byte[] report, bool isreport)
+	{
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(BaseAsset.lds.GetCurUI());
+		battleUI.setReport(report, isreport);
+		battleUI.ViewType = enumBattleViewType.viewReport;
+		battleUI.setClose(BattleViewClose);
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		Hide();
+	}
+
+	private void BattleViewClose()
+	{
+		Visible();
+		Enable();
+	}
+
+	public void EarthPavilion_formation_enter()
+	{
+		EarthPavilionFormationUI component = GameObject.Find("/EarthPavilionFormation/EarthPavilionFormationUI").GetComponent<EarthPavilionFormationUI>();
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component2 = GameObject.Find("/EarthPavilionFormation").GetComponent<RootMessenger>();
+		component2.LevelStart();
+		level_rmg = component2;
+		BaseAsset.lds.SetCurUI(component2);
+	}
+
+	public void cs_lake_temple_enter()
+	{
+		DisableAll();
+		CSLakeTempleEnter_0x73C pkt = new CSLakeTempleEnter_0x73C();
+		Global.m_client.Send(1852, pkt, sc_lake_temple_enter);
+	}
+
+	public void sc_lake_temple_enter(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			EnableAll();
+			return;
+		}
+		SCLakeTempleEnter_0x73C sCLakeTempleEnter_0x73C = JSProtoBuf.Serializer.Deserialize<SCLakeTempleEnter_0x73C>(stream);
+		if (sCLakeTempleEnter_0x73C.operate == SCLakeTempleEnter_0x73C.Operate.OK)
+		{
+			LakeTempleFormationUI component = GameObject.Find("/LakeTempleFormation/LakeTempleFormationUI").GetComponent<LakeTempleFormationUI>();
+			if (sCLakeTempleEnter_0x73C.first_time)
+			{
+				if (Global.character_.skytower != null)
+				{
+					Global.character_.skytower.challenge_times--;
+				}
+				if (sCLakeTempleEnter_0x73C.laketemple != null)
+				{
+					Global.character_.laketemple.Set(sCLakeTempleEnter_0x73C.laketemple);
+					Global.character_.laketemple.m_armys.Clear();
+					foreach (db_character_lake_temple_army laketemple_army in sCLakeTempleEnter_0x73C.laketemple_armys)
+					{
+						LakeTempleArmy lakeTempleArmy = new LakeTempleArmy();
+						lakeTempleArmy.Set(laketemple_army);
+						Global.character_.laketemple.m_armys.Add(lakeTempleArmy.location, lakeTempleArmy);
+					}
+					Global.character_.laketemple.m_bonuses.Clear();
+					foreach (db_character_lake_temple_bonus laketemple_bonuse in sCLakeTempleEnter_0x73C.laketemple_bonuses)
+					{
+						_Treasure treasure = new _Treasure();
+						treasure.make(91, laketemple_bonuse.element_id, laketemple_bonuse.element_count);
+						Global.character_.laketemple.m_bonuses.Add(treasure);
+					}
+				}
+				component.Setfirstin(_isfirst: true);
+			}
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component2 = GameObject.Find("/LakeTempleFormation").GetComponent<RootMessenger>();
+			component2.LevelStart();
+			level_rmg = component2;
+			BaseAsset.lds.SetCurUI(component2);
+		}
+		else if (sCLakeTempleEnter_0x73C.operate != SCLakeTempleEnter_0x73C.Operate.Error)
+		{
+		}
+		EnableAll();
+	}
+
+	public void cs_zhenyaota_enter()
+	{
+		DisableAll();
+		CSZhenYaoTaEnter_0x818 pkt = new CSZhenYaoTaEnter_0x818();
+		Global.m_client.Send(2072, pkt, sc_zhenyaota_enter);
+	}
+
+	public void sc_zhenyaota_enter(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			EnableAll();
+			return;
+		}
+		SCZhenYaoTaEnter_0x818 sCZhenYaoTaEnter_0x = JSProtoBuf.Serializer.Deserialize<SCZhenYaoTaEnter_0x818>(stream);
+		if (sCZhenYaoTaEnter_0x.operate == SCZhenYaoTaEnter_0x818.Operate.OK)
+		{
+			Global.character_.zhenyaota_armys.Clear();
+			foreach (db_character_zhenyaota_army zhenyaota_army in sCZhenYaoTaEnter_0x.zhenyaota_armys)
+			{
+				ZhenYaoTaArmy zhenYaoTaArmy = new ZhenYaoTaArmy();
+				zhenYaoTaArmy.Set(zhenyaota_army);
+				Global.character_.zhenyaota_armys.Add(zhenYaoTaArmy.location, zhenYaoTaArmy);
+			}
+			BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+			RootMessenger component = GameObject.Find("/ZhenYaoTaFormation").GetComponent<RootMessenger>();
+			component.LevelStart();
+			level_rmg = component;
+			BaseAsset.lds.SetCurUI(component);
+		}
+		else if (sCZhenYaoTaEnter_0x.operate != SCZhenYaoTaEnter_0x818.Operate.Error)
+		{
+		}
+		EnableAll();
+	}
+
+	public void GeneralStar_enter()
+	{
+		cs_general_star_enter();
+	}
+
+	public void cs_general_star_enter()
+	{
+		DisableAll();
+		CSGeneralStarEnter_0x70A pkt = new CSGeneralStarEnter_0x70A();
+		m_client.Send(1802, pkt, sc_general_star_enter);
+	}
+
+	private void sc_general_star_enter(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			EnableAll();
+			return;
+		}
+		SCGeneralStarEnter_0x70A sCGeneralStarEnter_0x70A = JSProtoBuf.Serializer.Deserialize<SCGeneralStarEnter_0x70A>(stream);
+		if (sCGeneralStarEnter_0x70A.operate == SCGeneralStarEnter_0x70A.Operate.OK)
+		{
+			if (sCGeneralStarEnter_0x70A.general_star != null)
+			{
+				if (Global.character_.generalstar.m_selectedGens.Count == 0)
+				{
+					_general_star_param general_star_param = Global.getTemplate("general_star_param", 1u) as _general_star_param;
+					if (Global.character_.general_star_challenge_free_times < general_star_param.challenge_free_times)
+					{
+						Global.character_.general_star_challenge_free_times++;
+					}
+					else if (Global.character_.general_star_challenge_times < general_star_param.challenge_times && Global.getTemplate("general_star_challenge_cost", Global.character_.general_star_challenge_times + 1) is _general_star_challenge_cost general_star_challenge_cost)
+					{
+						Global.character_.remParam((uint)general_star_challenge_cost.treasure_type, general_star_challenge_cost.param0, general_star_challenge_cost.param1);
+						Global.character_.general_star_challenge_times++;
+					}
+				}
+				Global.character_.generalstar.Set(sCGeneralStarEnter_0x70A.general_star);
+				Global.character_.generalstar.m_selectedGens.Clear();
+				foreach (db_character_general_star_selected_gen general_star_selected_gen in sCGeneralStarEnter_0x70A.general_star_selected_gens)
+				{
+					GeneralStarSelectedGen generalStarSelectedGen = new GeneralStarSelectedGen();
+					generalStarSelectedGen.Set(general_star_selected_gen);
+					Global.character_.generalstar.m_selectedGens.Add(generalStarSelectedGen);
+				}
+				Global.character_.generalstar.m_armys.Clear();
+				foreach (db_character_general_star_army general_star_army in sCGeneralStarEnter_0x70A.general_star_armys)
+				{
+					GeneralStarArmy generalStarArmy = new GeneralStarArmy();
+					generalStarArmy.Set(general_star_army);
+					Global.character_.generalstar.m_armys.Add(generalStarArmy);
+				}
+				GeneralStarUI component = GameObject.Find("/GeneralStar/GeneralStarUI").GetComponent<GeneralStarUI>();
+				BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+				RootMessenger component2 = GameObject.Find("/GeneralStar").GetComponent<RootMessenger>();
+				component2.LevelStart();
+				level_rmg = component2;
+				BaseAsset.lds.SetCurUI(component2);
+			}
+		}
+		else if (sCGeneralStarEnter_0x70A.operate == SCGeneralStarEnter_0x70A.Operate.NoTimes)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20239u), rmg);
+		}
+		else if (sCGeneralStarEnter_0x70A.operate == SCGeneralStarEnter_0x70A.Operate.NoResource)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(726u), rmg);
+		}
+		else if (sCGeneralStarEnter_0x70A.operate == SCGeneralStarEnter_0x70A.Operate.NoGeneral)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9115u), rmg);
+		}
+		EnableAll();
+	}
+
+	public void skytower_enter(uint level)
+	{
+		cs_skytower_detail(level);
+	}
+
+	private void cs_skytower_detail(uint level)
+	{
+		DisableAll();
+		CSSkyTowerDetail_0x281 cSSkyTowerDetail_0x = new CSSkyTowerDetail_0x281();
+		cSSkyTowerDetail_0x.level = level;
+		m_client.Send(641, cSSkyTowerDetail_0x, sc_skytower_detail);
+	}
+
+	private void sc_skytower_detail(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCSkyTowerDetail_0x281 sCSkyTowerDetail_0x = JSProtoBuf.Serializer.Deserialize<SCSkyTowerDetail_0x281>(stream);
+			if (sCSkyTowerDetail_0x != null)
+			{
+				Global.character_.skytower.read_detail(sCSkyTowerDetail_0x);
+				if (Global.character_.skytower.idskytower_template != 0)
+				{
+					BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+					RootMessenger component = GameObject.Find("/SkyTower").GetComponent<RootMessenger>();
+					component.LevelStart();
+					level_rmg = component;
+					BaseAsset.lds.SetCurUI(component);
+				}
+			}
+		}
+		EnableAll();
+	}
+
+	public void preset_duel_enter()
+	{
+		BaseAsset.lds.SetOldUI(BaseAsset.lds.GetCurUI());
+		RootMessenger component = GameObject.Find("/PresetDuel").GetComponent<RootMessenger>();
+		component.LevelStart();
+		level_rmg = component;
+		BaseAsset.lds.SetCurUI(component);
+	}
+
+	public void cs_maze_enter(ushort idtrial, bool refresh)
+	{
+		BaseAsset.lds.Visible_sub();
+		CSTrialMazeInfo_0x2B0 cSTrialMazeInfo_0x2B = new CSTrialMazeInfo_0x2B0();
+		cSTrialMazeInfo_0x2B.idtrial = idtrial;
+		cSTrialMazeInfo_0x2B.force_refresh = refresh;
+		m_client.Send(688, cSTrialMazeInfo_0x2B, sc_trialmaze_info_0x2B0);
+	}
+
+	private void sc_trialmaze_info_0x2B0(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCTrialMazeInfo_0x2B0 sCTrialMazeInfo_0x2B = JSProtoBuf.Serializer.Deserialize<SCTrialMazeInfo_0x2B0>(stream);
+			if (sCTrialMazeInfo_0x2B.result == 1)
+			{
+				MainUI.SetSubUI(null);
+				RootMessenger component = GameObject.Find("/TrialMaze").GetComponent<RootMessenger>();
+				component.GetComponentInChildren<MazeUI>().SetMaze(sCTrialMazeInfo_0x2B);
+				LoadLevel("TrialMaze", rmg);
+				return;
+			}
+		}
+		BaseAsset.lds.Hide();
+	}
+
+	private static void sc_chatmessage_0x220(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCChatMessage_0x220 pkt = JSProtoBuf.Serializer.Deserialize<SCChatMessage_0x220>(stream);
+			ChatBehaviour component = BaseUI.GetRootUI().GetComponent<ChatBehaviour>();
+			component.OnReceiveMessage(pkt);
+		}
+	}
+
+	private static void sc_buddy_be_sent_flower(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBuddyBeSentFlower_0x355 sCBuddyBeSentFlower_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyBeSentFlower_0x355>(stream);
+			FlowerMessUI.FMUI f = new FlowerMessUI.FMUI(BaseUI.GetRootUI().GetComponent<FlowerMessUI>().getbtn(), (int)sCBuddyBeSentFlower_0x.buddyevent.param, sCBuddyBeSentFlower_0x.buddyevent.name, BaseUI.GetRootUI().GetComponent<FlowerMessUI>().CallbackOnClickPending, (int)sCBuddyBeSentFlower_0x.buddyevent.id);
+			BaseUI.GetRootUI().GetComponent<FlowerMessUI>().ADDFM(f);
+		}
+	}
+
+	private static void sc_weekend_lottery_other_player(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCWeekendLotteryOtherPlayer_0x392 sCWeekendLotteryOtherPlayer_0x = JSProtoBuf.Serializer.Deserialize<SCWeekendLotteryOtherPlayer_0x392>(stream);
+			WeekendLotteryUI component = BaseUI.GetRootUI().GetComponent<WeekendLotteryUI>();
+			WeekendLotteryMessage weekendLotteryMessage = new WeekendLotteryMessage();
+			weekendLotteryMessage.Set(sCWeekendLotteryOtherPlayer_0x.msg);
+			component.m_msgs.Add(weekendLotteryMessage);
+			if (component.m_msgs.Count > 6)
+			{
+				component.m_msgs.RemoveAt(0);
+			}
+			component.makeAllSs();
+		}
+	}
+
+	public static bool check_mobile()
+	{
+		return Application.platform == RuntimePlatform.IPhonePlayer;
+	}
+
+	private static void sc_show_flower(MemoryStream stream, object arg)
+	{
+		if (stream != null && BaseAsset.lds.GetCurUI() != null && BaseAsset.lds.GetCurUI().LevelID == "Capital" && !BaseAsset.lds.IsBattling() && GameObject.Find("/Capital/CapitalUI") != null)
+		{
+			GameObject.Find("/Capital/CapitalUI").GetComponent<CapitalUI>().playflower();
+		}
+	}
+
+	private void OnApplicationQuit()
+	{
+		if (show_setup_warning_on_quit)
+		{
+			show_update_msgbox();
+			Application.CancelQuit();
+			if (!warning_showed)
+			{
+				warning_showed = true;
+				StartCoroutine(delayed_quit());
+			}
+		}
+		else if (Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			string text = ((!openLauncherAfterQuit) ? new_setup_path : Global.launcher_exe);
+			if (text.Length > 0)
+			{
+				Process process = new Process();
+				process.EnableRaisingEvents = false;
+				process.StartInfo.FileName = text;
+				process.StartInfo.Arguments = string.Empty;
+				int length = text.LastIndexOf("\\");
+				process.StartInfo.WorkingDirectory = text.Substring(0, length);
+				process.Start();
+			}
+		}
+	}
+
+	private IEnumerator delayed_quit()
+	{
+		yield return new WaitForSeconds(5f);
+		show_setup_warning_on_quit = false;
+		Application.Quit();
+	}
+
+	public void new_setup_needed(string path)
+	{
+		new_setup_path = path;
+		openLauncherAfterQuit = false;
+		show_setup_warning_on_quit = true;
+	}
+
+	private void show_update_msgbox()
+	{
+		DisableAll();
+		__BaseUI.GetMessageBox().setMessage(string.Empty, "登陆器版本过低，点击确定后升级", rmg, exec_new_setup, _bCancel: false);
+		__BaseUI.GetMessageBox().bNoButton = false;
+	}
+
+	private void exec_new_setup(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			show_setup_warning_on_quit = false;
+			Application.Quit();
+		}
+	}
+
+	public void Disconnect()
+	{
+		if (m_client != null)
+		{
+			m_client.Disconnect();
+		}
+	}
+
+	public static void Coin()
+	{
+		string url = Global.game_data["charge_url"].ToString();
+		Global.IEExplore(url, "congzi");
+		if (BaseUI.GetRootUI() != null)
+		{
+			BaseUI.GetRootUI().HDTAdvert("http://map.ra.icast.cn/event?id=MjQ1XzY3MWMzYzU4");
+		}
+	}
+
+	private static void sc_fcm_0x06(MemoryStream stream, object arg)
+	{
+		SCFCM_0x06 sCFCM_0x = JSProtoBuf.Serializer.Deserialize<SCFCM_0x06>(stream);
+		Global.anti_addicted_on = sCFCM_0x.isfcm;
+		AntiAddictedUI component = GameObject.Find("/Root/RootUI").GetComponent<AntiAddictedUI>();
+		if (component != null)
+		{
+			component.Initialize();
+		}
+	}
+
+	private static void sc_player_refresh_0x23(MemoryStream stream, object arg)
+	{
+		m_bRefreshCharacter = false;
+		if (stream != null)
+		{
+			SCPlayerRefresh_0x23 sCPlayerRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCPlayerRefresh_0x23>(stream);
+			Global.character_.next_stamina_time = sCPlayerRefresh_0x.next_stamina_time;
+			if (sCPlayerRefresh_0x.result == 0)
+			{
+				Global.character_.stamina = (short)sCPlayerRefresh_0x.stamina;
+			}
+		}
+	}
+
+	private static void sc_player_refresh_fiveclock_0x24(MemoryStream stream, object arg)
+	{
+		Logger.Log("sc_player_refresh_fiveclock_0x24");
+		m_bRefreshFive = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCPlayerRefreshFiveClock_0x24 sCPlayerRefreshFiveClock_0x = JSProtoBuf.Serializer.Deserialize<SCPlayerRefreshFiveClock_0x24>(stream);
+		Global.character_.next_resource_time = sCPlayerRefreshFiveClock_0x.next_refresh_time;
+		if (sCPlayerRefreshFiveClock_0x.result != 0)
+		{
+			return;
+		}
+		Global.character_.last_login = TimeUtil.Now;
+		Global.character_.battle_fail_count = 0;
+		Global.character_.stamina_buy_count = 0;
+		Global.character_.monster_assist_count = 0;
+		if (sCPlayerRefreshFiveClock_0x.challengers != null)
+		{
+			Global.character_.arena.makeChallengers(sCPlayerRefreshFiveClock_0x.challengers, bChanged: true);
+		}
+		Global.character_.arena.challenge_count = 0;
+		Global.character_.arena.challenge_buy = 0;
+		Global.character_.gold_pick_times = 0;
+		Global.character_.generalsoul_blue_times = 0;
+		Global.character_.generalsoul_purple_times = 0;
+		Global.character_.generalsoul_orange_times = 0;
+		Global.character_.god_bonus_today = 0;
+		Global.character_.online_times_got = 0;
+		Global.character_.online_seconds = 0u;
+		Global.character_.makeGodTroops(sCPlayerRefreshFiveClock_0x.god_troops);
+		foreach (Database.Campaign value in Global.character_.campaigns_.Values)
+		{
+			foreach (CampaignTroop value2 in value.troops_.Values)
+			{
+				value2.data_.fail_count = 0;
+			}
+		}
+		Database.GodTroop[] god_troops = Global.character_.god_troops;
+		foreach (Database.GodTroop godTroop in god_troops)
+		{
+			if (godTroop != null)
+			{
+				godTroop.data_.fail_count = 0;
+			}
+		}
+		if (Global.character_.spirit != null)
+		{
+			Global.character_.spirit.fruit_training_count = 0;
+			Global.character_.spirit.gold_training_count = 0;
+			Global.character_.gold_fruit = 0;
+		}
+		if (Global.character_.arena != null)
+		{
+			Global.character_.arena.challenge_count = 0;
+			Global.character_.arena.challenge_buy = 0;
+			Global.character_.arena.money = 0;
+			Global.character_.arena.reputation = 0;
+		}
+		for (int j = 0; j < sCPlayerRefreshFiveClock_0x.chest.Count; j++)
+		{
+			Global.character_.grave.setChest((byte)(j + 1), (byte)sCPlayerRefreshFiveClock_0x.chest[j]);
+		}
+		foreach (Database.BuildingMonster value3 in Global.character_.building_monsters.Values)
+		{
+			value3.fail_count = 0;
+		}
+		Global.character_.building_interacts.Clear();
+		foreach (GuildMember value4 in Global.character_.members.Values)
+		{
+			value4.today_donate = 0;
+			value4.guild_lottery_count = 5;
+			value4.tree_refresh = false;
+		}
+		foreach (Activity value5 in Global.character_.acts.Values)
+		{
+			value5.condition_param = 0;
+		}
+		foreach (Activity_Reward value6 in Global.character_.act_rewards.Values)
+		{
+			value6.finished_flag = false;
+		}
+		Global.character_.patrol_last_time = 0;
+		if (Global.character_.grave != null)
+		{
+			Global.character_.grave.buytimes = 0;
+		}
+		if (TimeUtil.WeekDay == DayOfWeek.Sunday || TimeUtil.WeekDay == DayOfWeek.Saturday)
+		{
+			Global.character_.newbieinfo.weekend_award = 3;
+		}
+		else
+		{
+			Global.character_.newbieinfo.weekend_award = 0;
+		}
+		Global.character_.grave.times = 3;
+		for (int k = 0; k < sCPlayerRefreshFiveClock_0x.chest.Count; k++)
+		{
+			Global.character_.grave.setChest((byte)(k + 1), (byte)sCPlayerRefreshFiveClock_0x.chest[k]);
+		}
+		Global.character_.festivalconsumes.Clear();
+		foreach (db_character_festival_consume fc in sCPlayerRefreshFiveClock_0x.fcs)
+		{
+			FestivalConsume festivalConsume = new FestivalConsume();
+			festivalConsume.Set(fc);
+			Global.character_.festivalconsumes.Add(festivalConsume.day, festivalConsume);
+		}
+		Global.character_.friendlotteryitems.Clear();
+		Global.character_.friendlottery.open_chest = false;
+		foreach (db_character_friend_lottery_item friendlotteryitem in sCPlayerRefreshFiveClock_0x.friendlotteryitems)
+		{
+			FriendLotteryItem friendLotteryItem = new FriendLotteryItem();
+			friendLotteryItem.Set(friendlotteryitem);
+			Global.character_.friendlotteryitems.Add(friendLotteryItem.id, friendLotteryItem);
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure heroautobonu in sCPlayerRefreshFiveClock_0x.heroautobonus)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(heroautobonu);
+			list.Add(treasure);
+		}
+		if (list.Count > 0)
+		{
+			__BaseUI.GetBattleResultUI().Set(null, string.Empty, string.Empty, 0, 0, list, null);
+			__BaseUI.GetBattleResultUI().MyLoading();
+		}
+		if (sCPlayerRefreshFiveClock_0x.clearherotoken)
+		{
+			Global.character_.hero_token = 0u;
+		}
+		if (Global.character_.puzzleshop != null)
+		{
+			Global.character_.puzzleshop.times = 0u;
+		}
+		Global.character_.vipdailyshopitems.Clear();
+		Global.character_.grave.finishtoday = 0;
+		Global.character_.grave.superchest_times = 0;
+		Global.character_.grave.chest_open = 0;
+		Global.character_.grave.chest_times = 0;
+		Global.character_.exchange.today_times = 0u;
+		Global.character_.practice_exchange = 0;
+		Global.character_.practice_exchange_gold = 0;
+		Global.character_.practice_money_exchange_times = 0;
+		Global.character_.sliver_pick++;
+		Global.character_.convoy.refreshfiveclock();
+		Global.character_.sealmonsterinfo.Set(sCPlayerRefreshFiveClock_0x.sealmonsterinfo);
+		for (byte b = 0; b < Global.character_.sealmonsterinfo.m_troops.Length; b++)
+		{
+			if (SealMonsterUI.mesh != null && Global.character_.sealmonsterinfo.m_troops[b].mesh != null)
+			{
+				UnityEngine.Object.Destroy(Global.character_.sealmonsterinfo.m_troops[b].mesh);
+			}
+			Global.character_.sealmonsterinfo.m_troops[b] = new SealMonsterTroop();
+			Global.character_.sealmonsterinfo.m_troops[b].idtroop = (byte)(b + 1);
+		}
+		foreach (db_character_sealmonster_army item in sCPlayerRefreshFiveClock_0x.sealmonsterarmy)
+		{
+			SealMonsterArmy sealMonsterArmy = new SealMonsterArmy();
+			sealMonsterArmy.Set(item);
+			Global.character_.sealmonsterinfo.m_troops[sealMonsterArmy.idtroop - 1].m_armys.Add(sealMonsterArmy);
+		}
+		if (Global.character_.generalbooks.Count > 0)
+		{
+			foreach (GeneralBook value7 in Global.character_.generalbooks.Values)
+			{
+				value7.cd = 0u;
+				value7.fail_count = 0;
+			}
+		}
+		Global.character_.skytower.challenge_times = 0;
+		Global.character_.festival_lottery.Set(sCPlayerRefreshFiveClock_0x.festival_lottery_states);
+		Global.character_.hequ_online_gift = 0;
+		Global.character_.talent_times = 0;
+		Global.character_.talent_buy_times = 0;
+		Global.character_.daily_ranking_types.Clear();
+		foreach (uint item2 in sCPlayerRefreshFiveClock_0x.daily_ranking_type)
+		{
+			Global.character_.daily_ranking_types.Add(item2);
+		}
+		Global.character_.is_zhounianfanli_open = sCPlayerRefreshFiveClock_0x.is_zhounianfanli_open;
+		if (Global.character_.anecdote_hero_try < 10)
+		{
+			Global.character_.anecdote_hero_try = 10;
+		}
+		Global.character_.anecdote_hero_buy = 0;
+		Global.character_.sevendaysopen.Clear();
+		foreach (bool item3 in sCPlayerRefreshFiveClock_0x.sevendayopening)
+		{
+			Global.character_.sevendaysopen.Add(item3);
+		}
+		Global.character_.checkin_today = 0;
+		if (sCPlayerRefreshFiveClock_0x.specialitemshop != null)
+		{
+			Global.specialitemshoptemp.make(sCPlayerRefreshFiveClock_0x.specialitemshop);
+		}
+		for (int l = 0; l < sCPlayerRefreshFiveClock_0x.recharge_activity_open.Count; l++)
+		{
+			Global.character_.recharge_activity_open[l] = sCPlayerRefreshFiveClock_0x.recharge_activity_open[l];
+		}
+		Global.character_.recharge_activity_haveReward = sCPlayerRefreshFiveClock_0x.recharge_activity_haveReward;
+		for (int m = 0; m < sCPlayerRefreshFiveClock_0x.new_recharge_activity_open.Count; m++)
+		{
+			int key = m + 4;
+			Global.character_.new_recharge_activity_open[key] = sCPlayerRefreshFiveClock_0x.new_recharge_activity_open[m];
+		}
+		Global.character_.recharge_activity.consumeBonuses.Clear();
+		foreach (ConsumeActivityBonus consume_activity_bonuse in sCPlayerRefreshFiveClock_0x.consume_activity_bonuses)
+		{
+			_Treasure treasure2 = new _Treasure();
+			treasure2.make((byte)consume_activity_bonuse.treasure_type, consume_activity_bonuse.param0, consume_activity_bonuse.param1);
+			if (!Global.character_.recharge_activity.consumeBonuses.ContainsKey(consume_activity_bonuse.consume_rank))
+			{
+				Global.character_.recharge_activity.consumeBonuses[consume_activity_bonuse.consume_rank] = new List<_Treasure>();
+			}
+			Global.character_.recharge_activity.consumeBonuses[consume_activity_bonuse.consume_rank].Add(treasure2);
+		}
+		Global.character_.today_is_forged = (ushort)sCPlayerRefreshFiveClock_0x.today_is_forged;
+		DailyRankingUI.showLight = true;
+		GameObject gameObject = GameObject.Find("/TrialMaze");
+		MazeUI componentInChildren = gameObject.GetComponentInChildren<MazeUI>();
+		if (componentInChildren != null && componentInChildren.enabled)
+		{
+			componentInChildren.refreshStaminaBuyTimes(sCPlayerRefreshFiveClock_0x.trial_maze_stamina_buy_times);
+		}
+		Global.character_.artifact_luck = sCPlayerRefreshFiveClock_0x.artifact_luck;
+		Global.character_.high_stone_buy_times = 0u;
+		foreach (Database.Artifact value8 in Global.character_.artifacts.Values)
+		{
+			value8.refreshfiveoclock();
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "ZhenYaoTaFormation")
+		{
+			ZhenYaoTaFormationUI component = GameObject.Find("/ZhenYaoTaFormation/ZhenYaoTaFormationUI").GetComponent<ZhenYaoTaFormationUI>();
+			if (component != null)
+			{
+				component._return();
+			}
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "LakeTempleFormation")
+		{
+			LakeTempleFormationUI component2 = GameObject.Find("/LakeTempleFormation/LakeTempleFormationUI").GetComponent<LakeTempleFormationUI>();
+			if (component2 != null)
+			{
+				component2._return();
+			}
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "EarthPavilionFormation")
+		{
+			EarthPavilionFormationUI component3 = GameObject.Find("/EarthPavilionFormation/EarthPavilionFormationUI").GetComponent<EarthPavilionFormationUI>();
+			if (component3 != null)
+			{
+				component3._return();
+			}
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "GeneralStar")
+		{
+			GeneralStarUI component4 = GameObject.Find("/GeneralStar/GeneralStarUI").GetComponent<GeneralStarUI>();
+			if (component4 != null)
+			{
+				component4._return();
+			}
+		}
+		if (Global.character_.generalstar != null)
+		{
+			Global.character_.generalstar.category = 0u;
+			Global.character_.generalstar.costid = 0;
+			Global.character_.generalstar.round = 0;
+			Global.character_.generalstar.m_armys.Clear();
+			Global.character_.generalstar.m_selectedGens.Clear();
+		}
+		Global.character_.general_star_challenge_free_times = 0u;
+		Global.character_.general_star_challenge_times = 0u;
+		Global.character_.general_star_revive_free_times = 0;
+		if (Global.character_.onlinelottery != null)
+		{
+			Global.character_.onlinelottery.online_time = 0u;
+			Global.character_.onlinelottery.lottery_today = 0;
+			Global.character_.onlinelottery.m_onlineLotteryItems.Clear();
+			foreach (db_character_online_lottery_item onlinelotteryitem in sCPlayerRefreshFiveClock_0x.onlinelotteryitems)
+			{
+				OnlineLotteryItem onlineLotteryItem = new OnlineLotteryItem();
+				onlineLotteryItem.Set(onlinelotteryitem);
+				Global.character_.onlinelottery.m_onlineLotteryItems.Add(onlineLotteryItem.iditem, onlineLotteryItem);
+			}
+		}
+		if (sCPlayerRefreshFiveClock_0x.shoplimit != null)
+		{
+			Global.shoplimit = new Database.ShopLimit(sCPlayerRefreshFiveClock_0x.shoplimit);
+		}
+		if (sCPlayerRefreshFiveClock_0x.assaultshop != null)
+		{
+			Global.assaultshop = new Database.AssaultShop(sCPlayerRefreshFiveClock_0x.assaultshop);
+		}
+		if (Global.assault_setting.start_time < TimeUtil.Now || Global.assault_setting.end_time + 86400 > TimeUtil.Now)
+		{
+			Global.character_.assault_score = 0;
+		}
+		if (Global.christmaseventtemplate.isShopOpen())
+		{
+			Global.character_.christmasEvent.today_times = 0u;
+		}
+		if (Global.character_.rescue != null)
+		{
+			if (sCPlayerRefreshFiveClock_0x.resetRescue)
+			{
+				Global.character_.rescue.clearPreviousData();
+			}
+			Global.character_.rescue.refreshFiveClock();
+			Global.character_.rescue.m_shopItemTemplates.Clear();
+			foreach (game.net.data.StoC.RescueShopItem rescueshopitemtemplate in sCPlayerRefreshFiveClock_0x.rescueshopitemtemplates)
+			{
+				RescueShopItemTemplate rescueShopItemTemplate = new RescueShopItemTemplate(rescueshopitemtemplate);
+				Global.character_.rescue.m_shopItemTemplates.Add(rescueShopItemTemplate.id, rescueShopItemTemplate);
+			}
+			Global.character_.rescue.m_quests.Clear();
+			foreach (db_character_rescue_quest rescuequest in sCPlayerRefreshFiveClock_0x.rescuequests)
+			{
+				RescueQuest rescueQuest = new RescueQuest();
+				rescueQuest.Set(rescuequest);
+				Global.character_.rescue.m_quests.Add(rescueQuest.id, rescueQuest);
+			}
+			Global.character_.rescue.m_dailyBonus = new _Treasure();
+			if (sCPlayerRefreshFiveClock_0x.rescuedailybonus != null)
+			{
+				Global.character_.rescue.m_dailyBonus.make((byte)sCPlayerRefreshFiveClock_0x.rescuedailybonus.idtreasure_type, sCPlayerRefreshFiveClock_0x.rescuedailybonus.param0, sCPlayerRefreshFiveClock_0x.rescuedailybonus.param1);
+			}
+		}
+		Global.character_.newyear_checkin_today = false;
+		Global.character_.today_ladder_challenge_times = 0;
+		if (Global.ladder_.status >= 2 && Global.ladder_.status < 6)
+		{
+			uint id = (TimeUtil.Now - Global.ladder_.start_time) / 86400 + 1;
+			if (Global.getTemplate("ladder_stamina_recover", id) is _ladder_stamina_recover ladder_stamina_recover)
+			{
+				short num = (short)(Global.ladder_.me.stamina + ladder_stamina_recover.stamina_recover);
+				if (num > 20)
+				{
+					num = 20;
+				}
+				Global.ladder_.me.stamina = num;
+			}
+		}
+		if (sCPlayerRefreshFiveClock_0x.newyearcheckinawards.Count > 0)
+		{
+			Global.character_.m_newYearCheckinAwards.Clear();
+			foreach (NewYearCheckinAward newyearcheckinaward in sCPlayerRefreshFiveClock_0x.newyearcheckinawards)
+			{
+				NewYearCheckinAwardTemplate newYearCheckinAwardTemplate = new NewYearCheckinAwardTemplate(newyearcheckinaward);
+				if (!Global.character_.m_newYearCheckinAwards.ContainsKey(newYearCheckinAwardTemplate.idrank))
+				{
+					Global.character_.m_newYearCheckinAwards[newYearCheckinAwardTemplate.idrank] = new List<_Treasure>();
+				}
+				Global.character_.m_newYearCheckinAwards[newYearCheckinAwardTemplate.idrank].Add(newYearCheckinAwardTemplate.treasure);
+			}
+		}
+		if (Global.character_.laketemple != null)
+		{
+			Global.character_.laketemple.refreshFiveClock();
+		}
+		if (Global.character_.shengjieLottery != null)
+		{
+			Global.character_.shengjieLottery.refreshFiveClock();
+		}
+		if (Global.character_.zhenyaota_challenge_times < 5)
+		{
+			Global.character_.zhenyaota_challenge_times = 5u;
+		}
+		Global.character_.zhenyaota_armys.Clear();
+		Global.character_.activity_quest_mgr.m_activityquests.Clear();
+		foreach (db_character_activity_quest activityquest in sCPlayerRefreshFiveClock_0x.activityquests)
+		{
+			ActivityQuest activityQuest = new ActivityQuest();
+			activityQuest.Set(activityquest);
+			Global.character_.activity_quest_mgr.m_activityquests.Add(activityQuest.idquest, activityQuest);
+		}
+		if (sCPlayerRefreshFiveClock_0x.resetChineseNewYearLottery)
+		{
+			Global.character_.clearChineseNewYearLotteryData();
+		}
+		Global.character_.chineseNewYearLottery.m_itemTemplates.Clear();
+		foreach (game.net.data.StoC.ChineseNewYearLotteryItem chineseNewYearLotteryItemTemplate3 in sCPlayerRefreshFiveClock_0x.chineseNewYearLotteryItemTemplates)
+		{
+			ChineseNewYearLotteryItemTemplate chineseNewYearLotteryItemTemplate = new ChineseNewYearLotteryItemTemplate(chineseNewYearLotteryItemTemplate3);
+			Global.character_.chineseNewYearLottery.m_itemTemplates.Add(chineseNewYearLotteryItemTemplate.id, chineseNewYearLotteryItemTemplate);
+		}
+		Global.character_.chineseNewYearLottery.m_spitemTemplates.Clear();
+		foreach (game.net.data.StoC.ChineseNewYearLotteryItem chineseNewYearLotterySpItemTemplate in sCPlayerRefreshFiveClock_0x.chineseNewYearLotterySpItemTemplates)
+		{
+			ChineseNewYearLotteryItemTemplate chineseNewYearLotteryItemTemplate2 = new ChineseNewYearLotteryItemTemplate(chineseNewYearLotterySpItemTemplate);
+			Global.character_.chineseNewYearLottery.m_spitemTemplates.Add(chineseNewYearLotteryItemTemplate2.id, chineseNewYearLotteryItemTemplate2);
+		}
+		Global.character_.chinese_new_year_lottery_times = 1;
+		Global.isRuneActivityOpen = sCPlayerRefreshFiveClock_0x.isRuneActivityOpen;
+		Global.isGiftbagOpen = sCPlayerRefreshFiveClock_0x.isGiftbagOpen;
+		Global.character_.hero_statue_today = 0;
+		Global.character_.hero_statue_today_new = 0;
+		Global.character_.tech_book_copy_free_times = 0;
+		Global.character_.exchangeshoptemp.Clear();
+		if (sCPlayerRefreshFiveClock_0x.exchangeshop != null)
+		{
+			foreach (game.net.data.StoC.ExchangeShop item4 in sCPlayerRefreshFiveClock_0x.exchangeshop)
+			{
+				ExchangeShopTemp exchangeShopTemp = new ExchangeShopTemp();
+				exchangeShopTemp.make(item4);
+				Global.character_.exchangeshoptemp.Add(exchangeShopTemp);
+			}
+		}
+		Global.character_.everyday_login_days = sCPlayerRefreshFiveClock_0x.everyday_login_days;
+		if (sCPlayerRefreshFiveClock_0x.everyday_login_refresh)
+		{
+			Global.character_.everydaylogins.Clear();
+		}
+		if (sCPlayerRefreshFiveClock_0x.costtimeswave != null)
+		{
+			Global.costtimeswave.make(sCPlayerRefreshFiveClock_0x.costtimeswave);
+		}
+		if (sCPlayerRefreshFiveClock_0x.christmasEventTemplate != null)
+		{
+			Global.christmaseventtemplate = new ChristmasEventTemplate(sCPlayerRefreshFiveClock_0x.christmasEventTemplate);
+		}
+		if (Global.character_.spiritascend != null)
+		{
+			Global.character_.spiritascend.battle_times = 0u;
+			Global.character_.spiritascend.gold_salary_times = 0;
+			Global.character_.spiritascend.salary_times = 0;
+			if (Global.character_.spiritascend.stamina < 10)
+			{
+				Global.character_.spiritascend.stamina = 0;
+			}
+			Global.character_.spiritascend.yesterday_campaign = Global.character_.spiritascend.idcampaign;
+			Global.character_.spiritascend.stamina_buy_times = 0u;
+			Global.character_.spiritascend.idtroop = 0u;
+			if (BaseAsset.lds.GetCurUI().LevelID == "SpiritAscend" && GameObject.Find("SpiritAscend/SpiritAscendUI") != null)
+			{
+				SpiritAscendCampaignUI component5 = GameObject.Find("Root/RootUI").GetComponent<SpiritAscendCampaignUI>();
+				component5._return();
+			}
+		}
+		Global.character_.puzzleshop.m_specialoffer.set(sCPlayerRefreshFiveClock_0x.puzzleSetting);
+	}
+
+	private static void sc_player_reconnect_confirm_0x40(MemoryStream stream, object arg)
+	{
+		CSPlayerReconnectConfirm_0x40 pkt = new CSPlayerReconnectConfirm_0x40();
+		m_client.Send(64, pkt, null);
+	}
+
+	public static void sc_building_monster_refresh_0x48c(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuildingMonsterRefresh_0x48C sCBuildingMonsterRefresh_0x48C = JSProtoBuf.Serializer.Deserialize<SCBuildingMonsterRefresh_0x48C>(stream);
+		Global.character_.next_monster_time = sCBuildingMonsterRefresh_0x48C.next_monster_time;
+		foreach (uint item in sCBuildingMonsterRefresh_0x48C.idmonster_clear)
+		{
+			Global.character_.building_monsters.Remove((byte)item);
+		}
+		foreach (game.net.data.StoC.BuildingMonster monster in sCBuildingMonsterRefresh_0x48C.monsters)
+		{
+			Database.BuildingMonster value = new Database.BuildingMonster(monster);
+			Global.character_.building_monsters[(byte)monster.monster.id] = value;
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "Capital")
+		{
+			GameObject.Find("Capital/CapitalUI").GetComponent<CapitalUI>().BuildingMonsterRefresh();
+		}
+	}
+
+	private static void sc_convoy_be_robbed(MemoryStream stream, object obj)
+	{
+		SCConvoyBeRobbed_0x371 sCConvoyBeRobbed_0x = JSProtoBuf.Serializer.Deserialize<SCConvoyBeRobbed_0x371>(stream);
+		if (stream == null)
+		{
+			return;
+		}
+		if (sCConvoyBeRobbed_0x.convoy != null)
+		{
+			Global.character_.convoy.Set(sCConvoyBeRobbed_0x.convoy);
+			GameObject gameObject = GameObject.Find("/Convoy/ConvoyUI");
+			if (gameObject != null && gameObject.GetComponent<ConvoyUI>() != null)
+			{
+				gameObject.GetComponent<ConvoyUI>().setMyself();
+			}
+		}
+		if (sCConvoyBeRobbed_0x.report != null)
+		{
+			Global.character_.convoy.convoyReports.Add(sCConvoyBeRobbed_0x.report);
+			FlowerMessUI.RobMsg rm = new FlowerMessUI.RobMsg(sCConvoyBeRobbed_0x.report, null);
+			BaseUI.GetRootUI().GetComponent<FlowerMessUI>().addRobMsg(rm);
+		}
+	}
+
+	private static void handleBrawlPhase(MemoryStream stream, object arg)
+	{
+		Logger.Log("phase");
+		if (stream != null)
+		{
+			SCBrawlPhase_0x145 sCBrawlPhase_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlPhase_0x145>(stream);
+			Global.character_.brawlinfo.phase_update(sCBrawlPhase_0x.phase);
+			if (sCBrawlPhase_0x.phase == 1)
+			{
+				BrawlInfo.nexttime = sCBrawlPhase_0x.nexttime;
+			}
+			if (sCBrawlPhase_0x.phase == 1 || sCBrawlPhase_0x.phase == 2)
+			{
+				BrawlInfo.nextround = sCBrawlPhase_0x.nextround;
+			}
+			if (sCBrawlPhase_0x.phase == 0)
+			{
+				BrawlUI.toClose = true;
+			}
+		}
+	}
+
+	private static void handleBrawlReport(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBrawlBattleReport_0x147 sCBrawlBattleReport_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlBattleReport_0x147>(stream);
+			Global.character_.brawlinfo.addReport(sCBrawlBattleReport_0x);
+			if (Global.character_.brawlinfo.round == 24)
+			{
+				Global.character_.brawlinfo.round++;
+			}
+			BrawlFightUI component = GameObject.Find("Brawl/BrawlUI").GetComponent<BrawlFightUI>();
+			if (component != null && component.enabled)
+			{
+				component.setReport(sCBrawlBattleReport_0x.pos);
+			}
+		}
+	}
+
+	private static void handleBrawlRecord(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBrawlRecord_0x162 sCBrawlRecord_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlRecord_0x162>(stream);
+		if (sCBrawlRecord_0x.dostreak)
+		{
+			if (sCBrawlRecord_0x.streak_count < 10)
+			{
+				BrawlUI.record_streak = string.Format(__BaseUI.get_string(559u), new object[2] { sCBrawlRecord_0x.streak, sCBrawlRecord_0x.streak_count });
+			}
+			else if (sCBrawlRecord_0x.streak_count < 15)
+			{
+				BrawlUI.record_streak = string.Format(__BaseUI.get_string(560u), new object[2] { sCBrawlRecord_0x.streak, sCBrawlRecord_0x.streak_count });
+			}
+			else if (sCBrawlRecord_0x.streak_count < 20)
+			{
+				BrawlUI.record_streak = string.Format(__BaseUI.get_string(561u), new object[2] { sCBrawlRecord_0x.streak, sCBrawlRecord_0x.streak_count });
+			}
+			else
+			{
+				BrawlUI.record_streak = string.Format(__BaseUI.get_string(562u), new object[2] { sCBrawlRecord_0x.streak, sCBrawlRecord_0x.streak_count });
+			}
+		}
+		if (sCBrawlRecord_0x.dosbreak)
+		{
+			if (sCBrawlRecord_0x.sbreak_count < 10)
+			{
+				BrawlUI.record_break = string.Format(__BaseUI.get_string(556u), new object[3] { sCBrawlRecord_0x.sbreak, sCBrawlRecord_0x.sbreak_loser, sCBrawlRecord_0x.sbreak_count });
+			}
+			else if (sCBrawlRecord_0x.sbreak_count < 15)
+			{
+				BrawlUI.record_break = string.Format(__BaseUI.get_string(557u), new object[3] { sCBrawlRecord_0x.sbreak, sCBrawlRecord_0x.sbreak_loser, sCBrawlRecord_0x.sbreak_count });
+			}
+			else
+			{
+				BrawlUI.record_break = string.Format(__BaseUI.get_string(558u), new object[3] { sCBrawlRecord_0x.sbreak, sCBrawlRecord_0x.sbreak_loser, sCBrawlRecord_0x.sbreak_count });
+			}
+		}
+	}
+
+	private static void handelSealDevilFullUpdate(MemoryStream stream, object arg)
+	{
+		SCSealDevilGroupDetail_0x16d sCSealDevilGroupDetail_0x16d = JSProtoBuf.Serializer.Deserialize<SCSealDevilGroupDetail_0x16d>(stream);
+		if (sCSealDevilGroupDetail_0x16d.detail.disband)
+		{
+			Global.character_.sd_detail.disband = true;
+			return;
+		}
+		Global.character_.sd_detail = new SealDevilGroupDetail();
+		Global.character_.sd_detail.unpack(sCSealDevilGroupDetail_0x16d.detail);
+		SealDevilUI component = GameObject.Find("/SealDevil/SealDevilUI").GetComponent<SealDevilUI>();
+		if (component != null)
+		{
+			component.PrepareGroup();
+		}
+	}
+
+	private static void handleSealDevilMember(MemoryStream stream, object arg)
+	{
+		SCSealDevilMember_0x170 sCSealDevilMember_0x = JSProtoBuf.Serializer.Deserialize<SCSealDevilMember_0x170>(stream);
+		if (sCSealDevilMember_0x.member != null)
+		{
+			Global.character_.sd_detail.unpack_member(sCSealDevilMember_0x.member);
+			SealDevilUI component = GameObject.Find("/SealDevil/SealDevilUI").GetComponent<SealDevilUI>();
+			if (component != null)
+			{
+				component.PrepareLine((int)sCSealDevilMember_0x.member.pos);
+			}
+		}
+	}
+
+	private static void handleSealDevilReport(MemoryStream stream, object arg)
+	{
+		SCSealDevilBattleReport_0x172 sCSealDevilBattleReport_0x = JSProtoBuf.Serializer.Deserialize<SCSealDevilBattleReport_0x172>(stream);
+		for (int i = 0; i < sCSealDevilBattleReport_0x.report.Count; i++)
+		{
+			Global.character_.sd_detail.reports.Add(sCSealDevilBattleReport_0x.report[i]);
+		}
+		SealDevilUI component = GameObject.Find("/SealDevil/SealDevilUI").GetComponent<SealDevilUI>();
+		if (component != null)
+		{
+			component.OnReceiveReport();
+		}
+	}
+
+	private static void handle_genqueststart(MemoryStream stream, object arg)
+	{
+		SCGeneralQuestStart_0x17e sCGeneralQuestStart_0x17e = JSProtoBuf.Serializer.Deserialize<SCGeneralQuestStart_0x17e>(stream);
+		if (!Global.character_.quest_gens.ContainsKey(sCGeneralQuestStart_0x17e.id))
+		{
+			Global.character_.quest_gens[sCGeneralQuestStart_0x17e.id] = false;
+			GeneralQuestUI.make_genquest_data(sCGeneralQuestStart_0x17e.id);
+		}
+	}
+
+	private static void handle_brawlcheckui(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBrawlCheckUI_0x183 sCBrawlCheckUI_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlCheckUI_0x183>(stream);
+		if (sCBrawlCheckUI_0x.state)
+		{
+			LoadScreen component = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+			if (component.GetCurUI() != null && component.GetCurUI().LevelID == "Brawl")
+			{
+				BrawlUI component2 = GameObject.Find("/Brawl/BrawlUI").GetComponent<BrawlUI>();
+				component2.cs_refresh();
+			}
+		}
+	}
+
+	private static void sc_achievement_change(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCAchievementChange_0x270 sCAchievementChange_0x = JSProtoBuf.Serializer.Deserialize<SCAchievementChange_0x270>(stream);
+		if (sCAchievementChange_0x == null || sCAchievementChange_0x.id == 0)
+		{
+			return;
+		}
+		switch (sCAchievementChange_0x.op)
+		{
+		case SCAchievementChange_0x270.Operation.Activate:
+			Global.character_.active_achievement = (ushort)sCAchievementChange_0x.id;
+			break;
+		case SCAchievementChange_0x270.Operation.Deactivate:
+			if (Global.character_.active_achievement == sCAchievementChange_0x.id)
+			{
+				Global.character_.active_achievement = 0;
+			}
+			break;
+		case SCAchievementChange_0x270.Operation.Lose:
+			if (Global.character_.active_achievement == sCAchievementChange_0x.id)
+			{
+				Global.character_.active_achievement = 0;
+			}
+			break;
+		}
+		InspectUI component = BaseUI.GetRootUI().GetComponent<InspectUI>();
+		if (component.IsVisible() && component.InspectingSelf)
+		{
+			component.ActiveAchievement = Global.character_.active_achievement;
+		}
+	}
+
+	private static void handle_sealdevil_msg(MemoryStream stream, object arg)
+	{
+		SealDevilUI component = GameObject.Find("/SealDevil/SealDevilUI").GetComponent<SealDevilUI>();
+		if (component != null && component.enabled)
+		{
+			component.handle_sealdevil_msg(stream, arg);
+		}
+	}
+
+	private static void sc_groupon_server_refresh(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCGroupOnServerRefresh_0x398 sCGroupOnServerRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCGroupOnServerRefresh_0x398>(stream);
+			ClubUI component = BaseUI.GetRootUI().GetComponent<ClubUI>();
+			if (component != null)
+			{
+				component.m_serverVipNum = sCGroupOnServerRefresh_0x.serverVipNum;
+				component.m_serverMingyueNum = sCGroupOnServerRefresh_0x.serverMingyueNum;
+				component.m_serverPurpleAmulet = sCGroupOnServerRefresh_0x.serverPurpleAmulet;
+				component.m_serverPurpleGem = sCGroupOnServerRefresh_0x.serverPurpleGem;
+			}
+		}
+	}
+
+	private static void sc_newbie_info_update(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCNewbieInfoUpdate_0x3BA sCNewbieInfoUpdate_0x3BA = JSProtoBuf.Serializer.Deserialize<SCNewbieInfoUpdate_0x3BA>(stream);
+		if (sCNewbieInfoUpdate_0x3BA.newbieenchantrecord != null)
+		{
+			NewbieEnchantRecord newbieEnchantRecord = new NewbieEnchantRecord();
+			newbieEnchantRecord.Set(sCNewbieInfoUpdate_0x3BA.newbieenchantrecord);
+			if (Global.character_.newbieenchantrecords.ContainsKey(sCNewbieInfoUpdate_0x3BA.newbieenchantrecord.day))
+			{
+				Global.character_.newbieenchantrecords[sCNewbieInfoUpdate_0x3BA.newbieenchantrecord.day] = newbieEnchantRecord;
+			}
+			else
+			{
+				Global.character_.newbieenchantrecords.Add(newbieEnchantRecord.day, newbieEnchantRecord);
+			}
+		}
+	}
+
+	private static void sc_gift_bag_open(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCGiftBagOpen_0x3BE sCGiftBagOpen_0x3BE = JSProtoBuf.Serializer.Deserialize<SCGiftBagOpen_0x3BE>(stream);
+		Global.character_.giftbags.Clear();
+		foreach (db_character_gift_bag giftbag in sCGiftBagOpen_0x3BE.giftbags)
+		{
+			GiftBag giftBag = new GiftBag();
+			giftBag.Set(giftbag);
+			Global.character_.giftbags.Add(giftBag.idgift_bag, giftBag);
+		}
+	}
+
+	private static void debug_newbie_state_change(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCDebugNewbieStateChange_0x3BF sCDebugNewbieStateChange_0x3BF = JSProtoBuf.Serializer.Deserialize<SCDebugNewbieStateChange_0x3BF>(stream);
+			Global.isNewNewbieActivity = sCDebugNewbieStateChange_0x3BF.isNewNewbieActivity;
+			Global.isTestServer = sCDebugNewbieStateChange_0x3BF.isTestServer;
+			string empty = string.Empty;
+			empty = ((!Global.isNewNewbieActivity) ? "服务器测试新服活动已关闭" : "服务器测试新服活动已开启");
+			__BaseUI.GetMessageBox().setMessage(string.Empty, empty, null);
+		}
+	}
+
+	private static void sc_cost_times_record(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCCostTimesRecord_0x3C3 sCCostTimesRecord_0x3C = JSProtoBuf.Serializer.Deserialize<SCCostTimesRecord_0x3C3>(stream);
+			CostTimesRecord costTimesRecord = new CostTimesRecord();
+			costTimesRecord.Set(sCCostTimesRecord_0x3C.costtimerecord);
+			if (Global.character_.costtimesrecords.ContainsKey(costTimesRecord.cost_times_type))
+			{
+				Global.character_.costtimesrecords[costTimesRecord.cost_times_type] = costTimesRecord;
+			}
+			else
+			{
+				Global.character_.costtimesrecords.Add(costTimesRecord.cost_times_type, costTimesRecord);
+			}
+		}
+	}
+
+	private static void sc_craft_world_bet_open(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCCraftWorldBetOpen_0x3D4 sCCraftWorldBetOpen_0x3D = JSProtoBuf.Serializer.Deserialize<SCCraftWorldBetOpen_0x3D4>(stream);
+		Global.serverCraftWorldBets.Clear();
+		foreach (CraftWorldBetTemplate servercraftworldbet in sCCraftWorldBetOpen_0x3D.servercraftworldbets)
+		{
+			ServerCraftWorldBet serverCraftWorldBet = new ServerCraftWorldBet(servercraftworldbet);
+			Global.serverCraftWorldBets.Add(serverCraftWorldBet.id, serverCraftWorldBet);
+		}
+		foreach (db_server_craftworld_bet_choice servercraftworldbetchoice in sCCraftWorldBetOpen_0x3D.servercraftworldbetchoices)
+		{
+			ServerCraftWorldBetChoice serverCraftWorldBetChoice = new ServerCraftWorldBetChoice();
+			serverCraftWorldBetChoice.Set(servercraftworldbetchoice);
+			if (Global.serverCraftWorldBets.ContainsKey(serverCraftWorldBetChoice.idcraftworld_bet))
+			{
+				Global.serverCraftWorldBets[serverCraftWorldBetChoice.idcraftworld_bet].choices.Add(serverCraftWorldBetChoice);
+			}
+		}
+		if (sCCraftWorldBetOpen_0x3D.need_clear)
+		{
+			Global.character_.craftworldbets.Clear();
+			Global.character_.craftworldbetrank = new CraftWorldBetRank();
+		}
+	}
+
+	private static void sc_craft_world_bet_win_info(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCCraftWorldBetWinInfo_0x3D6 sCCraftWorldBetWinInfo_0x3D = JSProtoBuf.Serializer.Deserialize<SCCraftWorldBetWinInfo_0x3D6>(stream);
+		Global.servercraftworldbetstatistics.Clear();
+		foreach (db_server_craftworld_bet_statistics statistic in sCCraftWorldBetWinInfo_0x3D.statistics)
+		{
+			ServerCraftWorldBetStatistics serverCraftWorldBetStatistics = new ServerCraftWorldBetStatistics();
+			serverCraftWorldBetStatistics.Set(statistic);
+			if (!Global.servercraftworldbetstatistics.ContainsKey(statistic.idcraftworld_bet))
+			{
+				List<ServerCraftWorldBetStatistics> value = new List<ServerCraftWorldBetStatistics>();
+				Global.servercraftworldbetstatistics.Add(statistic.idcraftworld_bet, value);
+			}
+			Global.servercraftworldbetstatistics[statistic.idcraftworld_bet].Add(serverCraftWorldBetStatistics);
+		}
+		foreach (ServerCraftWorldBet value2 in Global.serverCraftWorldBets.Values)
+		{
+			if (value2.id == 1 || value2.id == 8 || !Global.servercraftworldbetstatistics.ContainsKey(value2.id))
+			{
+				continue;
+			}
+			foreach (ServerCraftWorldBetChoice choice in value2.choices)
+			{
+				bool flag = false;
+				foreach (ServerCraftWorldBetStatistics item in Global.servercraftworldbetstatistics[value2.id])
+				{
+					if (item.choice == choice.choice)
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (!flag)
+				{
+					ServerCraftWorldBetStatistics serverCraftWorldBetStatistics2 = new ServerCraftWorldBetStatistics();
+					serverCraftWorldBetStatistics2.idcraftworld_bet = value2.id;
+					serverCraftWorldBetStatistics2.choice = choice.choice;
+					serverCraftWorldBetStatistics2.count = 0;
+					Global.servercraftworldbetstatistics[value2.id].Add(serverCraftWorldBetStatistics2);
+				}
+			}
+		}
+		Global.character_.Sortbigbet();
+		Global.craftworldtoprank.Clear();
+		foreach (db_craftworld_top_rank toprank in sCCraftWorldBetWinInfo_0x3D.topranks)
+		{
+			CraftWorldTopRank craftWorldTopRank = new CraftWorldTopRank();
+			craftWorldTopRank.Set(toprank);
+			Global.craftworldtoprank.Add(craftWorldTopRank);
+		}
+		Global.character_.craftworldbets.Clear();
+		foreach (db_character_craftworld_bet bet in sCCraftWorldBetWinInfo_0x3D.bets)
+		{
+			CraftWorldBet craftWorldBet = new CraftWorldBet();
+			craftWorldBet.Set(bet);
+			Global.character_.craftworldbets.Add(craftWorldBet.id_craftworld_bet, craftWorldBet);
+		}
+		if (sCCraftWorldBetWinInfo_0x3D.selfrank != null)
+		{
+			Global.character_.craftworldbetrank.Set(sCCraftWorldBetWinInfo_0x3D.selfrank);
+		}
+	}
+
+	private static void sc_hero_statue_clear(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCHeroStatueClear_0x3D9 sCHeroStatueClear_0x3D = JSProtoBuf.Serializer.Deserialize<SCHeroStatueClear_0x3D9>(stream);
+		if (sCHeroStatueClear_0x3D.result != 0)
+		{
+			return;
+		}
+		foreach (Building value in Global.character_.buildings.Values)
+		{
+			if (value.idbuilding != 137 && value.idbuilding != 138 && value.idbuilding != 139 && value.idbuilding != 140)
+			{
+				continue;
+			}
+			BuildingIsland island = Global.getIsland(value.idisland);
+			island.buildingBits = 0u;
+			UnityEngine.Object.Destroy(value.root);
+			Global.character_.remBuilding(value.id);
+			CapitalUI component = GameObject.Find("Capital/CapitalUI").GetComponent<CapitalUI>();
+			foreach (object value2 in Global.getTemplates("building_default").Values)
+			{
+				_building_default building_default = (_building_default)value2;
+				if (building_default.idbuilding == value.idbuilding)
+				{
+					component.loadFloor(building_default.idisland);
+				}
+			}
+			break;
+		}
+		foreach (BuildingDrawing value3 in Global.character_.buildingdrawings.Values)
+		{
+			if (value3.idbuilding == 137 || value3.idbuilding == 138 || value3.idbuilding == 139 || value3.idbuilding == 140)
+			{
+				Global.character_.buildingdrawings.Remove(value3.idbuilding);
+				break;
+			}
+		}
+		MailUI component2 = BaseUI.GetRootUI().GetComponent<MailUI>();
+		component2.delMailWithHeroStatue();
+	}
+
+	private static void sc_word_abused(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCWordAbused_0x50 sCWordAbused_0x = JSProtoBuf.Serializer.Deserialize<SCWordAbused_0x50>(stream);
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(898u), null);
+			MailUI component = BaseUI.GetRootUI().GetComponent<MailUI>();
+			if (component.sending_mail)
+			{
+				component.sending_mail = false;
+			}
+			GuildUI_3 component2 = BaseUI.GetRootUI().GetComponent<GuildUI_3>();
+			if (component2.IsVisible())
+			{
+				component2.Enable();
+			}
+		}
+	}
+
+	public void cs_formation_set_switch(uint setid)
+	{
+		DisableAll();
+		CSFormationSetSwitch_0x747 cSFormationSetSwitch_0x = new CSFormationSetSwitch_0x747();
+		cSFormationSetSwitch_0x.idset = setid;
+		Global.m_client.Send(1863, cSFormationSetSwitch_0x, sc_formation_set_switch, (int)setid);
+	}
+
+	public void sc_formation_set_switch(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		if (stream == null)
+		{
+			return;
+		}
+		SCFormationSetSwitch_0x747 sCFormationSetSwitch_0x = JSProtoBuf.Serializer.Deserialize<SCFormationSetSwitch_0x747>(stream);
+		if (sCFormationSetSwitch_0x.operate == SCFormationSetSwitch_0x747.Operate.OK)
+		{
+			MainUI mainUI = BaseUI.GetMainUI();
+			if (mainUI != null)
+			{
+				mainUI.luoshuShouqi();
+			}
+			int cur_formation_set = (int)arg;
+			Global.character_.cur_formation_set = cur_formation_set;
+			Global.character_.m_formationsets.Clear();
+			foreach (db_character_formation_set formation_set in sCFormationSetSwitch_0x.formation_sets)
+			{
+				FormationSet formationSet = new FormationSet();
+				formationSet.Set(formation_set);
+				Global.character_.m_formationsets.Add(formationSet.idset, formationSet);
+			}
+			foreach (db_character_formation_set_general formation_set_general in sCFormationSetSwitch_0x.formation_set_generals)
+			{
+				if (Global.character_.m_formationsets.ContainsKey(formation_set_general.idset))
+				{
+					FormationSetGeneral formationSetGeneral = new FormationSetGeneral();
+					formationSetGeneral.Set(formation_set_general);
+					Global.character_.m_formationsets[formation_set_general.idset].m_gens.Add(formationSetGeneral.idgeneral, formationSetGeneral);
+				}
+			}
+			foreach (db_character_formation_set_general_location formation_set_spot in sCFormationSetSwitch_0x.formation_set_spots)
+			{
+				if (Global.character_.m_formationsets.ContainsKey(formation_set_spot.idformation_set))
+				{
+					FormationSetGeneralLocation formationSetGeneralLocation = new FormationSetGeneralLocation();
+					formationSetGeneralLocation.Set(formation_set_spot);
+					Global.character_.m_formationsets[formation_set_spot.idformation_set].m_spots.Add(formationSetGeneralLocation);
+				}
+			}
+			if (sCFormationSetSwitch_0x.newset)
+			{
+				return;
+			}
+			Global.character_.set_cur_form((int)sCFormationSetSwitch_0x.cur_form);
+			FormGeneral formGeneral = Global.character_.form_generals_[0];
+			formGeneral.idarmy_template = (ushort)sCFormationSetSwitch_0x.mainchar_armyid;
+			formGeneral.armytemplate = Global.getArmyTemplate(sCFormationSetSwitch_0x.mainchar_armyid);
+			formGeneral.activeskill = (ushort)sCFormationSetSwitch_0x.mainchar_skillid;
+			formGeneral.activeskillinfo = Global.getSkillTemplate(formGeneral.activeskill);
+			formGeneral.armyspeclist.Clear();
+			if (formGeneral.armytemplate != null)
+			{
+				if (formGeneral.armytemplate.spec1 != 0)
+				{
+					formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec1) as _speciality);
+				}
+				if (formGeneral.armytemplate.spec2 != 0)
+				{
+					formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec2) as _speciality);
+				}
+				if (formGeneral.armytemplate.spec3 != 0)
+				{
+					formGeneral.armyspeclist.Add(Global.getTemplate("speciality", formGeneral.armytemplate.spec3) as _speciality);
+				}
+			}
+			Global.character_.form_generals_.Clear();
+			foreach (GeneralData general in sCFormationSetSwitch_0x.generals)
+			{
+				Global.character_.addGenerals(general);
+			}
+			Global.character_.GeneralsOutSquad.Clear();
+			foreach (SCFormationSetSwitch_0x747.SCGeneralOutSquad item in sCFormationSetSwitch_0x.generalsout)
+			{
+				Global.character_.addGeneralsOutSquad(item.id, item.level, (byte)item.upgrade_lv, item.upgrade_exp);
+			}
+			Global.character_.formations_.Clear();
+			foreach (FormMap formation in sCFormationSetSwitch_0x.formations)
+			{
+				Global.character_.addFormations(formation);
+			}
+			Global.character_.amulets.Clear();
+			foreach (db_character_amulet amulet in sCFormationSetSwitch_0x.amulets)
+			{
+				Global.character_.addAmulet(amulet);
+			}
+			Global.character_.equipments.Clear();
+			foreach (db_character_equipment equipment in sCFormationSetSwitch_0x.equipments)
+			{
+				Global.character_.addEquipment(equipment);
+			}
+			Global.character_.artifacts.Clear();
+			foreach (game.net.data.StoC.Artifact artifact in sCFormationSetSwitch_0x.artifacts)
+			{
+				Global.character_.addArtifacts(artifact);
+			}
+			if (sCFormationSetSwitch_0x.god_list_slots.Count > 0)
+			{
+				Global.character_.godlist.m_slots.Clear();
+				foreach (db_character_god_list_slot god_list_slot in sCFormationSetSwitch_0x.god_list_slots)
+				{
+					GodListSlot godListSlot = new GodListSlot();
+					godListSlot.Set(god_list_slot);
+					Global.character_.godlist.m_slots.Add(godListSlot.idslot, godListSlot);
+				}
+			}
+			AmuletForger instance = AmuletForger.Instance;
+			instance.reloadGem();
+			Global.character_.change_bvscore();
+			onFormationUpdate();
+			string text = string.Empty;
+			for (int i = 0; i < sCFormationSetSwitch_0x.setlost.Count; i++)
+			{
+				if (sCFormationSetSwitch_0x.setlost[i] != 0)
+				{
+					text += __BaseUI.load_str((uint)(9250 + i), sCFormationSetSwitch_0x.setlost[i]);
+				}
+			}
+			if (text != string.Empty)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, text, null);
+			}
+		}
+		else if (sCFormationSetSwitch_0x.operate == SCFormationSetSwitch_0x747.Operate.Error)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9256u), null);
+		}
+	}
+
+	public void onFormationUpdate()
+	{
+		if (BaseAsset.lds.GetCurUI().LevelID == "EarthPavilionFormation")
+		{
+			EarthPavilionFormationUI component = GameObject.Find("/EarthPavilionFormation/EarthPavilionFormationUI").GetComponent<EarthPavilionFormationUI>();
+			if (component != null)
+			{
+				component.PrepareGroup();
+				component.StartLoadingSub();
+			}
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "LakeTempleFormation")
+		{
+			LakeTempleFormationUI component2 = GameObject.Find("/LakeTempleFormation/LakeTempleFormationUI").GetComponent<LakeTempleFormationUI>();
+			if (component2 != null)
+			{
+				component2.FormationClose();
+			}
+		}
+		if (BaseAsset.lds.GetCurUI().LevelID == "ZhenYaoTaFormation")
+		{
+			ZhenYaoTaFormationUI component3 = GameObject.Find("/ZhenYaoTaFormation/ZhenYaoTaFormationUI").GetComponent<ZhenYaoTaFormationUI>();
+			if (component3 != null)
+			{
+				component3.FormationClose();
+			}
+		}
+	}
+}

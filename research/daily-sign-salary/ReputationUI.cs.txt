@@ -1,0 +1,577 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class ReputationUI : __BaseUI
+{
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle ui_sw_bar2 = new GUIStyle();
+
+	private GUIStyle ui_sw_bar1 = new GUIStyle();
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_sw_zi3 = new GUIStyle();
+
+	private GUIStyle ui_sw_cion = new GUIStyle();
+
+	private GUIStyle ui_sw_cion2 = new GUIStyle();
+
+	private GUIStyle ui_xuyaoshegnwang = new GUIStyle();
+
+	private GUIStyle ui_keshengji = new GUIStyle();
+
+	private _ButtonStyle button_shengji = new _ButtonStyle();
+
+	private GUIStyle ui_sw_zi1 = new GUIStyle();
+
+	private GUIStyle ui_sw_zi2 = new GUIStyle();
+
+	private GUIStyle ui_sw_tiao = new GUIStyle();
+
+	private Texture2D ui_sw_tiao2;
+
+	private GUIStyle LargeStyle = new GUIStyle();
+
+	private Dictionary<uint, Texture2D> dictTex = new Dictionary<uint, Texture2D>();
+
+	private Texture2D[] icon_zhenxing = new Texture2D[8];
+
+	private GUIStyle ui_sw_zi5 = new GUIStyle();
+
+	private GUIStyle ui_sw_zi6 = new GUIStyle();
+
+	private GUIStyle ui_icon = new GUIStyle();
+
+	private GUIStyle ui_sw_zi4 = new GUIStyle();
+
+	private _ButtonStyle button_lingqu = new _ButtonStyle();
+
+	private GUIStyle ui_sw_zi7 = new GUIStyle();
+
+	private Vector2 scrollPos = new Vector2(0f, 0f);
+
+	private int scroll_index;
+
+	private GUIStyle ui_icon_di = new GUIStyle();
+
+	private GUIStyle ui_shengwangdengji = new GUIStyle();
+
+	private GUIStyle ui_shengwang = new GUIStyle();
+
+	private Texture2D ui_sw_di1;
+
+	private Texture2D ui_sw_di2;
+
+	private GUIStyle ui_sw_zi8 = new GUIStyle();
+
+	private GUIStyle ui_ling = new GUIStyle();
+
+	private GUIStyle ui_sw_zi10 = new GUIStyle();
+
+	private GUIStyle ui_sw_zi9 = new GUIStyle();
+
+	private GUIStyle ui_sw_zi11 = new GUIStyle();
+
+	private GUIStyle ui_sw_lights = new GUIStyle();
+
+	private Rect scrollViewrect = new Rect(0f, 0f, 0f, 0f);
+
+	private bool scrollStart;
+
+	private Vector2 scrollPosition = Vector2.zero;
+
+	private GUIStyle ui_sw_zi12 = new GUIStyle();
+
+	public Dictionary<int, _Treasure> spBonuses = new Dictionary<int, _Treasure>();
+
+	private Rect btnRc = default(Rect);
+
+	private bool sended;
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_reputation");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+		dictTex.Clear();
+	}
+
+	public override void Start()
+	{
+		scroll_index = ScrollControl.RegisterInfo();
+		base.Start();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_reputation");
+		ui_sw_bar2.normal.background = asset.Load("ui_sw_bar2") as Texture2D;
+		ui_sw_bar1.normal.background = asset.Load("ui_sw_bar1") as Texture2D;
+		titleStyle.normal.background = asset.Load("ui_biaoti") as Texture2D;
+		ui_sw_zi3.normal.background = asset.Load("ui_sw_zi3") as Texture2D;
+		ui_sw_cion.normal.background = asset.Load("ui_sw_cion") as Texture2D;
+		ui_sw_cion2.normal.background = asset.Load("ui_sw_cion2") as Texture2D;
+		ui_xuyaoshegnwang.normal.background = asset.Load("ui_xuyaoshegnwang") as Texture2D;
+		ui_keshengji.normal.background = asset.Load("ui_keshengji") as Texture2D;
+		button_shengji.make(asset, "button_shengji");
+		ui_sw_zi1.normal.background = asset.Load("ui_sw_zi1") as Texture2D;
+		ui_sw_tiao.normal.background = asset.Load("ui_sw_tiao") as Texture2D;
+		ui_sw_tiao2 = asset.Load("ui_sw_tiao2") as Texture2D;
+		LargeStyle.font = __BaseUI.ArialFont;
+		LargeStyle.alignment = TextAnchor.MiddleCenter;
+		LargeStyle.fontStyle = FontStyle.Italic;
+		LargeStyle.fontSize = 30;
+		ui_sw_zi5.normal.background = asset.Load("ui_sw_zi5") as Texture2D;
+		for (int i = 0; i < icon_zhenxing.Length; i++)
+		{
+			icon_zhenxing[i] = asset.Load("icon_zhenxing" + (i + 1)) as Texture2D;
+		}
+		ui_sw_zi6.normal.background = asset.Load("ui_sw_zi6") as Texture2D;
+		ui_icon.normal.background = asset.Load("ui_icon") as Texture2D;
+		ui_sw_zi4.normal.background = asset.Load("ui_sw_zi4") as Texture2D;
+		button_lingqu.make(asset, "button_lingqu");
+		ui_sw_zi7.normal.background = asset.Load("ui_sw_zi7") as Texture2D;
+		ui_icon_di.normal.background = asset.Load("ui_icon_di") as Texture2D;
+		ui_shengwangdengji.normal.background = asset.Load("ui_shengwangdengji") as Texture2D;
+		ui_shengwang.normal.background = asset.Load("ui_shengwang") as Texture2D;
+		ui_sw_di1 = asset.Load("ui_sw_di1") as Texture2D;
+		ui_sw_di2 = asset.Load("ui_sw_di2") as Texture2D;
+		ui_sw_zi2.normal.background = asset.Load("ui_sw_zi2") as Texture2D;
+		ui_sw_zi8.normal.background = asset.Load("ui_sw_zi8") as Texture2D;
+		ui_ling.normal.background = asset.Load("ui_ling") as Texture2D;
+		ui_sw_zi10.normal.background = asset.Load("ui_sw_zi10") as Texture2D;
+		ui_sw_zi9.normal.background = asset.Load("ui_sw_zi9") as Texture2D;
+		ui_sw_zi11.normal.background = asset.Load("ui_sw_zi11") as Texture2D;
+		ui_sw_lights.normal.background = asset.Load("ui_sw_lights") as Texture2D;
+		ui_sw_zi12.normal.background = asset.Load("ui_sw_zi12") as Texture2D;
+		makeSpBonus();
+		Visible();
+		EnableAll();
+		setCurRep();
+	}
+
+	private void makeSpBonus()
+	{
+		Hashtable templates = Global.getTemplates("reputation");
+		foreach (DictionaryEntry item in templates)
+		{
+			_reputation reputation = (_reputation)item.Value;
+			if (reputation != null && reputation.trigger == 8)
+			{
+				spBonuses[reputation.level] = new _Treasure();
+				spBonuses[reputation.level].make((byte)reputation.sp_bonus_id, (int)reputation.sp_bonus_param0, (int)reputation.sp_bonus_param1);
+			}
+		}
+	}
+
+	private void setCurRep()
+	{
+		if (Global.character_.reputation_level > 0)
+		{
+			if (Global.getTemplate("reputation", (uint)(Global.character_.reputation_level + 1)) is _reputation)
+			{
+				ScrollControl.infos[scroll_index].SetStartPos(new Vector2(0f, (Global.character_.reputation_level + 1) * 92));
+			}
+			else
+			{
+				ScrollControl.infos[scroll_index].SetStartPos(new Vector2(0f, Global.character_.reputation_level * 92));
+			}
+		}
+		else
+		{
+			ScrollControl.infos[scroll_index].SetStartPos(new Vector2(0f, 92f));
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(707f, 472f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, titleStyle);
+			__BaseUI.Label(_CalcRect(177, 12, 161, 36, 369, 12), string.Empty, __BaseUI._box15Style);
+			__BaseUI.Label(__BaseUI._rect(210f, 23f, 74f, 15f), string.Empty, ui_shengwangdengji);
+			__BaseUI.Label(__BaseUI._rect(291f, 22f, 27f, 15f), Global.character_.reputation_level.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(341f, 23f, 38f, 14f), string.Empty, ui_shengwang);
+			GUI.DrawTexture(__BaseUI._rect(389f, 18f, 23f, 23f), __BaseUI._iconReputation);
+			__BaseUI.Label(__BaseUI._rect(436f, 22f, 71f, 15f), Global.character_.reputation.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+			DrawCurRep();
+			__BaseUI.Label(_CalcRect(47, 147, 92, 92, 565, 363), string.Empty, __BaseUI._boxnew11Style);
+			Hashtable templates = Global.getTemplates("reputation");
+			int num2 = templates.Count * 92;
+			GUI.skin.customStyles = __BaseUI._vertScroll1;
+			scrollPos = ScrollControl.infos[scroll_index].scrollpos;
+			scrollPos = GUIHacks.BeginScrollView(__BaseUI._rect(65f, 165f, 576f, 275f), scrollPos, __BaseUI._rect(0f, 0f, 576f, num2), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 92, 0, scroll_index);
+			ScrollControl.infos[scroll_index].scrollpos = scrollPos;
+			ScrollControl.SetLimit(scroll_index, 0, num2, 1000);
+			for (int i = 0; i < templates.Count; i++)
+			{
+				int num3 = (int)scrollPos.y / 92 + 1;
+				if (i >= num3 - 3 && i <= num3 + 6)
+				{
+					GUI.BeginGroup(__BaseUI._rect(0f, i * 92, 553f, 92f));
+					DrawReputation((ushort)i);
+					GUI.EndGroup();
+				}
+			}
+			GUIHacks.EndScrollView();
+		}
+		if (EndGUI())
+		{
+			DelegateFunc.MainUI_SetSubUI(null);
+		}
+	}
+
+	public Rect getBtnRc()
+	{
+		return btnRc;
+	}
+
+	private void DrawCurRep()
+	{
+		__BaseUI.Label(__BaseUI._rect(50f, 27f, 605f, 121f), string.Empty, ui_sw_bar1);
+		_reputation reputation = Global.getTemplate("reputation", Global.character_.reputation_level) as _reputation;
+		_reputation reputation2 = Global.getTemplate("reputation", (uint)(Global.character_.reputation_level + 1)) as _reputation;
+		if (reputation == null)
+		{
+			return;
+		}
+		__BaseUI.Label(__BaseUI._rect(360f, 70f, 40f, 21f), GetCurRepLevel().ToString(), __BaseUI._numCenter, __BaseUI._clrWhite, 20);
+		__BaseUI.Label(__BaseUI._rect(456f, 77f, 54f, 16f), string.Empty, ui_sw_zi3);
+		__BaseUI.Label(__BaseUI._rect(538f, 71f, 100f, 20f), reputation.money.ToString(), __BaseUI._numLeft, __BaseUI._clrYellowDark, 18);
+		__BaseUI.Label(__BaseUI._rect(514f, 71f, 23f, 23f), string.Empty, __BaseUI._moneyIcon2);
+		if (Global.character_.gotSalary() || Global.character_.reputation_level == 0)
+		{
+			if (reputation2 != null && reputation2.reputation <= Global.character_.reputation)
+			{
+				btnRc = GUITOScreen(__BaseUI._rect(509f, 91f, 110f, 40f));
+				if (button_shengji.Button(IsEnable(), __BaseUI._rect(509f, 91f, 110f, 40f), string.Empty))
+				{
+					cs_reputation_up();
+				}
+			}
+		}
+		else if (button_lingqu.Button(IsEnable(), __BaseUI._rect(509f, 91f, 110f, 40f), string.Empty))
+		{
+			cs_reputation_salary();
+		}
+		if (reputation2 != null)
+		{
+			float num = ((float)Global.character_.reputation - (float)reputation.reputation) / ((float)reputation2.reputation - (float)reputation.reputation);
+			if (num < 0f)
+			{
+				num = 0f;
+			}
+			if (num > 1f)
+			{
+				num = 1f;
+			}
+			int num2 = (int)(243f * num);
+			if (ui_sw_tiao2 != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(219f, 108f, num2, 12f), ui_sw_tiao2);
+			}
+			__BaseUI.Label(__BaseUI._rect(202 + num2, 99f, 35f, 30f), string.Empty, ui_sw_lights);
+			int num3 = 0;
+			if (Global.character_.reputation > reputation.reputation)
+			{
+				num3 = (int)(Global.character_.reputation - reputation.reputation);
+			}
+			string str = num3 + "/" + (reputation2.reputation - reputation.reputation);
+			if (__BaseUI._rect(219f, 108f, 243f, 12f).Contains(Event.current.mousePosition))
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(219f, 108f, 243f, 12f), str, __BaseUI._numCenter, __BaseUI._clrWhite);
+			}
+		}
+	}
+
+	private void DrawReputation(ushort replevel)
+	{
+		_reputation reputation = Global.getTemplate("reputation", replevel) as _reputation;
+		if (reputation != null)
+		{
+			Color color = new Color(1f, 1f, 0.41568628f, 1f);
+			Color clr = new Color(0.2f, 0.6f, 0.6f, 1f);
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 553f, 92f), string.Empty, ui_sw_bar2);
+			__BaseUI.Label(__BaseUI._rect(460f, 8f, 78f, 59f), string.Empty, ui_sw_cion);
+			__BaseUI.Label(__BaseUI._rect(439f, 15f, 38f, 16f), string.Empty, ui_sw_zi10);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(25f, 45f, 41f, 30f), reputation.level.ToString(), 2, __BaseUI._clrBlack, LargeStyle, clr);
+			if (GetCurRepLevel() >= replevel)
+			{
+				__BaseUI.Label(__BaseUI._rect(159f, 33f, 87f, 28f), string.Empty, ui_sw_zi8);
+			}
+			else
+			{
+				__BaseUI.Label(__BaseUI._rect(159f, 19f, 87f, 28f), string.Empty, ui_sw_zi9);
+				__BaseUI.Label(__BaseUI._rect(141f, 53f, 38f, 17f), string.Empty, ui_sw_zi11);
+				__BaseUI.Label(__BaseUI._rect(185f, 52f, 83f, 16f), __BaseUI.load_str(20434u, reputation.reputation), __BaseUI._numRight, new Color(1f, float.PositiveInfinity, 1f));
+			}
+			__BaseUI.Label(__BaseUI._rect(461f, 56f, 80f, 21f), reputation.money.ToString(), __BaseUI._numLeft, new Color(0.2f, 0.6f, 0.6f, 1f));
+		}
+		GUI.DrawTexture(__BaseUI._rect(437f, 55f, 23f, 23f), __BaseUI._iconMoney);
+		switch (reputation.trigger)
+		{
+		case 1:
+		{
+			int result2 = 0;
+			__BaseUI.Label(__BaseUI._rect(327f, 8f, 64f, 64f), string.Empty, ui_icon_di);
+			if (!int.TryParse(reputation.param, out result2) || !(Global.getTemplate("artifact_template", (uint)result2) is _artifact_template artifact_template))
+			{
+				break;
+			}
+			if (dictTex.ContainsKey(artifact_template.idartifact_template))
+			{
+				GUI.DrawTexture(__BaseUI._rect(334f, 15f, 50f, 50f), dictTex[artifact_template.idartifact_template]);
+			}
+			else
+			{
+				_artifact_forge_info artifact_forge_info = Database.Artifact.get_forge_info(artifact_template.idartifact_template, 0);
+				if (artifact_forge_info != null)
+				{
+					AddAssetSub("item" + artifact_forge_info.icon);
+					StartLoadingSub();
+				}
+			}
+			GUI.Label(__BaseUI._rect(334f, 15f, 50f, 50f), new GUIContent(string.Empty, "atemp" + artifact_template.idartifact_template), __BaseUI.normalStyle);
+			__BaseUI.Label(__BaseUI._rect(322f, 64f, 73f, 17f), string.Empty, ui_sw_zi5);
+			break;
+		}
+		case 6:
+		{
+			__BaseUI.Label(__BaseUI._rect(327f, 8f, 64f, 64f), string.Empty, ui_icon_di);
+			string[] array = reputation.param.Split(':');
+			byte result = 0;
+			if (byte.TryParse(array[0], out result) && Global.getTemplate("formation_template", result) is _formation_template formation_template)
+			{
+				GUI.DrawTexture(__BaseUI._rect(334f, 15f, 50f, 50f), icon_zhenxing[formation_template.icon - 1]);
+				GUIContent content = new GUIContent(string.Empty, "formation" + formation_template.name + "\n" + formation_template.desc);
+				GUI.Label(__BaseUI._rect(334f, 15f, 50f, 50f), content, __BaseUI.normalStyle);
+			}
+			__BaseUI.Label(__BaseUI._rect(321f, 64f, 73f, 17f), string.Empty, ui_sw_zi6);
+			break;
+		}
+		case 7:
+			__BaseUI.Label(__BaseUI._rect(327f, 8f, 64f, 64f), string.Empty, ui_icon_di);
+			__BaseUI.Label(__BaseUI._rect(334f, 15f, 50f, 50f), string.Empty, ui_icon);
+			__BaseUI.Label(__BaseUI._rect(314f, 64f, 86f, 17f), string.Empty, ui_sw_zi4);
+			break;
+		case 8:
+			__BaseUI.Label(__BaseUI._rect(327f, 8f, 64f, 64f), string.Empty, ui_icon_di);
+			if (spBonuses.ContainsKey(reputation.level))
+			{
+				_Treasure treasure = spBonuses[reputation.level];
+				treasure.make((byte)reputation.sp_bonus_id, (int)reputation.sp_bonus_param0, (int)reputation.sp_bonus_param1);
+				if (treasure.texIcon != null)
+				{
+					__BaseUI.Box(__BaseUI._rect(334f, 15f, 50f, 50f), new GUIContent(string.Empty, string.Empty + treasure), treasure.texIcon);
+				}
+				else
+				{
+					AddAssetSub(treasure.getIconName());
+					StartLoadingSub();
+				}
+			}
+			__BaseUI.Label(__BaseUI._rect(314f, 64f, 86f, 17f), string.Empty, ui_sw_zi12);
+			break;
+		}
+		if (GetCurRepLevel() > replevel)
+		{
+			__BaseUI.Label(__BaseUI._rect(159f, 33f, 87f, 28f), string.Empty, ui_sw_zi8);
+		}
+		if (GetCurRepLevel() >= replevel && reputation.trigger != 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(322f, 15f, 71f, 49f), string.Empty, ui_ling);
+		}
+	}
+
+	private ushort GetCurRepLevel()
+	{
+		return Global.character_.reputation_level;
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("atemp"))
+		{
+			ushort id = ushort.Parse(tip.Replace("atemp", string.Empty));
+			tooltipUI.ShowTooltipArtifacTemplate(string.Empty, id);
+		}
+		else if (tip.Contains("formation"))
+		{
+			string text = tip.Replace("formation", string.Empty);
+			tooltipUI.ShowTooltipCommon2(text, tt_owner, 340);
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (AssetName.Contains("item"))
+		{
+			Hashtable templates = Global.getTemplates("artifact_template");
+			foreach (object value in templates.Values)
+			{
+				_artifact_template artifact_template = (_artifact_template)value;
+				_artifact_forge_info artifact_forge_info = Database.Artifact.get_forge_info(artifact_template.idartifact_template, 0);
+				if (artifact_forge_info != null && AssetName == "item" + artifact_forge_info.icon)
+				{
+					dictTex[artifact_template.idartifact_template] = BaseAsset.LoadTexture(AssetName);
+					return;
+				}
+			}
+		}
+		foreach (_Treasure value2 in spBonuses.Values)
+		{
+			if (value2 != null && AssetName == value2.getIconName())
+			{
+				value2.setTexIcon(BaseAsset.LoadTexture(AssetName));
+			}
+		}
+	}
+
+	public void cs_reputation_up()
+	{
+		if (!sended)
+		{
+			CSReputationUp_0x332 pkt = new CSReputationUp_0x332();
+			Global.m_client.Send(818, pkt, sc_reputation_up);
+			sended = true;
+		}
+	}
+
+	public void sc_reputation_up(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCReputationUp_0x332 sCReputationUp_0x = JSProtoBuf.Serializer.Deserialize<SCReputationUp_0x332>(stream);
+		switch (sCReputationUp_0x.operate)
+		{
+		case SCReputationUp_0x332.Operate.OK:
+			setCurRep();
+			Global.character_.reputation_level++;
+			if (!(Global.getTemplate("reputation", Global.character_.reputation_level) is _reputation reputation))
+			{
+				break;
+			}
+			switch (reputation.trigger)
+			{
+			case 1:
+			{
+				int result4 = 0;
+				if (int.TryParse(reputation.param, out result4) && Global.getTemplate("artifact_template", (uint)result4) is _artifact_template)
+				{
+					Database.Artifact artifact = new Database.Artifact((ushort)result4);
+					if (!Global.character_.artifacts.ContainsKey(artifact.idartifact_template))
+					{
+						Global.character_.artifacts.Add(artifact.idartifact_template, artifact);
+					}
+					SpecialGetUI component3 = GetComponent<SpecialGetUI>();
+					component3.ShowSPGet_Artifact(artifact.idartifact_template);
+				}
+				break;
+			}
+			case 6:
+			{
+				string param = reputation.param;
+				string s = param.Substring(0, 1);
+				string s2 = param.Substring(2, 1);
+				int result = 0;
+				int result2 = 0;
+				if (int.TryParse(s, out result) && int.TryParse(s2, out result2))
+				{
+					SpecialGetUI component = GetComponent<SpecialGetUI>();
+					component.ShowSPGet_Form((uint)result);
+				}
+				break;
+			}
+			case 7:
+			{
+				string param2 = reputation.param;
+				int result3 = 0;
+				if (int.TryParse(param2, out result3))
+				{
+					SpecialGetUI component2 = GetComponent<SpecialGetUI>();
+					component2.ShowSPGet_Spot((uint)result3);
+				}
+				break;
+			}
+			case 8:
+				if (sCReputationUp_0x.bonus != null)
+				{
+					List<_Treasure> list = new List<_Treasure>();
+					_Treasure treasure = new _Treasure();
+					treasure.make(sCReputationUp_0x.bonus);
+					list.Add(treasure);
+					BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+					battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+					battleResultUI.MyLoading();
+				}
+				break;
+			}
+			ScrollControl.doscroll(scroll_index, 92);
+			break;
+		}
+	}
+
+	public void cs_reputation_salary()
+	{
+		if (!sended)
+		{
+			CSReputationSalary_0x333 pkt = new CSReputationSalary_0x333();
+			Global.m_client.Send(819, pkt, sc_reputation_salary);
+			sended = true;
+		}
+	}
+
+	public void sc_reputation_salary(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream != null)
+		{
+			SCReputationSalary_0x333 sCReputationSalary_0x = JSProtoBuf.Serializer.Deserialize<SCReputationSalary_0x333>(stream);
+			switch (sCReputationSalary_0x.operate)
+			{
+			case SCReputationSalary_0x333.Operate.OK:
+			{
+				long money = sCReputationSalary_0x.money64;
+				List<_Treasure> list = new List<_Treasure>();
+				_Treasure treasure = new _Treasure();
+				treasure.make(4, 0, (int)(money - Global.character_.money));
+				list.Add(treasure);
+				__BaseUI.GetBattleResultUI().Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+				__BaseUI.GetBattleResultUI().MyLoading();
+				Global.character_.patrol_last_time = (int)sCReputationSalary_0x.time;
+				break;
+			}
+			}
+		}
+	}
+}

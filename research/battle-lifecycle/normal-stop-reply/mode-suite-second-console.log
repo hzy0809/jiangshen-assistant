@@ -1,0 +1,2 @@
+native\unity_bridge\managed\DailyPointRaceModel.cs(394,85): error CS0103: 当前上下文中不存在名称“requestRoot”
+native\unity_bridge\managed\DailyPointRaceModel.cs(395,81): error CS0103: 当前上下文中不存在名称“requestSourceRoot”

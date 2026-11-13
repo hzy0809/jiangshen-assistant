@@ -1,0 +1,32 @@
+[
+  {
+    "path": "native/unity_bridge/managed/DailyArenaBattleModel.cs",
+    "sha256": "80aef1468ad04ac1aa744f844f3195a69521e4a4af9ef8403367ee03adb1a489",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\managed\\DailyArenaBattleModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyPointRaceModel.cs",
+    "sha256": "9dd4df2ad36c4bbf7516d182bdc45666c55fdbf18b09f1e6724dc9717ddf9185",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyMonsterModel.cs",
+    "sha256": "9deab8d4bb862b76e4c20683e7632079fbdd43db6d59822ab1b3abf429ec69bc",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\managed\\DailyMonsterModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/NormalStopModeReplyTests.cs",
+    "sha256": "4d2bc7ba5f4b758817eec2733af36afa295d715cf761423a71517f300dacc74b",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\tests\\NormalStopModeReplyTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/NormalStopDemonReplyTests.cs",
+    "sha256": "f13841bf23adc6a39dd139bbebf1c803b2f578388fafcdd622bb544fa48e05d9",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\tests\\NormalStopDemonReplyTests.cs"
+  },
+  {
+    "path": "native/unity_bridge/tests/run-normal-stop-reply.ps1",
+    "sha256": "819850c652134fedc856d9b5cabc357d0695ae67243caffee6ce136c2530c2bc",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\idempotent-stop\\frozen-source\\native\\unity_bridge\\tests\\run-normal-stop-reply.ps1"
+  }
+]

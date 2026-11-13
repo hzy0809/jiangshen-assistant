@@ -1,0 +1,236 @@
+{
+  "source_sha256": "465514a28097bb8e7dd8832ed50ec69f003196a3e59dc2e020ee2b2d130a044b",
+  "scope": "cached client configuration; current server and account ownership unverified",
+  "duration_seconds": [
+    1200,
+    3600,
+    43200
+  ],
+  "duplicated_building_ids": [],
+  "duplicated_product_ids": [],
+  "money_buildings": [
+    {
+      "idbuilding": 5,
+      "name": "药材铺",
+      "type": 5,
+      "automatic": 1,
+      "recipes": [
+        {
+          "id": 1,
+          "time": 1200,
+          "money_output": 10000,
+          "mana_consume": 80,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 2,
+          "time": 3600,
+          "money_output": 20000,
+          "mana_consume": 160,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 3,
+          "time": 43200,
+          "money_output": 200000,
+          "mana_consume": 1600,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        }
+      ]
+    },
+    {
+      "idbuilding": 10,
+      "name": "酿酒窖",
+      "type": 5,
+      "automatic": 1,
+      "recipes": [
+        {
+          "id": 12,
+          "time": 1200,
+          "money_output": 10000,
+          "mana_consume": 80,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 13,
+          "time": 3600,
+          "money_output": 20000,
+          "mana_consume": 160,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 14,
+          "time": 43200,
+          "money_output": 200000,
+          "mana_consume": 1600,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        }
+      ]
+    },
+    {
+      "idbuilding": 16,
+      "name": "美食街",
+      "type": 5,
+      "automatic": 1,
+      "recipes": [
+        {
+          "id": 24,
+          "time": 1200,
+          "money_output": 30000,
+          "mana_consume": 240,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 25,
+          "time": 3600,
+          "money_output": 60000,
+          "mana_consume": 480,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 26,
+          "time": 43200,
+          "money_output": 600000,
+          "mana_consume": 4800,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        }
+      ]
+    },
+    {
+      "idbuilding": 20,
+      "name": "豪华商铺",
+      "type": 5,
+      "automatic": 1,
+      "recipes": [
+        {
+          "id": 32,
+          "time": 1200,
+          "money_output": 45000,
+          "mana_consume": 240,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 33,
+          "time": 3600,
+          "money_output": 90000,
+          "mana_consume": 480,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        },
+        {
+          "id": 34,
+          "time": 43200,
+          "money_output": 900000,
+          "mana_consume": 4800,
+          "gold_consume": 0,
+          "wood_consume": 0,
+          "mine_consume": 0
+        }
+      ]
+    }
+  ],
+  "tree_buildings": [
+    {
+      "idbuilding": 6,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        4
+      ]
+    },
+    {
+      "idbuilding": 8,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        8
+      ]
+    },
+    {
+      "idbuilding": 11,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        15
+      ]
+    },
+    {
+      "idbuilding": 13,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        19
+      ]
+    },
+    {
+      "idbuilding": 15,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        23
+      ]
+    },
+    {
+      "idbuilding": 17,
+      "name": "灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        27
+      ]
+    },
+    {
+      "idbuilding": 19,
+      "name": "豪华灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        31
+      ]
+    },
+    {
+      "idbuilding": 24,
+      "name": "豪华灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        44
+      ]
+    },
+    {
+      "idbuilding": 25,
+      "name": "豪华灵气树",
+      "type": 4,
+      "automatic": 3,
+      "recipe_ids": [
+        45
+      ]
+    }
+  ]
+}

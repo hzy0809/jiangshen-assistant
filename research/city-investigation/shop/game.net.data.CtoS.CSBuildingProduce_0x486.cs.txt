@@ -1,0 +1,61 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSBuildingProduce_0x486")]
+public class CSBuildingProduce_0x486 : IExtensible
+{
+	private uint _id;
+
+	private uint _idproduct;
+
+	private bool _is_immediate;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "idproduct", DataFormat = DataFormat.TwosComplement)]
+	public uint idproduct
+	{
+		get
+		{
+			return _idproduct;
+		}
+		set
+		{
+			_idproduct = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "is_immediate", DataFormat = DataFormat.Default)]
+	public bool is_immediate
+	{
+		get
+		{
+			return _is_immediate;
+		}
+		set
+		{
+			_is_immediate = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

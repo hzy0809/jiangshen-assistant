@@ -1,0 +1,106 @@
+{
+  "utc": "2026-10-30T17:50:50.1744024Z",
+  "mode": "PEReader metadata only; game assemblies not loaded or executed",
+  "passed": 70,
+  "failed": 0,
+  "checks": [
+    "PASS MainUI|m_subui|static __BaseUI declared=Assembly-CSharp:MainUI actual=static __BaseUI",
+    "PASS Global|character_|static Database.Character declared=Assembly-CSharp-firstpass:Global actual=static Database.Character",
+    "PASS Global|extern_enabled|static System.Boolean declared=Assembly-CSharp-firstpass:Global actual=static System.Boolean",
+    "PASS BaseAsset|lds|static LoadScreen declared=Assembly-CSharp-firstpass:BaseAsset actual=static LoadScreen",
+    "PASS BaseAsset|rmg|instance RootMessenger declared=Assembly-CSharp-firstpass:BaseAsset actual=instance RootMessenger",
+    "PASS BaseAsset|m_bInit|instance System.Boolean declared=Assembly-CSharp-firstpass:BaseAsset actual=instance System.Boolean",
+    "PASS __BaseUI|enable|instance System.Boolean declared=Assembly-CSharp-firstpass:__BaseUI actual=instance System.Boolean",
+    "PASS __BaseUI|first|instance System.Boolean declared=Assembly-CSharp-firstpass:__BaseUI actual=instance System.Boolean",
+    "PASS __BaseUI|UICount_Visible|static System.Int32 declared=Assembly-CSharp-firstpass:__BaseUI actual=static System.Int32",
+    "PASS BuildingBuildUI|m_bBuildVisible|static System.Boolean declared=Assembly-CSharp:BuildingBuildUI actual=static System.Boolean",
+    "PASS LoadScreen|currmg|instance RootMessenger declared=Assembly-CSharp-firstpass:LoadScreen actual=instance RootMessenger",
+    "PASS LoadScreen|isBattling|instance System.Boolean declared=Assembly-CSharp-firstpass:LoadScreen actual=instance System.Boolean",
+    "PASS RootMessenger|LevelID|instance System.String declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.String",
+    "PASS RootMessenger|bLoading|instance System.Boolean declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.Boolean",
+    "PASS RootMessenger|ExpectingCount|instance System.Int32 declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.Int32",
+    "PASS Database.Character|level|instance System.Int16 declared=pbdata:Database._character actual=instance System.Int16",
+    "PASS Database.Character|stamina|instance System.Int16 declared=pbdata:Database._character actual=instance System.Int16",
+    "PASS Database.Character|gold|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|bind_gold|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|experience|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|practice|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|spirit_food|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|mana|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|stone|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|reputation|instance System.UInt32 declared=pbdata:Database._character actual=instance System.UInt32",
+    "PASS Database.Character|money|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|money64|instance System.Int64 declared=pbdata:Database._character actual=instance System.Int64",
+    "PASS Database.Character|cur_formation_set|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|formation_set|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS PopupUI|popup|static System.Boolean declared=Assembly-CSharp-firstpass:PopupUI actual=static System.Boolean",
+    "PASS TooltipUI|TooltipFlag|instance System.String declared=Assembly-CSharp-firstpass:TooltipUI actual=instance System.String",
+    "PASS TooltipUI|tttitle|instance System.String declared=Assembly-CSharp-firstpass:TooltipUI actual=instance System.String",
+    "PASS BuildingBehaviourScript|m_bEdit|instance System.Boolean declared=Assembly-CSharp:BuildingBehaviourScript actual=instance System.Boolean",
+    "PASS BuildingBehaviourScript|m_bEditVisible|static System.Boolean declared=Assembly-CSharp:BuildingBehaviourScript actual=static System.Boolean",
+    "PASS FlowerMessUI|fc|instance System.Boolean declared=Assembly-CSharp:FlowerMessUI actual=instance System.Boolean",
+    "PASS FlowerMessUI|rm|instance System.Boolean declared=Assembly-CSharp:FlowerMessUI actual=instance System.Boolean",
+    "PASS CapitalUI|curArea|static Database.BuildingArea declared=Assembly-CSharp:CapitalUI actual=static Database.BuildingArea",
+    "PASS Database.BuildingArea|unlocked|instance System.Boolean declared=Assembly-CSharp-firstpass:Database.BuildingArea actual=instance System.Boolean",
+    "PASS MessengerUI|active_sessions|instance System.Collections.Generic.Dictionary`2<System.Int32,MessengerUI+ChatSession> declared=Assembly-CSharp:MessengerUI actual=instance System.Collections.Generic.Dictionary`2<System.Int32,MessengerUI+ChatSession>",
+    "PASS MessengerUI|pending_sessions|instance System.Collections.Generic.List`1<MessengerUI+PendingChatSession> declared=Assembly-CSharp:MessengerUI actual=instance System.Collections.Generic.List`1<MessengerUI+PendingChatSession>",
+    "PASS METHOD __BaseUI|public instance System.Void Enable()",
+    "PASS METHOD __BaseUI|public instance System.Void Disable()",
+    "PASS METHOD UnityEngine.Object|public static UnityEngine.Object[] FindObjectsOfType(System.Type)",
+    "PASS NO_DECLARED_INTERACTION_OVERRIDE MainUI",
+    "PASS NO_DECLARED_INTERACTION_OVERRIDE BaseUI",
+    "PASS EXACT_VIRTUAL_DECLARATION __BaseUI.Enable",
+    "PASS EXACT_FIELD_ONLY_IL __BaseUI.Enable -> enable=true",
+    "PASS EXACT_VIRTUAL_DECLARATION __BaseUI.Disable",
+    "PASS EXACT_FIELD_ONLY_IL __BaseUI.Disable -> enable=false",
+    "PASS ASSEMBLY MainUI|Assembly-CSharp",
+    "PASS ASSEMBLY BuildingBuildUI|Assembly-CSharp",
+    "PASS ASSEMBLY Global|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY Database.Character|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY __BaseUI|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY BaseAsset|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY RootUI|Assembly-CSharp",
+    "PASS ASSEMBLY PopupUI|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY TooltipUI|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY MessengerUI|Assembly-CSharp",
+    "PASS ASSEMBLY FlowerMessUI|Assembly-CSharp",
+    "PASS ASSEMBLY BuildingBehaviourScript|Assembly-CSharp",
+    "PASS ASSEMBLY CapitalUI|Assembly-CSharp",
+    "PASS ASSEMBLY Database.BuildingArea|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY BuildingMonsterScript|Assembly-CSharp",
+    "PASS ASSEMBLY SecretShopNPC|Assembly-CSharp",
+    "PASS ASSEMBLY CheckLauncherVersion|Assembly-CSharp",
+    "PASS ASSEMBLY AnnounceBehaviour|Assembly-CSharp",
+    "PASS ASSEMBLY MeditationUI|Assembly-CSharp",
+    "PASS ASSEMBLY ChatBehaviour|Assembly-CSharp",
+    "PASS HIERARCHY MainUI -> BaseAsset"
+  ],
+  "input_hashes": [
+    {
+      "file": "Assembly-CSharp.dll",
+      "sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911"
+    },
+    {
+      "file": "Assembly-CSharp-firstpass.dll",
+      "sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87"
+    },
+    {
+      "file": "pbdata.dll",
+      "sha256": "905CF19394545E2C4B5D49D994A7D981E13AE38A2A629F7D02329F27C6D2D5AB"
+    },
+    {
+      "file": "UnityEngine.dll",
+      "sha256": "D479BEFC03AFB0F2071FFCF108847F06A0D560075EB8A76980F0AE929115ED73"
+    }
+  ],
+  "source_hashes": [
+    {
+      "file": "Protocol.cs",
+      "sha256": "04C3EAE1F58E40B77FD0F1EB598094F07F434E03052BDBDE948CBB7A43C65409"
+    },
+    {
+      "file": "Probe.cs",
+      "sha256": "54075567B039E7C63282ED88B1D265C969E628323F0A8C9DA14D6D5FEDA7DDC7"
+    }
+  ]
+}

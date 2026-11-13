@@ -1,0 +1,625 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class ArmyStarRefineUI : __BaseUI
+{
+	public enum RefineType
+	{
+		jingyan,
+		qianbi
+	}
+
+	private class FlyEffectGroup
+	{
+		public List<FlyEffect> effects = new List<FlyEffect>();
+
+		public int practice;
+
+		public FlyEffectGroup(int _practice)
+		{
+			practice = _practice;
+		}
+	}
+
+	private class FlyEffect
+	{
+		public Vector2 target_pos;
+
+		public Vector2 current_pos;
+
+		public float effectSize;
+
+		public int texIndex;
+
+		public bool updateOK;
+
+		private float full_dist;
+
+		private double delay;
+
+		private DateTime time = default(DateTime);
+
+		private Vector2 base_pos;
+
+		private Vector2 offset = Vector2.zero;
+
+		public FlyEffect(Vector2 _curPos, Vector2 _tarPos, float _size)
+		{
+			target_pos = _tarPos;
+			current_pos = _curPos;
+			base_pos = _curPos;
+			effectSize = _size;
+			texIndex = UnityEngine.Random.Range(3, 5);
+			full_dist = (target_pos - _curPos).magnitude;
+			delay = UnityEngine.Random.Range(0f, 0.5f);
+			time = DateTime.Now;
+			int num = UnityEngine.Random.Range(0, 2);
+			int num2 = UnityEngine.Random.Range(20, 41);
+			switch (num)
+			{
+			case 0:
+				offset = new Vector2(num2, 0f);
+				break;
+			case 1:
+				offset = new Vector2(-1 * num2, 0f);
+				break;
+			}
+		}
+
+		public void Update()
+		{
+			if (!((DateTime.Now - time).TotalSeconds < delay))
+			{
+				updateOK = true;
+				base_pos = Vector2.MoveTowards(base_pos, target_pos, Time.deltaTime * 260f);
+				float num = Mathf.Sin((base_pos - target_pos).magnitude / full_dist * (float)Math.PI);
+				current_pos = base_pos + offset * num;
+				if (effectSize < 82f)
+				{
+					effectSize += Time.deltaTime * 170f;
+				}
+			}
+		}
+
+		public bool AtTarget()
+		{
+			return current_pos == target_pos;
+		}
+	}
+
+	private Texture2D texTitle;
+
+	private Texture2D texCrit;
+
+	private Texture2D texDouble;
+
+	private Texture2D texNoChance;
+
+	private Texture2D[] texSoul = new Texture2D[5];
+
+	private Texture2D crit;
+
+	private GUIStyle armyStarSty = new GUIStyle();
+
+	private GUIStyle ui_di2 = new GUIStyle();
+
+	private GUIStyle ui_di3 = new GUIStyle();
+
+	private GUIStyle ui_zi1 = new GUIStyle();
+
+	private GUIStyle ui_zi2 = new GUIStyle();
+
+	private GUIStyle experienceLight = new GUIStyle();
+
+	private GUIStyle experienceBar = new GUIStyle();
+
+	private _ButtonStyle moneyExchangeBtn = new _ButtonStyle();
+
+	private _ButtonStyle goldExchangeBtn = new _ButtonStyle();
+
+	private _RadioStyle Btn_jingyan = new _RadioStyle();
+
+	private _RadioStyle Btn_qianbi = new _RadioStyle();
+
+	private Texture2D ui_zi_qianbi;
+
+	private Texture2D ui_zi_sanbei;
+
+	private RefineType m_refinetype;
+
+	private float curExpBarWidth;
+
+	private float newExpBarWidth;
+
+	private uint expMax;
+
+	private Vector2 soulCurPos;
+
+	private Vector2 soulTargetPos;
+
+	private uint exchangeLevel;
+
+	private Dictionary<int, FlyEffectGroup> fly_effects = new Dictionary<int, FlyEffectGroup>();
+
+	private bool sended;
+
+	public override void Start()
+	{
+		base.Start();
+		soulCurPos = Vector2.zero;
+		soulTargetPos = Vector2.zero;
+	}
+
+	private void Update()
+	{
+		if (Global.character_.level < 60)
+		{
+			exchangeLevel = 60u;
+		}
+		else if (Global.character_.level > Global.PLAYER_LEVEL_MAX)
+		{
+			exchangeLevel = (uint)Global.PLAYER_LEVEL_MAX;
+		}
+		else
+		{
+			exchangeLevel = (uint)Global.character_.level;
+		}
+		if (curExpBarWidth > newExpBarWidth)
+		{
+			curExpBarWidth -= 20f * Time.deltaTime;
+			if (curExpBarWidth - newExpBarWidth < 1f)
+			{
+				curExpBarWidth = newExpBarWidth;
+			}
+		}
+		soulTargetPos = new Vector2(Screen.width / 2 - 40, Screen.height / 2 - 250 + 166);
+		Dictionary<int, int> dictionary = new Dictionary<int, int>();
+		foreach (FlyEffectGroup value in fly_effects.Values)
+		{
+			List<int> list = new List<int>();
+			for (int i = 0; i < value.effects.Count; i++)
+			{
+				FlyEffect flyEffect = value.effects[i];
+				flyEffect.Update();
+				if (flyEffect.AtTarget())
+				{
+					list.Add(i);
+				}
+			}
+			list.Reverse();
+			foreach (int item in list)
+			{
+				value.effects.RemoveAt(item);
+			}
+		}
+	}
+
+	public void MyLoading(delegate_OnClose _onClose)
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_armystarrefine");
+		if (Global.getTemplate("exp_require_character", (uint)(Global.character_.level + 1)) is _exp_require_character exp_require_character)
+		{
+			expMax = exp_require_character.exp - 1;
+		}
+		else
+		{
+			expMax = 0u;
+		}
+		Logger.Log("(float)Global.character_.experience : " + (float)Global.character_.experience + " expMax : " + expMax);
+		newExpBarWidth = (curExpBarWidth = 265f * ((float)Global.character_.experience / (float)expMax));
+		OnClose = _onClose;
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	public void MyLoading()
+	{
+		MyLoading(null);
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_armystarrefine");
+		texTitle = asset.Load("ui_biaoti") as Texture2D;
+		texCrit = asset.Load("ui_baoji1") as Texture2D;
+		texDouble = asset.Load("ui_baoji2") as Texture2D;
+		texNoChance = asset.Load("ui_zi3") as Texture2D;
+		for (int i = 0; i < 5; i++)
+		{
+			texSoul[i] = asset.Load("ui_icon" + (i + 1)) as Texture2D;
+		}
+		crit = null;
+		armyStarSty.normal.background = asset.Load("ui_di1") as Texture2D;
+		ui_di2.normal.background = asset.Load("ui_di2") as Texture2D;
+		ui_di3.normal.background = asset.Load("ui_di3") as Texture2D;
+		ui_zi1.normal.background = asset.Load("ui_zi1") as Texture2D;
+		ui_zi2.normal.background = asset.Load("ui_zi2") as Texture2D;
+		experienceLight.normal.background = asset.Load("ui_light") as Texture2D;
+		moneyExchangeBtn.make(asset, "button_duihuan");
+		goldExchangeBtn.make(asset, "button_jinbi");
+		Btn_jingyan.make(asset, "button_jingyan", "button_jingyan_hover");
+		Btn_jingyan.normalStyle.active.background = Btn_jingyan.normalStyle.hover.background;
+		Btn_qianbi.make(asset, "button_qianbi", "button_qianbi_hover");
+		Btn_qianbi.normalStyle.active.background = Btn_qianbi.normalStyle.hover.background;
+		ui_zi_qianbi = asset.Load("ui_zi_qianbi") as Texture2D;
+		ui_zi_sanbei = asset.Load("ui_zi_sanbei") as Texture2D;
+		experienceBar.normal.background = __BaseUI._barBlueTex;
+		if (Global.character_.practice_money_exchange_times >= 20)
+		{
+			m_refinetype = RefineType.jingyan;
+		}
+		else if (Global.character_.checkUI(91u))
+		{
+			m_refinetype = RefineType.qianbi;
+		}
+		else
+		{
+			m_refinetype = RefineType.jingyan;
+		}
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(__BaseUI._rectC(200f, 260f, 401f, 520f), __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		__BaseUI.Label(__BaseUI._rectCT(179f, 75f, 358f, 290f), string.Empty, armyStarSty);
+		__BaseUI.Label(__BaseUI._rectCT(26f, 343f, 52f, 33f), string.Empty, ui_di2);
+		__BaseUI.Label(__BaseUI._rectCT(50f, 201f, 100f, 30f), Global.character_.practice.ToString(), __BaseUI._numNCenter, __BaseUI._clrWhite, 20);
+		__BaseUI._btnHelp.Button(bBtn: true, __BaseUI._rectR(70f, 100f, 38f, 57f), new GUIContent(string.Empty, "help"));
+		int num = 100;
+		if (Global.character_.checkUI(91u))
+		{
+			num = 0;
+		}
+		if (Btn_qianbi.Button(m_refinetype != RefineType.qianbi, __BaseUI._rect(33 + num, 65f, 99f, 25f), string.Empty))
+		{
+			if (Global.character_.checkUI(91u))
+			{
+				m_refinetype = RefineType.qianbi;
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(36004u), rmg);
+			}
+		}
+		if (Btn_jingyan.Button(m_refinetype != RefineType.jingyan, __BaseUI._rect(133 - num, 65f, 99f, 25f), string.Empty))
+		{
+			m_refinetype = RefineType.jingyan;
+		}
+		if (m_refinetype == RefineType.jingyan)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectCT(179f, 370f, 358f, 36f));
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 358f, 36f), string.Empty, __BaseUI._box15Style);
+			__BaseUI.Label(__BaseUI._rectLC(25f, 8f, 41f, 16f), string.Empty, ui_zi1);
+			__BaseUI.Label(__BaseUI._rectLC(68f, 7f, 265f, 15f), string.Empty, ui_di3);
+			__BaseUI.Label(__BaseUI._rectLC(68f, 7f, curExpBarWidth, 15f), string.Empty, experienceBar);
+			__BaseUI.Label(__BaseUI._rectLC(68f + curExpBarWidth - 27f, 29f, 58f, 58f), string.Empty, experienceLight);
+			__BaseUI.OutlinedLabel(__BaseUI._rectLC(68f, 7f, 265f, 15f), Global.character_.experience + "/" + expMax, __BaseUI._numNCenter, __BaseUI._clrCyanLight);
+			__BaseUI.EndGroup();
+		}
+		if (Global.character_.practice_exchange + Global.character_.practice_exchange_gold < 10)
+		{
+			if (m_refinetype == RefineType.jingyan)
+			{
+				__BaseUI.Label(__BaseUI._rectB(90f, 100f, 148f, 31f), string.Empty, ui_zi2);
+				int id = Global.character_.practice_exchange + Global.character_.practice_exchange_gold + 1;
+				_practice_exchange practice_exchange = Global.getTemplate("practice_exchange", exchangeLevel) as _practice_exchange;
+				_practice_exchange_rate practice_exchange_rate = Global.getTemplate("practice_exchange_rate", (uint)id) as _practice_exchange_rate;
+				if (practice_exchange != null && practice_exchange_rate != null)
+				{
+					int num2 = (int)practice_exchange.exp * practice_exchange_rate.rate / 100;
+					__BaseUI.Label(__BaseUI._rectB(245f, 100f, 50f, 15f), num2.ToString(), __BaseUI._numNLeft, __BaseUI._clrCyanLight);
+				}
+				__BaseUI.Label(__BaseUI._rectB(245f, 82f, 50f, 15f), (10 - Global.character_.practice_exchange - Global.character_.practice_exchange_gold).ToString(), __BaseUI._numNLeft, __BaseUI._clrCyanLight);
+				if (moneyExchangeBtn.Button(bBtn: true, __BaseUI._rectB(75f, 60f, 110f, 40f), new GUIContent(string.Empty, "moneyExchange")) && practice_exchange != null && practice_exchange_rate != null)
+				{
+					int num3 = (int)practice_exchange.exp * practice_exchange_rate.rate / 100;
+					if (Global.character_.experience < num3)
+					{
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20588u), rmg);
+					}
+					else
+					{
+						cs_practice_exchange();
+					}
+				}
+				if (goldExchangeBtn.Button(bBtn: true, __BaseUI._rectB(215f, 60f, 110f, 40f), new GUIContent(string.Empty, "goldExchange")) && practice_exchange != null && practice_exchange_rate != null)
+				{
+					int num4 = (int)practice_exchange.exp * practice_exchange_rate.rate / 100;
+					if (Global.character_.experience < num4)
+					{
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20588u), rmg);
+					}
+					else
+					{
+						int id2 = Global.character_.practice_exchange_gold + 1;
+						_practice_exchange_gold practice_exchange_gold = Global.getTemplate("practice_exchange_gold", (uint)id2) as _practice_exchange_gold;
+						int gold = practice_exchange_gold.gold;
+						DisableAll();
+						__BaseUI.GetConsumeUI().setConsume(gold, 43, GoldExchangeOK);
+					}
+				}
+			}
+		}
+		else if (m_refinetype == RefineType.jingyan)
+		{
+			GUI.DrawTexture(__BaseUI._rectCB(116f, 80f, 233f, 30f), texNoChance);
+		}
+		if (Global.character_.practice_money_exchange_times < 20)
+		{
+			if (m_refinetype == RefineType.qianbi)
+			{
+				__BaseUI.Box(__BaseUI._rect(85f, 405f, ui_zi_qianbi.width, ui_zi_qianbi.height), ui_zi_qianbi);
+				foreach (object value2 in Global.getTemplates("practice_money_exchange").Values)
+				{
+					_practice_money_exchange practice_money_exchange = (_practice_money_exchange)value2;
+					if (practice_money_exchange.level != Global.character_.level || practice_money_exchange.times != Global.character_.practice_money_exchange_times + 1)
+					{
+						continue;
+					}
+					__BaseUI.Label(__BaseUI._rect(248f, 404f, 300f, 16f), practice_money_exchange.money.ToString(), __BaseUI._numNLeft, __BaseUI._clrCyanLight);
+					__BaseUI.Label(__BaseUI._rect(248f, 430f, 300f, 16f), (20 - Global.character_.practice_money_exchange_times).ToString(), __BaseUI._numNLeft, __BaseUI._clrCyanLight);
+					if (moneyExchangeBtn.Button(bBtn: true, __BaseUI._rectB(145f, 60f, 110f, 40f), new GUIContent(string.Empty, "qianbiex")))
+					{
+						if (Global.character_.money < practice_money_exchange.money)
+						{
+							__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(726u), rmg);
+						}
+						else
+						{
+							cs_practice_money_exchange();
+						}
+					}
+					break;
+				}
+			}
+		}
+		else if (m_refinetype == RefineType.qianbi)
+		{
+			GUI.DrawTexture(__BaseUI._rectCB(116f, 100f, 233f, 30f), texNoChance);
+		}
+		if (EndGUI() && OnClose == null)
+		{
+			DelegateFunc.MainUI_SetSubUI(null);
+		}
+		List<int> list = new List<int>();
+		foreach (KeyValuePair<int, FlyEffectGroup> fly_effect in fly_effects)
+		{
+			FlyEffectGroup value = fly_effect.Value;
+			foreach (FlyEffect effect in value.effects)
+			{
+				if (!effect.AtTarget() && effect.updateOK)
+				{
+					GUI.DrawTexture(__BaseUI._rect(effect.current_pos.x, effect.current_pos.y, effect.effectSize, effect.effectSize), texSoul[effect.texIndex]);
+				}
+			}
+			if (value.effects.Count == 0)
+			{
+				Global.character_.practice = Global.character_.practice + value.practice;
+				RootBase._drawBubble(value.practice, __BaseUI._rect(soulTargetPos.x, soulTargetPos.y, 100f, 30f), null, 0.6f, 50f, -20f);
+				list.Add(fly_effect.Key);
+			}
+		}
+		foreach (int item in list)
+		{
+			fly_effects.Remove(item);
+		}
+		drawTooltips();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		_practice_exchange practice_exchange = Global.getTemplate("practice_exchange", exchangeLevel) as _practice_exchange;
+		int id = Global.character_.practice_exchange_gold + 1;
+		_practice_exchange_gold practice_exchange_gold = Global.getTemplate("practice_exchange_gold", (uint)id) as _practice_exchange_gold;
+		if (practice_exchange != null)
+		{
+			if (tip == "moneyExchange")
+			{
+				tooltipUI.ShowTooltipContent("ArmyStarRefineUI", __BaseUI.load_str(20586u, 0, 0, 0, practice_exchange.practice, (int)((double)practice_exchange.practice * 1.5)), 400, __BaseUI._fontSize);
+			}
+			else if (tip == "goldExchange" && practice_exchange_gold != null)
+			{
+				tooltipUI.ShowTooltipContent("ArmyStarRefineUI", __BaseUI.load_str(20587u, 0, practice_exchange_gold.gold, 0, practice_exchange.practice_gold, (int)((double)practice_exchange.practice_gold * 1.5), practice_exchange.practice_gold * 2), 400, __BaseUI._fontSize);
+			}
+		}
+		if (tip == "help")
+		{
+			tooltipUI.ShowTooltipContent("ArmyStarRefineUI", __BaseUI.load_str(20589u), 350, __BaseUI._fontSize);
+		}
+		else
+		{
+			if (!(tip == "qianbiex"))
+			{
+				return;
+			}
+			foreach (object value in Global.getTemplates("practice_money_exchange").Values)
+			{
+				_practice_money_exchange practice_money_exchange = (_practice_money_exchange)value;
+				if (practice_money_exchange.level == Global.character_.level && practice_money_exchange.times == Global.character_.practice_money_exchange_times + 1)
+				{
+					uint practice = practice_money_exchange.practice;
+					tooltipUI.ShowTooltipContent("ArmyStarRefineUI", __BaseUI.load_str(36003u, practice), 350, __BaseUI._fontSize);
+					break;
+				}
+			}
+		}
+	}
+
+	public void cs_practice_exchange()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSPracticeExchange_0x35C pkt = new CSPracticeExchange_0x35C();
+			Global.m_client.Send(860, pkt, sc_practice_exchange);
+		}
+	}
+
+	public void sc_practice_exchange(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCPracticeExchange_0x35C sCPracticeExchange_0x35C = JSProtoBuf.Serializer.Deserialize<SCPracticeExchange_0x35C>(stream);
+		if (sCPracticeExchange_0x35C.operate == SCPracticeExchange_0x35C.Operate.OK)
+		{
+			int num = Global.character_.practice_exchange + 1;
+			int id = Global.character_.practice_exchange + Global.character_.practice_exchange_gold + 1;
+			_practice_exchange practice_exchange = Global.getTemplate("practice_exchange", exchangeLevel) as _practice_exchange;
+			_practice_exchange_rate practice_exchange_rate = Global.getTemplate("practice_exchange_rate", (uint)id) as _practice_exchange_rate;
+			if (practice_exchange != null && practice_exchange_rate != null)
+			{
+				int practice = (int)practice_exchange.practice;
+				int num2 = (int)practice_exchange.exp * practice_exchange_rate.rate / 100;
+				Global.character_.practice_exchange++;
+				newExpBarWidth = 265f * ((float)Global.character_.experience / (float)expMax);
+				addFlyEffectWithCri(sCPracticeExchange_0x35C.cri, practice);
+				Global.character_.experience = Global.character_.experience - num2;
+				RootBase._drawBubble(0L, __BaseUI._rect(soulCurPos.x, soulCurPos.y, 100f, 30f), crit, 0.6f, 100f, -20f);
+			}
+		}
+	}
+
+	private void GoldExchangeOK(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			cs_practice_exchange_gold();
+		}
+	}
+
+	public void cs_practice_exchange_gold()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSPracticeExchangeGold_0x35D pkt = new CSPracticeExchangeGold_0x35D();
+			Global.m_client.Send(861, pkt, sc_practice_exchange_gold);
+		}
+	}
+
+	public void sc_practice_exchange_gold(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCPracticeExchangeGold_0x35D sCPracticeExchangeGold_0x35D = JSProtoBuf.Serializer.Deserialize<SCPracticeExchangeGold_0x35D>(stream);
+		if (sCPracticeExchangeGold_0x35D.operate == SCPracticeExchangeGold_0x35D.Operate.OK)
+		{
+			int id = Global.character_.practice_exchange_gold + 1;
+			int id2 = Global.character_.practice_exchange + Global.character_.practice_exchange_gold + 1;
+			_practice_exchange practice_exchange = Global.getTemplate("practice_exchange", exchangeLevel) as _practice_exchange;
+			_practice_exchange_gold practice_exchange_gold = Global.getTemplate("practice_exchange_gold", (uint)id) as _practice_exchange_gold;
+			_practice_exchange_rate practice_exchange_rate = Global.getTemplate("practice_exchange_rate", (uint)id2) as _practice_exchange_rate;
+			if (practice_exchange != null && practice_exchange_gold != null && practice_exchange_rate != null)
+			{
+				int practice_gold = (int)practice_exchange.practice_gold;
+				int num = (int)practice_exchange.exp * practice_exchange_rate.rate / 100;
+				int gold = practice_exchange_gold.gold;
+				Global.character_.gold = Global.character_.gold - gold;
+				__BaseUI.drawStateBubble("gold-" + gold);
+				Global.character_.practice_exchange_gold++;
+				newExpBarWidth = 265f * ((float)Global.character_.experience / (float)expMax);
+				addFlyEffectWithCri(sCPracticeExchangeGold_0x35D.cri, practice_gold);
+				Global.character_.experience = Global.character_.experience - num;
+				RootBase._drawBubble(0L, __BaseUI._rect(soulCurPos.x, soulCurPos.y, 100f, 30f), crit, 0.6f, 100f, -20f);
+			}
+		}
+	}
+
+	private void addFlyEffectWithCri(uint cri, int practice)
+	{
+		switch (cri)
+		{
+		case 1u:
+			crit = texCrit;
+			addFlyEffect(8, practice * 3 / 2);
+			break;
+		case 2u:
+			crit = texDouble;
+			addFlyEffect(12, practice * 2);
+			break;
+		default:
+			crit = null;
+			addFlyEffect(4, practice);
+			break;
+		}
+	}
+
+	private void addFlyEffect(int count, int practice)
+	{
+		soulCurPos.x = Screen.width / 2 - 200 + 194;
+		soulCurPos.y = Screen.height / 2 - 250 + 320 + 35;
+		int num = Global.character_.practice_exchange + Global.character_.practice_exchange_gold;
+		int num2 = 0;
+		bool flag = false;
+		while (!flag)
+		{
+			flag = true;
+			num2++;
+			foreach (int key in fly_effects.Keys)
+			{
+				if (num2 == key)
+				{
+					flag = false;
+					break;
+				}
+			}
+		}
+		FlyEffectGroup flyEffectGroup = new FlyEffectGroup(practice);
+		for (int i = 0; i < count; i++)
+		{
+			FlyEffect item = new FlyEffect(soulCurPos, soulTargetPos, 10f);
+			flyEffectGroup.effects.Add(item);
+		}
+		fly_effects.Add(num2, flyEffectGroup);
+	}
+
+	public void cs_practice_money_exchange()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSPracticeMoneyExchange_0x3DF pkt = new CSPracticeMoneyExchange_0x3DF();
+			Global.m_client.Send(991, pkt, sc_practice_money_exchange);
+		}
+	}
+
+	public void sc_practice_money_exchange(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream != null)
+		{
+			SCPracticeMoneyExchange_0x3DF sCPracticeMoneyExchange_0x3DF = JSProtoBuf.Serializer.Deserialize<SCPracticeMoneyExchange_0x3DF>(stream);
+			if (sCPracticeMoneyExchange_0x3DF.result == 0)
+			{
+				Global.character_.practice_money_exchange_times++;
+				Global.character_.money -= (int)sCPracticeMoneyExchange_0x3DF.cost;
+				int param = sCPracticeMoneyExchange_0x3DF.practice.param1;
+				__BaseUI.drawStateBubble("money-" + sCPracticeMoneyExchange_0x3DF.cost);
+				addFlyEffect(12, param);
+			}
+		}
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

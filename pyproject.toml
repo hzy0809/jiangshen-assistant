@@ -1,0 +1,12 @@
+[project]
+name = "jiangshen-assistant"
+version = "0.4.0"
+description = "将神游戏桌面辅助框架"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+jiangshen-assistant = "jiangshen_assistant.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

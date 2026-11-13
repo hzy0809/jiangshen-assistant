@@ -1,0 +1,149 @@
+using Database;
+using UnityEngine;
+
+public class ArenaChestUI : BaseUI
+{
+	private Arena m_arena;
+
+	private Texture2D texTitle;
+
+	private _ButtonStyle btnGet = new _ButtonStyle();
+
+	private _ButtonStyle btnFindback = new _ButtonStyle();
+
+	private Texture2D texChestView;
+
+	private Texture2D[] texChest = new Texture2D[8];
+
+	private int curChest;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(545f, 225f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		for (int i = 0; i < m_arena.bonuses.Count && i <= 3; i++)
+		{
+			uint num = TimeUtil.ThisDay;
+			if (TimeUtil.Now <= TimeUtil.ThisDay + 72000)
+			{
+				num = TimeUtil.ThisDay - 86400;
+			}
+			uint num2 = num - 518400;
+			_character_arena_bonus character_arena_bonus = m_arena.bonuses[i];
+			if (character_arena_bonus.time < num2)
+			{
+				break;
+			}
+			_arena_bonus arenaBonus = Arena.getArenaBonus(character_arena_bonus.rank);
+			GUI.BeginGroup(__BaseUI._rect(30 + i * 125, 55f, 120f, 200f));
+			GUI.Label(__BaseUI._rect(0f, 0f, 110f, 126f), string.Empty, __BaseUI._box5Style);
+			__BaseUI.Box(__BaseUI._rect(15f, 10f, 78f, 84f), new GUIContent(string.Empty, "arena_bonus" + arenaBonus.id), texChestView);
+			int num3 = 0;
+			string str = "今天";
+			if (character_arena_bonus.time < num)
+			{
+				uint num4 = num - character_arena_bonus.time;
+				num3 = (int)(num4 / 86400 + 1);
+				str = Global.getStringFromInt(num3) + __BaseUI.load_str(20011u);
+			}
+			__BaseUI.Label(__BaseUI._rect(11f, 74f, 78f, 20f), str, __BaseUI._textCenter, __BaseUI._clrWhite);
+			if (num3 == 0 && btnGet.Button(bBtn: true, __BaseUI._rect(15f, 130f, 80f, 22f), string.Empty))
+			{
+				Disable();
+				GetComponent<ArenaUI>().cs_arena_bonusget_0x462(bFindBack: false, i, BonusGetClose);
+			}
+			if (num3 > 0)
+			{
+				__BaseUI.Label(__BaseUI._rect(11f, 100f, 78f, 20f), "10", __BaseUI._textCenter, __BaseUI._clrYellowDark);
+				GUI.Label(__BaseUI._rect(60f, 102f, 18f, 16f), string.Empty, __BaseUI._goldIcon);
+				if (btnFindback.Button(bBtn: true, __BaseUI._rect(15f, 130f, 80f, 22f), string.Empty))
+				{
+					int gold = 10;
+					Disable();
+					curChest = i;
+					__BaseUI.GetConsumeUI().setConsume(gold, 8, BonusGet);
+				}
+			}
+			GUI.EndGroup();
+		}
+		EndGUI();
+	}
+
+	private void BonusGet(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			GetComponent<ArenaUI>().cs_arena_bonusget_0x462(bFindBack: true, curChest, BonusGetClose);
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void BonusGetClose()
+	{
+		Enable();
+		if (m_arena.bonuses.Count == 0)
+		{
+			Hide();
+			if (OnClose != null)
+			{
+				OnClose();
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("arena_bonus"))
+		{
+			byte id = byte.Parse(tip.Replace("arena_bonus", string.Empty));
+			tooltipUI.ShowTooltipArenaBonus(string.Empty, id);
+		}
+		else
+		{
+			tooltipUI.HideTooltip(string.Empty);
+		}
+	}
+
+	public void MyLoading(delegate_OnClose onClose)
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		MainUI.SetSubUI(this);
+		OnClose = onClose;
+		AddAsset("ui_arena");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_arena");
+		texTitle = asset.Load("ui_zh") as Texture2D;
+		for (int i = 0; i < 8; i++)
+		{
+			texChest[i] = asset.Load("button_baoxiang" + (i + 1)) as Texture2D;
+		}
+		btnGet.make(asset, "button_lingqu", unable: false);
+		btnFindback.make(asset, "button_zhaohui", unable: false);
+		texChestView = asset.Load("ui_bar_normal") as Texture2D;
+		m_arena = Global.character_.arena;
+	}
+}

@@ -1,0 +1,68 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _tech_book_copy_setting
+{
+	public short id;
+
+	public byte free_copy_times;
+
+	public uint free_copy_time;
+
+	public ushort free_copy_number;
+
+	public ushort free_copy_crit_chance;
+
+	public byte free_copy_crit_ratio;
+
+	public uint gold_copy_cost;
+
+	public ushort gold_copy_number;
+
+	public ushort gold_copy_crit_chance;
+
+	public byte gold_copy_crit_ratio;
+
+	public void Set(_tech_book_copy_setting d)
+	{
+		id = d.id;
+		free_copy_times = d.free_copy_times;
+		free_copy_time = d.free_copy_time;
+		free_copy_number = d.free_copy_number;
+		free_copy_crit_chance = d.free_copy_crit_chance;
+		free_copy_crit_ratio = d.free_copy_crit_ratio;
+		gold_copy_cost = d.gold_copy_cost;
+		gold_copy_number = d.gold_copy_number;
+		gold_copy_crit_chance = d.gold_copy_crit_chance;
+		gold_copy_crit_ratio = d.gold_copy_crit_ratio;
+	}
+
+	public void Set(db_tech_book_copy_setting d)
+	{
+		id = (short)d.id;
+		free_copy_times = (byte)d.free_copy_times;
+		free_copy_time = d.free_copy_time;
+		free_copy_number = (ushort)d.free_copy_number;
+		free_copy_crit_chance = (ushort)d.free_copy_crit_chance;
+		free_copy_crit_ratio = (byte)d.free_copy_crit_ratio;
+		gold_copy_cost = d.gold_copy_cost;
+		gold_copy_number = (ushort)d.gold_copy_number;
+		gold_copy_crit_chance = (ushort)d.gold_copy_crit_chance;
+		gold_copy_crit_ratio = (byte)d.gold_copy_crit_ratio;
+	}
+
+	public void Get(ref db_tech_book_copy_setting d)
+	{
+		d.id = id;
+		d.free_copy_times = free_copy_times;
+		d.free_copy_time = free_copy_time;
+		d.free_copy_number = free_copy_number;
+		d.free_copy_crit_chance = free_copy_crit_chance;
+		d.free_copy_crit_ratio = free_copy_crit_ratio;
+		d.gold_copy_cost = gold_copy_cost;
+		d.gold_copy_number = gold_copy_number;
+		d.gold_copy_crit_chance = gold_copy_crit_chance;
+		d.gold_copy_crit_ratio = gold_copy_crit_ratio;
+	}
+}

@@ -1,0 +1,154 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class AnnounceBehaviour : BaseUI
+{
+	private class AnnounceMsg
+	{
+		public string msg;
+
+		public ScenarioSection section;
+
+		public AnnounceMsg(string m)
+		{
+			msg = m;
+		}
+	}
+
+	private List<AnnounceMsg> m_announce_msg = new List<AnnounceMsg>();
+
+	private bool lastHasAnnounce;
+
+	private float scrollBgShowHideTime;
+
+	private float scrollBgAlpha;
+
+	private Texture2D m_announce_bg;
+
+	private GUIStyle m_style_broadcast;
+
+	private float current_announce_pos = 410f;
+
+	public float AnnounceScrollSpeed = 1f;
+
+	public Color AnnounceColor = new Color(0.8f, 1f, 1f, 1f);
+
+	public bool AnnounceUseOutLine;
+
+	public Color AnnounceOutLineColor = Color.black;
+
+	public int AnnounceFontSize = 13;
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+		m_style_broadcast = new GUIStyle();
+		m_style_broadcast.fontSize = AnnounceFontSize;
+		m_style_broadcast.normal.textColor = AnnounceColor;
+		m_style_broadcast.alignment = TextAnchor.UpperLeft;
+		m_style_broadcast.fontStyle = FontStyle.Bold;
+	}
+
+	private void Update()
+	{
+		if (m_announce_msg.Count > 0)
+		{
+			if (!lastHasAnnounce)
+			{
+				scrollBgShowHideTime = Time.time;
+			}
+			scrollBgAlpha += (Time.time - scrollBgShowHideTime) * 2f;
+			scrollBgAlpha = Mathf.Min(1f, scrollBgAlpha);
+			current_announce_pos -= AnnounceScrollSpeed;
+			lastHasAnnounce = true;
+			float num = current_announce_pos;
+			foreach (AnnounceMsg item in m_announce_msg)
+			{
+				if (item.section != null)
+				{
+					num += item.section.width + 200f;
+				}
+			}
+			if (num < 0f)
+			{
+				m_announce_msg.Clear();
+			}
+		}
+		else
+		{
+			if (lastHasAnnounce)
+			{
+				scrollBgShowHideTime = Time.time;
+			}
+			scrollBgAlpha -= (Time.time - scrollBgShowHideTime) * 2f;
+			scrollBgAlpha = Mathf.Max(0f, scrollBgAlpha);
+			lastHasAnnounce = false;
+		}
+	}
+
+	public void SetBg(Texture2D tex)
+	{
+		m_announce_bg = tex;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Announce;
+		recalcAnnounceSize();
+		drawAnnounce();
+	}
+
+	private void drawAnnounce()
+	{
+		if (!(scrollBgAlpha > 0.003f))
+		{
+			return;
+		}
+		GUI.contentColor = new Color(1f, 1f, 1f, scrollBgAlpha);
+		GUI.BeginGroup(new Rect(Screen.width / 2 - 255, 85f * __BaseUI._screenScale, 510f, 40f));
+		__BaseUI.normalStyle.normal.background = null;
+		GUI.Label(new Rect(0f, 0f, 510f, 40f), m_announce_bg, __BaseUI.normalStyle);
+		GUI.BeginGroup(new Rect(62f, 4f, 445f, 40f));
+		float num = current_announce_pos;
+		for (int i = 0; i < m_announce_msg.Count; i++)
+		{
+			if (num > 410f)
+			{
+				break;
+			}
+			if (m_announce_msg[i].section != null)
+			{
+				if (num + m_announce_msg[i].section.width >= 0f)
+				{
+					m_announce_msg[i].section.draw(num, 10f, 410f, 30f, m_style_broadcast, bSystem: true);
+				}
+				num += m_announce_msg[i].section.width + 200f;
+			}
+		}
+		GUI.EndGroup();
+		GUI.EndGroup();
+	}
+
+	private void AddAnnounceMessage(string msg)
+	{
+		m_announce_msg.Add(new AnnounceMsg(msg));
+		if (m_announce_msg.Count == 1)
+		{
+			current_announce_pos = 410f;
+		}
+	}
+
+	private void recalcAnnounceSize()
+	{
+		for (int i = 0; i < m_announce_msg.Count; i++)
+		{
+			if (m_announce_msg[i].section == null)
+			{
+				m_announce_msg[i].section = new ScenarioSection();
+				m_announce_msg[i].section.setParams(100000, 18, AnnounceFontSize);
+				m_announce_msg[i].section.makes_string("#c=CCFFFF#b=1" + m_announce_msg[i].msg, m_style_broadcast, bSystem: true);
+			}
+		}
+	}
+}

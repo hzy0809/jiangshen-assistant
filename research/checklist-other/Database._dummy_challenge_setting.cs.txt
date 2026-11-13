@@ -1,0 +1,58 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _dummy_challenge_setting
+{
+	public int id;
+
+	public ushort user_open_level;
+
+	public ushort start_level;
+
+	public byte max_turn;
+
+	public ushort level_increase;
+
+	public uint refresh_time;
+
+	public byte fast_challenge_vip;
+
+	public byte fast_challenge_times;
+
+	public void Set(_dummy_challenge_setting d)
+	{
+		id = d.id;
+		user_open_level = d.user_open_level;
+		start_level = d.start_level;
+		max_turn = d.max_turn;
+		level_increase = d.level_increase;
+		refresh_time = d.refresh_time;
+		fast_challenge_vip = d.fast_challenge_vip;
+		fast_challenge_times = d.fast_challenge_times;
+	}
+
+	public void Set(db_dummy_challenge_setting d)
+	{
+		id = d.id;
+		user_open_level = (ushort)d.user_open_level;
+		start_level = (ushort)d.start_level;
+		max_turn = (byte)d.max_turn;
+		level_increase = (ushort)d.level_increase;
+		refresh_time = d.refresh_time;
+		fast_challenge_vip = (byte)d.fast_challenge_vip;
+		fast_challenge_times = (byte)d.fast_challenge_times;
+	}
+
+	public void Get(ref db_dummy_challenge_setting d)
+	{
+		d.id = id;
+		d.user_open_level = user_open_level;
+		d.start_level = start_level;
+		d.max_turn = max_turn;
+		d.level_increase = level_increase;
+		d.refresh_time = refresh_time;
+		d.fast_challenge_vip = fast_challenge_vip;
+		d.fast_challenge_times = fast_challenge_times;
+	}
+}

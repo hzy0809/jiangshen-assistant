@@ -1,0 +1,102 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCDemonBattle_0x492")]
+public class SCDemonBattle_0x492 : IExtensible
+{
+	private uint _result;
+
+	private bool _iswin = false;
+
+	private byte[] _report = null;
+
+	private Treasures _bonuses = null;
+
+	private db_character_cooldown _cooldown = null;
+
+	private readonly List<DemonArmySoldier> _soldiers = new List<DemonArmySoldier>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "bonuses", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public Treasures bonuses
+	{
+		get
+		{
+			return _bonuses;
+		}
+		set
+		{
+			_bonuses = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "cooldown", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public db_character_cooldown cooldown
+	{
+		get
+		{
+			return _cooldown;
+		}
+		set
+		{
+			_cooldown = value;
+		}
+	}
+
+	[ProtoMember(6, Name = "soldiers", DataFormat = DataFormat.Default)]
+	public List<DemonArmySoldier> soldiers => _soldiers;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

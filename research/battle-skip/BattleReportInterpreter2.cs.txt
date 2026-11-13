@@ -1,0 +1,2011 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using Ionic.Zlib;
+using UnityEngine;
+using game.net.data.StoC;
+
+public class BattleReportInterpreter2
+{
+	private enum StepMode
+	{
+		SingleStep,
+		Batch,
+		Skill
+	}
+
+	private class HandlePair
+	{
+		public StepHandle handle;
+
+		public HandleCallback callback;
+
+		public HandlePair(StepHandle h)
+		{
+			handle = h;
+			callback = null;
+		}
+	}
+
+	private class FlyEffect
+	{
+		public GameObject effect_obj;
+
+		private List<Vector3> target_pos;
+
+		private int cur_target;
+
+		private float speed;
+
+		private float destroy_delay;
+
+		private Vector3 velocity;
+
+		public uint effect_id;
+
+		public FlyEffect(uint id, GameObject obj, List<Vector3> target_list, float _speed, float _destroy_delay)
+		{
+			effect_id = id;
+			effect_obj = obj;
+			target_pos = target_list;
+			speed = _speed;
+			destroy_delay = _destroy_delay;
+			cur_target = 0;
+			effect_obj.transform.LookAt(target_list[0]);
+			effect_obj.BroadcastMessage("Emit");
+		}
+
+		public float GetFlyDuration()
+		{
+			velocity = target_pos[cur_target] - effect_obj.transform.position;
+			velocity.Normalize();
+			velocity *= speed;
+			return (target_pos[cur_target] - effect_obj.transform.position).magnitude / speed;
+		}
+
+		public bool NextTarget()
+		{
+			cur_target++;
+			if (cur_target < target_pos.Count)
+			{
+				effect_obj.transform.LookAt(target_pos[cur_target]);
+				return true;
+			}
+			UnityEngine.Object.Destroy(effect_obj, destroy_delay);
+			return false;
+		}
+
+		public void UpdatePosition()
+		{
+			effect_obj.transform.position += velocity * Time.deltaTime;
+		}
+
+		public bool Flying()
+		{
+			return cur_target < target_pos.Count;
+		}
+
+		public void Destroy()
+		{
+			effect_obj.BroadcastMessage("Stop");
+			UnityEngine.Object.Destroy(effect_obj, destroy_delay);
+		}
+	}
+
+	private class EffectTimer
+	{
+		public float start_time;
+
+		public float time_span;
+
+		public int index;
+
+		public bool attacker;
+
+		public uint effect_id;
+
+		public EffectTimer(int loc, bool att, uint id, float span)
+		{
+			start_time = Time.time;
+			time_span = span;
+			index = loc;
+			attacker = att;
+			effect_id = id;
+		}
+
+		public bool isFinished()
+		{
+			if (time_span < 0f)
+			{
+				return false;
+			}
+			return Time.time - start_time > time_span;
+		}
+
+		public bool isForever()
+		{
+			return time_span < 0f;
+		}
+	}
+
+	private class Banner
+	{
+		private string msg;
+
+		private Vector2 cur_pos;
+
+		private Vector2 end_pos;
+
+		private float speed;
+
+		private float slideInTime;
+
+		private float holdTime;
+
+		private float fadeTime;
+
+		private float start_time;
+
+		private Color color = new Color(1f, 1f, 1f, 1f);
+
+		private bool fading;
+
+		public Banner(string _msg, Vector2 _start, Vector2 _end, float _slide, float _hold, float _fade)
+		{
+			msg = _msg;
+			cur_pos = _start;
+			end_pos = _end;
+			slideInTime = _slide;
+			holdTime = _hold;
+			fadeTime = _fade;
+			start_time = Time.time;
+		}
+
+		public bool Update()
+		{
+			float num = Time.time - start_time;
+			if (num < slideInTime)
+			{
+				cur_pos.x = Mathf.SmoothDamp(cur_pos.x, end_pos.x, ref speed, slideInTime - num);
+			}
+			else if (num > slideInTime + holdTime)
+			{
+				fading = true;
+				color.a = 1f - (num - slideInTime - holdTime) / fadeTime;
+			}
+			return num < slideInTime + holdTime + fadeTime;
+		}
+
+		public void Draw(GUIStyle style, GUIStyle text_style)
+		{
+			if (fading)
+			{
+				GUI.color = color;
+			}
+			else
+			{
+				GUI.color = Color.white;
+			}
+			GUI.Box(new Rect(cur_pos.x, cur_pos.y, 0f, 0f), string.Empty, style);
+			GUI.Label(new Rect(cur_pos.x, cur_pos.y + 4f, 0f, 0f), msg, text_style);
+		}
+	}
+
+	private delegate float StepHandle(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action);
+
+	public delegate void HandleCallback(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action);
+
+	public delegate void NewTurnCallback();
+
+	private BattleReport m_report;
+
+	private IEnumerator m_turn_enumerator;
+
+	private IEnumerator m_action_enumerator;
+
+	private bool m_finished;
+
+	private StepMode CurrentStepMode;
+
+	private float BatchWaitMax;
+
+	private float defaultTurnWaitSpan = 0.3f;
+
+	protected bool bLegionBlocking;
+
+	private Vector3 m_shakeCameraOffset = Vector3.zero;
+
+	private bool m_cameraShake;
+
+	private float m_cameraShakeDuration;
+
+	private float m_cameraShakeStart;
+
+	private int m_cameraShakeTimes;
+
+	private Vector3 m_cameraPositionOrigin;
+
+	private Camera m_shakeCamera;
+
+	private NewTurnCallback _new_turn_callback;
+
+	private Dictionary<BattleReport.GameTurn.Action.ActionType, HandlePair> StepHandleDictionary = new Dictionary<BattleReport.GameTurn.Action.ActionType, HandlePair>();
+
+	private BaseAsset assetBehaviour;
+
+	private Dictionary<int, Dictionary<uint, _skill_animation>>[] skill_animation_table = new Dictionary<int, Dictionary<uint, _skill_animation>>[2]
+	{
+		new Dictionary<int, Dictionary<uint, _skill_animation>>(),
+		new Dictionary<int, Dictionary<uint, _skill_animation>>()
+	};
+
+	private SpiritBeastTooltip[] spirit_tt = new SpiritBeastTooltip[2];
+
+	protected int playedTurnCount;
+
+	private bool bShowEffect = true;
+
+	private bool bShowSpiritAnim = true;
+
+	private Dictionary<string, AudioClip> soundEffectDict = new Dictionary<string, AudioClip>();
+
+	private FlyEffect m_flyEffect;
+
+	private float m_flyWait = -1f;
+
+	private int left_turn_move = -1;
+
+	private int right_turn_move = -1;
+
+	protected _troop_animation current_pass_troop_anim;
+
+	private byte[] status_buff_id_list = new byte[16]
+	{
+		12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+		22, 23, 24, 25, 26, 27
+	};
+
+	private BattleShowInfo[] status_info_list = new BattleShowInfo[16]
+	{
+		BattleShowInfo.INCR_DAMAGE,
+		BattleShowInfo.DECR_DAMAGE,
+		BattleShowInfo.INCR_PROTECTION,
+		BattleShowInfo.DECR_PROTECTION,
+		BattleShowInfo.INCR_CRIT,
+		BattleShowInfo.DECR_CRIT,
+		BattleShowInfo.INCR_CRIT_REDUCE,
+		BattleShowInfo.DECR_CRIT_REDUCE,
+		BattleShowInfo.INCR_HIT,
+		BattleShowInfo.DECR_HIT,
+		BattleShowInfo.INCR_DODGE,
+		BattleShowInfo.DECR_DODGE,
+		BattleShowInfo.INCR_COUNTER,
+		BattleShowInfo.DECR_COUNTER,
+		BattleShowInfo.INCR_BLOCK,
+		BattleShowInfo.DECR_BLOCK
+	};
+
+	protected GameObject gameObject;
+
+	protected ArmyBehaviour[] m_ArmyBehaviour = new ArmyBehaviour[2];
+
+	protected GameObject m_Battleground;
+
+	private List<EffectTimer> m_EffectControlList = new List<EffectTimer>();
+
+	private Dictionary<string, GameObject> m_EffectGround = new Dictionary<string, GameObject>();
+
+	private ActionQueue2 _MainActionQueue;
+
+	private Dictionary<int, ActionQueue2>[] _LegionActionQueue = new Dictionary<int, ActionQueue2>[2]
+	{
+		new Dictionary<int, ActionQueue2>(),
+		new Dictionary<int, ActionQueue2>()
+	};
+
+	private List<Banner> BannerList = new List<Banner>();
+
+	public float DefaultTurnSpan => defaultTurnWaitSpan;
+
+	public BattleReport.BattleType BattleType => m_report.type;
+
+	public BattleReport packet => m_report;
+
+	public bool isFinished => m_finished;
+
+	public bool MainQueueFinished => _MainActionQueue.isFinished();
+
+	public BattleReport.GameTurn.Action CurrentAction => m_action_enumerator.Current as BattleReport.GameTurn.Action;
+
+	public int PlayedTurnCount => playedTurnCount;
+
+	public bool ShowEffect
+	{
+		get
+		{
+			return bShowEffect;
+		}
+		set
+		{
+			bShowEffect = value;
+		}
+	}
+
+	public bool ShowSpiritAnim
+	{
+		get
+		{
+			return bShowSpiritAnim;
+		}
+		set
+		{
+			bShowSpiritAnim = value;
+		}
+	}
+
+	public BattleReportInterpreter2(BaseAsset a, GameObject root)
+	{
+		assetBehaviour = a;
+		gameObject = root;
+		InitStepHandleDictionary();
+		_MainActionQueue = new ActionQueue2(this);
+	}
+
+	public void setReport(byte[] report_string)
+	{
+		clearAnimationTable();
+		m_report = null;
+		m_turn_enumerator = null;
+		m_action_enumerator = null;
+		m_finished = false;
+		Logger.Log("report");
+		if (report_string == null)
+		{
+			Logger.Log("NULL");
+		}
+		else
+		{
+			Logger.Log(report_string.Length.ToString());
+		}
+		if (report_string != null)
+		{
+			MemoryStream stream = new MemoryStream(report_string);
+			try
+			{
+				DeflateStream inputStream = new DeflateStream(stream, CompressionMode.Decompress);
+				m_report = JSProtoBuf.Serializer.Deserialize<BattleReport>(inputStream);
+				Logger.Log(m_report.battle_field.ToString());
+			}
+			catch (Exception ex)
+			{
+				Logger.Log("catch zlib exception");
+				Logger.Log(ex.Message);
+			}
+			clearAllCallbacks();
+		}
+	}
+
+	public void setReport(BattleReport report)
+	{
+		clearAnimationTable();
+		m_report = report;
+		m_turn_enumerator = null;
+		m_action_enumerator = null;
+		m_finished = false;
+		clearAllCallbacks();
+	}
+
+	private void clearAnimationTable()
+	{
+		skill_animation_table[0].Clear();
+		skill_animation_table[1].Clear();
+	}
+
+	public void Reset()
+	{
+		m_turn_enumerator = m_report.game_turns.GetEnumerator();
+		if (m_turn_enumerator != null)
+		{
+			m_turn_enumerator.Reset();
+		}
+		m_action_enumerator = null;
+		m_finished = false;
+	}
+
+	public void Update()
+	{
+		updateEffectTimer();
+		updateFlyEffect();
+		updateBanners();
+		if (m_cameraShake && m_shakeCamera != null)
+		{
+			if (Time.time < m_cameraShakeStart + m_cameraShakeDuration)
+			{
+				AccumulateCameraShakeVertical(0.3f * Mathf.Sin((float)Math.PI * 2f / m_cameraShakeDuration * (float)m_cameraShakeTimes * (Time.time - m_cameraShakeStart)));
+			}
+			else
+			{
+				m_cameraShake = false;
+			}
+		}
+	}
+
+	public void LateUpdate()
+	{
+		if (m_shakeCamera == null)
+		{
+			getShakeCamera();
+		}
+		if (m_shakeCamera != null)
+		{
+			if (m_shakeCameraOffset.sqrMagnitude > 0.001f)
+			{
+				m_shakeCamera.transform.position = m_cameraPositionOrigin + m_shakeCameraOffset;
+			}
+			else
+			{
+				m_shakeCamera.transform.position = m_cameraPositionOrigin;
+			}
+		}
+		m_shakeCameraOffset = Vector3.zero;
+	}
+
+	private void getShakeCamera()
+	{
+		if (m_Battleground != null)
+		{
+			Camera[] componentsInChildren = m_Battleground.GetComponentsInChildren<Camera>();
+			if (componentsInChildren.Length == 1)
+			{
+				m_shakeCamera = componentsInChildren[0];
+				m_cameraPositionOrigin = m_shakeCamera.transform.position;
+			}
+		}
+	}
+
+	private void AccumulateCameraShake(Vector3 offset)
+	{
+		if (m_shakeCameraOffset.sqrMagnitude < 0.001f)
+		{
+			m_shakeCameraOffset = offset;
+		}
+	}
+
+	public void AccumulateCameraShakeVertical(float v)
+	{
+		if (m_shakeCamera != null)
+		{
+			AccumulateCameraShake(m_shakeCamera.transform.up * v);
+		}
+	}
+
+	public void AccumulateCameraShakeHorizontal(float v)
+	{
+		if (m_shakeCamera != null)
+		{
+			AccumulateCameraShake(m_shakeCamera.transform.right * v);
+		}
+	}
+
+	public bool fight()
+	{
+		ExecLegionAction();
+		while (!_MainActionQueue.isWaiting())
+		{
+			if (_MainActionQueue.isActionQueued())
+			{
+				_MainActionQueue.ExecQueuedAction();
+				continue;
+			}
+			if (!m_finished && !bLegionBlocking)
+			{
+				TryMoveNext();
+			}
+			if (m_finished)
+			{
+				_MainActionQueue.AddAction(new WaitAction2(1.5f));
+				break;
+			}
+			if (bLegionBlocking = isBlocked())
+			{
+				break;
+			}
+			float num = Handle();
+			switch (CurrentStepMode)
+			{
+			case StepMode.SingleStep:
+				_MainActionQueue.Wait(num);
+				break;
+			case StepMode.Skill:
+				_MainActionQueue.Wait(num);
+				break;
+			case StepMode.Batch:
+				if (num > BatchWaitMax)
+				{
+					BatchWaitMax = num;
+				}
+				break;
+			}
+		}
+		return !m_finished;
+	}
+
+	public bool TryMoveNext()
+	{
+		if (m_turn_enumerator == null)
+		{
+			m_finished = true;
+			return false;
+		}
+		while (m_action_enumerator == null || !m_action_enumerator.MoveNext())
+		{
+			if (m_turn_enumerator.MoveNext())
+			{
+				OnNewTurn(m_turn_enumerator.Current as BattleReport.GameTurn);
+				m_action_enumerator = (m_turn_enumerator.Current as BattleReport.GameTurn).actions.GetEnumerator();
+				continue;
+			}
+			m_finished = true;
+			return false;
+		}
+		return true;
+	}
+
+	public virtual bool isBlocked()
+	{
+		BattleReport.GameTurn.Action currentAction = CurrentAction;
+		bool flag = currentAction.side == BattleReport.GameTurn.Action.LegionSide.LEGION_LEFT;
+		int location = currentAction.location;
+		switch (currentAction.type)
+		{
+		case BattleReport.GameTurn.Action.ActionType.skillActionEnd:
+		case BattleReport.GameTurn.Action.ActionType.targetHandleBegin:
+		case BattleReport.GameTurn.Action.ActionType.targetHandleEnd:
+		case BattleReport.GameTurn.Action.ActionType.one_pass_begin:
+		case BattleReport.GameTurn.Action.ActionType.one_pass_end:
+		case BattleReport.GameTurn.Action.ActionType.block:
+		case BattleReport.GameTurn.Action.ActionType.beHit:
+		case BattleReport.GameTurn.Action.ActionType.addRage:
+		case BattleReport.GameTurn.Action.ActionType.buffOperation:
+		case BattleReport.GameTurn.Action.ActionType.dead:
+		case BattleReport.GameTurn.Action.ActionType.revive:
+			return false;
+		case BattleReport.GameTurn.Action.ActionType.move:
+			if (isLegionBlocked(flag, location))
+			{
+				return true;
+			}
+			if ((flag && right_turn_move == 0 && !currentAction.is_sub_skill) || (!flag && left_turn_move == 0 && !currentAction.is_sub_skill))
+			{
+				return false;
+			}
+			if (currentAction.target_locations.Count > 0)
+			{
+				for (int i = 0; i < currentAction.target_locations.Count; i++)
+				{
+					if (isLegionBlocked(currentAction.target_side == BattleReport.GameTurn.Action.LegionSide.LEGION_LEFT, currentAction.target_locations[i]))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		case BattleReport.GameTurn.Action.ActionType.skillHandleEnd:
+			if ((flag && right_turn_move == 0 && !currentAction.is_sub_skill) || (!flag && left_turn_move == 0 && !currentAction.is_sub_skill))
+			{
+				return false;
+			}
+			return isLegionBlocked(flag, location);
+		default:
+			return isLegionBlocked(flag, location);
+		}
+	}
+
+	public void SetArmyToFinalState()
+	{
+		if (_LegionActionQueue[0] != null)
+		{
+			_LegionActionQueue[0].Clear();
+		}
+		if (_LegionActionQueue[1] != null)
+		{
+			_LegionActionQueue[1].Clear();
+		}
+		_MainActionQueue.Clear();
+		for (int i = 0; i < m_report.left_army.legions.Count; i++)
+		{
+			if (m_ArmyBehaviour[0] != null)
+			{
+				m_ArmyBehaviour[0].SetToFinal(m_report.left_army.legions[i].location, m_report.left_army.legions[i]);
+			}
+		}
+		for (int j = 0; j < m_report.right_army.legions.Count; j++)
+		{
+			if (m_ArmyBehaviour[1] != null)
+			{
+				m_ArmyBehaviour[1].SetToFinal(m_report.right_army.legions[j].location, m_report.right_army.legions[j]);
+			}
+		}
+	}
+
+	public virtual void Destroy()
+	{
+		RemoveFlyEffect();
+		ClearActionQueue();
+		clearEffectTimer();
+		soundEffectDict.Clear();
+		if (m_ArmyBehaviour[0] != null && m_ArmyBehaviour[0].gameObject != null)
+		{
+			UnityEngine.Object.Destroy(m_ArmyBehaviour[0].gameObject);
+		}
+		if (m_ArmyBehaviour[1] != null && m_ArmyBehaviour[1].gameObject != null)
+		{
+			UnityEngine.Object.Destroy(m_ArmyBehaviour[1].gameObject);
+		}
+		m_ArmyBehaviour[0] = null;
+		m_ArmyBehaviour[1] = null;
+		UnityEngine.Object.Destroy(m_Battleground);
+		foreach (KeyValuePair<string, GameObject> item in m_EffectGround)
+		{
+			UnityEngine.Object.Destroy(item.Value);
+		}
+		m_EffectGround.Clear();
+	}
+
+	private void InitStepHandleDictionary()
+	{
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.skillActionHead] = new HandlePair(skillAction);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.skillActionEnd] = new HandlePair(skillActionEnd);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.dodge] = new HandlePair(dodge);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.counterBegin] = new HandlePair(counterBegin);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.counterEnd] = new HandlePair(counterEnd);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.block] = new HandlePair(block);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.beHit] = new HandlePair(beHit);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.addRage] = new HandlePair(addRage);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.skillHandle] = new HandlePair(skillHandle);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.skillHandleEnd] = new HandlePair(skillHandleEnd);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.buffOperation] = new HandlePair(buffOperation);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.dead] = new HandlePair(dead);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.revive] = new HandlePair(revive);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.targetHandleBegin] = new HandlePair(targetHandleBegin);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.targetHandleEnd] = new HandlePair(targetHandleEnd);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.one_pass_begin] = new HandlePair(one_pass_begin);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.one_pass_end] = new HandlePair(one_pass_end);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.move] = new HandlePair(actionMove);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.transform] = new HandlePair(actionTransform);
+		StepHandleDictionary[BattleReport.GameTurn.Action.ActionType.transformBack] = new HandlePair(actionTransformBack);
+	}
+
+	public void clearAllCallbacks()
+	{
+		foreach (KeyValuePair<BattleReport.GameTurn.Action.ActionType, HandlePair> item in StepHandleDictionary)
+		{
+			item.Value.callback = null;
+		}
+		_new_turn_callback = null;
+	}
+
+	public void clearCallback(BattleReport.GameTurn.Action.ActionType type)
+	{
+		StepHandleDictionary[type].callback = null;
+	}
+
+	public void setCallback(BattleReport.GameTurn.Action.ActionType type, HandleCallback c)
+	{
+		StepHandleDictionary[type].callback = c;
+	}
+
+	public void setNewTurnCallback(NewTurnCallback c)
+	{
+		_new_turn_callback = c;
+	}
+
+	public float Handle()
+	{
+		BattleReport.GameTurn.Action currentAction = CurrentAction;
+		bool b_attacker = currentAction.side == BattleReport.GameTurn.Action.LegionSide.LEGION_LEFT;
+		int location = currentAction.location;
+		float result = 0f;
+		if (StepHandleDictionary.ContainsKey(currentAction.type))
+		{
+			result = StepHandleDictionary[currentAction.type].handle(b_attacker, location, currentAction);
+			if (StepHandleDictionary[currentAction.type].callback != null)
+			{
+				StepHandleDictionary[currentAction.type].callback(b_attacker, location, currentAction);
+			}
+		}
+		return result;
+	}
+
+	public _skill_animation getSkillAnimation(bool b_attacker, int actor_loc, uint skill_id)
+	{
+		int num = ((!b_attacker) ? 1 : 0);
+		if (!skill_animation_table[num].ContainsKey(actor_loc))
+		{
+			skill_animation_table[num][actor_loc] = new Dictionary<uint, _skill_animation>();
+		}
+		if (!skill_animation_table[num][actor_loc].ContainsKey(skill_id))
+		{
+			BattleReport.ArmyInfo army_info = ((!b_attacker) ? m_report.right_army : m_report.left_army);
+			skill_animation_table[num][actor_loc][skill_id] = getSkillAnimation(army_info, actor_loc, skill_id);
+		}
+		if (skill_animation_table[num][actor_loc][skill_id] == null)
+		{
+			return null;
+		}
+		_skill_animation skill_animation = new _skill_animation();
+		if (!ShowEffect)
+		{
+			skill_animation.Set(Global.getTemplate("skill_animation", 0u) as _skill_animation);
+			skill_animation.skill_handle_animation = skill_animation_table[num][actor_loc][skill_id].skill_handle_animation;
+			skill_animation.skill_move_type = skill_animation_table[num][actor_loc][skill_id].skill_move_type;
+		}
+		else
+		{
+			skill_animation.Set(skill_animation_table[num][actor_loc][skill_id]);
+		}
+		return skill_animation;
+	}
+
+	public static _skill_animation getSkillAnimation(BattleReport.ArmyInfo army_info, int actor_loc, uint skill_id)
+	{
+		if (actor_loc == 0)
+		{
+			return getSkillAnimation(army_info.beast, skill_id);
+		}
+		for (int i = 0; i < army_info.legions.Count; i++)
+		{
+			if (army_info.legions[i].location == actor_loc)
+			{
+				return getSkillAnimation(army_info.legions[i], skill_id);
+			}
+		}
+		return null;
+	}
+
+	private static _skill_animation getSkillAnimation(BattleReport.ArmyInfo.LegionInfo legion, uint skill_id)
+	{
+		if (legion.isMainCharacter)
+		{
+			Hashtable templates = Global.getTemplates("skill_animation_override");
+			if (!legion.male_model)
+			{
+				foreach (DictionaryEntry item in templates)
+				{
+					_skill_animation_override skill_animation_override = item.Value as _skill_animation_override;
+					if (skill_animation_override.idskill == skill_id && skill_animation_override.variation == 2)
+					{
+						return Global.getTemplate("skill_animation", skill_animation_override.idskill_animation) as _skill_animation;
+					}
+				}
+			}
+		}
+		if (!(Global.getTemplate("skill", skill_id) is _skill skill))
+		{
+			return null;
+		}
+		return Global.getTemplate("skill_animation", skill.idskill_animation) as _skill_animation;
+	}
+
+	private static _skill_animation getSkillAnimation(BattleReport.ArmyInfo.SpiritBeastInfo beast, uint skill_id)
+	{
+		Hashtable templates = Global.getTemplates("skill_animation_override");
+		foreach (DictionaryEntry item in templates)
+		{
+			_skill_animation_override skill_animation_override = item.Value as _skill_animation_override;
+			if (skill_animation_override.idskill == skill_id && skill_animation_override.variation == 3)
+			{
+				return Global.getTemplate("skill_animation", skill_animation_override.idskill_animation) as _skill_animation;
+			}
+		}
+		if (!(Global.getTemplate("skill", skill_id) is _skill skill))
+		{
+			return null;
+		}
+		return Global.getTemplate("skill_animation", skill.idskill_animation) as _skill_animation;
+	}
+
+	public SpiritBeastTooltip getSpiritTooltip(int side)
+	{
+		return spirit_tt[side];
+	}
+
+	public void CheckAssetLoaded(string AssetName)
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			if (spirit_tt[i] == null)
+			{
+				continue;
+			}
+			for (int j = 0; j < spirit_tt[i].skills.Count; j++)
+			{
+				if (spirit_tt[i].skills[j] != null && AssetName == spirit_tt[i].skills[j].icon_name)
+				{
+					spirit_tt[i].skills[j].icon = BaseAsset.LoadTexture(AssetName);
+				}
+			}
+		}
+	}
+
+	public void getArmyNum(out int attacker_num, out int attacker_lose_num, out int defender_num, out int defender_lose_num)
+	{
+		attacker_num = 0;
+		attacker_lose_num = 0;
+		for (int i = 0; i < m_report.left_army.legions.Count; i++)
+		{
+			attacker_num += m_report.left_army.legions[i].troop_base_num;
+			attacker_lose_num += m_report.left_army.legions[i].troop_lose_num;
+		}
+		defender_num = 0;
+		defender_lose_num = 0;
+		for (int j = 0; j < m_report.right_army.legions.Count; j++)
+		{
+			defender_num += m_report.right_army.legions[j].troop_base_num;
+			defender_lose_num += m_report.right_army.legions[j].troop_lose_num;
+		}
+	}
+
+	public void initBattleAsset(bool brawl_mode)
+	{
+		assetBehaviour.AddAsset("blob_shadow", bForce: false);
+		assetBehaviour.AddAsset("ui_main");
+		assetBehaviour.AddAsset("ui_battle");
+		assetBehaviour.AddAsset("ui_share2");
+		assetBehaviour.AddAsset("battle/battle" + m_report.battle_field);
+		assetBehaviour.AddAsset("battle/battle_sound");
+		assetBehaviour.AddAsset("battle/damage_effect", bForce: false);
+		assetBehaviour.AddAsset("battle/rage_effect", bForce: false);
+		assetBehaviour.AddAsset("battle/once_nuqi_full", bForce: false);
+		if (m_report.left_army.beast != null || m_report.right_army.beast != null)
+		{
+			assetBehaviour.AddAsset("ui_spiriticon");
+			assetBehaviour.AddAsset("ui_spirit");
+		}
+		assetBehaviour.AddAsset("ui_nationbattle");
+		addArmyAsset(b_attacker: true, m_report.left_army, brawl_mode);
+		addArmyAsset(b_attacker: false, m_report.right_army, brawl_mode);
+	}
+
+	private void addArmyAsset(bool b_attacker, BattleReport.ArmyInfo army_info, bool brawl_mode)
+	{
+		List<uint> list = new List<uint>();
+		List<int> skill_id_list = new List<int>();
+		foreach (BattleReport.ArmyInfo.LegionInfo legion in army_info.legions)
+		{
+			if (Global.getTemplate("army_template", (uint)legion.army_id) is _army_template army_template)
+			{
+				string text = ((!legion.male_model && army_template.model_name_female.Length != 0) ? army_template.model_name_female : army_template.model_name_male);
+				assetBehaviour.AddAsset("battle/" + text, bForce: false);
+			}
+			else
+			{
+				Logger.Log("can't find army template " + legion.army_id);
+			}
+			assetBehaviour.AddAsset("face" + legion.icon, bForce: false);
+			for (int i = 0; i < legion.used_armys.Count; i++)
+			{
+				if (Global.getTemplate("army_template", (uint)legion.used_armys[i]) is _army_template army_template2)
+				{
+					string text2 = ((!legion.male_model && army_template2.model_name_female.Length != 0) ? army_template2.model_name_female : army_template2.model_name_male);
+					assetBehaviour.AddAsset("battle/" + text2, bForce: false);
+				}
+			}
+			if (!brawl_mode)
+			{
+				for (int j = 0; j < legion.used_skills.Count; j++)
+				{
+					addSkillEffectAsset(b_attacker, legion.location, legion.used_skills[j], list, skill_id_list);
+				}
+				for (int k = 0; k < legion.used_buffs.Count; k++)
+				{
+					addBuffEffectAsset(legion.used_buffs[k], list);
+				}
+				for (int l = 0; l < legion.used_damages.Count; l++)
+				{
+					addDamageEffectAsset(legion.used_damages[l], list);
+				}
+			}
+		}
+		spirit_tt[(!b_attacker) ? 1u : 0u] = null;
+		if (army_info.beast != null)
+		{
+			if (Global.getTemplate("spirit_beast", army_info.beast.id) is _spirit_beast spirit_beast)
+			{
+				assetBehaviour.AddAsset("battle/" + spirit_beast.model_name, bForce: false);
+			}
+			if (!brawl_mode)
+			{
+				for (int m = 0; m < army_info.beast.skill_id.Count; m++)
+				{
+					addSkillEffectAsset(b_attacker, 0, army_info.beast.skill_id[m], list, skill_id_list);
+				}
+				for (int n = 0; n < army_info.beast.used_buffs.Count; n++)
+				{
+					addBuffEffectAsset(army_info.beast.used_buffs[n], list);
+				}
+				for (int num = 0; num < army_info.beast.used_damages.Count; num++)
+				{
+					addDamageEffectAsset(army_info.beast.used_damages[num], list);
+				}
+			}
+			spirit_tt[(!b_attacker) ? 1u : 0u] = new SpiritBeastTooltip(army_info.beast);
+			SpiritBeastTooltip spiritBeastTooltip = spirit_tt[(!b_attacker) ? 1u : 0u];
+			for (int num2 = 0; num2 < spiritBeastTooltip.skills.Count; num2++)
+			{
+				if (spiritBeastTooltip.skills[num2] != null)
+				{
+					assetBehaviour.AddAssetSub(spiritBeastTooltip.skills[num2].icon_name);
+				}
+			}
+		}
+		if (!list.Contains(27u))
+		{
+			list.Add(27u);
+		}
+		if (!list.Contains(28u))
+		{
+			list.Add(28u);
+		}
+		for (int num3 = 0; num3 < list.Count; num3++)
+		{
+			if (Global.getTemplate("battle_effect", list[num3]) is _battle_effect battle_effect && battle_effect.name.Length > 0)
+			{
+				assetBehaviour.AddAsset("battle/" + battle_effect.name, bForce: false);
+			}
+		}
+	}
+
+	private void addSkillEffectAsset(bool b_attacker, int actor_loc, int skill_id, List<uint> effect_id_list, List<int> skill_id_list)
+	{
+		if (skill_id_list.Contains(skill_id))
+		{
+			return;
+		}
+		skill_id_list.Add(skill_id);
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)skill_id);
+		if (skillAnimation != null)
+		{
+			if (!effect_id_list.Contains(skillAnimation.skill_action_effect))
+			{
+				effect_id_list.Add(skillAnimation.skill_action_effect);
+			}
+			if (!effect_id_list.Contains(skillAnimation.skill_handle_effect))
+			{
+				effect_id_list.Add(skillAnimation.skill_handle_effect);
+			}
+			if (!effect_id_list.Contains(skillAnimation.skill_fly_effect_id))
+			{
+				effect_id_list.Add(skillAnimation.skill_fly_effect_id);
+			}
+			if (!effect_id_list.Contains(skillAnimation.skill_attack_effect))
+			{
+				effect_id_list.Add(skillAnimation.skill_attack_effect);
+			}
+			if (!effect_id_list.Contains(skillAnimation.skill_hit_effect))
+			{
+				effect_id_list.Add(skillAnimation.skill_hit_effect);
+			}
+			if (!effect_id_list.Contains(skillAnimation.skill_transform_effect))
+			{
+				effect_id_list.Add(skillAnimation.skill_transform_effect);
+			}
+			if (skillAnimation.ground_setting != string.Empty)
+			{
+				assetBehaviour.AddAsset("battle/" + skillAnimation.ground_setting, bForce: false);
+			}
+		}
+	}
+
+	private void addBuffEffectAsset(uint buff_id, List<uint> effect_id_list)
+	{
+		if (Global.getTemplate("buff_table", buff_id) is _buff_table buff_table)
+		{
+			if (!effect_id_list.Contains(buff_table.effect_id))
+			{
+				effect_id_list.Add(buff_table.effect_id);
+			}
+			if (!effect_id_list.Contains(buff_table.trigger_effect_id))
+			{
+				effect_id_list.Add(buff_table.trigger_effect_id);
+			}
+			if (!effect_id_list.Contains(buff_table.hit_effect_id))
+			{
+				effect_id_list.Add(buff_table.hit_effect_id);
+			}
+		}
+	}
+
+	private void addDamageEffectAsset(uint damage_type, List<uint> effect_id_list)
+	{
+		switch (damage_type)
+		{
+		case 4u:
+			if (!effect_id_list.Contains(4u))
+			{
+				effect_id_list.Add(4u);
+			}
+			break;
+		case 5u:
+			if (!effect_id_list.Contains(24u))
+			{
+				effect_id_list.Add(24u);
+			}
+			break;
+		}
+	}
+
+	public virtual void InitTroop(bool invert_side)
+	{
+		UnityEngine.Object.Destroy(m_Battleground);
+		foreach (KeyValuePair<string, GameObject> item in m_EffectGround)
+		{
+			UnityEngine.Object.Destroy(item.Value);
+		}
+		m_EffectGround.Clear();
+		RemoveFlyEffect();
+		ClearActionQueue();
+		clearEffectTimer();
+		current_pass_troop_anim = null;
+		string text = "battle" + m_report.battle_field;
+		m_Battleground = BaseAsset.Instantiate_mainAsset("battle/" + text) as GameObject;
+		if (m_Battleground == null)
+		{
+			m_Battleground = new GameObject();
+		}
+		if (m_Battleground.GetComponent<CutSceneHelper>() != null)
+		{
+			m_Battleground.GetComponent<CutSceneHelper>().enabled = false;
+		}
+		m_Battleground.transform.parent = this.gameObject.transform;
+		Camera componentInChildren = m_Battleground.GetComponentInChildren<Camera>();
+		if (componentInChildren != null)
+		{
+			if ((bool)componentInChildren.gameObject.GetComponent<AudioListener>())
+			{
+				componentInChildren.gameObject.GetComponent<AudioListener>().enabled = false;
+			}
+			GameObject gameObject = new GameObject("listener");
+			gameObject.transform.parent = componentInChildren.transform;
+			gameObject.transform.localRotation = Quaternion.identity;
+			gameObject.transform.localPosition = new Vector3(0f, 0f, 60f);
+			gameObject.AddComponent<AudioListener>();
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			m_ArmyBehaviour[i] = new GameObject().AddComponent<ArmyBehaviour>();
+			m_ArmyBehaviour[i].transform.parent = m_Battleground.transform;
+			int num = ((!invert_side) ? i : (1 - i));
+			m_ArmyBehaviour[i].SetSide(num);
+			m_ArmyBehaviour[i].transform.localPosition = new Vector3(0f, 0f, 8 * ((num == 0) ? 1 : (-1)));
+			m_ArmyBehaviour[i].transform.localEulerAngles = new Vector3(0f, (num == 0) ? 180 : 0, 0f);
+			m_ArmyBehaviour[i].gameObject.layer = 9;
+			if (getSpiritTooltip(i) != null)
+			{
+				getSpiritTooltip(i).skill_used = 0;
+			}
+		}
+		Camera componentInChildren2 = m_Battleground.GetComponentInChildren<Camera>();
+		if (componentInChildren2 != null)
+		{
+			m_cameraPositionOrigin = componentInChildren2.transform.position;
+		}
+		m_ArmyBehaviour[0].Init(packet.left_army, 0, brawl_mode: false);
+		m_ArmyBehaviour[1].Init(packet.right_army, 0, brawl_mode: false);
+		bLegionBlocking = false;
+		playedTurnCount = 0;
+		Reset();
+	}
+
+	public virtual void MoveLegion(int location, bool isAttacker, Vector3 pos, float time_span)
+	{
+		m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].MoveAction(location, pos, time_span);
+	}
+
+	private void add_setup_ground(string name)
+	{
+		m_ArmyBehaviour[0].transform.parent = gameObject.transform;
+		m_ArmyBehaviour[1].transform.parent = gameObject.transform;
+		m_Battleground.SetActiveRecursively(state: false);
+		if (m_EffectGround.ContainsKey(name))
+		{
+			m_EffectGround[name].SetActiveRecursively(state: true);
+		}
+		else
+		{
+			m_EffectGround[name] = BaseAsset.Instantiate_mainAsset("battle/" + name) as GameObject;
+			if (m_EffectGround[name] == null)
+			{
+				m_EffectGround[name] = new GameObject();
+			}
+			m_EffectGround[name].transform.parent = gameObject.transform;
+		}
+		m_ArmyBehaviour[0].transform.parent = m_EffectGround[name].transform;
+		m_ArmyBehaviour[1].transform.parent = m_EffectGround[name].transform;
+	}
+
+	private void remove_setup_ground(string name)
+	{
+		m_ArmyBehaviour[0].transform.parent = gameObject.transform;
+		m_ArmyBehaviour[1].transform.parent = gameObject.transform;
+		if (m_EffectGround.ContainsKey(name))
+		{
+			m_EffectGround[name].SetActiveRecursively(state: false);
+		}
+		m_Battleground.SetActiveRecursively(state: true);
+		m_ArmyBehaviour[0].transform.parent = m_Battleground.transform;
+		m_ArmyBehaviour[1].transform.parent = m_Battleground.transform;
+	}
+
+	public virtual void AddEffect(int location, bool isAttacker, uint id, float span, bool attach_to_unit)
+	{
+		if (!bShowEffect || !(Global.getTemplate("battle_effect", id) is _battle_effect battle_effect) || battle_effect.name.Length <= 0)
+		{
+			return;
+		}
+		int num = hasEffectTimed(location, isAttacker, id);
+		if (num != -1)
+		{
+			if (m_EffectControlList[num].time_span + m_EffectControlList[num].start_time < Time.time + span)
+			{
+				m_EffectControlList[num].time_span = span;
+				m_EffectControlList[num].start_time = Time.time;
+			}
+		}
+		else
+		{
+			m_EffectControlList.Add(new EffectTimer(location, isAttacker, id, span));
+		}
+		float size_scale = 1f;
+		m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].AddEffect(location, battle_effect.name, battle_effect.speed_scale, size_scale, battle_effect.area_type, attach_to_unit);
+	}
+
+	public virtual void AddEffect(int location, bool isAttacker, uint id, float span, bool attach_to_unit, string se_name)
+	{
+		float size_scale = 1f;
+		_battle_effect battle_effect = null;
+		if (bShowEffect)
+		{
+			battle_effect = Global.getTemplate("battle_effect", id) as _battle_effect;
+		}
+		int num = hasEffectTimed(location, isAttacker, id);
+		if (num != -1)
+		{
+			if (m_EffectControlList[num].time_span + m_EffectControlList[num].start_time < Time.time + span)
+			{
+				m_EffectControlList[num].time_span = span;
+				m_EffectControlList[num].start_time = Time.time;
+			}
+		}
+		else
+		{
+			m_EffectControlList.Add(new EffectTimer(location, isAttacker, id, span));
+		}
+		object obj;
+		if (se_name == null)
+		{
+			obj = null;
+		}
+		else if (soundEffectDict.ContainsKey(se_name))
+		{
+			obj = soundEffectDict[se_name];
+		}
+		else
+		{
+			AudioClip audioClip = BaseAsset.LoadAsset_named("battle/battle_sound", se_name) as AudioClip;
+			soundEffectDict[se_name] = audioClip;
+			obj = audioClip;
+		}
+		AudioClip se_clip = (AudioClip)obj;
+		if (battle_effect == null)
+		{
+			m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].AddEffect(location, null, 0f, 1f, 2, attach_to_unit, se_clip);
+		}
+		else
+		{
+			m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].AddEffect(location, battle_effect.name, battle_effect.speed_scale, size_scale, battle_effect.area_type, attach_to_unit, se_clip);
+		}
+	}
+
+	protected virtual int hasEffectTimed(int loc, bool att, uint id)
+	{
+		for (int i = 0; i < m_EffectControlList.Count; i++)
+		{
+			if (m_EffectControlList[i].index == loc && m_EffectControlList[i].attacker == att && m_EffectControlList[i].effect_id == id)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private void updateEffectTimer()
+	{
+		for (int i = 0; i < m_EffectControlList.Count; i++)
+		{
+			if (m_EffectControlList[i].isFinished())
+			{
+				RemoveEffect(m_EffectControlList[i].index, m_EffectControlList[i].attacker, m_EffectControlList[i].effect_id);
+				m_EffectControlList.RemoveAt(i);
+				i--;
+			}
+		}
+	}
+
+	public void removeEndlessEffect(int loc, bool attacker)
+	{
+		for (int i = 0; i < m_EffectControlList.Count; i++)
+		{
+			if (m_EffectControlList[i].index == loc && m_EffectControlList[i].attacker == attacker && m_EffectControlList[i].isForever())
+			{
+				RemoveEffect(m_EffectControlList[i].index, m_EffectControlList[i].attacker, m_EffectControlList[i].effect_id);
+				m_EffectControlList.RemoveAt(i);
+				i--;
+			}
+		}
+	}
+
+	public void RemoveEffect(int location, bool isAttacker, uint id)
+	{
+		if (Global.getTemplate("battle_effect", id) is _battle_effect battle_effect && battle_effect.name.Length > 0)
+		{
+			m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].RemoveEffect(location, battle_effect.name);
+		}
+	}
+
+	public virtual void AddFlyEffect(uint eff_id, int attacker_loc, bool attacker_side, List<int> target_loc, bool target_side, float speed, float destroy_delay)
+	{
+		if (!(Global.getTemplate("battle_effect", eff_id) is _battle_effect battle_effect) || battle_effect.name.Length <= 0)
+		{
+			return;
+		}
+		GameObject gameObject = BaseAsset.Instantiate_mainAsset("battle/" + battle_effect.name) as GameObject;
+		if (gameObject == null)
+		{
+			gameObject = new GameObject();
+		}
+		BaseAsset.SetLayerRecursively(gameObject, 9);
+		Vector3 localPosition = gameObject.transform.localPosition;
+		Quaternion localRotation = gameObject.transform.localRotation;
+		gameObject.transform.parent = m_ArmyBehaviour[(!attacker_side) ? 1u : 0u].getLegionTransform(attacker_loc);
+		gameObject.transform.localPosition = localPosition;
+		gameObject.transform.localRotation = localRotation;
+		gameObject.transform.parent = this.gameObject.transform;
+		gameObject.AddComponent<BasicEffectBehaviour>();
+		List<Vector3> list = new List<Vector3>();
+		if (battle_effect.area_type == 2)
+		{
+			list.Add(m_ArmyBehaviour[(!target_side) ? 1u : 0u].getLegionOriginPos(-1));
+		}
+		else
+		{
+			for (int i = 0; i < target_loc.Count; i++)
+			{
+				list.Add(m_ArmyBehaviour[(!target_side) ? 1u : 0u].getLegionOriginPos(target_loc[i]));
+			}
+		}
+		m_flyEffect = new FlyEffect(eff_id, gameObject, list, speed, destroy_delay);
+	}
+
+	public void RemoveFlyEffect()
+	{
+		if (m_flyEffect != null)
+		{
+			m_flyEffect.Destroy();
+		}
+		m_flyEffect = null;
+	}
+
+	public bool FlyToNextTarget()
+	{
+		bool flag = false;
+		if (m_flyEffect != null)
+		{
+			flag = m_flyEffect.NextTarget();
+			if (!flag)
+			{
+				m_flyEffect = null;
+			}
+		}
+		return flag;
+	}
+
+	public bool isEffectFlying()
+	{
+		return m_flyEffect != null && m_flyEffect.Flying();
+	}
+
+	public void FlyEffectWait(float sec)
+	{
+		m_flyWait = sec;
+	}
+
+	private void updateFlyEffect()
+	{
+		if (m_flyEffect != null && m_flyWait <= 0f)
+		{
+			m_flyEffect.UpdatePosition();
+		}
+	}
+
+	public virtual float GetFlyEffectDuration()
+	{
+		if (m_flyEffect != null)
+		{
+			return m_flyEffect.GetFlyDuration();
+		}
+		return 0f;
+	}
+
+	protected void clearEffectTimer()
+	{
+		for (int i = 0; i < m_EffectControlList.Count; i++)
+		{
+			RemoveEffect(m_EffectControlList[i].index, m_EffectControlList[i].attacker, m_EffectControlList[i].effect_id);
+		}
+		m_EffectControlList.Clear();
+	}
+
+	protected virtual void OnNewTurn(BattleReport.GameTurn turn)
+	{
+		playedTurnCount++;
+		left_turn_move = turn.left_move_num;
+		right_turn_move = turn.right_move_num;
+		if (_new_turn_callback != null)
+		{
+			_new_turn_callback();
+		}
+	}
+
+	public virtual float skillAction(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		if (!action.is_normal && Global.getTemplate("skill", (uint)action.skill_id) is _skill skill)
+		{
+			DoShowBanner(b_attacker, skill.name, 0.3f, 1f, 1f);
+		}
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+		if (skillAnimation != null && skillAnimation.ground_setting.Length > 0)
+		{
+			add_setup_ground(skillAnimation.ground_setting);
+		}
+		if (b_attacker)
+		{
+			left_turn_move--;
+		}
+		else
+		{
+			right_turn_move--;
+		}
+		return 0f;
+	}
+
+	public void TroopAction(int location, bool isAttacker, TroopActionID id)
+	{
+		if (bShowSpiritAnim || location != 0)
+		{
+			m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].TroopAction(location, id);
+		}
+	}
+
+	public void DoShowBanner(bool isAttacker, string str, float slideTime, float holdTime, float fadeTime)
+	{
+		if (isAttacker)
+		{
+			addBanner(str, new Vector2(7f * __BaseUI._screenScale - 498f, 122f * __BaseUI._screenScale), new Vector2(7f * __BaseUI._screenScale, 122f * __BaseUI._screenScale), slideTime, holdTime, fadeTime);
+		}
+		else
+		{
+			addBanner(str, new Vector2(__BaseUI._rcCur.width - 7f * __BaseUI._screenScale, __BaseUI._rcCur.height - 165f * __BaseUI._screenScale), new Vector2(__BaseUI._rcCur.width - 7f * __BaseUI._screenScale - 498f, __BaseUI._rcCur.height - 165f * __BaseUI._screenScale), slideTime, holdTime, fadeTime);
+		}
+	}
+
+	public void ChangeSceneSetting(int index)
+	{
+		CutSceneManager component = m_Battleground.GetComponent<CutSceneManager>();
+		if (component != null)
+		{
+			component.Play(index);
+		}
+	}
+
+	public virtual float skillActionEnd(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+		if (skillAnimation != null && skillAnimation.ground_setting.Length > 0)
+		{
+			remove_setup_ground(skillAnimation.ground_setting);
+		}
+		if (actor_loc == 0)
+		{
+			SpiritBeastTooltip spiritTooltip = getSpiritTooltip((!b_attacker) ? 1 : 0);
+			if (spiritTooltip != null)
+			{
+				spiritTooltip.skill_used_list.Add((uint)action.skill_id);
+				spiritTooltip.skill_used++;
+			}
+		}
+		return movebackAction(actor_loc, b_attacker);
+	}
+
+	public virtual float skillHandle(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return doActionHandle(action.skill_id, actor_loc, b_attacker, action.target_locations, action.target_side == BattleReport.GameTurn.Action.LegionSide.LEGION_LEFT);
+	}
+
+	public virtual float skillHandleEnd(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return 0f;
+	}
+
+	public virtual float targetHandleBegin(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		if (action.skill_id >= 0)
+		{
+			_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+			if (skillAnimation != null && skillAnimation.skill_fly_effect_during_time > 0f && isEffectFlying())
+			{
+				FlyEffectWait(skillAnimation.skill_hit_delay_time);
+				AddMainAction(new WaitAction2(skillAnimation.skill_hit_delay_time));
+			}
+		}
+		return -1f;
+	}
+
+	public virtual float targetHandleEnd(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		if (action.skill_id >= 0)
+		{
+			_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+			if (skillAnimation != null && skillAnimation.skill_fly_effect_during_time > 0f && isEffectFlying())
+			{
+				FlyEffectWait(-1f);
+				if (FlyToNextTarget())
+				{
+					AddMainAction(new WaitAction2(GetFlyEffectDuration()));
+				}
+			}
+		}
+		return -1f;
+	}
+
+	public virtual float one_pass_begin(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		CurrentStepMode = StepMode.Batch;
+		BatchWaitMax = 0f;
+		current_pass_troop_anim = m_ArmyBehaviour[(!b_attacker) ? 1u : 0u].getLegionTroopAnimation(actor_loc);
+		return -1f;
+	}
+
+	public virtual float one_pass_end(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		CurrentStepMode = StepMode.SingleStep;
+		current_pass_troop_anim = null;
+		return (!(BatchWaitMax >= 0f)) ? DefaultTurnSpan : BatchWaitMax;
+	}
+
+	public virtual float counterBegin(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		doShowInfo(BattleShowInfo.Counter, actor_loc, b_attacker);
+		return 0f;
+	}
+
+	public virtual float counterEnd(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return -1f;
+	}
+
+	public virtual float dodge(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		if (action.damage_type == 3 || action.damage_type == 1)
+		{
+			doShowInfo(BattleShowInfo.Dodge, actor_loc, b_attacker);
+		}
+		else
+		{
+			doShowInfo(BattleShowInfo.Fail, actor_loc, b_attacker);
+		}
+		return 0f;
+	}
+
+	public virtual float block(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		int hit_point = action.hit_point;
+		bool critical = action.critical;
+		int absorb_point = action.absorb_point;
+		for (int i = 0; i < action.buff_effects.Count; i++)
+		{
+			if (Global.getTemplate("buff_table", action.buff_effects[i]) is _buff_table { hit_effect_id: >0 } buff_table)
+			{
+				AddEffect(actor_loc, b_attacker, buff_table.hit_effect_id, 1f, attach_to_unit: true);
+			}
+		}
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+		if (skillAnimation != null)
+		{
+			string text = ((Global.getTemplate("skill_sound", skillAnimation.id) is _skill_sound skill_sound) ? skill_sound.hit_effect : string.Empty);
+			if (text.Length == 0)
+			{
+				if (current_pass_troop_anim != null)
+				{
+					switch (skillAnimation.skill_handle_animation)
+					{
+					case 0:
+						text = current_pass_troop_anim.hit_sound01;
+						break;
+					case 1:
+						text = current_pass_troop_anim.hit_sound02;
+						break;
+					case 2:
+						text = current_pass_troop_anim.hit_sound03;
+						break;
+					case 3:
+						text = current_pass_troop_anim.hit_sound04;
+						break;
+					}
+				}
+			}
+			else if (text == "-")
+			{
+				text = null;
+			}
+			AddMainAction(new EffectAction2(actor_loc, b_attacker, skillAnimation.skill_hit_effect, skillAnimation.skill_hit_effect_time, attach_to_unit: true, text));
+		}
+		doShowInfo(BattleShowInfo.Block, actor_loc, b_attacker);
+		return doBeHit(actor_loc, b_attacker, hit_point, absorb_point, critical, b_executed: false, skillAnimation);
+	}
+
+	public virtual float beHit(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		int hit_point = action.hit_point;
+		bool critical = action.critical;
+		bool executed = action.executed;
+		int absorb_point = action.absorb_point;
+		for (int i = 0; i < action.buff_effects.Count; i++)
+		{
+			if (Global.getTemplate("buff_table", action.buff_effects[i]) is _buff_table { hit_effect_id: >0 } buff_table)
+			{
+				AddEffect(actor_loc, b_attacker, buff_table.hit_effect_id, 1f, attach_to_unit: true);
+			}
+		}
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+		if (skillAnimation != null)
+		{
+			string text = ((Global.getTemplate("skill_sound", skillAnimation.id) is _skill_sound skill_sound) ? skill_sound.hit_effect : string.Empty);
+			if (text.Length == 0)
+			{
+				if (current_pass_troop_anim != null)
+				{
+					switch (skillAnimation.skill_handle_animation)
+					{
+					case 0:
+						text = current_pass_troop_anim.hit_sound01;
+						break;
+					case 1:
+						text = current_pass_troop_anim.hit_sound02;
+						break;
+					case 2:
+						text = current_pass_troop_anim.hit_sound03;
+						break;
+					case 3:
+						text = current_pass_troop_anim.hit_sound04;
+						break;
+					}
+				}
+			}
+			else if (text == "-")
+			{
+				text = null;
+			}
+			AddMainAction(new EffectAction2(actor_loc, b_attacker, skillAnimation.skill_hit_effect, skillAnimation.skill_hit_effect_time, attach_to_unit: true, text));
+		}
+		return action.damage_type switch
+		{
+			4u => doRecovery(actor_loc, b_attacker, critical, hit_point), 
+			5u => doInspire(actor_loc, b_attacker), 
+			_ => doBeHit(actor_loc, b_attacker, hit_point, absorb_point, critical, executed, skillAnimation), 
+		};
+	}
+
+	public virtual float addRage(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return doAddRage(actor_loc, b_attacker, action.add_rage_num);
+	}
+
+	public virtual float dead(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return doDead(actor_loc, b_attacker);
+	}
+
+	public virtual float revive(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		return doRevive(action.hit_point, actor_loc, b_attacker);
+	}
+
+	public virtual float buffOperation(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		ushort num = (ushort)action.buff;
+		_buff_table buff_table = Global.getTemplate("buff_table", num) as _buff_table;
+		if (buff_table == null)
+		{
+			Debug.Log("no buff id in buff_table:" + num);
+		}
+		if (action.buff_op == BattleReport.GameTurn.Action.BuffOperationType.add_buff)
+		{
+			SetBuff(actor_loc, b_attacker, num, flag: true);
+			if (buff_table != null)
+			{
+				if (buff_table.trigger_effect_id > 0)
+				{
+					AddEffect(actor_loc, b_attacker, buff_table.trigger_effect_id, 1f, attach_to_unit: true);
+				}
+				if (buff_table.effect_id > 0)
+				{
+					AddEffect(actor_loc, b_attacker, buff_table.effect_id, -1f, attach_to_unit: true);
+				}
+			}
+			for (int i = 0; i < status_buff_id_list.Length; i++)
+			{
+				if (status_buff_id_list[i] == num)
+				{
+					doShowInfo(status_info_list[i], actor_loc, b_attacker);
+					break;
+				}
+			}
+		}
+		else if (action.buff_op == BattleReport.GameTurn.Action.BuffOperationType.remove_buff)
+		{
+			SetBuff(actor_loc, b_attacker, num, flag: false);
+			if (buff_table != null && buff_table.effect_id > 0)
+			{
+				AddEffect(actor_loc, b_attacker, 0u, -1f, attach_to_unit: true, buff_table.rem_sound);
+				RemoveEffect(actor_loc, b_attacker, buff_table.effect_id);
+			}
+		}
+		return -1f;
+	}
+
+	public virtual float actionMove(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.skill_id);
+		if (skillAnimation != null)
+		{
+			if (skillAnimation.skill_move_type == 3)
+			{
+				return -1f;
+			}
+			if (action.target_locations.Count > 0)
+			{
+				return moveAction(actor_loc, b_attacker, action.target_locations[0], action.target_side == BattleReport.GameTurn.Action.LegionSide.LEGION_LEFT, skillAnimation.skill_move_type);
+			}
+		}
+		return -1f;
+	}
+
+	public float moveAction(int location, bool isAttacker, int target_location, bool target_isAttacker, byte move_type)
+	{
+		float result = -1f;
+		Vector3 resultPos = new Vector3(0f, 0f, 0f);
+		if (m_ArmyBehaviour[(!target_isAttacker) ? 1u : 0u].getTargetPosition(target_location, move_type, ref resultPos))
+		{
+			if (!m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].NeedMove(location, resultPos))
+			{
+				return 0f;
+			}
+			float wait_len = 0f;
+			float move_len = 0f;
+			float move_end = 0f;
+			m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].GetMoveTime(location, ref wait_len, ref move_len, ref move_end);
+			AddLegionAction(isAttacker, location, new TroopAnimAction2(location, isAttacker, TroopActionID.Jump));
+			if (wait_len > 0f)
+			{
+				AddLegionAction(isAttacker, location, new WaitAction2(wait_len));
+			}
+			AddLegionAction(isAttacker, location, new MoveAction2(location, isAttacker, resultPos, move_len));
+			if (move_len > 0f)
+			{
+				AddLegionAction(isAttacker, location, new WaitAction2(move_len));
+			}
+		}
+		return result;
+	}
+
+	public float movebackAction(int location, bool isAttacker)
+	{
+		if (!m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].NeedMove(location, m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].getLegionOriginPos(location)))
+		{
+			return 0f;
+		}
+		float wait_len = 0f;
+		float move_len = 0f;
+		float move_end = 0f;
+		m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].GetMoveTime(location, ref wait_len, ref move_len, ref move_end);
+		AddLegionAction(isAttacker, location, new TroopAnimAction2(location, isAttacker, TroopActionID.Jump));
+		if (wait_len > 0f)
+		{
+			AddLegionAction(isAttacker, location, new WaitAction2(wait_len));
+		}
+		AddLegionAction(isAttacker, location, new MoveAction2(location, isAttacker, m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].getLegionOriginPos(location), move_len));
+		if (move_len > 0f)
+		{
+			AddLegionAction(isAttacker, location, new WaitAction2(move_len));
+		}
+		return defaultTurnWaitSpan;
+	}
+
+	public virtual float actionTransform(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)action.transform_skill_id);
+		if (skillAnimation != null)
+		{
+			_skill_sound skill_sound = Global.getTemplate("skill_sound", skillAnimation.id) as _skill_sound;
+			AddEffect(actor_loc, b_attacker, skillAnimation.skill_transform_effect, skillAnimation.skill_transform_effect_time, attach_to_unit: false, skill_sound?.transform_effect);
+			AddLegionAction(b_attacker, actor_loc, new WaitAction2(skillAnimation.skill_transform_delay));
+		}
+		Hashtable hashtable = new Hashtable();
+		hashtable["idarmy"] = action.army_id;
+		hashtable["idskill"] = action.skill_id;
+		hashtable["rage_cast"] = action.rage_cast_transform;
+		hashtable["rage_max"] = action.rage_max_transform;
+		AddLegionAction(b_attacker, actor_loc, new QueuedDoAction2(actor_loc, b_attacker, "transform", hashtable));
+		return 0f;
+	}
+
+	public virtual float actionTransformBack(bool b_attacker, int actor_loc, BattleReport.GameTurn.Action action)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["idarmy"] = action.army_id;
+		hashtable["idskill"] = action.skill_id;
+		hashtable["rage_cast"] = action.rage_cast_transform;
+		hashtable["rage_max"] = action.rage_max_transform;
+		return doAction(actor_loc, b_attacker, "transformBack", hashtable);
+	}
+
+	protected virtual float doActionHandle(int skill_id, int actor_loc, bool b_attacker, List<int> target_loc, bool target_attacker)
+	{
+		_skill_animation skillAnimation = getSkillAnimation(b_attacker, actor_loc, (uint)skill_id);
+		if (skillAnimation != null)
+		{
+			_skill_sound skill_sound = Global.getTemplate("skill_sound", skillAnimation.id) as _skill_sound;
+			if (skillAnimation.light_setting > 0)
+			{
+				ChangeSceneSetting(skillAnimation.light_setting);
+			}
+			if (b_attacker && skillAnimation.camera_setting1 > 0)
+			{
+				ChangeSceneSetting(skillAnimation.camera_setting1);
+			}
+			else if (!b_attacker && skillAnimation.camera_setting0 > 0)
+			{
+				ChangeSceneSetting(skillAnimation.camera_setting0);
+			}
+			AddEffect(actor_loc, b_attacker, skillAnimation.skill_handle_effect, skillAnimation.skill_handle_time, attach_to_unit: true, skill_sound?.handle);
+			Hashtable hashtable = new Hashtable();
+			hashtable["action"] = skillAnimation.skill_handle_animation;
+			AddMainAction(new EffectAction2(actor_loc, b_attacker, skillAnimation.skill_attack_effect, skillAnimation.skill_attack_effect_time, attach_to_unit: false, skill_sound?.attack));
+			if (skillAnimation.skill_fly_effect_id != 0)
+			{
+				AddMainAction(new WaitAction2(skillAnimation.skill_fly_effect_start_time));
+				if (skillAnimation.skill_fly_effect_during_time == 0f)
+				{
+					for (int i = 0; i < target_loc.Count; i++)
+					{
+						AddMainAction(new EffectAction2(target_loc[i], target_attacker, skillAnimation.skill_fly_effect_id, skillAnimation.skill_fly_effect_time, attach_to_unit: true, skill_sound?.fly_effect));
+					}
+					AddMainAction(new WaitAction2(skillAnimation.skill_hit_delay_time));
+				}
+				if (skillAnimation.skill_fly_effect_during_time > 0f)
+				{
+					AddMainAction(new FlyEffectAction2(actor_loc, b_attacker, skillAnimation.skill_fly_effect_id, target_loc, target_attacker, skillAnimation.skill_fly_effect_during_time, skillAnimation.skill_fly_effect_time));
+				}
+			}
+			else
+			{
+				AddMainAction(new WaitAction2(skillAnimation.skill_hit_delay_time));
+			}
+			return doAction(actor_loc, b_attacker, "ActionHandle", hashtable);
+		}
+		return 0f;
+	}
+
+	private float doShowInfo(BattleShowInfo info, int actor_loc, bool b_attacker)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["info"] = info;
+		return doAction(actor_loc, b_attacker, "ShowInfo", hashtable);
+	}
+
+	public float doAction(int location, bool isAttacker, string op_str, Hashtable param)
+	{
+		if (!bShowSpiritAnim && location == 0 && (op_str == "Action" || op_str == "ActionHandle"))
+		{
+			return 0f;
+		}
+		AddLegionAction(isAttacker, location, new WaitAction2(getLegionActionLength(isAttacker, location, op_str, param)));
+		return m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].DoAction(location, op_str, param);
+	}
+
+	protected float doBeHit(int actor_loc, bool b_attacker, int point, int absorb_point, bool b_critical, bool b_executed, _skill_animation skill_anim)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["point"] = point;
+		hashtable["critical"] = b_critical;
+		hashtable["executed"] = b_executed;
+		hashtable["can_blow"] = skill_anim?.blow_away_when_dead ?? false;
+		hashtable["absorb"] = absorb_point;
+		if (skill_anim != null && skill_anim.damage_shake_camera)
+		{
+			BattleReport.ArmyInfo armyInfo = ((!b_attacker) ? m_report.right_army : m_report.left_army);
+			for (int i = 0; i < armyInfo.legions.Count; i++)
+			{
+				if (armyInfo.legions[i].location == actor_loc)
+				{
+					if ((float)point >= (float)armyInfo.legions[i].troop_base_num * 0.2f)
+					{
+						ShakeCamera(0.2f, 2);
+					}
+					break;
+				}
+			}
+		}
+		if (point > 0)
+		{
+			AddEffect(actor_loc, b_attacker, (!b_critical) ? 27u : 28u, 1f, attach_to_unit: true);
+		}
+		return doAction(actor_loc, b_attacker, "beHit", hashtable);
+	}
+
+	protected float doRecovery(int actor_loc, bool b_attacker, bool b_critical, int point)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["point"] = point;
+		hashtable["critical"] = b_critical;
+		AddEffect(actor_loc, b_attacker, 4u, 2f, attach_to_unit: true);
+		return doAction(actor_loc, b_attacker, "recovery", hashtable);
+	}
+
+	protected float doInspire(int actor_loc, bool b_attacker)
+	{
+		AddEffect(actor_loc, b_attacker, 24u, 1f, attach_to_unit: true);
+		return -1f;
+	}
+
+	protected float doAddRage(int actor_loc, bool b_attacker, int point)
+	{
+		if (point != 0)
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable["point"] = point;
+			doAction(actor_loc, b_attacker, "addRage", hashtable);
+		}
+		return 0f;
+	}
+
+	protected virtual float doDead(int actor_loc, bool b_attacker)
+	{
+		removeEndlessEffect(actor_loc, b_attacker);
+		return doAction(actor_loc, b_attacker, "dead", null);
+	}
+
+	protected float doRevive(int revive_point, int actor_loc, bool b_attacker)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable["point"] = revive_point;
+		return doAction(actor_loc, b_attacker, "revive", hashtable);
+	}
+
+	public void SetBuff(int location, bool b_attacker, ushort buff_id, bool flag)
+	{
+		m_ArmyBehaviour[(!b_attacker) ? 1u : 0u].SetBuff(location, buff_id, flag);
+	}
+
+	public float getLegionActionLength(bool isAttacker, int location, string op_str, Hashtable param)
+	{
+		return m_ArmyBehaviour[(!isAttacker) ? 1u : 0u].GetLegionActionLength(location, op_str, param);
+	}
+
+	public ArmyBehaviour getArmyBehaviour(int index)
+	{
+		return m_ArmyBehaviour[index];
+	}
+
+	protected void ClearActionQueue()
+	{
+		_MainActionQueue.Clear();
+		for (int i = 0; i < 2; i++)
+		{
+			foreach (KeyValuePair<int, ActionQueue2> item in _LegionActionQueue[i])
+			{
+				item.Value.Clear();
+			}
+		}
+	}
+
+	public void AddMainAction(BattleAction2 action)
+	{
+		_MainActionQueue.AddAction(action);
+	}
+
+	public void AddLegionAction(bool b_attack, int index, BattleAction2 action)
+	{
+		int num = ((!b_attack) ? 1 : 0);
+		if (!_LegionActionQueue[num].ContainsKey(index))
+		{
+			_LegionActionQueue[num][index] = new ActionQueue2(this);
+		}
+		_LegionActionQueue[num][index].AddAction(action);
+	}
+
+	public bool isLegionBlocked(bool b_attack, int index)
+	{
+		int num = ((!b_attack) ? 1 : 0);
+		if (!_LegionActionQueue[num].ContainsKey(index))
+		{
+			return false;
+		}
+		return _LegionActionQueue[num][index].isActionQueued() || _LegionActionQueue[num][index].isWaiting();
+	}
+
+	public void ExecLegionAction()
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			foreach (KeyValuePair<int, ActionQueue2> item in _LegionActionQueue[i])
+			{
+				while (!item.Value.isWaiting() && item.Value.isActionQueued())
+				{
+					item.Value.ExecQueuedAction();
+				}
+			}
+		}
+	}
+
+	public bool allLegionFinished()
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			foreach (KeyValuePair<int, ActionQueue2> item in _LegionActionQueue[i])
+			{
+				if (!item.Value.isFinished())
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	private void updateBanners()
+	{
+		for (int i = 0; i < BannerList.Count; i++)
+		{
+			if (!BannerList[i].Update())
+			{
+				BannerList.RemoveAt(i);
+				i--;
+			}
+		}
+	}
+
+	public virtual void drawBanners(GUIStyle skillBannerStyle, GUIStyle skillBannerTextStyle)
+	{
+		for (int i = 0; i < BannerList.Count; i++)
+		{
+			BannerList[i].Draw(skillBannerStyle, skillBannerTextStyle);
+		}
+	}
+
+	private void addBanner(string _msg, Vector2 _start, Vector2 _end, float _slide, float _hold, float _fade)
+	{
+		BannerList.Add(new Banner(_msg, _start, _end, _slide, _hold, _fade));
+	}
+
+	private void ShakeCamera(float d, int t)
+	{
+		m_cameraShake = true;
+		m_cameraShakeDuration = d;
+		m_cameraShakeTimes = t;
+		m_cameraShakeStart = Time.time;
+	}
+}

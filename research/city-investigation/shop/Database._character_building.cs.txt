@@ -1,0 +1,61 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _character_building
+{
+	public byte id;
+
+	public byte idbuilding;
+
+	public byte idisland;
+
+	public byte x;
+
+	public byte y;
+
+	public byte idproduct;
+
+	public bool lucky;
+
+	public bool gathering;
+
+	public byte rotation;
+
+	public uint start_time;
+
+	public uint build_time;
+
+	public uint cd_time;
+
+	public byte level;
+
+	public int havest_times;
+
+	public uint next_havest_time;
+
+	public uint upgrade_finish;
+
+	public bool mining;
+
+	public void Set(db_character_building d)
+	{
+		id = (byte)d.id;
+		idbuilding = (byte)d.idbuilding;
+		idisland = (byte)d.idisland;
+		x = (byte)d.x;
+		y = (byte)d.y;
+		idproduct = (byte)d.idproduct;
+		lucky = d.lucky;
+		gathering = d.gathering;
+		rotation = (byte)d.rotation;
+		start_time = d.start_time;
+		build_time = d.build_time;
+		cd_time = d.cd_time;
+		level = (byte)d.level;
+		havest_times = d.havest_times;
+		next_havest_time = d.next_havest_time;
+		upgrade_finish = d.upgrade_finish;
+		mining = d.mining;
+	}
+}

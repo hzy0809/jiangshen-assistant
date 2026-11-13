@@ -1,0 +1,55 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _seven_days_login_bonus
+{
+	public ushort idloginday;
+
+	public sbyte bonus1_type;
+
+	public int bonus1_param0;
+
+	public int bonus1_param1;
+
+	public sbyte bonus2_type;
+
+	public int bonus2_param0;
+
+	public int bonus2_param1;
+
+	public void Set(_seven_days_login_bonus d)
+	{
+		idloginday = d.idloginday;
+		bonus1_type = d.bonus1_type;
+		bonus1_param0 = d.bonus1_param0;
+		bonus1_param1 = d.bonus1_param1;
+		bonus2_type = d.bonus2_type;
+		bonus2_param0 = d.bonus2_param0;
+		bonus2_param1 = d.bonus2_param1;
+	}
+
+	public void Set(db_seven_days_login_bonus d)
+	{
+		idloginday = (ushort)d.idloginday;
+		bonus1_type = (sbyte)d.bonus1_type;
+		bonus1_param0 = d.bonus1_param0;
+		bonus1_param1 = d.bonus1_param1;
+		bonus2_type = (sbyte)d.bonus2_type;
+		bonus2_param0 = d.bonus2_param0;
+		bonus2_param1 = d.bonus2_param1;
+	}
+
+	public void Get(ref db_seven_days_login_bonus d)
+	{
+		d.idloginday = idloginday;
+		d.bonus1_type = bonus1_type;
+		d.bonus1_param0 = bonus1_param0;
+		d.bonus1_param1 = bonus1_param1;
+		d.bonus2_type = bonus2_type;
+		d.bonus2_param0 = bonus2_param0;
+		d.bonus2_param1 = bonus2_param1;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

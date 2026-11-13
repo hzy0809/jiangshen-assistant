@@ -1,0 +1,9 @@
+﻿{
+    "status":  "PASS",
+    "test_exit":  0,
+    "source_hashes_stable":  true,
+    "game_access":  false,
+    "network_access":  false,
+    "real_named_ipc":  true,
+    "limitations":  "Detached stock callback branches and reflection/transport boundary; no live gameplay, scene loading or business acceptance."
+}

@@ -1,0 +1,53 @@
+{
+  "status": "PASS",
+  "pid": 20976,
+  "field": "chinese_new_year_lottery_times",
+  "target_count": 1,
+  "write_attempts": 1,
+  "started_at_utc": "2026-10-30T18:18:28.017917+00:00",
+  "receipt_dir": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\local-lottery-count-write\\20261031-021828",
+  "scope": "One-byte local remaining-draw-count write; no draw request or draw action",
+  "count_before": 0,
+  "count_address": "0x22fee328",
+  "field_metadata": {
+    "name": "chinese_new_year_lottery_times",
+    "descriptor": "0x11f4bb88",
+    "type_pointer": "0x11f751e0",
+    "type_data": 0,
+    "offset": 808,
+    "type_enum": 4,
+    "flags": 6,
+    "declared_ordinal": 246,
+    "offline_field_token": "0x40002ec",
+    "offline_signature": "06-04"
+  },
+  "write_at_utc": "2026-10-30T18:18:28.156595+00:00",
+  "write_api_success": true,
+  "bytes_written": 1,
+  "immediate_count": 1,
+  "neighbor_bytes_unchanged": true,
+  "independent_snapshots": [
+    {
+      "observed_at_utc": "2026-10-30T18:18:28.233242+00:00",
+      "count": 1,
+      "other_values": {
+        "level": 86,
+        "stamina": 20,
+        "gold": 450
+      },
+      "same_identity": true
+    },
+    {
+      "observed_at_utc": "2026-10-30T18:18:31.359555+00:00",
+      "count": 1,
+      "other_values": {
+        "level": 86,
+        "stamina": 20,
+        "gold": 450
+      },
+      "same_identity": true
+    }
+  ],
+  "server_extra_draw_acceptance": "UNVERIFIED",
+  "completed_at_utc": "2026-10-30T18:18:31.413931+00:00"
+}

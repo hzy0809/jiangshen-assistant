@@ -1,0 +1,35 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _premium_general_quest
+{
+	public short idgeneral_template;
+
+	public int quest_startid;
+
+	public int quest_maxstep;
+
+	public void Set(_premium_general_quest d)
+	{
+		idgeneral_template = d.idgeneral_template;
+		quest_startid = d.quest_startid;
+		quest_maxstep = d.quest_maxstep;
+	}
+
+	public void Set(db_premium_general_quest d)
+	{
+		idgeneral_template = (short)d.idgeneral_template;
+		quest_startid = d.quest_startid;
+		quest_maxstep = d.quest_maxstep;
+	}
+
+	public void Get(ref db_premium_general_quest d)
+	{
+		d.idgeneral_template = idgeneral_template;
+		d.quest_startid = quest_startid;
+		d.quest_maxstep = quest_maxstep;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

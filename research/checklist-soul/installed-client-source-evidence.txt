@@ -1,0 +1,162 @@
+Installed Assembly-CSharp SHA256: C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911; observed 2026-11-06; matches data/campaign-research/input-hashes.json.
+
+GeneralSoulGatherUI.cs.txt lines 730-748:
+		start_modes[0] = Global.getTemplate("general_soul_start_mode", 1u) as _general_soul_start_mode;
+		start_modes[1] = Global.getTemplate("general_soul_start_mode", 2u) as _general_soul_start_mode;
+		start_modes[2] = Global.getTemplate("general_soul_start_mode", 3u) as _general_soul_start_mode;
+		start_modes[3] = Global.getTemplate("general_soul_start_mode", 4u) as _general_soul_start_mode;
+		start_modes[4] = Global.getTemplate("general_soul_start_mode", 5u) as _general_soul_start_mode;
+		start_modes[5] = Global.getTemplate("general_soul_start_mode", 6u) as _general_soul_start_mode;
+		start_modes[6] = Global.getTemplate("general_soul_start_mode", 7u) as _general_soul_start_mode;
+		start_modes[7] = Global.getTemplate("general_soul_start_mode", 8u) as _general_soul_start_mode;
+		start_modes[8] = Global.getTemplate("general_soul_start_mode", 9u) as _general_soul_start_mode;
+		bool[] array = new bool[2] { true, false };
+		array[1] = Global.character_.level >= start_modes[1].require_level || Global.character_.VIPLEVEL >= start_modes[1].nolimit_viplevel;
+		byte[] array2 = new byte[3]
+		{
+			Global.character_.generalsoul_blue_times,
+			Global.character_.generalsoul_purple_times,
+			Global.character_.generalsoul_orange_times
+		};
+		__BaseUI.Label(__BaseUI._rect(33f, 56f, 722f, 396f), string.Empty, __BaseUI._boxnew4Style);
+		__BaseUI.Label(__BaseUI._rect(167f, 15f, 379f, 36f), string.Empty, __BaseUI._box15Style);
+
+GeneralSoulGatherUI.cs.txt lines 786-810:
+		for (int i = 0; i < 2; i++)
+		{
+			string tooltip = getTooltipOfIndex(i, array2[i] < start_modes[i].free_times);
+			if (array[i] || i == 1)
+			{
+				if (array[i] && array2[i] < start_modes[i].free_times)
+				{
+					__BaseUI.Label(__BaseUI._rect(175 + i * 310, 418f, 49f, 16f), __BaseUI.load_str(20269u), __BaseUI._textCenter, __BaseUI._clrWhite);
+				}
+				else
+				{
+					__BaseUI.Label(__BaseUI._rect(175 + i * 310, 418f, 49f, 16f), start_modes[i].price.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+					tooltip = string.Format(tooltip, start_modes[i].price);
+				}
+				if (i == 0)
+				{
+					btnGather = GUITOScreen(__BaseUI._rect(167 + 306 * i, 343f, 83f, 78f));
+				}
+				if (gatherBtns[i].Button(subwindow == string.Empty, __BaseUI._rect(167 + 306 * i + 6, 346f, 72f, 72f), new GUIContent(string.Empty, tooltip)))
+				{
+					RequestGather(start_modes[i], array[i] && array2[i] < start_modes[i].free_times);
+				}
+			}
+			else
+			{
+
+GeneralSoulGatherUI.cs.txt lines 1636-1720:
+	private void RequestGather(_general_soul_start_mode start_mode, bool free_gather)
+	{
+		if (start_mode == null)
+		{
+			return;
+		}
+		switch (start_mode.type)
+		{
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+			if (start_mode.require_level != 0 && Global.character_.level < start_mode.require_level && Global.character_.VIPLEVEL < start_mode.nolimit_viplevel)
+			{
+				msgbox.setMessage(__BaseUI.load_str(20286u), __BaseUI.load_str(20287u, start_mode.require_level, start_mode.nolimit_viplevel.ToString()), rmg);
+				return;
+			}
+			break;
+		case 3:
+			if (start_mode.require_level != 0 && Global.character_.level < start_mode.require_level)
+			{
+				msgbox.setMessage(__BaseUI.load_str(20286u), __BaseUI.load_str(20288u, start_mode.require_level), rmg);
+				return;
+			}
+			if (Global.character_.VIPLEVEL < start_mode.nolimit_viplevel)
+			{
+				msgbox.setMessage(__BaseUI.load_str(20286u), __BaseUI.load_str(20289u, start_mode.nolimit_viplevel.ToString()), rmg);
+				return;
+			}
+			break;
+		}
+		if (!free_gather && Global.character_.money < start_mode.price)
+		{
+			RequestZhaoCai(__BaseUI.load_str(20290u));
+			return;
+		}
+		Disable();
+		CSGatherSoulRefresh_0x205 cSGatherSoulRefresh_0x = new CSGatherSoulRefresh_0x205();
+		cSGatherSoulRefresh_0x.type = start_mode.type;
+		RootUI.m_client.Send(517, cSGatherSoulRefresh_0x, sc_refresh_gather_soul, (uint)start_mode.type);
+	}
+
+	private void RequestGrow(uint gtype, uint rate)
+	{
+		if (isAllSoulFull)
+		{
+			msgbox.setMessage(__BaseUI.load_str(20291u), __BaseUI.load_str(20292u), rmg);
+		}
+		else if (Global.getTemplate("general_soul_grow_mode", gtype) is _general_soul_grow_mode general_soul_grow_mode)
+		{
+			if (Global.character_.VIPLEVEL < general_soul_grow_mode.vip_require)
+			{
+				msgbox.setMessage(__BaseUI.load_str(20293u), __BaseUI.load_str(20294u), rmg);
+			}
+			else if (general_soul_grow_mode.isgold)
+			{
+				__BaseUI.GetConsumeUI().setConsume(general_soul_grow_mode.cost * (int)rate, 72, onGrowSoulGoldOK, new object[1] { gtype });
+			}
+			else if (Global.character_.money < general_soul_grow_mode.cost)
+			{
+				RequestZhaoCai(__BaseUI.load_str(20295u));
+			}
+			else
+			{
+				cs_grow_soul(gtype);
+			}
+		}
+	}
+
+	private void onGrowSoulGoldOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_grow_soul((uint)objs[0]);
+		}
+	}
+
+	private void cs_grow_soul(uint gtype)
+	{
+		Disable();
+		CSGatherSoulGrow_0x207 cSGatherSoulGrow_0x = new CSGatherSoulGrow_0x207();
+		cSGatherSoulGrow_0x.type = gtype;
+		RootUI.m_client.Send(519, cSGatherSoulGrow_0x, sc_grow_soul);
+
+GeneralSoulGatherUI.cs.txt lines 1765-1788:
+	private void sc_refresh_gather_soul(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			m_curType = (uint)arg;
+			SCGatherSoulStatus_0x205 sCGatherSoulStatus_0x = JSProtoBuf.Serializer.Deserialize<SCGatherSoulStatus_0x205>(stream);
+			Global.character_.gather_souls.setSouls(sCGatherSoulStatus_0x.soul_status);
+			RootUI.HandleExchangeParam(sCGatherSoulStatus_0x.exchange);
+			switch (sCGatherSoulStatus_0x.type)
+			{
+			case 1u:
+				Global.character_.generalsoul_blue_times = (byte)sCGatherSoulStatus_0x.used_times;
+				break;
+			case 2u:
+				Global.character_.generalsoul_purple_times = (byte)sCGatherSoulStatus_0x.used_times;
+				break;
+			case 3u:
+				Global.character_.generalsoul_orange_times = (byte)sCGatherSoulStatus_0x.used_times;
+				break;
+			}
+			ResetSoul();
+			currentGatherSoulStatus = GatherSoulStatus.Grow;
+		}
+		Enable();

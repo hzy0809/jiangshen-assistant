@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "scenarios": 54,
+  "failed": 0,
+  "checks": 862,
+  "source_hashes_stable": true,
+  "real_battle_launch": true,
+  "real_named_ipc": true,
+  "pinned_dependencies": {
+    "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+    "protobuf-net.dll": "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b",
+    "Ionic.Zlib.dll": "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+  },
+  "game_access": false,
+  "network_access": false,
+  "limits": "Production models/guard/helpers and named event/mutex are real; stock callbacks, Unity scenes, dispatch transport and manual presentation are detached fixtures. No live game, physical UI, deployment, server cost or business acceptance."
+}

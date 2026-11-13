@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "scope": "synthetic offline memory map only; no OS process APIs",
+  "checks": [
+    "exact cached type identity PASS",
+    "uncached type stays UNVERIFIED without initialization",
+    "wrong native callbacks refused",
+    "collision cycle refused",
+    "class identity mismatch refused"
+  ]
+}

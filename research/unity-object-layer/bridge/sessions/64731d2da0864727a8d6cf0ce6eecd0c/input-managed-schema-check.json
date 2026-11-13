@@ -1,0 +1,81 @@
+{
+  "utc": "2026-10-30T17:31:34.4092489Z",
+  "mode": "PEReader metadata only; game assemblies not loaded or executed",
+  "passed": 45,
+  "failed": 0,
+  "checks": [
+    "PASS MainUI|luoshustatus|instance MainUI+LUOSHUSTATUS declared=Assembly-CSharp:MainUI actual=instance MainUI+LUOSHUSTATUS",
+    "PASS MainUI|startposx|instance System.Single declared=Assembly-CSharp:MainUI actual=instance System.Single",
+    "PASS MainUI|target_pos|instance System.Single declared=Assembly-CSharp:MainUI actual=instance System.Single",
+    "PASS MainUI|turningEndTime|instance System.DateTime declared=Assembly-CSharp:MainUI actual=instance System.DateTime",
+    "PASS MainUI|m_subui|static __BaseUI declared=Assembly-CSharp:MainUI actual=static __BaseUI",
+    "PASS Global|character_|static Database.Character declared=Assembly-CSharp-firstpass:Global actual=static Database.Character",
+    "PASS Global|extern_enabled|static System.Boolean declared=Assembly-CSharp-firstpass:Global actual=static System.Boolean",
+    "PASS BaseAsset|lds|static LoadScreen declared=Assembly-CSharp-firstpass:BaseAsset actual=static LoadScreen",
+    "PASS BaseAsset|rmg|instance RootMessenger declared=Assembly-CSharp-firstpass:BaseAsset actual=instance RootMessenger",
+    "PASS BaseAsset|m_bInit|instance System.Boolean declared=Assembly-CSharp-firstpass:BaseAsset actual=instance System.Boolean",
+    "PASS __BaseUI|enable|instance System.Boolean declared=Assembly-CSharp-firstpass:__BaseUI actual=instance System.Boolean",
+    "PASS __BaseUI|first|instance System.Boolean declared=Assembly-CSharp-firstpass:__BaseUI actual=instance System.Boolean",
+    "PASS __BaseUI|UICount_Visible|static System.Int32 declared=Assembly-CSharp-firstpass:__BaseUI actual=static System.Int32",
+    "PASS BuildingBuildUI|m_bBuildVisible|static System.Boolean declared=Assembly-CSharp:BuildingBuildUI actual=static System.Boolean",
+    "PASS LoadScreen|currmg|instance RootMessenger declared=Assembly-CSharp-firstpass:LoadScreen actual=instance RootMessenger",
+    "PASS LoadScreen|isBattling|instance System.Boolean declared=Assembly-CSharp-firstpass:LoadScreen actual=instance System.Boolean",
+    "PASS RootMessenger|LevelID|instance System.String declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.String",
+    "PASS RootMessenger|bLoading|instance System.Boolean declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.Boolean",
+    "PASS RootMessenger|ExpectingCount|instance System.Int32 declared=Assembly-CSharp-firstpass:RootMessenger actual=instance System.Int32",
+    "PASS Database.Character|level|instance System.Int16 declared=pbdata:Database._character actual=instance System.Int16",
+    "PASS Database.Character|stamina|instance System.Int16 declared=pbdata:Database._character actual=instance System.Int16",
+    "PASS Database.Character|gold|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|bind_gold|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|experience|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|practice|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|spirit_food|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|mana|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|stone|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|reputation|instance System.UInt32 declared=pbdata:Database._character actual=instance System.UInt32",
+    "PASS Database.Character|money|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|money64|instance System.Int64 declared=pbdata:Database._character actual=instance System.Int64",
+    "PASS Database.Character|cur_formation_set|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS Database.Character|formation_set|instance System.Int32 declared=pbdata:Database._character actual=instance System.Int32",
+    "PASS METHOD MainUI|public instance System.Void luoshuZhankai()",
+    "PASS METHOD MainUI|public instance System.Void luoshuShouqi()",
+    "PASS METHOD Database.Character|public instance System.Boolean checkUI(System.UInt32)",
+    "PASS METHOD UnityEngine.Object|public static UnityEngine.Object[] FindObjectsOfType(System.Type)",
+    "PASS ENUM MainUI+LUOSHUSTATUS SHOUQI=0 ZHANKAI=1",
+    "PASS ASSEMBLY MainUI|Assembly-CSharp",
+    "PASS ASSEMBLY BuildingBuildUI|Assembly-CSharp",
+    "PASS ASSEMBLY Global|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY Database.Character|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY __BaseUI|Assembly-CSharp-firstpass",
+    "PASS ASSEMBLY BaseAsset|Assembly-CSharp-firstpass",
+    "PASS HIERARCHY MainUI -> BaseAsset"
+  ],
+  "input_hashes": [
+    {
+      "sha256": "C1C8EBAC7DDEF4173C873A00774975A5CA366F95B19164C4CA775165EB994911",
+      "file": "Assembly-CSharp.dll"
+    },
+    {
+      "sha256": "29D8FA2CB55E800CCDF1CDC6C5B274B924EA7D03C989296DFA569731E02A8D87",
+      "file": "Assembly-CSharp-firstpass.dll"
+    },
+    {
+      "sha256": "905CF19394545E2C4B5D49D994A7D981E13AE38A2A629F7D02329F27C6D2D5AB",
+      "file": "pbdata.dll"
+    },
+    {
+      "sha256": "D479BEFC03AFB0F2071FFCF108847F06A0D560075EB8A76980F0AE929115ED73",
+      "file": "UnityEngine.dll"
+    }
+  ],
+  "source_hashes": [
+    {
+      "sha256": "76F857445B9FAC4915AD309D5B579FEA7411E7ABE20A6D788A85DBB613CA5C22",
+      "file": "Protocol.cs"
+    },
+    {
+      "sha256": "AC06AD7DE1D1666EFBE830D574204E87C645AD7EEF8DE87D093C00A1E3573B4E",
+      "file": "Probe.cs"
+    }
+  ]
+}

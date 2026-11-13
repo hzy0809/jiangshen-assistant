@@ -1,0 +1,43 @@
+--- before/native/unity_bridge/managed/DailyArenaBattleModel.cs
++++ after/native/unity_bridge/managed/DailyArenaBattleModel.cs
+@@ -676,7 +676,11 @@
+         { queuedFrame = null; queuedAction = ""; reason = detail; PublishRevision(); }
+         internal void Stop(string detail = "stop")
+         {
+-            normalStopDrain = !stopped && detail == "stop" && status != "UNKNOWN" && !settlementInvalid &&
++            // Re-entering Finish may repeat the same normal stop while this
++            // response is pending. Preserve only its existing admission;
++            // abnormal stop or an independent failure can never reopen it.
++            normalStopDrain = detail == "stop" &&
++                (stopped ? normalStopDrain && reason == "arena_battle_stopped" : status != "UNKNOWN") && !settlementInvalid &&
+                 battleReply != null && !battleReply.Returned && battleReply.Error == null;
+             stopped = true; queuedFrame = null; nextAction = "";
+             if (!closed) { status = attempted ? "UNKNOWN" : "STOPPED"; reason = "arena_battle_stopped"; }
+--- before/native/unity_bridge/managed/DailyPointRaceModel.cs
++++ after/native/unity_bridge/managed/DailyPointRaceModel.cs
+@@ -613,7 +613,10 @@
+         { queued = null; action = ""; reason = detail; PublishRevision(); }
+         internal void Stop(string detail = "stop")
+         {
+-            normalStopDrain = !stopped && detail == "stop" && status != "UNKNOWN" && !settlementInvalid &&
++            // A repeated normal stop preserves the same pending admission,
++            // without reviving one revoked by failure or abnormal stop.
++            normalStopDrain = detail == "stop" &&
++                (stopped ? normalStopDrain && reason == "pointrace_stopped" : status != "UNKNOWN") && !settlementInvalid &&
+                 battleTap != null && !battleTap.Returned && battleTap.Error == "";
+             stopped = true; queued = null; action = next = "";
+             if (!closed) { status = touched ? "UNKNOWN" : "STOPPED"; reason = "pointrace_stopped"; }
+--- before/native/unity_bridge/managed/DailyMonsterModel.cs
++++ after/native/unity_bridge/managed/DailyMonsterModel.cs
+@@ -628,7 +628,10 @@
+ 
+         internal void Stop(string detail)
+         {
+-            normalStopDrain = !stopped && detail == "stop" && !blocked && !terminal && status != "UNKNOWN" &&
++            // Only the existing normal-stop admission may survive re-entry;
++            // an abnormal stop or independent UNKNOWN revokes it permanently.
++            normalStopDrain = detail == "stop" &&
++                (stopped ? normalStopDrain && reason == "stop" : status != "UNKNOWN") && !blocked && !terminal &&
+                 demonRequest != null && !demonRequest.Returned && demonRequest.Error == "";
+             stopped = true; queued = null;
+             if (demonRequest != null && !normalStopDrain) demonRequest.Restore();

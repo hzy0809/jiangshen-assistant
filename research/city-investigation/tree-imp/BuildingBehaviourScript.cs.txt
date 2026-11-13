@@ -1,0 +1,681 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BuildingBehaviourScript : MeshScript
+{
+	private bool m_bFriend;
+
+	public static Vector3 m_prevMP = Vector3.zero;
+
+	public static bool m_bMouseMove = false;
+
+	public Building data;
+
+	public bool detectMouseClick = true;
+
+	public bool m_bEdit;
+
+	private float m_fTime;
+
+	private float yheight;
+
+	public static bool m_bEditVisible = false;
+
+	private bool send;
+
+	public override void Start()
+	{
+		base.Start();
+		m_fTime = UnityEngine.Random.value;
+	}
+
+	public void setBuilding(Building d, bool bEdit, bool bFriend)
+	{
+		data = d;
+		m_bFriend = bFriend;
+		data.playAnim();
+		CutSceneHelper component = GetComponent<CutSceneHelper>();
+		if (component != null)
+		{
+			UnityEngine.Object.Destroy(component);
+		}
+		SetEdit(bEdit);
+	}
+
+	private void Update()
+	{
+		if (bBright)
+		{
+			BaseUI subUI = MainUI.GetSubUI();
+			if (subUI != null)
+			{
+				base.MyMouseExit();
+			}
+		}
+		m_fTime += Time.deltaTime;
+		float num = 0.5f;
+		float num2 = m_fTime - (float)(int)(m_fTime / num / 2f) * num * 2f;
+		yheight = ((!(num2 > num)) ? ((num - num2) / num * 10f) : ((num2 - num) / num * 10f));
+		if (!m_bEditVisible)
+		{
+			return;
+		}
+		if (!Input.mousePosition.Equals(m_prevMP))
+		{
+			m_bMouseMove = true;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		int layerMask = -1025;
+		bool flag = false;
+		if (Physics.Raycast(ray, out var hitInfo, 1000f, layerMask))
+		{
+			Vector3 point = hitInfo.point;
+			foreach (BuildingIsland value in CapitalUI.curArea.m_islands.Values)
+			{
+				if (value.width != 0 && !(Math.Abs(value.pos.y - point.y) > 0.5f))
+				{
+					Rect rect = new Rect(value.pos.x, value.pos.z, (float)(int)value.width * Building._step, (float)(int)value.height * Building._step);
+					if (rect.Contains(new Vector2(point.x, point.z)))
+					{
+						int num3 = (int)((point.x - rect.x) / Building._step);
+						int num4 = (int)((point.z - rect.y) / Building._step);
+						point.x = rect.x + ((float)num3 + (float)(int)data.data.area / 2f) * Building._step;
+						point.z = rect.y + ((float)num4 + (float)(int)data.data.area / 2f) * Building._step;
+						data.idisland = value.id;
+						data.x = (byte)num3;
+						data.y = (byte)num4;
+						flag = true;
+						break;
+					}
+				}
+			}
+			point.y += 0.05f;
+			data.root.transform.position = point;
+		}
+		else
+		{
+			Vector3 vector = Camera.main.transform.position - data.root.transform.position;
+			data.root.transform.position = Camera.main.transform.position + vector.magnitude * ray.direction;
+		}
+		if (!flag)
+		{
+			data.idisland = 0;
+		}
+		data.setColor();
+		if (m_bMouseMove && Input.GetMouseButtonUp(0))
+		{
+			EditVisible(bVisible: false);
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (m_bEdit || Camera.main == null || (!m_bFriend && data.automatic && TimeUtil.Now < data.start_time + 3600))
+		{
+			return;
+		}
+		__BaseUI.my_enabled = IsEnable();
+		GUI.depth = __BaseUI.UIDepth_Scene;
+		Vector3 position = data.mesh.transform.position;
+		if (data.mesh.collider != null)
+		{
+			position.y = data.mesh.collider.bounds.center.y + data.mesh.collider.bounds.extents.y;
+		}
+		position = Camera.main.WorldToScreenPoint(position);
+		position.y = (float)Screen.height - position.y;
+		position.x -= 30f;
+		position.y -= 80f;
+		__BaseUI.BeginGroup(new Rect(position.x, position.y, 86f, 130f));
+		Rect rc = new Rect(0f, 0f, 71f, 78f);
+		if (data.idbuilding == 31)
+		{
+			Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2((int)rc.x, (int)rc.y));
+			CapitalUI.rect28 = new Rect((int)vector.x, (int)vector.y, (int)rc.width, (int)rc.height);
+		}
+		checkHover(rc, "BuildingBehaviourScript");
+		if (m_bFriend)
+		{
+			drawHarvest();
+		}
+		else if (data.data.type == 11)
+		{
+			if (data.mining)
+			{
+				if (data.next_havest_time > TimeUtil.Now)
+				{
+					int num = 0;
+					_building_havest building_havest = Global.getTemplate("building_havest", data.idbuilding) as _building_havest;
+					num = (int)building_havest.cd;
+					int num2 = (int)(data.next_havest_time - TimeUtil.Now);
+					GUI.DrawTexture(__BaseUI._rect(rc.x, rc.y + 76f, 86f, 9f), CapitalUI.ui_bar_cj);
+					float num3 = 78f;
+					num3 *= 1f - Mathf.Clamp01((float)num2 / (float)num);
+					GUI.DrawTexture(__BaseUI._rect(rc.x + 4f, rc.y + 79f, num3, 3f), CapitalUI.ui_tiao_cj);
+				}
+				else
+				{
+					_building_havest building_havest2 = Global.getTemplate("building_havest", data.idbuilding) as _building_havest;
+					GUI.backgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+					Texture2D bPicon = GameObject.Find("Capital/CapitalUI").GetComponent<CapitalUI>().GetBPicon((int)building_havest2.icon);
+					if (bPicon != null)
+					{
+						__BaseUI.Box(__BaseUI._rect(13f, yheight, 44f, 44f), bPicon);
+					}
+					GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+					if (CapitalUI.btnHarvest.Button(bBtn: true, rc, string.Empty))
+					{
+						cs_building_mine_havest(data.id);
+					}
+				}
+			}
+			else
+			{
+				_building_havest building_havest3 = Global.getTemplate("building_havest", data.idbuilding) as _building_havest;
+				if (Global.character_.level >= building_havest3.require_level)
+				{
+					__BaseUI.Box(__BaseUI._rect(13f, yheight, 59f, 55f), CapitalUI.ui_icon_cj);
+					if (CapitalUI.btn_kecaiji.Button(bBtn: true, rc, string.Empty))
+					{
+						DisableAll();
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21552u), rmg, CaiJiRecall, _bCancel: true);
+					}
+				}
+			}
+		}
+		else if (data.build_time == 0)
+		{
+			if (data.automatic)
+			{
+				if (TimeUtil.Now >= data.start_time + 3600)
+				{
+					drawHarvest();
+				}
+			}
+			else if (data.data.type == 5 && data.idproduct == 0)
+			{
+				if (data.cd_time > TimeUtil.Now)
+				{
+					drawCD();
+				}
+				else
+				{
+					drawIdle();
+				}
+			}
+			else if (data.idbuilding == 2)
+			{
+				if (CapitalUI.b_shop.Button(bBtn: true, __BaseUI._rect(0f, 50f, 73f, 73f), string.Empty))
+				{
+					GameObject.Find("Capital/CapitalUI").GetComponent<MainUI>().SendMessage("_resource_depot");
+				}
+			}
+			else
+			{
+				drawHarvest();
+			}
+		}
+		__BaseUI.EndGroup();
+		__BaseUI.my_enabled = true;
+	}
+
+	private void CaiJiRecall(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_building_mine(data.id);
+			EnableAll();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void drawStop()
+	{
+		GUI.DrawTexture(__BaseUI._rect(13f, yheight, 44f, 44f), CapitalUI.texSleep);
+		GUI.DrawTexture(__BaseUI._rect(0f, 40f, 71f, 38f), CapitalUI.texStop);
+	}
+
+	private void drawIdle()
+	{
+		if (data.upgrade_finish > TimeUtil.Now)
+		{
+			GUI.DrawTexture(__BaseUI._rect(0f, 40f, 71f, 38f), CapitalUI.ui_zi_sjz2);
+			return;
+		}
+		GUI.DrawTexture(__BaseUI._rect(13f, yheight, 44f, 44f), CapitalUI.texSleep);
+		GUI.DrawTexture(__BaseUI._rect(0f, 40f, 71f, 38f), CapitalUI.texIdle);
+	}
+
+	private void drawCD()
+	{
+		GUI.DrawTexture(__BaseUI._rect(13f, yheight, 44f, 44f), CapitalUI.texCD);
+		GUI.DrawTexture(__BaseUI._rect(0f, 40f, 71f, 23f), CapitalUI.texCDFrame);
+		int t = (int)(data.cd_time - TimeUtil.Now);
+		__BaseUI.Label(__BaseUI._rect(0f, 40f, 71f, 23f), Global.getFormatTime(t), __BaseUI._numCenter, __BaseUI._clrRed);
+	}
+
+	private void drawHarvest()
+	{
+		if (data.idproduct == 0 || (!m_bFriend && ((data.automatic && data.start_time + 3600 > TimeUtil.Now) || (!data.automatic && data.start_time + data.product.time > TimeUtil.Now))) || (m_bFriend && !CanInteract()))
+		{
+			return;
+		}
+		Rect rect = new Rect(0f, 0f, 71f, 78f);
+		checkHover(rect, "BuildingBehaviourScript");
+		if (m_bFriend)
+		{
+			if (!m_bHover)
+			{
+				GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+			}
+			__BaseUI.Box(__BaseUI._rect(13f, yheight, 46f, 50f), data.product.texIcon);
+			GUI.backgroundColor = new Color(1.1f, 1.1f, 1.1f, 1f);
+			if (GUI.Button(rect, string.Empty, __BaseUI.normalStyle))
+			{
+				FriendInteract();
+			}
+		}
+		else
+		{
+			if (!m_bHover)
+			{
+				GUI.backgroundColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+			}
+			__BaseUI.Box(__BaseUI._rect(13f, yheight, 44f, 44f), data.product.texIcon);
+			GUI.backgroundColor = new Color(1f, 1f, 1f, 1f);
+			if (CapitalUI.btnHarvest.Button(bBtn: true, rect, string.Empty))
+			{
+				BuildingHarvestUI.wantHarvest(data, null, bBubble: true);
+			}
+		}
+	}
+
+	private bool CanInteract()
+	{
+		if (!data.data.interact || data.idproduct == 0)
+		{
+			return false;
+		}
+		foreach (_character_building_interact building_interact in Global.character_.building_interacts)
+		{
+			if (building_interact.idfriend == CapitalFriendUI.myfriend.id && building_interact.idbuilding == data.id)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private void FriendInteract()
+	{
+		if (!Global.character_.checkUI(52u))
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20163u), null);
+		}
+		else if (!CapitalFriendUI.myfriend.isfans)
+		{
+			string message = __BaseUI.format(100u, new object[1] { CapitalFriendUI.myfriend.name });
+			__BaseUI.GetMessageBox().setMessage(string.Empty, message, null, EnableAll);
+		}
+		else if (Global.character_.building_interacts.Count >= 10)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20164u), null);
+		}
+		else
+		{
+			BuildingInteractUI component = BaseUI.GetRootUI().GetComponent<BuildingInteractUI>();
+			component.MyLoading(data);
+		}
+	}
+
+	protected override void MyMouseEnter()
+	{
+		if (!m_bEdit)
+		{
+			base.MyMouseEnter();
+			if (!ShowTooltip)
+			{
+				ShowTooltip = true;
+				TooltipUI.setTooltip(this, "Building");
+			}
+		}
+	}
+
+	protected override void MyMouseExit()
+	{
+		if (!m_bEdit)
+		{
+			base.MyMouseExit();
+			if (ShowTooltip)
+			{
+				ShowTooltip = false;
+				TooltipUI.setTooltip(this, string.Empty);
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "Building")
+		{
+			tooltipUI.ShowTooltipBuilding(data, "Building");
+		}
+	}
+
+	protected override void MyMouseDown()
+	{
+		if (m_bEdit)
+		{
+			MyMouseExit();
+			VisibleMesh();
+			EditVisible(!m_bEditVisible);
+		}
+	}
+
+	protected override void MyMouseUp()
+	{
+		if (m_bEdit || !detectMouseClick || !base.enabled || !IsEnable())
+		{
+			return;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		if (data == null || !data.Raycast(ray, out var _, 1000f))
+		{
+			return;
+		}
+		if (m_bFriend)
+		{
+			if (data.idbuilding == 135 || data.idbuilding == 136)
+			{
+				HeroStatueUI component = BaseUI.GetRootUI().GetComponent<HeroStatueUI>();
+				component.MyLoading(data, CapitalFriendUI.myfriend.id);
+			}
+			else if (CanInteract())
+			{
+				FriendInteract();
+			}
+		}
+		else
+		{
+			if (data.build_time != 0)
+			{
+				return;
+			}
+			if (data.idbuilding == 1)
+			{
+				GameObject.Find("Capital/CapitalUI").GetComponent<MainUI>().SendMessage("_meditation");
+			}
+			else if (data.idbuilding == 2)
+			{
+				GameObject.Find("Capital/CapitalUI").GetComponent<MainUI>().SendMessage("_resource_depot");
+			}
+			else if (data.idbuilding == 3)
+			{
+				MainUI._training();
+			}
+			else if (data.idbuilding == 4)
+			{
+				MainUI._army_star();
+			}
+			else if (data.data.type == 2)
+			{
+				GameObject.Find("Capital/CapitalUI").GetComponent<MainUI>().resource_partrol(data);
+			}
+			else if (data.data.type == 3)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20165u) + data.data.capacity, null);
+			}
+			else
+			{
+				if (data.data.type == 9 || data.data.type == 10)
+				{
+					return;
+				}
+				if (data.data.type == 11)
+				{
+					if (data.mining)
+					{
+						if (data.next_havest_time > TimeUtil.Now)
+						{
+							BuildGatherCDUI component2 = BaseUI.GetRootUI().GetComponent<BuildGatherCDUI>();
+							component2.MyLoading(data);
+						}
+						else
+						{
+							cs_building_mine_havest(data.id);
+						}
+						return;
+					}
+					_building_havest building_havest = Global.getTemplate("building_havest", data.idbuilding) as _building_havest;
+					if (Global.character_.level >= building_havest.require_level)
+					{
+						DisableAll();
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21552u), rmg, CaiJiRecall, _bCancel: true);
+					}
+				}
+				else if (data.data.type == 14)
+				{
+					if (data.idbuilding == 133 || data.idbuilding == 134 || data.idbuilding == 135 || data.idbuilding == 136)
+					{
+						HeroStatueUI component3 = BaseUI.GetRootUI().GetComponent<HeroStatueUI>();
+						component3.MyLoading(data);
+					}
+					else
+					{
+						cs_craft_world_champions_send();
+					}
+				}
+				else if (data.product != null || data.cd_time > TimeUtil.Now)
+				{
+					if (data.canHarvest())
+					{
+						BuildingHarvestUI.wantHarvest(data, OpenProductUI, bBubble: true);
+					}
+					else
+					{
+						GameObject.Find("Capital/CapitalUI").GetComponent<BuildingHarvestUI>().MyLoading(data);
+					}
+				}
+				else
+				{
+					GameObject.Find("Capital/CapitalUI").GetComponent<BuildingProductUI>().MyLoading(data, bSub: true, null);
+				}
+			}
+		}
+	}
+
+	protected override void MyMouseOver()
+	{
+		if (!m_bEdit)
+		{
+			TooltipUI.setTooltip(this, "Building");
+		}
+	}
+
+	private void DisableMouseDown()
+	{
+		detectMouseClick = false;
+	}
+
+	private void EnableMouseDown()
+	{
+		detectMouseClick = true;
+	}
+
+	public void SetEdit(bool bEdit)
+	{
+		m_bEdit = bEdit;
+		if (m_bEdit)
+		{
+			MyMouseExit();
+			VisibleMesh();
+			EditVisible(bVisible: true);
+		}
+		else
+		{
+			m_bEditVisible = false;
+		}
+	}
+
+	public static void EditVisible(bool bVisible)
+	{
+		m_bEditVisible = bVisible;
+		if (m_bEditVisible)
+		{
+			m_prevMP = Input.mousePosition;
+			m_bMouseMove = false;
+			GameObject.Find("Capital/CapitalUI").GetComponent<BuildingBuildUI>().Hideme();
+		}
+		else
+		{
+			GameObject.Find("Capital/CapitalUI").GetComponent<BuildingBuildUI>().Visible();
+		}
+	}
+
+	private void OpenProductUI()
+	{
+		if (!data.automatic)
+		{
+			GameObject.Find("Capital/CapitalUI").GetComponent<BuildingProductUI>().MyLoading(data, bSub: true, null);
+		}
+	}
+
+	public void cs_building_mine(byte id)
+	{
+		if (!send)
+		{
+			send = true;
+			CSBuildingMine_0x39E cSBuildingMine_0x39E = new CSBuildingMine_0x39E();
+			cSBuildingMine_0x39E.idbuilding = id;
+			RootUI.m_client.Send(926, cSBuildingMine_0x39E, sc_building_mine, id);
+		}
+	}
+
+	public void sc_building_mine(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		byte key = (byte)arg;
+		send = false;
+		SCBuildingMine_0x39E sCBuildingMine_0x39E = JSProtoBuf.Serializer.Deserialize<SCBuildingMine_0x39E>(stream);
+		uint result = sCBuildingMine_0x39E.result;
+		if (result != 0 && result == 1 && Global.character_.buildings.ContainsKey(key))
+		{
+			Building building = Global.character_.buildings[key];
+			if (Global.getTemplate("building_havest", building.idbuilding) is _building_havest building_havest)
+			{
+				building.next_havest_time = TimeUtil.Now + building_havest.cd;
+				building.mining = true;
+			}
+		}
+	}
+
+	public void cs_building_mine_havest(byte id)
+	{
+		if (!send)
+		{
+			send = true;
+			CSBuildingMineHavest_0x39F cSBuildingMineHavest_0x39F = new CSBuildingMineHavest_0x39F();
+			cSBuildingMineHavest_0x39F.idbuilding = id;
+			RootUI.m_client.Send(927, cSBuildingMineHavest_0x39F, sc_building_mine_havest, id);
+		}
+	}
+
+	public void sc_building_mine_havest(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		byte b = (byte)arg;
+		send = false;
+		SCBuildingMineHavest_0x39F sCBuildingMineHavest_0x39F = JSProtoBuf.Serializer.Deserialize<SCBuildingMineHavest_0x39F>(stream);
+		uint result = sCBuildingMineHavest_0x39F.result;
+		if (result == 0 || result != 1 || !Global.character_.buildings.ContainsKey(b))
+		{
+			return;
+		}
+		Building building = Global.character_.buildings[b];
+		building.mining = false;
+		building.havest_times++;
+		if (sCBuildingMineHavest_0x39F.destroyed)
+		{
+			BuildingIsland island = Global.getIsland(building.idisland);
+			island.buildingBits = 0u;
+			UnityEngine.Object.Destroy(building.root);
+			Global.character_.remBuilding(b);
+			CapitalUI component = GameObject.Find("Capital/CapitalUI").GetComponent<CapitalUI>();
+			foreach (object value in Global.getTemplates("building_default").Values)
+			{
+				_building_default building_default = (_building_default)value;
+				if (building_default.idbuilding == building.idbuilding)
+				{
+					component.loadFloor(building_default.idisland);
+				}
+			}
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse in sCBuildingMineHavest_0x39F.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse);
+			list.Add(treasure);
+		}
+		if (list.Count > 0)
+		{
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, ResumeUI);
+			battleResultUI.MyLoading();
+		}
+	}
+
+	public void cs_craft_world_champions_send()
+	{
+		if (!send)
+		{
+			send = true;
+			CSCraftWorldChampionsSend_0x73A pkt = new CSCraftWorldChampionsSend_0x73A();
+			RootUI.m_client.Send(1850, pkt, sc_craft_world_champions_send);
+		}
+	}
+
+	public void sc_craft_world_champions_send(MemoryStream stream, object arg)
+	{
+		send = false;
+		if (stream == null)
+		{
+			return;
+		}
+		SCCraftWorldChampionsSend_0x73A sCCraftWorldChampionsSend_0x73A = JSProtoBuf.Serializer.Deserialize<SCCraftWorldChampionsSend_0x73A>(stream);
+		if (sCCraftWorldChampionsSend_0x73A.operate == SCCraftWorldChampionsSend_0x73A.Operate.OK)
+		{
+			Global.craftWorldChampions.Clear();
+			foreach (db_craft_world_champion craftWorldChampion2 in sCCraftWorldChampionsSend_0x73A.craftWorldChampions)
+			{
+				CraftWorldChampion craftWorldChampion = new CraftWorldChampion();
+				craftWorldChampion.Set(craftWorldChampion2);
+				Global.craftWorldChampions.Add(craftWorldChampion.craft_match, craftWorldChampion);
+			}
+			HeroStatueUI component = BaseUI.GetRootUI().GetComponent<HeroStatueUI>();
+			component.MyLoading(data);
+		}
+		else if (sCCraftWorldChampionsSend_0x73A.operate != SCCraftWorldChampionsSend_0x73A.Operate.Error)
+		{
+		}
+	}
+
+	private void ResumeUI()
+	{
+		EnableAll();
+	}
+}

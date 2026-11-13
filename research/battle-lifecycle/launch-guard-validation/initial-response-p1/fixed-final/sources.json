@@ -1,0 +1,46 @@
+﻿[
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\Protocol.cs",
+        "sha256":  "33693d74ed54a4de6232afd23915f38521cb33598b732b5a7a5f743af3c9964d"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleLifecycle.cs",
+        "sha256":  "08b9890ba7cf5cf5c2ad10c76c2c32b2a7db6045c6e94ce8ca56709d7f204e3e"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleLaunch.cs",
+        "sha256":  "29690330e2e95332fe59eab116fe3d20e202a2e1ce49f610c18a923ddf023103"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\BattleLaunchRaceFixture.cs",
+        "sha256":  "d1abc5988d0e794d8a3fc67cd6b1d570748b88e04bc394616146a24f4a550628"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\managed\\BattleReplyPreflight.cs",
+        "sha256":  "9ee98d0944318272488df68ab27b66e3390def402de0d9104b3f3c1b45017e42"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\jiangshen_assistant\\battle_launch.py",
+        "sha256":  "6d832b2485089682b72924f61ca105d17eecc03b0f44cf1f747b5c639a1d7b14"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\tests\\test_battle_launch.py",
+        "sha256":  "96ea6d0599cab2275504519342504dd0e91937615a4f74a38ba958f82459e188"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\pbdata.dll",
+        "sha256":  "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\protobuf-net.dll",
+        "sha256":  "e3f060f578bc4b6d0c4715ef731a1fba4dd04389902d12e1a8a73b788b9d838b"
+    },
+    {
+        "path":  "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Ionic.Zlib.dll",
+        "sha256":  "799f6b9630886132564f961031f2908263e55b104e712009eef0d4bfceb80a30"
+    },
+    {
+        "path":  "G:\\development\\enjoy\\jiangshen-assistant\\native\\unity_bridge\\tests\\run-battle-launch-race.ps1",
+        "sha256":  "f51270b8f9acf86f41865108d2a44a1e4e910e6c99463c0a7cfbeac8fce33408"
+    }
+]

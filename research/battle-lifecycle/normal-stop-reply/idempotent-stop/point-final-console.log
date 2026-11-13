@@ -1,0 +1,16 @@
+{"scenario":"pointrace_reply_wrong_opponent_blocked","status":"PASS","checks":9}
+{"scenario":"pointrace_reply_premium_blocked","status":"PASS","checks":9}
+{"scenario":"pointrace_reply_wire_and_identity_negatives","status":"PASS","checks":234}
+{"scenario":"pointrace_reply_original_stream_and_defaults","status":"PASS","checks":26}
+{"scenario":"pointrace_reply_report_mutation_unknown","status":"PASS","checks":7}
+{"scenario":"pointrace_win_settled_original_scene","status":"PASS","checks":17}
+{"scenario":"pointrace_loss_then_natural_next","status":"PASS","checks":16}
+{"scenario":"pointrace_duplicate_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_timeout_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_rejection_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_replaced_target_unknown","status":"PASS","checks":8}
+{"scenario":"pointrace_foreign_callback_blocks","status":"PASS","checks":8}
+{"scenario":"pointrace_stop_pending","status":"PASS","checks":8}
+{"scenario":"pointrace_guard_denial_no_stock_start","status":"PASS","checks":6}
+{"status":"PASS","scenarios":14,"failed":0,"checks":372,"scope":"production PointRace adapter and settlement; fake client/Unity and instrumented launch-guard substitute; no actual IPC or guard race","game_access":false}
+PointRace adapter artifacts: G:\development\enjoy\jiangshen-assistant\research\battle-lifecycle\normal-stop-reply\idempotent-stop\point-final

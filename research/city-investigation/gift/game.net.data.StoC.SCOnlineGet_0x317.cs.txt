@@ -1,0 +1,53 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCOnlineGet_0x317")]
+public class SCOnlineGet_0x317 : IExtensible
+{
+	[ProtoContract(Name = "Operate")]
+	public enum Operate
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "Error", Value = 1)]
+		Error
+	}
+
+	private Operate _operate;
+
+	private readonly List<int> _type_id = new List<int>();
+
+	private readonly List<uint> _amount = new List<uint>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "operate", DataFormat = DataFormat.TwosComplement)]
+	public Operate operate
+	{
+		get
+		{
+			return _operate;
+		}
+		set
+		{
+			_operate = value;
+		}
+	}
+
+	[ProtoMember(2, Name = "type_id", DataFormat = DataFormat.ZigZag)]
+	public List<int> type_id => _type_id;
+
+	[ProtoMember(3, Name = "amount", DataFormat = DataFormat.TwosComplement)]
+	public List<uint> amount => _amount;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

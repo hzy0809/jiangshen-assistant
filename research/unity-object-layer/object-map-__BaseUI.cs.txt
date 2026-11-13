@@ -1,0 +1,2003 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using Database;
+using UnityEngine;
+
+public class __BaseUI : BaseAsset
+{
+	public class AmuletPropertySort
+	{
+		public string name;
+
+		public bool ispercent;
+
+		public int priority;
+
+		public AmuletPropertySort(int _priority, string _name, bool _ispercent)
+		{
+			priority = _priority;
+			name = _name;
+			ispercent = _ispercent;
+		}
+	}
+
+	public delegate void delegate_OnClose();
+
+	public delegate void delegate_OnOK(bool bOK, object[] objs);
+
+	public const int fontSizePhone1 = 20;
+
+	public const int fontSizePhone2 = 22;
+
+	public const int fontSizePhone3 = 24;
+
+	public const int InGUI_effect_layer = 8;
+
+	public const int BattleSoldierLayerID = 9;
+
+	public const int over_UI_effect_layer = 13;
+
+	protected delegate_OnClose OnClose;
+
+	public static float _screenScale = 1f;
+
+	public static int _fontSize = 14;
+
+	public static bool _isunity3_5 = true;
+
+	public static GUIStyle normalStyle = new GUIStyle();
+
+	public static GUIStyle texStyle = new GUIStyle();
+
+	public static GUIStyle _bgStyle = new GUIStyle();
+
+	public static GUIStyle _bgTooltip = new GUIStyle();
+
+	public static GUIStyle _frame1Style = new GUIStyle();
+
+	public static GUIStyle _frame2Style = new GUIStyle();
+
+	public static GUIStyle _frame3Style = new GUIStyle();
+
+	public static GUIStyle _frame4Style = new GUIStyle();
+
+	public static GUIStyle _frameUnableStyle = new GUIStyle();
+
+	public static GUIStyle _namebarStyle = new GUIStyle();
+
+	public static GUIStyle _pageStyle = new GUIStyle();
+
+	public static GUIStyle _barStyle = new GUIStyle();
+
+	public static GUIStyle _contentStyle = new GUIStyle();
+
+	public static GUIStyle _infoStyle = new GUIStyle();
+
+	public static GUIStyle _iconStyle = new GUIStyle();
+
+	public static GUIStyle _icon2Style = new GUIStyle();
+
+	public static GUIStyle _icon3Style = new GUIStyle();
+
+	public static GUIStyle _icon4Style = new GUIStyle();
+
+	public static GUIStyle _iconGeneralStyle = new GUIStyle();
+
+	public static GUIStyle _boxStyle = new GUIStyle();
+
+	public static GUIStyle _box2Style = new GUIStyle();
+
+	public static GUIStyle _box3Style = new GUIStyle();
+
+	public static GUIStyle _box4Style = new GUIStyle();
+
+	public static GUIStyle _box5Style = new GUIStyle();
+
+	public static GUIStyle _box6Style = new GUIStyle();
+
+	public static GUIStyle _box6DarkStyle = new GUIStyle();
+
+	public static GUIStyle _box6LightStyle = new GUIStyle();
+
+	public static GUIStyle _box7Style = new GUIStyle();
+
+	public static GUIStyle _box8Style = new GUIStyle();
+
+	public static GUIStyle _box9Style = new GUIStyle();
+
+	public static GUIStyle _box11Style = new GUIStyle();
+
+	public static GUIStyle _box12Style = new GUIStyle();
+
+	public static GUIStyle _box13Style = new GUIStyle();
+
+	public static GUIStyle _box14Style = new GUIStyle();
+
+	public static GUIStyle _box15Style = new GUIStyle();
+
+	public static GUIStyle _box16Style = new GUIStyle();
+
+	public static GUIStyle _box17Style = new GUIStyle();
+
+	public static GUIStyle _box18Style = new GUIStyle();
+
+	public static GUIStyle _box19Style = new GUIStyle();
+
+	public static GUIStyle _hover3Style = new GUIStyle();
+
+	public static GUIStyle _hover3Label = new GUIStyle();
+
+	public static GUIStyle _hover5Label = new GUIStyle();
+
+	public static GUIStyle[] _vertScroll1 = new GUIStyle[4];
+
+	public static GUIStyle[] _vertScroll2 = new GUIStyle[4];
+
+	public static GUIStyle _vertThumb = new GUIStyle();
+
+	public static GUIStyle _checkStyle = new GUIStyle();
+
+	public static GUIStyle _icon_unkown = new GUIStyle();
+
+	public static GUIStyle _tooltipStyle = new GUIStyle();
+
+	public static GUIStyle _splitLineH = new GUIStyle();
+
+	public static GUIStyle _splitLineV = new GUIStyle();
+
+	public static GUIStyle _frameboxStyle = new GUIStyle();
+
+	public static GUIStyle _framebox2Style = new GUIStyle();
+
+	public static GUIStyle _iconMask = new GUIStyle();
+
+	public static GUIStyle _iconMask2 = new GUIStyle();
+
+	public static GUIStyle _iconMask_newyear = new GUIStyle();
+
+	public static GUIStyle _faceMask = new GUIStyle();
+
+	public static GUIStyle _hoverBtnStyle = new GUIStyle();
+
+	public static GUIStyle _soulblue = new GUIStyle();
+
+	public static GUIStyle _soulpurple = new GUIStyle();
+
+	public static GUIStyle _soulorange = new GUIStyle();
+
+	public static GUIStyle _soulred = new GUIStyle();
+
+	public static GUIStyle _qianghuaFrame = new GUIStyle();
+
+	public static GUIStyle _box_light = new GUIStyle();
+
+	public static GUIStyle _bubbleStyle = new GUIStyle();
+
+	public static GUIStyle _iconDi = new GUIStyle();
+
+	public static GUIStyle _labaDiStyle = new GUIStyle();
+
+	public static Dictionary<byte, GUIStyle> _iconSingle = new Dictionary<byte, GUIStyle>();
+
+	public static Dictionary<byte, GUIStyle> _iconMulti = new Dictionary<byte, GUIStyle>();
+
+	public static GUIStyle _box20Style = new GUIStyle();
+
+	public static GUIStyle _icondiStyle = new GUIStyle();
+
+	public static GUIStyle _icondiStyle2 = new GUIStyle();
+
+	public static GUIStyle _boxnew2Style = new GUIStyle();
+
+	public static GUIStyle _boxnew3Style = new GUIStyle();
+
+	public static GUIStyle _boxnew4Style = new GUIStyle();
+
+	public static GUIStyle _boxnew5Style = new GUIStyle();
+
+	public static GUIStyle _boxnew6Style = new GUIStyle();
+
+	public static GUIStyle _boxnew7Style = new GUIStyle();
+
+	public static GUIStyle _boxnew8Style = new GUIStyle();
+
+	public static GUIStyle _boxnew9Style = new GUIStyle();
+
+	public static GUIStyle _boxnew10Style = new GUIStyle();
+
+	public static GUIStyle _boxnew11Style = new GUIStyle();
+
+	public static GUIStyle _boxnew12Style = new GUIStyle();
+
+	public static GUIStyle _boxnewStyle = new GUIStyle();
+
+	public static GUIStyle ui_tipci_kuang = new GUIStyle();
+
+	public static GUIStyle ui_tipzhu_kuang = new GUIStyle();
+
+	public static GUIStyle _barBgStyle = new GUIStyle();
+
+	public static Texture2D _barGreenTex;
+
+	public static Texture2D _barRedTex;
+
+	public static Texture2D _barBlueTex;
+
+	public static _ButtonStyle _hovernewStyle = new _ButtonStyle();
+
+	public static GUIStyle _inputBgStyle = new GUIStyle();
+
+	public static _ButtonStyle _btnnewOK = new _ButtonStyle();
+
+	public static _ButtonStyle _btnnewCancel = new _ButtonStyle();
+
+	public static _CheckStyle _chknewStyle = new _CheckStyle();
+
+	public static _CheckStyle _chknew2Style = new _CheckStyle();
+
+	public static _CheckStyle _chknew3Style = new _CheckStyle();
+
+	public static GUIStyle _chknew3Style_unlocked = new GUIStyle();
+
+	public static _RadioStyle _rdnewStyle = new _RadioStyle();
+
+	public static _ButtonStyle _btnHelp = new _ButtonStyle();
+
+	public static _ButtonStyle _btnHelp2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnHelp3 = new _ButtonStyle();
+
+	public static GUIStyle _boxmsgStyle = new GUIStyle();
+
+	public static Texture2D _texWarning;
+
+	public static Texture2D _texNotip;
+
+	public static GUIStyle _gou = new GUIStyle();
+
+	public static FontNumber _fontNumber = new FontNumber();
+
+	public static FontNumber _fontNumber2 = new FontNumber();
+
+	public static GUIStyle _textLeft = new GUIStyle();
+
+	public static GUIStyle _textCenter = new GUIStyle();
+
+	public static GUIStyle _textRight = new GUIStyle();
+
+	public static GUIStyle _textNLeft = new GUIStyle();
+
+	public static GUIStyle _textNCenter = new GUIStyle();
+
+	public static GUIStyle _textNRight = new GUIStyle();
+
+	public static GUIStyle _numLeft = new GUIStyle();
+
+	public static GUIStyle _numCenter = new GUIStyle();
+
+	public static GUIStyle _numRight = new GUIStyle();
+
+	public static GUIStyle _numNLeft = new GUIStyle();
+
+	public static GUIStyle _numNCenter = new GUIStyle();
+
+	public static GUIStyle _numNRight = new GUIStyle();
+
+	public static GUIStyle _numSpLeft = new GUIStyle();
+
+	public static GUIStyle _numSpRight = new GUIStyle();
+
+	public static GUIStyle _numSpCenter = new GUIStyle();
+
+	public static GUIStyle _scenarioText = new GUIStyle();
+
+	public static GUIStyle _expFrame = new GUIStyle();
+
+	public static GUIStyle _expBar = new GUIStyle();
+
+	public static GUIStyle _expTilt = new GUIStyle();
+
+	public static GUIStyle _biao1 = new GUIStyle();
+
+	public static GUIStyle _hLine = new GUIStyle();
+
+	public static GUIStyle _vLine = new GUIStyle();
+
+	public static GUIStyle _iconBar = new GUIStyle();
+
+	public static GUIStyle _moneyIcon = new GUIStyle();
+
+	public static GUIStyle _moneyIcon2 = new GUIStyle();
+
+	public static GUIStyle _goldIcon = new GUIStyle();
+
+	public static GUIStyle _expIcon = new GUIStyle();
+
+	public static GUIStyle _energyIcon = new GUIStyle();
+
+	public static GUIStyle _shengwangIcon = new GUIStyle();
+
+	public static GUIStyle _diamondIcon = new GUIStyle();
+
+	public static Texture2D _iconUnable;
+
+	public static Texture2D icon_bluesoul;
+
+	public static Texture2D icon_orangesoul;
+
+	public static Texture2D icon_purplesoul;
+
+	public static Texture2D _icondragonball1;
+
+	public static Texture2D _icondragonball2;
+
+	public static Texture2D _icondragonball3;
+
+	public static Texture2D _icondragonball4;
+
+	public static Texture2D _icondragonball5;
+
+	public static Texture2D _iconjinengsuipian;
+
+	public static Texture2D _tex2Dexp;
+
+	public static Texture2D _iconRenkou;
+
+	public static Texture2D _iconRenkou2;
+
+	public static Texture2D _iconGold;
+
+	public static Texture2D _iconWood;
+
+	public static Texture2D _iconMine;
+
+	public static Texture2D _iconMana;
+
+	public static Texture2D _iconMoney;
+
+	public static Texture2D _iconExp;
+
+	public static Texture2D _iconPractice;
+
+	public static Texture2D _iconDivine_soul;
+
+	public static Texture2D _iconStone;
+
+	public static Texture2D ui_face_mask;
+
+	public static Texture2D _iconTeamFightPoint;
+
+	public static Texture2D _iconAssaultScore;
+
+	public static Texture2D _iconCraftPoint;
+
+	public static Texture2D _iconCraftBetPoint;
+
+	public static Texture2D _iconLadderGift;
+
+	public static Texture2D _iconHighStone;
+
+	public static Texture2D _iconReputation;
+
+	public static Texture2D _iconFlower;
+
+	public static Texture2D _iconAttack;
+
+	public static Texture2D _iconFruit;
+
+	public static Texture2D _iconEnchant;
+
+	public static Texture2D _iconEnchantPick;
+
+	public static Texture2D _iconGemShard;
+
+	public static Texture2D _iconGemEssence;
+
+	public static Texture2D _iconDarkIron;
+
+	public static Texture2D _iconchoujiangquan;
+
+	public static Texture2D _iconjiangling;
+
+	public static Texture2D _iconEmptyRage;
+
+	public static Texture2D _iconRage;
+
+	public static Texture2D _iconDiamond;
+
+	public static Texture2D _iconLimitTime;
+
+	public static Texture2D _iconPublicExp;
+
+	public static Texture2D _iconBuilding_material;
+
+	public static Texture2D _iconFriendPoint;
+
+	public static Texture2D _iconkeji;
+
+	public static Texture2D _iconDragonSoul;
+
+	public static Texture2D _iconjiangyin;
+
+	public static Texture2D _iconspirit_skill_essence_blue;
+
+	public static Texture2D _iconspirit_skill_essence_orange;
+
+	public static Texture2D _iconspirit_skill_essence_purple;
+
+	public static Texture2D _iconyazhujifen;
+
+	public static Texture2D _icon_xinwu_lv;
+
+	public static Texture2D _icon_xinwu_cheng;
+
+	public static Texture2D _icon_xinwu_lan;
+
+	public static Texture2D _icon_xinwu_zi;
+
+	public static Texture2D[] ui_gbt = new Texture2D[6];
+
+	public static Texture2D[] ui_zhenxing = new Texture2D[8];
+
+	public static Texture2D _icon_amulet_forge_tool;
+
+	public static Dictionary<int, Texture2D> _icon_elements = new Dictionary<int, Texture2D>();
+
+	public static Texture2D _ui_kuang_bai;
+
+	public static Texture2D _ui_kuang_lv;
+
+	public static Texture2D _ui_kuang_lan;
+
+	public static Texture2D _ui_kuang_zi;
+
+	public static Texture2D _ui_kuang_cheng;
+
+	public static Texture2D _ui_nengliang;
+
+	public static Texture2D _ziyazhujifen;
+
+	public static Texture2D _zijingpo;
+
+	public static Texture2D _ziDragonSoul;
+
+	public static Texture2D _ziFriendPoint;
+
+	public static Texture2D _ziBuilding_material;
+
+	public static Texture2D _ziGold;
+
+	public static Texture2D _ziMana;
+
+	public static Texture2D _ziMoney;
+
+	public static Texture2D _ziStone;
+
+	public static Texture2D _ziTeamFightPoint;
+
+	public static Texture2D _ziAssaultScore;
+
+	public static Texture2D _ziCraftPoint;
+
+	public static Texture2D _ziCraftBetPoint;
+
+	public static Texture2D _ziLadderGift;
+
+	public static Texture2D _ziReputation;
+
+	public static Texture2D _ziFruit;
+
+	public static Texture2D _ziEnchant;
+
+	public static Texture2D _ziStamina;
+
+	public static Texture2D _ziFlower;
+
+	public static Texture2D _ziFans;
+
+	public static Texture2D _ziGemShard;
+
+	public static Texture2D _ziGemEssence;
+
+	public static Texture2D _ziOrangeSoul;
+
+	public static Texture2D _ziPurpleSoul;
+
+	public static Texture2D _ziBlueSoul;
+
+	public static Texture2D _ziDarkIron;
+
+	public static Texture2D _ziHighStone;
+
+	public static Texture2D _ziPractice;
+
+	public static Texture2D _ziPublicExp;
+
+	public static Texture2D _ziAmuletForgeTool;
+
+	public static Texture2D _ziDivine_soul;
+
+	public static Texture2D _zigeneral_seal;
+
+	public static Texture2D _tex_expbar;
+
+	public static Texture2D _texReturn;
+
+	public static Texture2D _texZhenshang;
+
+	public static Texture2D _texGemEmbbed;
+
+	public static Texture2D _texui_fenge;
+
+	public static GUIStyle _markNumStyle = new GUIStyle();
+
+	public static GUIStyle _markUpStyle = new GUIStyle();
+
+	public static GUIStyle _markNewStyle = new GUIStyle();
+
+	public static GUIStyle _markNumStyle_small = new GUIStyle();
+
+	public static GUIStyle _goldbgIcon = new GUIStyle();
+
+	public static GUIStyle ui_mark_rlz = new GUIStyle();
+
+	public static _ButtonStyle _btnmiaosha = new _ButtonStyle();
+
+	public static _ButtonStyle _btntiaozhan = new _ButtonStyle();
+
+	public static _ButtonStyle _btnfastchange = new _ButtonStyle();
+
+	public static _ButtonStyle _btnNormal = new _ButtonStyle();
+
+	public static _ButtonStyle _btnItem = new _ButtonStyle();
+
+	public static _ButtonStyle _btnPrev = new _ButtonStyle();
+
+	public static _ButtonStyle _btnNext = new _ButtonStyle();
+
+	public static _ButtonStyle _btnX = new _ButtonStyle();
+
+	public static _ButtonStyle _btnClose = new _ButtonStyle();
+
+	public static _ButtonStyle _btnUp = new _ButtonStyle();
+
+	public static _ButtonStyle _btnDown = new _ButtonStyle();
+
+	public static _ButtonStyle _btnUp5 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnDown5 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnUp6 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnDown6 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnSearch = new _ButtonStyle();
+
+	public static _ButtonStyle _btnReturn = new _ButtonStyle();
+
+	public static _ButtonStyle _btnReturn2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnOK = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCancel = new _ButtonStyle();
+
+	public static _ButtonStyle _btnOK2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCancel2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCancel3 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCloseBig = new _ButtonStyle();
+
+	public static _ButtonStyle _btnLeft4 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnPrev2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnNext2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnRight4 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnEdit = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCommon = new _ButtonStyle();
+
+	public static _ButtonStyle _btnClose2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnCD = new _ButtonStyle();
+
+	public static _ButtonStyle _hover3Button = new _ButtonStyle();
+
+	public static _ButtonStyle _hover4Button = new _ButtonStyle();
+
+	public static _ButtonStyle _hover6Button = new _ButtonStyle();
+
+	public static _ButtonStyle _btnBox6 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnQianghuaBox = new _ButtonStyle();
+
+	public static _ButtonStyle _button_close2 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnBuy = new _ButtonStyle();
+
+	public static _ButtonStyle _btnChest = new _ButtonStyle();
+
+	public static _ButtonStyle _btnQuxiao3 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnBonusList = new _ButtonStyle();
+
+	public static _ButtonStyle _btnBigUp = new _ButtonStyle();
+
+	public static _ButtonStyle _btnBigDown = new _ButtonStyle();
+
+	public static _ButtonStyle _btnPageUp5 = new _ButtonStyle();
+
+	public static _ButtonStyle _btnPageDown5 = new _ButtonStyle();
+
+	public static _CheckStyle _btnCheck = new _CheckStyle();
+
+	public static _RadioStyle _hover3Radio = new _RadioStyle();
+
+	public static _RadioStyle _hover4Radio = new _RadioStyle();
+
+	public static _RadioStyle _hoverIconRadio = new _RadioStyle();
+
+	public static _RadioStyle _labelRadio = new _RadioStyle();
+
+	public static _RadioStyle _hoverRadio = new _RadioStyle();
+
+	public static GUIStyle _lblIconLight = new GUIStyle();
+
+	public static GUIStyle _btnIconLight = new GUIStyle();
+
+	public static GUIStyle _ui_shuru = new GUIStyle();
+
+	public static _ButtonStyle _btnShang = new _ButtonStyle();
+
+	public static _ButtonStyle _btnXia = new _ButtonStyle();
+
+	public static _RadioStyle _btnradio = new _RadioStyle();
+
+	public static _CheckStyle _checkBox = new _CheckStyle();
+
+	public static _CheckStyle _checkBox3 = new _CheckStyle();
+
+	public static GUIStyle _icon_unfinish = new GUIStyle();
+
+	public static GUIStyle _icon_finish = new GUIStyle();
+
+	public static GUIStyle _kuang_d116 = new GUIStyle();
+
+	public static Texture2D[] _texVips = new Texture2D[11];
+
+	public static Texture2D[] _texGems = new Texture2D[3];
+
+	public static Texture2D _texGemDi;
+
+	public static GUIStyle _ui_jiang = new GUIStyle();
+
+	public static _ButtonStyle _unable1 = new _ButtonStyle();
+
+	public static Texture2D _texFriend;
+
+	public static Texture2D _texEnemy;
+
+	public static Texture2D _texBlack;
+
+	public static Color _clrWhite = new Color(1f, 1f, 1f, 1f);
+
+	public static Color _clrBlack = new Color(0f, 0f, 0f, 1f);
+
+	public static Color _clrCyan = new Color(0.8f, 1f, 1f, 1f);
+
+	public static Color _clrCyanDark = new Color(0f, 0.8f, 1f, 1f);
+
+	public static Color _clrYellowLight = new Color(1f, 1f, 0.8f, 1f);
+
+	public static Color _clrGold = new Color(0.8901961f, 66f / 85f, 16f / 51f);
+
+	public static Color _clrYellow = new Color(1f, 1f, 0f, 1f);
+
+	public static Color _clrYellowDark = new Color(1f, 0.8f, 0f, 1f);
+
+	public static Color _clrRed = new Color(1f, 0f, 0f, 1f);
+
+	public static Color _clrGreen = new Color(0.6f, 1f, 0f, 1f);
+
+	public static Color _clrBlue = new Color(0.4f, 0.8f, 1f);
+
+	public static Color _clrDark = new Color(0.7f, 0.7f, 0.7f, 1f);
+
+	public static string[] _clrQualityStrings = new string[8];
+
+	public static Color[] _clrQualitys = new Color[8];
+
+	public static Color _clrCyanLight = new Color(0f, 1f, 1f, 1f);
+
+	public static Color _clrMsg = new Color(0.2f, 0f, 0f, 1f);
+
+	public static Dictionary<string, AmuletPropertySort> amulet_property_sorts = new Dictionary<string, AmuletPropertySort>();
+
+	public static AudioClip _audBtnClick;
+
+	public static AudioClip _audOpenWindow;
+
+	public static bool my_enabled = true;
+
+	public static bool my_mouseclick = true;
+
+	public static string subui = string.Empty;
+
+	public static Font ArialFont;
+
+	public static Font DmgFont;
+
+	public static int UICount_Visible = 0;
+
+	public static readonly int UIDepth_Scene = 101;
+
+	public static readonly int UIDepth_Main = 100;
+
+	public static readonly int UIDepth_Main2 = 99;
+
+	public static readonly int UIDepth_Announce = 98;
+
+	public static readonly int UIDepth_Sub = 97;
+
+	public static readonly int UIDepth_Sub2 = 96;
+
+	public static readonly int UIDepth_Consume = 95;
+
+	public static readonly int UIDepth_Scenario = 90;
+
+	public static readonly int UIDepth_Message = -50;
+
+	public static readonly int UIDepth_BattleResult = -60;
+
+	public static readonly int UIDepth_Tooltip = -100;
+
+	public static readonly int UIDepth_Effect = -200;
+
+	protected string lastTooltip = string.Empty;
+
+	protected string tt_owner = string.Empty;
+
+	protected float w;
+
+	protected float h;
+
+	protected DateTime visible_time;
+
+	public bool first_visible;
+
+	private bool visible_once;
+
+	private bool enable = true;
+
+	protected bool visible_count = true;
+
+	private bool first = true;
+
+	private static List<Rect> _rcGroups = new List<Rect>();
+
+	private static List<Rect> _rcGroupsLocal = new List<Rect>();
+
+	private static int tipstate = 0;
+
+	private static string lasttip = string.Empty;
+
+	public static List<string> cuis = new List<string>();
+
+	protected object m_string_obj;
+
+	public static GUIStyle tga_kuang_left = new GUIStyle();
+
+	public static GUIStyle tga_kuang_right = new GUIStyle();
+
+	public static GUIStyle tga_kuang_down = new GUIStyle();
+
+	public static GUIStyle tga_kuang_lpart = new GUIStyle();
+
+	public static GUIStyle tga_kuang_rpart = new GUIStyle();
+
+	public static GUIStyle tga_kuang_up = new GUIStyle();
+
+	public static MessageBox msgBox = null;
+
+	private Dictionary<string, FrameAnimation> frameAnimationDic = new Dictionary<string, FrameAnimation>();
+
+	private int spacingLeft = 39;
+
+	private int spacingRight = 40;
+
+	private int spacingGroup = 20;
+
+	private float resource_bar_width;
+
+	private float resource_bar_offset;
+
+	public float[] resource_bubble_posX = new float[10];
+
+	private static ConsumeUI consume_ui = null;
+
+	private static BattleResultUI battle_result_ui = null;
+
+	private static MailUI mail_ui = null;
+
+	private static SpecialGetUI special_get_ui = null;
+
+	public static Rect _rcCur
+	{
+		get
+		{
+			if (_rcGroups.Count == 0)
+			{
+				return new Rect(0f, 0f, Screen.width, Screen.height);
+			}
+			return _rcGroups[_rcGroups.Count - 1];
+		}
+	}
+
+	public static Rect _rect(Rect rc)
+	{
+		return _rect(rc.x, rc.y, rc.width, rc.height);
+	}
+
+	public static Rect _rect(float x, float y, float w, float h)
+	{
+		return new Rect(x * _screenScale, y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectR(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width - x * _screenScale, y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectB(float x, float y, float w, float h)
+	{
+		return new Rect(x * _screenScale, _rcCur.height - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectRB(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width - x * _screenScale, _rcCur.height - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectC(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width / 2f - x * _screenScale, _rcCur.height / 2f - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectCT(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width / 2f - x * _screenScale, y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectCB(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width / 2f - x * _screenScale, _rcCur.height - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectLC(float x, float y, float w, float h)
+	{
+		return new Rect(x * _screenScale, _rcCur.height / 2f - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Rect _rectRC(float x, float y, float w, float h)
+	{
+		return new Rect(_rcCur.width - x * _screenScale, _rcCur.height / 2f - y * _screenScale, w * _screenScale, h * _screenScale);
+	}
+
+	public static Color clrQuality(uint idx)
+	{
+		return (idx <= 7) ? _clrQualitys[idx] : _clrQualitys[0];
+	}
+
+	public static string clrQualityString(uint idx)
+	{
+		return (idx <= 7) ? _clrQualityStrings[idx] : _clrQualityStrings[0];
+	}
+
+	public override void Awake()
+	{
+		base.Awake();
+	}
+
+	public override void Start()
+	{
+		if (first)
+		{
+			base.Start();
+			base.enabled = false;
+			first = false;
+		}
+	}
+
+	public Rect _CalcRect(Rect originSize, Vector2 secondPoint)
+	{
+		return _rect(originSize.x, originSize.y, secondPoint.x + originSize.width - originSize.x, secondPoint.y + originSize.height - originSize.y);
+	}
+
+	public Rect _CalcRect(int x, int y, int ow, int oh, int nx, int ny)
+	{
+		return _CalcRect(new Rect(x, y, ow, oh), new Vector2(nx, ny));
+	}
+
+	public static Vector2 CalcSize(string msg, GUIStyle style, int fontSize)
+	{
+		int fontSize2 = style.fontSize;
+		style.fontSize = fontSize;
+		Vector2 result = style.CalcSize(new GUIContent(msg));
+		style.fontSize = fontSize2;
+		return result;
+	}
+
+	public Rect GUITOScreen(Rect rc)
+	{
+		Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2((int)rc.x, (int)rc.y));
+		return new Rect((int)vector.x, (int)vector.y, (int)rc.width, (int)rc.height);
+	}
+
+	public bool BeginGUI(float _w, float _h, int depth)
+	{
+		return BeginGUI(_rectC(_w / 2f, _h / 2f, _w, _h), depth);
+	}
+
+	public bool BeginGUI(Rect rc, int depth)
+	{
+		my_enabled = IsEnable();
+		GUI.depth = depth;
+		GUI.skin.customStyles = _vertScroll1;
+		w = rc.width;
+		h = rc.height;
+		BeginGroup(rc);
+		GUI.Box(new Rect(0f, 0f, rc.width, rc.height), new GUIContent(string.Empty, "Background"), normalStyle);
+		return true;
+	}
+
+	public bool BeginGUI(float _w, float _h, int depth, GUIStyle bgStyle, Texture2D texTitle)
+	{
+		return BeginGUI(_rectC(_w / 2f, _h / 2f, _w, _h), depth, bgStyle, texTitle, null);
+	}
+
+	public bool BeginGUI(float _w, float _h, int depth, GUIStyle bgStyle, Texture2D texTitle, Texture2D texCaption)
+	{
+		return BeginGUI(_rectC(_w / 2f, _h / 2f, _w, _h), depth, bgStyle, texTitle, texCaption);
+	}
+
+	public bool BeginGUI(Rect rc, int depth, GUIStyle bgStyle, Texture2D texTitle)
+	{
+		return BeginGUI(rc, depth, bgStyle, texTitle, null);
+	}
+
+	public bool BeginGUI(Rect rc, int depth, GUIStyle bgStyle, Texture2D texTitle, Texture2D texCaption)
+	{
+		return BeginGUI(rc, depth, bgStyle, texTitle, texCaption, _rect(0f, 0f, rc.width, rc.height));
+	}
+
+	public bool BeginGUI(Rect rc, int depth, GUIStyle bgStyle, Texture2D texTitle, Texture2D texCaption, Rect rcBG)
+	{
+		BeginGUI(rc, depth);
+		TimeSpan timeSpan = DateTime.Now - visible_time;
+		if (timeSpan.TotalSeconds < 0.30000001192092896)
+		{
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)timeSpan.TotalSeconds / 0.3f);
+		}
+		if (bgStyle != null)
+		{
+			GUI.Box(rcBG, string.Empty, bgStyle);
+		}
+		if (texTitle != null)
+		{
+			Box(_rect(rcBG.x + 9f, rcBG.y + 9f, texTitle.width, texTitle.height), texTitle);
+		}
+		if (texCaption != null)
+		{
+			Box(_rect(w / 2f - (float)(texCaption.width / 2), 15f, texCaption.width, texCaption.height), texCaption);
+		}
+		if (timeSpan.TotalSeconds < 0.30000001192092896)
+		{
+			GUI.backgroundColor = Color.white;
+			EndGroup();
+			my_enabled = true;
+			return false;
+		}
+		return true;
+	}
+
+	public bool EndGUI()
+	{
+		return EndGUI(hasClose: true);
+	}
+
+	public bool EndGUI(bool hasClose)
+	{
+		return EndGUI(hasClose, hasBlock: true);
+	}
+
+	public bool EndGUI(bool hasClose, bool hasBlock)
+	{
+		return EndGUI(hasClose, hasBlock, isX: false);
+	}
+
+	public bool EndGUI(bool hasClose, bool hasBlock, bool isX)
+	{
+		return EndGUI(hasClose, hasBlock, isX, hasFrameAnimation: true);
+	}
+
+	public bool EndGUI(bool hasClose, bool hasBlock, bool isX, bool hasFrameAnimation)
+	{
+		bool flag = false;
+		if (hasClose)
+		{
+			if (!isX && _btnClose.Button(bBtn: true, new Rect(w * _screenScale - 159f, 9f, 150f, 41f), string.Empty))
+			{
+				flag = true;
+			}
+			if (isX && _btnX.Button(bBtn: true, new Rect(w * _screenScale - 37f, 13f, 24f, 24f), string.Empty))
+			{
+				flag = true;
+			}
+			if (flag)
+			{
+				Hide();
+				if (OnClose != null)
+				{
+					OnClose();
+				}
+			}
+		}
+		if (hasBlock)
+		{
+			GUI.Button(_rect(0f, 0f, w, h), new GUIContent(string.Empty, string.Empty), normalStyle);
+		}
+		EndGroup();
+		if (hasFrameAnimation)
+		{
+			drawFrameAnimation();
+		}
+		my_enabled = true;
+		drawTooltips();
+		return flag;
+	}
+
+	public static void BeginGroup(Rect rc)
+	{
+		BeginGroup(rc, bGUI: true);
+	}
+
+	public static void BeginGroup(Rect rc, bool bGUI)
+	{
+		if (_rcGroups.Count == 0)
+		{
+			_rcGroups.Add(new Rect(rc));
+		}
+		else
+		{
+			_rcGroups.Add(new Rect(_rcCur.x + rc.x, _rcCur.y + rc.y, rc.width, rc.height));
+		}
+		if (bGUI)
+		{
+			GUI.BeginGroup(rc);
+		}
+	}
+
+	public static void EndGroup()
+	{
+		EndGroup(bGUI: true);
+	}
+
+	public static void EndGroup(bool bGUI)
+	{
+		if (_rcGroups.Count > 0)
+		{
+			if (bGUI)
+			{
+				GUI.EndGroup();
+			}
+			_rcGroups.RemoveAt(_rcGroups.Count - 1);
+		}
+	}
+
+	public virtual void drawTooltips(string tip)
+	{
+	}
+
+	public virtual void drawTooltips()
+	{
+		TooltipUI tooltipUI = GetTooltipUI();
+		if (IsEnable())
+		{
+			if (Input.GetMouseButton(0))
+			{
+				GUI.tooltip = "Background";
+			}
+			if (Event.current.type == EventType.Repaint && GUI.tooltip != string.Empty)
+			{
+				TooltipUI.setTooltip(this, GUI.tooltip, bClear: true);
+			}
+		}
+		else if (Event.current.type == EventType.Repaint && GUI.tooltip != string.Empty)
+		{
+			TooltipUI.setTooltip(this, "Background", bClear: true);
+		}
+	}
+
+	protected void setTooltip_hold(Rect area, string tip)
+	{
+	}
+
+	public void setTooltip_click(Rect area, string tip)
+	{
+	}
+
+	public virtual void Visible()
+	{
+		if (!first && !base.enabled && visible_count)
+		{
+			UICount_Visible++;
+			cuis.Add(ToString());
+		}
+		if (!base.enabled)
+		{
+			visible_time = DateTime.Now;
+			if (!first_visible)
+			{
+				SoundEffectHandler.Instance.Play(_audOpenWindow);
+			}
+		}
+		base.enabled = true;
+		if (!collecting && asset_names.Count == 0 && asset_names_sub.Count > 0)
+		{
+			StartLoadingSub();
+		}
+	}
+
+	public virtual void Hideme()
+	{
+		if (!first && base.enabled && visible_count)
+		{
+			UICount_Visible--;
+			cuis.Remove(ToString());
+		}
+		base.enabled = false;
+	}
+
+	public virtual void Hide()
+	{
+		if (tt_owner != string.Empty)
+		{
+			GetTooltipUI().HideTooltip(tt_owner);
+		}
+		clearFrameAnimation();
+		Hideme();
+	}
+
+	public bool IsVisible()
+	{
+		return base.enabled;
+	}
+
+	public virtual void Enable()
+	{
+		enable = true;
+	}
+
+	public virtual void Disable()
+	{
+		enable = false;
+	}
+
+	public bool IsEnable()
+	{
+		return enable;
+	}
+
+	public void OnceVisible()
+	{
+		visible_once = true;
+	}
+
+	public virtual void Resume()
+	{
+		enable = true;
+		if (first_visible || visible_once)
+		{
+			visible_once = false;
+			Visible();
+		}
+		else
+		{
+			Hide();
+		}
+	}
+
+	public override void Destroy()
+	{
+		Hide();
+		base.Destroy();
+	}
+
+	protected virtual void PostInit()
+	{
+	}
+
+	public virtual void Command(string cmd)
+	{
+	}
+
+	protected void init_string(string[] area)
+	{
+	}
+
+	public static string get_string(string index, bool _global)
+	{
+		return Global.getText(index);
+	}
+
+	public static string get_string(string index)
+	{
+		return get_string(index, _global: false);
+	}
+
+	public static string get_string(uint index)
+	{
+		return Global.getText(index);
+	}
+
+	public static string format(string index, object[] args, bool _global)
+	{
+		return string.Format(get_string(index, _global), args);
+	}
+
+	public static string format(string index, object[] args)
+	{
+		return format(index, args, _global: false);
+	}
+
+	public static string format(uint index, object[] args)
+	{
+		return string.Format(get_string(index), args);
+	}
+
+	public static void OutlinedLabel(Rect rc, string str, GUIStyle style, Color clr)
+	{
+		OutlinedLabel(rc, str, 1, Color.black, style, clr);
+	}
+
+	public static void OutlinedLabel(Rect rc, string str, GUIStyle style, Color clr, int fontsize)
+	{
+		int fontSize = style.fontSize;
+		style.fontSize = fontsize;
+		OutlinedLabel(rc, str, 1, Color.black, style, clr);
+		style.fontSize = fontSize;
+	}
+
+	public static void OutlinedLabel(Rect rc, string str, int lineThickness, Color lineColor, GUIStyle style, Color clr)
+	{
+		Rect position = rc;
+		style.normal.textColor = lineColor;
+		for (int i = -lineThickness; i <= lineThickness; i++)
+		{
+			for (int j = -lineThickness; j <= lineThickness; j++)
+			{
+				if (i != 0 || j != 0)
+				{
+					position.x = rc.x + (float)i;
+					position.y = rc.y + (float)j;
+					GUI.Label(position, str, style);
+				}
+			}
+		}
+		style.normal.textColor = clr;
+		GUI.Label(rc, str, style);
+	}
+
+	public static void Box(Rect rc, GUIContent content, Texture2D tex)
+	{
+		texStyle.normal.background = tex;
+		GUI.Box(rc, content, texStyle);
+	}
+
+	public static void Box(Rect rc, Texture2D tex)
+	{
+		texStyle.normal.background = tex;
+		GUI.Box(rc, string.Empty, texStyle);
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style, Color clr, int fontSize)
+	{
+		int fontSize2 = style.fontSize;
+		style.fontSize = fontSize;
+		Label(rc, str, style, clr);
+		style.fontSize = fontSize2;
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style, int fontSize, Color clr)
+	{
+		int fontSize2 = style.fontSize;
+		style.fontSize = fontSize;
+		Label(rc, str, style, clr);
+		style.fontSize = fontSize2;
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style, int fontSize, Color clr, FontStyle fontStyle)
+	{
+		FontStyle fontStyle2 = style.fontStyle;
+		style.fontStyle = fontStyle;
+		Label(rc, str, style, fontSize, clr);
+		style.fontStyle = fontStyle2;
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style, Color clr, int fontSize, FontStyle fontStyle)
+	{
+		FontStyle fontStyle2 = style.fontStyle;
+		style.fontStyle = fontStyle;
+		Label(rc, str, style, clr, fontSize);
+		style.fontStyle = fontStyle2;
+	}
+
+	public static void Label(Rect rc, uint intstr, GUIStyle style, Color clr)
+	{
+		Label(rc, intstr.ToString(), style, clr);
+	}
+
+	public static void Label(Rect rc, long intstr, GUIStyle style, Color clr)
+	{
+		Label(rc, intstr.ToString(), style, clr);
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style, Color clr)
+	{
+		style.normal.textColor = clr;
+		GUI.Label(rc, str, style);
+	}
+
+	public static void Label(Rect rc, GUIContent cont, GUIStyle style, Color clr)
+	{
+		style.normal.textColor = clr;
+		GUI.Label(rc, cont, style);
+	}
+
+	public static void Label(Rect rc, uint strint, GUIStyle style)
+	{
+		Label(rc, strint.ToString(), style);
+	}
+
+	public static void Label(Rect rc, int strint, GUIStyle style)
+	{
+		Label(rc, strint.ToString(), style);
+	}
+
+	public static void Label(Rect rc, string str, GUIStyle style)
+	{
+		GUI.Label(rc, str, style);
+	}
+
+	public static void ShadowLabel(Rect rc, string str, GUIStyle style)
+	{
+		ShadowLabel(rc, str, style, style.normal.textColor, new Vector2(1f, 1f));
+	}
+
+	public static void ShadowLabel(Rect rc, string str, GUIStyle style, Color clr, int fontSize)
+	{
+		ShadowLabel(rc, str, style, clr, fontSize, new Vector2(1f, 1f));
+	}
+
+	public static void ShadowLabel(Rect rc, string str, GUIStyle style, Color clr, int fontSize, Vector2 offset)
+	{
+		int fontSize2 = style.fontSize;
+		style.fontSize = fontSize;
+		ShadowLabel(rc, str, style, clr, offset);
+		style.fontSize = fontSize2;
+	}
+
+	public static void ShadowLabel(Rect rc, string str, GUIStyle style, Color clr)
+	{
+		ShadowLabel(rc, str, style, clr, new Vector2(1f, 1f));
+	}
+
+	public static void ShadowLabel(Rect rc, string str, GUIStyle style, Color clr, Vector2 offset)
+	{
+		Rect position = rc;
+		style.normal.textColor = Color.black;
+		position.x = rc.x + offset.x;
+		position.y = rc.y + offset.y;
+		GUI.Label(position, str, style);
+		style.normal.textColor = clr;
+		GUI.Label(rc, str, style);
+	}
+
+	public static GUIStyle PrepLable(AssetBundle uibundle, string name)
+	{
+		GUIStyle gUIStyle = new GUIStyle();
+		gUIStyle.normal.background = uibundle.Load(name) as Texture2D;
+		return gUIStyle;
+	}
+
+	public static string TextField(Rect textRc, string strInput, int lenMax, GUIStyle gstyle, Color clr)
+	{
+		Color textColor = gstyle.normal.textColor;
+		gstyle.normal.textColor = clr;
+		string result = GUI.TextField(textRc, strInput, 256, _textCenter);
+		gstyle.normal.textColor = textColor;
+		return result;
+	}
+
+	public static string TextTextArea(Rect textRc, string strInput, int lenMax, GUIStyle gstyle, Color clr)
+	{
+		Color textColor = gstyle.normal.textColor;
+		gstyle.normal.textColor = clr;
+		string result = GUI.TextArea(textRc, strInput, 256, _textCenter);
+		gstyle.normal.textColor = textColor;
+		return result;
+	}
+
+	public static void DrawArea(Rect btnRc, string strTemp, ArrowFace face)
+	{
+		int fontSize = _textCenter.fontSize;
+		_textCenter.fontSize = 30;
+		Rect rc = DrawArrowMessage(btnRc, face, (int)_textCenter.CalcSize(new GUIContent(strTemp)).x);
+		Label(rc, strTemp, _textCenter, _clrMsg);
+		_textCenter.fontSize = fontSize;
+	}
+
+	public static Rect DrawArrowMessage(Vector2 point, ArrowFace direction, Vector2 rc_size)
+	{
+		if (rc_size.x < 32f)
+		{
+			rc_size.x = 32f;
+		}
+		Rect rect = default(Rect);
+		Rect result = new Rect
+		{
+			width = rc_size.x,
+			height = rc_size.y
+		};
+		if (direction == ArrowFace.Down)
+		{
+			rect.x = point.x - rc_size.x / 2f - (float)tga_kuang_lpart.border.left;
+			rect.y = point.y + 5f - (float)tga_kuang_down.border.bottom - rc_size.y - (float)tga_kuang_down.border.top;
+			rect.width = (float)tga_kuang_lpart.border.left + rc_size.x + (float)tga_kuang_rpart.border.right;
+			rect.height = (float)tga_kuang_down.border.top + rc_size.y + (float)tga_kuang_down.border.bottom;
+			result.x = point.x - rc_size.x / 2f;
+			result.y = rect.y + (float)tga_kuang_down.border.top;
+			Label(new Rect(point.x - 16f, rect.y, 32f, rect.height), string.Empty, tga_kuang_down);
+			Label(new Rect(rect.x, rect.y, point.x - 16f - rect.x, rect.height), string.Empty, tga_kuang_lpart);
+			Label(new Rect(point.x + 16f, rect.y, rect.x + rect.width - point.x - 16f, rect.height), string.Empty, tga_kuang_rpart);
+		}
+		return result;
+	}
+
+	public static Rect DrawArrowMessage(Rect rc, ArrowFace face, int width)
+	{
+		if (rc == new Rect(0f, 0f, 0f, 0f))
+		{
+			return new Rect(0f, 0f, 0f, 0f);
+		}
+		int num = 32;
+		int num2 = 139;
+		width += 110;
+		Rect arrowrc = default(Rect);
+		switch (face)
+		{
+		case ArrowFace.Left:
+		{
+			int num3 = (int)rc.x + (int)rc.width - 10;
+			int num4 = (int)rc.center.y - num2 / 2;
+			arrowrc.x = num3;
+			arrowrc.y = num4;
+			arrowrc.width = width;
+			arrowrc.height = num2;
+			Label(arrowrc, string.Empty, tga_kuang_left);
+			break;
+		}
+		case ArrowFace.Right:
+			arrowrc.x = rc.x - (float)width + 10f;
+			arrowrc.y = rc.center.y - (float)(num2 / 2);
+			arrowrc.width = width;
+			arrowrc.height = num2;
+			Label(arrowrc, string.Empty, tga_kuang_right);
+			break;
+		case ArrowFace.Up:
+			arrowrc.x = rc.center.x - (float)(num / 2);
+			arrowrc.y = rc.y + rc.height - 10f;
+			arrowrc.width = num;
+			arrowrc.height = num2;
+			Label(arrowrc, string.Empty, tga_kuang_up);
+			DrawArrowParts(ref arrowrc, width);
+			break;
+		case ArrowFace.Down:
+			arrowrc.x = rc.center.x - (float)(num / 2);
+			arrowrc.y = rc.y - (float)num2 + 10f;
+			arrowrc.width = num;
+			arrowrc.height = num2;
+			if (arrowrc.x < (float)width * 0.5f)
+			{
+				arrowrc.x += 30f;
+			}
+			Label(arrowrc, string.Empty, tga_kuang_down);
+			DrawArrowParts(ref arrowrc, width);
+			break;
+		}
+		return arrowrc;
+	}
+
+	public static void DrawArrowParts(ref Rect arrowrc, int width)
+	{
+		int num = 139;
+		Rect rect = default(Rect);
+		rect.width = ((float)width - arrowrc.width) / 2f;
+		rect.height = num;
+		rect.y = arrowrc.y;
+		rect.x = arrowrc.x - rect.width;
+		Label(rect, string.Empty, tga_kuang_lpart);
+		Rect rc = rect;
+		rc.x = arrowrc.x + arrowrc.width;
+		Label(rc, string.Empty, tga_kuang_rpart);
+		arrowrc.x = rect.x;
+		arrowrc.width = width;
+	}
+
+	public static void init_lable(AssetBundle asset, string pic_name, ref GUIStyle style)
+	{
+		if (style == null)
+		{
+			style = new GUIStyle();
+		}
+		style.normal.background = asset.Load(pic_name) as Texture2D;
+	}
+
+	public static string load_str(uint id)
+	{
+		if (Global.getTemplate("text", id) is _text text)
+		{
+			return text.text_chs;
+		}
+		return string.Empty;
+	}
+
+	public static string load_str(uint id, params object[] args)
+	{
+		return string.Format(load_str(id), args);
+	}
+
+	public static void CopyToClipboard(string data)
+	{
+		Type typeFromHandle = typeof(GUIUtility);
+		PropertyInfo property = typeFromHandle.GetProperty("systemCopyBuffer", BindingFlags.Static | BindingFlags.NonPublic);
+		property.SetValue(null, data, null);
+	}
+
+	private void OnGUI()
+	{
+		if (BaseAsset._PHONEUI)
+		{
+			Phone_OnGUI();
+		}
+		else
+		{
+			Web_OnGUI();
+		}
+	}
+
+	protected virtual void Web_OnGUI()
+	{
+	}
+
+	protected virtual void Phone_OnGUI()
+	{
+		Web_OnGUI();
+	}
+
+	public static char DisplayableChar(char c)
+	{
+		return (c == ' ') ? c : ((!(_textLeft.CalcSize(new GUIContent(c.ToString())).x < 1f)) ? c : '□');
+	}
+
+	public static MessageBox GetMessageBox()
+	{
+		if (msgBox == null && GameObject.Find("Root/RootUI") != null)
+		{
+			msgBox = GameObject.Find("Root/RootUI").GetComponent<MessageBox>();
+		}
+		return msgBox;
+	}
+
+	public static TooltipUI GetTooltipUI()
+	{
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			return GameObject.Find("Root/RootUI").GetComponent<TooltipUI>();
+		}
+		return null;
+	}
+
+	public static FontCache GetFontCache()
+	{
+		if (GameObject.Find("/Root") != null)
+		{
+			return GameObject.Find("/Root").GetComponent<FontCache>();
+		}
+		return null;
+	}
+
+	public void HDTAdvert(string url)
+	{
+		if (Global.game_data.Contains("source") && Global.game_data["source"].ToString() == "hdtads")
+		{
+			StartCoroutine(_HDTAdvert(url));
+		}
+	}
+
+	private static IEnumerator _HDTAdvert(string url)
+	{
+		yield return new WWW(url);
+	}
+
+	public void LevelUPTo51(short level)
+	{
+		Logger.Log("Levelup51");
+		StartCoroutine(level_up(Global.userid, level));
+	}
+
+	private static IEnumerator level_up(ulong userid, short level)
+	{
+		WWWForm form = new WWWForm();
+		form.AddField("game_id", 248);
+		string areasign = "s" + Global.game_data["sid"].ToString();
+		form.AddField("areasign", areasign);
+		string user = Global.game_data["username"].ToString();
+		form.AddField("user", user);
+		string t = TimeUtil.Now.ToString();
+		form.AddField("t", t);
+		form.AddField("level", level);
+		string md5_str = "248" + areasign + user + t + level + "a4c2d23614737a505950740bfeba35f3";
+		MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
+		byte[] md5code = md5.ComputeHash(Encoding.Default.GetBytes(md5_str));
+		string md5result = BitConverter.ToString(md5code).Replace("-", string.Empty);
+		md5result = md5result.ToLower();
+		form.AddField("authkey", md5result);
+		string url = "http://gameapi.51.com/role_level/level_push";
+		yield return new WWW(url, form);
+	}
+
+	public void drawLimitTime(Rect rc, float ratio_extern)
+	{
+		BeginGroup(rc);
+		Box(_rect(0f, 0f, 40f, 54f), _iconLimitTime);
+		if (ratio_extern > 0f)
+		{
+			Label(_rect(0f, 32f, 40f, 20f), "+" + (int)(ratio_extern * 100f) + "%", _numLeft, 14, _clrWhite);
+		}
+		EndGroup();
+	}
+
+	public FrameAnimation addFrameAnimation(string name, List<GUIStyle> styList, float intervalTime, Rect rc, int animeStartIdx, bool isCirculate)
+	{
+		if (!isContainsFrameAnimationKey(name))
+		{
+			return addFrameAnimation(name, styList, intervalTime, rc, animeStartIdx, isCirculate, isreversal: false, 0f);
+		}
+		if (frameAnimationDic[name].getRect() != rc)
+		{
+			setRectFrameAnimation(name, rc);
+		}
+		return null;
+	}
+
+	public FrameAnimation addFrameAnimation(string name, List<GUIStyle> styList, float intervalTime, Rect rc, int animeStartIdx, bool isCirculate, bool isreversal, float pausetime)
+	{
+		if (!isContainsFrameAnimationKey(name))
+		{
+			FrameAnimation frameAnimation = new FrameAnimation(name, styList, intervalTime, rc, animeStartIdx, isCirculate, isreversal, pausetime);
+			frameAnimationDic.Add(frameAnimation.m_name, frameAnimation);
+			return frameAnimation;
+		}
+		if (frameAnimationDic[name].getRect() != rc)
+		{
+			setRectFrameAnimation(name, rc);
+		}
+		return null;
+	}
+
+	public void removeFrameAnimation(string name)
+	{
+		if (isContainsFrameAnimationKey(name))
+		{
+			frameAnimationDic.Remove(name);
+		}
+	}
+
+	public void updateFrameAnimation()
+	{
+		Dictionary<string, FrameAnimation> dictionary = new Dictionary<string, FrameAnimation>();
+		foreach (FrameAnimation value in frameAnimationDic.Values)
+		{
+			value.update();
+			if (value.isFinished())
+			{
+				dictionary.Add(value.m_name, value);
+			}
+		}
+		foreach (FrameAnimation value2 in dictionary.Values)
+		{
+			frameAnimationDic.Remove(value2.m_name);
+		}
+		dictionary.Clear();
+		if (BaseAsset.lds != null && BaseAsset.lds.IsBattling())
+		{
+			clearFrameAnimation();
+		}
+	}
+
+	public bool isContainsFrameAnimationKey(string name)
+	{
+		return frameAnimationDic.ContainsKey(name);
+	}
+
+	public void drawFrameAnimation()
+	{
+		updateFrameAnimation();
+		foreach (FrameAnimation value in frameAnimationDic.Values)
+		{
+			value.draw();
+		}
+	}
+
+	public void setRectFrameAnimation(string name, Rect rc)
+	{
+		foreach (KeyValuePair<string, FrameAnimation> item in frameAnimationDic)
+		{
+			if (item.Key == name)
+			{
+				item.Value.setRect(rc);
+			}
+		}
+	}
+
+	public void clearFrameAnimation()
+	{
+		frameAnimationDic.Clear();
+	}
+
+	public float drawTopResourceBar(Texture2D[] texZis, Texture2D[] texIcons, long[] resources)
+	{
+		return drawTopResourceBar(texZis, texIcons, resources, 0f);
+	}
+
+	public float drawTopResourceBar(Texture2D[] texZis, Texture2D[] texIcons, long[] resources, float offset)
+	{
+		int num = Math.Max(texZis.Length, texIcons.Length);
+		float[] array = new float[num];
+		for (int i = 0; i < num; i++)
+		{
+			array[i] = CalcSize(resources[i].ToString(), _numLeft, _fontSize).x;
+		}
+		setResourceBar(texZis, texIcons, resources, offset);
+		BeginGroup(_rect((_rcCur.width - resource_bar_width) / 2f + offset, 15f, resource_bar_width, 36f));
+		Label(_rect(0f, 0f, resource_bar_width, 36f), string.Empty, _box15Style);
+		BeginGroup(_rect(spacingLeft, 0f, resource_bar_width - (float)spacingLeft - (float)spacingRight, 36f));
+		float num2 = 0f;
+		for (int j = 0; j < num; j++)
+		{
+			if (j < texZis.Length && texZis[j] != null)
+			{
+				GUI.DrawTexture(_rect(num2, (36 - texZis[j].height) / 2, texZis[j].width, texZis[j].height), texZis[j]);
+				num2 += (float)texZis[j].width;
+			}
+			if (j < texIcons.Length && texIcons[j] != null)
+			{
+				GUI.DrawTexture(_rect(num2, (36 - texIcons[j].height) / 2, texIcons[j].width, texIcons[j].height), texIcons[j]);
+				num2 += (float)texIcons[j].width;
+			}
+			Label(_rect(num2, 8f, array[j], 20f), resources[j].ToString(), _numLeft, _clrWhite, _fontSize);
+			num2 += (float)spacingGroup + array[j];
+		}
+		EndGroup();
+		EndGroup();
+		return resource_bar_width;
+	}
+
+	public void setResourceBar(Texture2D[] texZis, Texture2D[] texIcons, long[] resources, float offset)
+	{
+		for (int i = 0; i < 10; i++)
+		{
+			resource_bubble_posX[i] = 0f;
+		}
+		int num = Math.Max(texZis.Length, texIcons.Length);
+		float[] array = new float[num];
+		resource_bar_offset = offset;
+		resource_bar_width = spacingLeft + spacingGroup * (num - 1) + spacingRight;
+		for (int j = 0; j < num; j++)
+		{
+			if (j > 0)
+			{
+				resource_bubble_posX[j] += resource_bubble_posX[j - 1] + (float)spacingGroup + array[j - 1];
+			}
+			if (j < texZis.Length && texZis[j] != null)
+			{
+				resource_bar_width += texZis[j].width;
+				resource_bubble_posX[j] += texZis[j].width;
+			}
+			if (j < texIcons.Length && texIcons[j] != null)
+			{
+				resource_bar_width += texIcons[j].width;
+				resource_bubble_posX[j] += texIcons[j].width;
+			}
+			array[j] = CalcSize(resources[j].ToString(), _numLeft, _fontSize).x;
+			resource_bar_width += array[j];
+		}
+		for (int k = 0; k < 10; k++)
+		{
+			resource_bubble_posX[k] += (float)spacingLeft + ((float)Screen.width - w) / 2f + (w - resource_bar_width) / 2f + resource_bar_offset;
+		}
+	}
+
+	public void drawResourceBubble(int resourceIdx, int value, Texture2D icon)
+	{
+		RootBase._drawBubble(value, _rect(resource_bubble_posX[resourceIdx - 1], ((float)Screen.height - h) / 2f + 36f, 200f, 50f), icon, 1f, 0f, -20f);
+	}
+
+	public static void drawStateBubble(string valuekind)
+	{
+		RootBase._drawStateBubble(valuekind);
+	}
+
+	public virtual void EnableAll()
+	{
+		Enable();
+		if (BaseAsset.lds.GetCurUI() != null)
+		{
+			BaseAsset.lds.GetCurUI().ToEnable();
+		}
+		my_mouseclick = true;
+	}
+
+	public virtual void DisableAll()
+	{
+		Disable();
+		if (BaseAsset.lds.GetCurUI() != null)
+		{
+			BaseAsset.lds.GetCurUI().ToDisable();
+		}
+		my_mouseclick = false;
+	}
+
+	public static ConsumeUI GetConsumeUI()
+	{
+		if (consume_ui != null)
+		{
+			return consume_ui;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			consume_ui = GameObject.Find("Root/RootUI").GetComponent<ConsumeUI>();
+		}
+		return consume_ui;
+	}
+
+	public static BattleResultUI GetBattleResultUI()
+	{
+		if (battle_result_ui != null)
+		{
+			return battle_result_ui;
+		}
+		if (GameObject.Find("Battle/BattleUI") != null)
+		{
+			battle_result_ui = GameObject.Find("Battle/BattleUI").GetComponent<BattleResultUI>();
+		}
+		return battle_result_ui;
+	}
+
+	public static MailUI GetMailUI()
+	{
+		if (mail_ui != null)
+		{
+			return mail_ui;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			mail_ui = GameObject.Find("Root/RootUI").GetComponent<MailUI>();
+		}
+		return mail_ui;
+	}
+
+	public static SpecialGetUI GetSpecialGetUI()
+	{
+		if (special_get_ui != null)
+		{
+			return special_get_ui;
+		}
+		if (GameObject.Find("Root/RootUI") != null)
+		{
+			special_get_ui = GameObject.Find("Root/RootUI").GetComponent<SpecialGetUI>();
+		}
+		return special_get_ui;
+	}
+
+	public bool canBuySpItem(_Treasure t)
+	{
+		return canBuySpItem(t.type, t.param[0], t.param[1]);
+	}
+
+	public bool canBuySpItem(int treasure_type, int param0, int param1)
+	{
+		switch (treasure_type)
+		{
+		case 0:
+			if (Global.character_.haveOneGeneral((uint)param0))
+			{
+				GetMessageBox().setMessage(string.Empty, load_str(9214u), rmg);
+				return false;
+			}
+			return true;
+		case 36:
+			if (Global.character_.artifacts.ContainsKey((ushort)param0) || Global.character_.treasuryItems.ContainsKey((uint)(3600000 + param0)))
+			{
+				GetMessageBox().setMessage(string.Empty, load_str(9213u), rmg);
+				return false;
+			}
+			return true;
+		case 43:
+			if (Global.character_.isAmuletFull())
+			{
+				GetMessageBox().setMessage(string.Empty, load_str(9212u), rmg);
+				return false;
+			}
+			return true;
+		case 54:
+			if (Global.character_.isGemFull())
+			{
+				GetMessageBox().setMessage(string.Empty, load_str(21068u), rmg);
+				return false;
+			}
+			return true;
+		case 53:
+			if (Global.getTemplate("spirit_skill", (uint)param1) is _spirit_skill spirit_skill)
+			{
+				for (int i = 0; i < Global.character_.spirit.skills.Count; i++)
+				{
+					if (Global.character_.spirit.skills[i].skill_type == spirit_skill.skill_type)
+					{
+						GetMessageBox().setMessage(string.Empty, load_str(34015u), rmg);
+						return false;
+					}
+				}
+			}
+			return true;
+		case 90:
+			return canBuyGodslot(param0, needmsg: true);
+		default:
+			return true;
+		}
+	}
+
+	public bool canBuyGodslot(int param0, bool needmsg)
+	{
+		_god_list_slot_template god_list_slot_template = Global.getTemplate("god_list_slot_template", (uint)param0) as _god_list_slot_template;
+		uint num = 0u;
+		uint num2 = 0u;
+		if (god_list_slot_template != null)
+		{
+			num2 = god_list_slot_template.slot_type;
+			num = god_list_slot_template.slot_rank;
+		}
+		foreach (object value in Global.getTemplates("god_list_slot_template").Values)
+		{
+			_god_list_slot_template god_list_slot_template2 = (_god_list_slot_template)value;
+			if (god_list_slot_template2 != null && god_list_slot_template2.slot_type == num2 && (Global.character_.godlist.m_slots.ContainsKey(god_list_slot_template2.id) || Global.character_.treasuryItems.ContainsKey((uint)(9000000 + god_list_slot_template2.id))) && god_list_slot_template2.slot_rank >= num)
+			{
+				if (needmsg)
+				{
+					GetMessageBox().setMessage(string.Empty, load_str(35531u), rmg);
+				}
+				return false;
+			}
+		}
+		return true;
+	}
+}

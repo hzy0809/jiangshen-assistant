@@ -1,0 +1,1081 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class EnchantUI : __BaseUI
+{
+	private class VecEnchant
+	{
+		public Vector2 pos = default(Vector2);
+
+		public DateTime timer = default(DateTime);
+	}
+
+	private enum digging_type
+	{
+		nodigging,
+		sliver,
+		gold
+	}
+
+	public delegate void m_coin();
+
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_zi1 = new GUIStyle();
+
+	private GUIStyle ui_zi2 = new GUIStyle();
+
+	private _ButtonStyle button_jingao = new _ButtonStyle();
+
+	private _ButtonStyle button_yingao = new _ButtonStyle();
+
+	private _enchant_harvest_chance lastenchant;
+
+	private DateTime digTimer = default(DateTime);
+
+	private DateTime showTimer = default(DateTime);
+
+	private GUIStyle[] typeicon = new GUIStyle[7];
+
+	private digging_type m_digging;
+
+	private GUIStyle ui_di = new GUIStyle();
+
+	private GUIStyle icon_gao1 = new GUIStyle();
+
+	private GUIStyle icon_gao2 = new GUIStyle();
+
+	private bool sending;
+
+	private GUIStyle ui_longmai = new GUIStyle();
+
+	private BubbleManager mBgr = new BubbleManager();
+
+	private bool vipdig;
+
+	private GUIStyle ui_di3 = new GUIStyle();
+
+	private GUIStyle ui_biaoti2 = new GUIStyle();
+
+	private _ButtonStyle button_piliang2 = new _ButtonStyle();
+
+	private _ButtonStyle button_piliang3 = new _ButtonStyle();
+
+	private GUIStyle ui_zi3 = new GUIStyle();
+
+	private GUIStyle ui_zi4 = new GUIStyle();
+
+	private GUIStyle ui_zi5 = new GUIStyle();
+
+	private GUIStyle icon1 = new GUIStyle();
+
+	private GUIStyle icon2 = new GUIStyle();
+
+	private Texture2D DragonTitle;
+
+	private _ButtonStyle[] btn_hover = new _ButtonStyle[2];
+
+	private _ButtonStyle AI_button = new _ButtonStyle();
+
+	private bool subwindow;
+
+	private float timecd;
+
+	private DateTime m_EnchantTime = default(DateTime);
+
+	private bool aistate;
+
+	private bool aiclosed = true;
+
+	private Texture2D ui_zi7;
+
+	private Texture2D ui_zi8;
+
+	private Texture2D ui_zi9;
+
+	private Texture2D ui_di4;
+
+	private _RadioStyle Btn_xuanzedian = new _RadioStyle();
+
+	private _ButtonStyle Btn_qwcz = new _ButtonStyle();
+
+	public m_coin e_coin;
+
+	private bool AIdig;
+
+	private int m_diglevel = 2;
+
+	private int[] m_double = new int[3] { 4, 8, 16 };
+
+	private int m_iTimes = 1;
+
+	private List<VecEnchant> m_dragons = new List<VecEnchant>();
+
+	private Rect homeRc = default(Rect);
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_enchant");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_enchant");
+		titleStyle.normal.background = asset.Load("ui_biaodi") as Texture2D;
+		ui_zi1.normal.background = asset.Load("ui_zi1") as Texture2D;
+		ui_zi2.normal.background = asset.Load("ui_zi2") as Texture2D;
+		button_jingao.make(asset, "button_jingao", "_unable");
+		button_yingao.make(asset, "button_yingao", "_unable");
+		icon_gao1.normal.background = asset.Load("icon_gao1") as Texture2D;
+		icon_gao2.normal.background = asset.Load("icon_gao2") as Texture2D;
+		ui_di3.normal.background = asset.Load("ui_di3") as Texture2D;
+		for (int i = 0; i < typeicon.Length; i++)
+		{
+			typeicon[i] = new GUIStyle();
+			if (i < 4)
+			{
+				typeicon[i].normal.background = asset.Load("icon_stone" + (i + 1)) as Texture2D;
+				continue;
+			}
+			switch (i)
+			{
+			case 4:
+				typeicon[i].normal.background = asset.Load("icon_longmai") as Texture2D;
+				break;
+			case 5:
+				typeicon[i].normal.background = asset.Load("icon_shibai") as Texture2D;
+				break;
+			case 6:
+				typeicon[i].normal.background = asset.Load("icon_stone1") as Texture2D;
+				break;
+			}
+		}
+		ui_di.normal.background = asset.Load("ui_di") as Texture2D;
+		ui_longmai.normal.background = asset.Load("ui_longmai") as Texture2D;
+		ui_biaoti2.normal.background = asset.Load("ui_biaoti2") as Texture2D;
+		button_piliang2.make(asset, "button_piliang2");
+		button_piliang3.make(asset, "button_piliang3");
+		__BaseUI.init_lable(asset, "ui_zi3", ref ui_zi3);
+		__BaseUI.init_lable(asset, "ui_zi4", ref ui_zi4);
+		__BaseUI.init_lable(asset, "ui_zi5", ref ui_zi5);
+		__BaseUI.init_lable(asset, "ui_icon1", ref icon1);
+		__BaseUI.init_lable(asset, "ui_icon2", ref icon2);
+		DragonTitle = asset.Load("ui_zi6") as Texture2D;
+		for (int j = 0; j < 2; j++)
+		{
+			btn_hover[j] = new _ButtonStyle();
+			btn_hover[j].make_nonormal_1pic(asset, "button_icon_hover", 0, 0);
+		}
+		AI_button.make(asset, "button_zidong");
+		if (Global.character_.enchant_dragon_protect)
+		{
+			subwindow = true;
+		}
+		ui_zi7 = asset.Load("ui_zi7") as Texture2D;
+		ui_zi8 = asset.Load("ui_zi8") as Texture2D;
+		ui_zi9 = asset.Load("ui_zi9") as Texture2D;
+		ui_di4 = asset.Load("ui_di4") as Texture2D;
+		Btn_xuanzedian.make(asset, "button_xuanzedian");
+		Btn_xuanzedian.normalStyle.hover.background = Btn_xuanzedian.normalStyle.normal.background;
+		Btn_qwcz.make(asset, "ui_chongzhi3");
+		AIdig = false;
+		aistate = false;
+		aiclosed = true;
+		Visible();
+		EnableAll();
+	}
+
+	private void DrawDigLevel()
+	{
+		if (Global.character_.VIPLEVEL <= 0)
+		{
+			__BaseUI.Box(__BaseUI._rect(40f, 70f, 122f, 111f), ui_zi7);
+			__BaseUI.Box(__BaseUI._rect(37f, 192f, 137f, 52f), ui_di4);
+			if (Btn_qwcz.Button(IsEnable(), __BaseUI._rect(60f, 217f, 80f, 22f), string.Empty))
+			{
+				e_coin();
+			}
+			return;
+		}
+		__BaseUI.Box(__BaseUI._rect(40f, 70f, 122f, 83f), ui_zi8);
+		__BaseUI.Box(__BaseUI._rect(71f, 170f, 33f, 89f), ui_zi9);
+		for (int i = 0; i < 3; i++)
+		{
+			if (Btn_xuanzedian.Button(m_diglevel != m_double[i], __BaseUI._rect(47f, 166 + i * 36, 25f, 26f), string.Empty) && !AIdig)
+			{
+				m_diglevel = m_double[i];
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(638f, 403f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, titleStyle);
+			__BaseUI.Label(_CalcRect(166, 14, 161, 36, 311, 14), string.Empty, __BaseUI._box15Style);
+			GUI.DrawTexture(__BaseUI._rect(232f, 26f, 56f, 14f), __BaseUI._ziEnchant);
+			GUI.DrawTexture(__BaseUI._rect(291f, 19f, 23f, 23f), __BaseUI._iconEnchant);
+			__BaseUI.Label(__BaseUI._rect(325f, 22f, 91f, 19f), Global.character_.enchant_stone.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+			__BaseUI.Label(__BaseUI._rect(25f, 54f, 588f, 329f), string.Empty, ui_di);
+			__BaseUI.Label(_CalcRect(127, 319, 89, 89, 171, 267), string.Empty, __BaseUI._bgTooltip);
+			__BaseUI.Label(_CalcRect(357, 319, 89, 89, 453, 267), string.Empty, __BaseUI._bgTooltip);
+			__BaseUI.Label(__BaseUI._rect(155f, 331f, 30f, 14f), string.Empty, ui_zi1);
+			__BaseUI.Label(__BaseUI._rect(384f, 330f, 104f, 15f), string.Empty, ui_zi2);
+			string text = Global.character_.sliver_pick.ToString();
+			DrawDigLevel();
+			__BaseUI.ShadowLabel(__BaseUI._rect(209f, 330f, 38f, 15f), text + __BaseUI.load_str(434u), __BaseUI._textLeft, __BaseUI._clrWhite);
+			_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+			int goldenchantharvest_times = vip_template.goldenchantharvest_times;
+			text = (goldenchantharvest_times - Global.character_.gold_pick_times).ToString();
+			__BaseUI.ShadowLabel(__BaseUI._rect(411f, 330f, 27f, 14f), GetGoldCost().ToString(), __BaseUI._textLeft, __BaseUI._clrWhite);
+			__BaseUI.ShadowLabel(__BaseUI._rect(488f, 330f, 42f, 14f), text + __BaseUI.load_str(433u), __BaseUI._textLeft, __BaseUI._clrWhite);
+			int buy_silver = (Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template).buy_silver;
+			GUIContent content = new GUIContent(string.Empty, __BaseUI.load_str(435u));
+			if (Global.character_.buy_silverpick >= buy_silver && Global.character_.sliver_pick <= 0 && Global.character_.VIPLEVEL < 10)
+			{
+				_vip_template vip_template2 = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+				int num2 = 0;
+				int num3 = 0;
+				for (int i = Global.character_.VIPLEVEL + 1; i <= 10; i++)
+				{
+					if (Global.getTemplate("vip_template", (uint)i) is _vip_template vip_template3 && vip_template2 != null)
+					{
+						num2 = vip_template3.buy_silver - vip_template2.buy_silver;
+						if (num2 > 0)
+						{
+							num3 = vip_template3.level;
+							break;
+						}
+					}
+				}
+				if (num2 > 0)
+				{
+					content = new GUIContent(string.Empty, string.Format(__BaseUI.load_str(458u), num3, num2));
+				}
+			}
+			if (Global.character_.VIPLEVEL >= 0 && Global.character_.sliver_pick > 1)
+			{
+				if (AI_button.Button(IsEnable() && (Global.character_.buy_silverpick < buy_silver || Global.character_.sliver_pick > 0) && !vipdig && m_digging == digging_type.nodigging && !subwindow && !sending && !aistate, __BaseUI._rect(79f, 303f, 70f, 70f), content))
+				{
+					AIdig = true;
+					aiclosed = false;
+				}
+			}
+			else if (button_yingao.Button(IsEnable() && (Global.character_.buy_silverpick < buy_silver || Global.character_.sliver_pick > 0) && !vipdig && m_digging == digging_type.nodigging && !subwindow && !sending, __BaseUI._rect(79f, 303f, 70f, 70f), content))
+			{
+				int num4 = 3;
+				if (m_diglevel == 16)
+				{
+					num4 = 4;
+				}
+				if (Global.character_.sliver_pick > 0)
+				{
+					if (Global.character_.enchant_double >= num4)
+					{
+						DisableAll();
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20853u), rmg, SliverDigCallBack, _bCancel: true);
+					}
+					else
+					{
+						ToDig(digging_type.sliver);
+					}
+				}
+				else if (Global.character_.enchant_double >= num4)
+				{
+					DisableAll();
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20853u), rmg, SliverDigCallBack, _bCancel: true);
+				}
+				else
+				{
+					Disable();
+					__BaseUI.GetConsumeUI().setConsume(5, 38, OnComfirmBuySilver);
+				}
+			}
+			content = new GUIContent(string.Empty, __BaseUI.load_str(436u));
+			if (!CheckGoldTimes())
+			{
+				_vip_template vip_template4 = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+				int num5 = 0;
+				int num6 = 0;
+				for (int j = Global.character_.VIPLEVEL + 1; j <= 10; j++)
+				{
+					if (Global.getTemplate("vip_template", (uint)j) is _vip_template vip_template5 && vip_template4 != null)
+					{
+						num5 = vip_template5.goldenchantharvest_times - vip_template4.goldenchantharvest_times;
+						if (num5 > 0)
+						{
+							num6 = vip_template5.level;
+							break;
+						}
+					}
+				}
+				if (num5 > 0)
+				{
+					content = new GUIContent(string.Empty, string.Format(__BaseUI.load_str(457u), num6, num5));
+				}
+			}
+			if (button_jingao.Button(IsEnable() && CheckGoldTimes() && !vipdig && m_digging == digging_type.nodigging && !subwindow && !sending && !aistate, __BaseUI._rect(314f, 303f, 70f, 70f), content))
+			{
+				__BaseUI.GetConsumeUI().setConsume((int)GetGoldCost(), 33, OnGoldPick);
+			}
+			if (m_digging != digging_type.nodigging)
+			{
+				double totalSeconds2 = (digTimer - DateTime.Now).TotalSeconds;
+				if (totalSeconds2 > 0.0)
+				{
+					__BaseUI.Label(_CalcRect(248, 219, 183, 26, 201, 219), string.Empty, __BaseUI._barBgStyle);
+					if (timecd == 0.5f)
+					{
+						GUI.DrawTexture(__BaseUI._rect(260f, 227f, (float)(112.0 * (1.0 - totalSeconds2 / 0.5)), 10f), __BaseUI._barRedTex);
+					}
+					else if (timecd == 1f)
+					{
+						GUI.DrawTexture(__BaseUI._rect(260f, 227f, (float)(112.0 * (1.0 - totalSeconds2)), 10f), __BaseUI._barRedTex);
+					}
+					GUIStyle gUIStyle = new GUIStyle();
+					__BaseUI.Label(style: (m_digging != digging_type.gold) ? icon_gao1 : icon_gao2, rc: __BaseUI._rect(226f, 208f, 40f, 44f), str: string.Empty);
+				}
+				else if (!sending)
+				{
+					if (m_digging == digging_type.gold)
+					{
+						cs_enchant_dig_gold();
+					}
+					else
+					{
+						cs_enchant_dig_sliver();
+						AIdig = true;
+						if (Global.character_.sliver_pick < 1 && Global.character_.buy_silverpick >= buy_silver)
+						{
+							AIdig = false;
+							aistate = false;
+						}
+					}
+					m_digging = digging_type.nodigging;
+				}
+			}
+			if (AIdig)
+			{
+				double totalSeconds3 = (digTimer - DateTime.Now).TotalSeconds;
+				if (!aiclosed)
+				{
+					aistate = true;
+				}
+				else
+				{
+					aistate = false;
+				}
+				if (!sending && totalSeconds3 < 0.0 && (Global.character_.buy_silverpick < buy_silver || Global.character_.sliver_pick > 0) && !aiclosed)
+				{
+					int num7 = 3;
+					if (m_diglevel == 16)
+					{
+						num7 = 4;
+					}
+					if (Global.character_.enchant_double >= num7)
+					{
+						DisableAll();
+						AIdig = false;
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20853u), rmg, AidigCallBack, _bCancel: true);
+					}
+					else if (Global.character_.sliver_pick > 0)
+					{
+						ToDig(digging_type.sliver);
+					}
+					else
+					{
+						DisableAll();
+						AIdig = false;
+						__BaseUI.GetConsumeUI().setConsume(5, 38, AiDigBuySilver);
+					}
+				}
+			}
+			if (lastenchant != null)
+			{
+				DrawDig((uint)lastenchant.id);
+			}
+			if (Global.character_.enchant_double > 0)
+			{
+				__BaseUI.Label(__BaseUI._rect(449f, 85f, 140f, 66f), string.Empty, ui_longmai);
+				int fontSize = __BaseUI._textCenter.fontSize;
+				__BaseUI._textCenter.fontSize = 20;
+				__BaseUI.Label(__BaseUI._rect(527f, 130f, 16f, 20f), "x", __BaseUI._textCenter, __BaseUI._clrGreen);
+				__BaseUI._textCenter.fontSize = fontSize;
+				fontSize = __BaseUI._numLeft.fontSize;
+				__BaseUI._numLeft.fontSize = 20;
+				__BaseUI.Label(__BaseUI._rect(545f, 130f, 32f, 20f), ((int)Math.Pow(2.0, Global.character_.enchant_double)).ToString(), __BaseUI._numLeft, __BaseUI._clrGreen);
+				__BaseUI._numLeft.fontSize = fontSize;
+			}
+			homeRc = GUITOScreen(__BaseUI._rect(325f, 62f, 91f, 30f));
+		}
+		if (subwindow)
+		{
+			DrawProtectWindow();
+		}
+		DrawDragonTitle();
+		if (EndGUI(hasClose: true, hasBlock: true))
+		{
+			AIdig = false;
+			DelegateFunc.MainUI_SetSubUI(null);
+			Hide();
+		}
+	}
+
+	private void AidigCallBack(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			if (Global.character_.sliver_pick > 0)
+			{
+				EnableAll();
+				ToDig(digging_type.sliver);
+			}
+			else
+			{
+				DisableAll();
+				AIdig = false;
+				__BaseUI.GetConsumeUI().setConsume(5, 38, AiDigBuySilver);
+			}
+		}
+		else
+		{
+			AIdig = false;
+			aistate = false;
+			EnableAll();
+		}
+	}
+
+	private void SliverDigCallBack(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			if (Global.character_.sliver_pick > 0)
+			{
+				EnableAll();
+				ToDig(digging_type.sliver);
+			}
+			else
+			{
+				DisableAll();
+				__BaseUI.GetConsumeUI().setConsume(5, 38, OnComfirmBuySilver);
+			}
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void OnComfirmBuySilver(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_buysilver();
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void AiDigBuySilver(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			EnableAll();
+			cs_buysilver();
+		}
+		else
+		{
+			EnableAll();
+			AIdig = false;
+			aistate = false;
+		}
+	}
+
+	private void cs_buysilver()
+	{
+		CSBuySilver_0x177 pkt = new CSBuySilver_0x177();
+		Global.m_client.Send(375, pkt, sc_buysilver);
+	}
+
+	private void sc_buysilver(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			Enable();
+			return;
+		}
+		SCBuySilver_0x177 sCBuySilver_0x = JSProtoBuf.Serializer.Deserialize<SCBuySilver_0x177>(stream);
+		if (sCBuySilver_0x.state)
+		{
+			Global.character_.sliver_pick++;
+			Global.character_.gold -= sCBuySilver_0x.cost;
+			__BaseUI.drawStateBubble("gold-" + sCBuySilver_0x.cost);
+			Global.character_.buy_silverpick++;
+			Enable();
+			ToDig(digging_type.sliver);
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void ToDig(digging_type type)
+	{
+		if (type == digging_type.sliver)
+		{
+			digTimer = DateTime.Now.AddSeconds(0.5);
+			timecd = 0.5f;
+		}
+		else
+		{
+			digTimer = DateTime.Now.AddSeconds(1.0);
+			timecd = 1f;
+		}
+		m_digging = type;
+	}
+
+	private void DrawVipDig()
+	{
+		Enable();
+		GUI.BeginGroup(__BaseUI._rectC(261f, 138f, 523f, 276f));
+		GUI.Label(__BaseUI._rect(0f, 0f, 523f, 276f), string.Empty, __BaseUI._bgStyle);
+		GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, ui_biaoti2);
+		__BaseUI.Label(__BaseUI._rect(30f, 59f, 463f, 147f), string.Empty, ui_di3);
+		GUI.Label(__BaseUI._rect(320f, 112f, 85f, 27f), string.Empty, __BaseUI._inputBgStyle);
+		GUIStyle gUIStyle = new GUIStyle();
+		gUIStyle.font = __BaseUI.ArialFont;
+		gUIStyle.normal.textColor = Color.white;
+		gUIStyle.alignment = TextAnchor.MiddleCenter;
+		gUIStyle.fontStyle = FontStyle.Bold;
+		_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+		string text = GUI.TextField(__BaseUI._rect(327f, 112f, 27f, 27f), m_iTimes.ToString(), gUIStyle);
+		int num = vip_template.goldenchantharvest_times - Global.character_.gold_pick_times;
+		if (text == string.Empty)
+		{
+			m_iTimes = 1;
+		}
+		if (int.TryParse(text, out var result))
+		{
+			if (result <= num && result > 0)
+			{
+				m_iTimes = result;
+			}
+			else if (result > num)
+			{
+				m_iTimes = num;
+			}
+		}
+		if (__BaseUI._btnShang.Button(result < num, __BaseUI._rect(360f, 116f, 19f, 9f), string.Empty))
+		{
+			m_iTimes++;
+		}
+		if (__BaseUI._btnXia.Button(m_iTimes > 1, __BaseUI._rect(360f, 126f, 19f, 9f), string.Empty))
+		{
+			m_iTimes--;
+		}
+		uint goldCost = GetGoldCost(m_iTimes);
+		__BaseUI.Label(__BaseUI._rect(371f, 156f, 47f, 17f), goldCost.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+		if (button_piliang3.Button(m_iTimes > 0 && CheckGoldTimes(m_iTimes), __BaseUI._rect(196f, 213f, 110f, 40f), string.Empty))
+		{
+			__BaseUI.GetConsumeUI().setConsume((int)goldCost, 35, OnGoldPickLot);
+		}
+		if (__BaseUI._btnClose.Button(bBtn: true, __BaseUI._rect(364f, 9f, 150f, 41f), string.Empty))
+		{
+			vipdig = false;
+		}
+		GUI.EndGroup();
+	}
+
+	private void OnGoldPickLot(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_enchant_dig_gold_many();
+		}
+	}
+
+	private void OnGoldPick(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			digTimer = DateTime.Now.AddSeconds(1.0);
+			timecd = 1f;
+			m_digging = digging_type.gold;
+		}
+	}
+
+	private bool CheckGoldTimes()
+	{
+		return CheckGoldTimes(1);
+	}
+
+	private bool CheckGoldTimes(int num)
+	{
+		_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+		byte goldenchantharvest_times = vip_template.goldenchantharvest_times;
+		if (Global.character_.gold_pick_times + num > goldenchantharvest_times)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	private uint GetGoldCost()
+	{
+		return GetGoldCost(1);
+	}
+
+	private uint GetGoldCost(int num)
+	{
+		uint num2 = 0u;
+		for (int i = 1; i <= num; i++)
+		{
+			num2 = ((Global.getTemplate("enchant_harvest_gold", (uint)(Global.character_.gold_pick_times + i)) is _enchant_harvest_gold enchant_harvest_gold) ? (num2 + enchant_harvest_gold.gold) : num2);
+		}
+		return num2;
+	}
+
+	public void cs_enchant_dig_sliver()
+	{
+		if (Global.character_.sliver_pick > 0)
+		{
+			sending = true;
+			CSEnchantDigSliver_0x339 pkt = new CSEnchantDigSliver_0x339();
+			Global.m_client.Send(825, pkt, sc_enchant_dig_sliver);
+		}
+	}
+
+	public void sc_enchant_dig_sliver(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		sending = false;
+		SCEnchantDigSliver_0x339 sCEnchantDigSliver_0x = JSProtoBuf.Serializer.Deserialize<SCEnchantDigSliver_0x339>(stream);
+		switch (sCEnchantDigSliver_0x.operate)
+		{
+		case SCEnchantDigSliver_0x339.Operate.OK:
+		{
+			uint type = sCEnchantDigSliver_0x.type;
+			if (Global.getTemplate("enchant_harvest_chance", type) is _enchant_harvest_chance enchant_harvest_chance)
+			{
+				lastenchant = enchant_harvest_chance;
+			}
+			phaseDig(type, goldDig: false);
+			Global.character_.sliver_pick--;
+			if (Global.character_.sliver_pick <= 1)
+			{
+				AIdig = false;
+				aistate = false;
+			}
+			break;
+		}
+		case SCEnchantDigSliver_0x339.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, string.Empty, rmg);
+			break;
+		}
+	}
+
+	public void cs_enchant_dig_gold()
+	{
+		sending = true;
+		CSEnchantDigGoldNew_0x33C pkt = new CSEnchantDigGoldNew_0x33C();
+		Global.m_client.Send(828, pkt, sc_enchant_dig_gold);
+	}
+
+	public void sc_enchant_dig_gold(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		sending = false;
+		SCEnchantDigGoldNew_0x33C sCEnchantDigGoldNew_0x33C = JSProtoBuf.Serializer.Deserialize<SCEnchantDigGoldNew_0x33C>(stream);
+		switch (sCEnchantDigGoldNew_0x33C.operate)
+		{
+		case SCEnchantDigGoldNew_0x33C.Operate.OK:
+		{
+			Global.character_.enchant_no_dragon = (byte)sCEnchantDigGoldNew_0x33C.nodouble;
+			if (sCEnchantDigGoldNew_0x33C.protect)
+			{
+				Global.character_.gold -= (int)GetGoldCost();
+				__BaseUI.drawStateBubble("gold" + (int)(0 - GetGoldCost()));
+				Global.character_.gold_pick_times++;
+				Global.character_.enchant_dragon_protect = true;
+				if (Global.character_.enchant_dragon_protect)
+				{
+					subwindow = true;
+				}
+				break;
+			}
+			uint type = sCEnchantDigGoldNew_0x33C.type;
+			if (Global.getTemplate("enchant_harvest_chance", type) is _enchant_harvest_chance enchant_harvest_chance)
+			{
+				lastenchant = enchant_harvest_chance;
+			}
+			phaseDig(type, goldDig: true);
+			Global.character_.gold -= (int)GetGoldCost();
+			__BaseUI.drawStateBubble("gold" + (int)(0 - GetGoldCost()));
+			Global.character_.gold_pick_times++;
+			break;
+		}
+		case SCEnchantDigGoldNew_0x33C.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, string.Empty, rmg);
+			break;
+		}
+	}
+
+	public void cs_enchant_dig_gold_many()
+	{
+		sending = true;
+		CSEnchantDigGoldMany_0x33A cSEnchantDigGoldMany_0x33A = new CSEnchantDigGoldMany_0x33A();
+		cSEnchantDigGoldMany_0x33A.times = (uint)m_iTimes;
+		Global.m_client.Send(826, cSEnchantDigGoldMany_0x33A, sc_enchant_dig_gold_many, m_iTimes);
+	}
+
+	public void sc_enchant_dig_gold_many(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			int num = (int)arg;
+			sending = false;
+			vipdig = false;
+			SCEnchantDigGoldMany_0x33A sCEnchantDigGoldMany_0x33A = JSProtoBuf.Serializer.Deserialize<SCEnchantDigGoldMany_0x33A>(stream);
+			switch (sCEnchantDigGoldMany_0x33A.operate)
+			{
+			case SCEnchantDigGoldMany_0x33A.Operate.OK:
+				Global.character_.gold -= (int)sCEnchantDigGoldMany_0x33A.gold;
+				Global.character_.enchant_stone += (int)sCEnchantDigGoldMany_0x33A.enchant;
+				Global.character_.enchant_double = (sbyte)sCEnchantDigGoldMany_0x33A.double_times;
+				__BaseUI.drawStateBubble("gold-" + sCEnchantDigGoldMany_0x33A.gold);
+				Global.character_.gold_pick_times += (short)num;
+				RootBase._drawBubble((int)sCEnchantDigGoldMany_0x33A.enchant, homeRc, __BaseUI._iconEnchant, 1f, 0f, -40f);
+				break;
+			case SCEnchantDigGoldMany_0x33A.Operate.Error:
+				__BaseUI.GetMessageBox().setMessage(string.Empty, string.Empty, rmg);
+				break;
+			}
+		}
+	}
+
+	public void cs_enchant_dragon_protect(bool isProtect)
+	{
+		sending = true;
+		CSEnchantDragonProtect_0x33B cSEnchantDragonProtect_0x33B = new CSEnchantDragonProtect_0x33B();
+		cSEnchantDragonProtect_0x33B.protect = isProtect;
+		Global.m_client.Send(827, cSEnchantDragonProtect_0x33B, sc_enchant_dragon_protect, isProtect);
+	}
+
+	public void sc_enchant_dragon_protect(MemoryStream stream, object arg)
+	{
+		sending = false;
+		if (stream == null)
+		{
+			return;
+		}
+		bool flag = (bool)arg;
+		SCEnchantDragonProtect_0x33B sCEnchantDragonProtect_0x33B = JSProtoBuf.Serializer.Deserialize<SCEnchantDragonProtect_0x33B>(stream);
+		switch (sCEnchantDragonProtect_0x33B.operate)
+		{
+		case SCEnchantDragonProtect_0x33B.Operate.OK:
+			if (flag)
+			{
+				sbyte enchant_double = Global.character_.enchant_double;
+				Global.character_.enchant_double = 0;
+				phaseDig(2u, goldDig: true);
+				if (Global.getTemplate("enchant_harvest_chance", 2u) is _enchant_harvest_chance enchant_harvest_chance)
+				{
+					lastenchant = enchant_harvest_chance;
+				}
+				Global.character_.enchant_double = enchant_double;
+			}
+			else
+			{
+				if (Global.getTemplate("enchant_harvest_chance", 4u) is _enchant_harvest_chance enchant_harvest_chance2)
+				{
+					lastenchant = enchant_harvest_chance2;
+				}
+				phaseDig(4u, goldDig: true);
+			}
+			Global.character_.enchant_dragon_protect = false;
+			break;
+		case SCEnchantDragonProtect_0x33B.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, string.Empty, rmg);
+			break;
+		}
+	}
+
+	private void DrawDig(uint type)
+	{
+		Rect rect = new Rect(280f, 143f, 80f, 80f);
+		Rect rect2 = new Rect(280f, 59f, 80f, 80f);
+		double totalSeconds = (showTimer - DateTime.Now).TotalSeconds;
+		switch (type)
+		{
+		case 0u:
+		case 1u:
+		case 2u:
+		case 3u:
+		case 4u:
+		case 7u:
+			if (m_dragons.Count > 0)
+			{
+				for (int i = 0; i < m_dragons.Count; i++)
+				{
+					Vector2 pos = m_dragons[i].pos;
+					totalSeconds = (m_dragons[i].timer - DateTime.Now).TotalSeconds;
+					if (totalSeconds > 0.0 && totalSeconds <= 1.0)
+					{
+						if (totalSeconds > 0.3)
+						{
+							double num6 = (totalSeconds - 0.3) / 0.7;
+							int num7 = (int)(59.0 + 84.0 * num6 + (double)pos.y);
+							__BaseUI.Label(__BaseUI._rect(pos.x, num7, 80f, 80f), string.Empty, typeicon[type - 1]);
+							continue;
+						}
+						double num8 = totalSeconds / 0.3;
+						int num9 = (int)(11.0 + 48.0 * num8 + (double)pos.y);
+						int num10 = (int)(80.0 * num8);
+						Color backgroundColor2 = GUI.backgroundColor;
+						GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num8);
+						__BaseUI.Label(__BaseUI._rect(pos.x + (float)((80 - num10) / 2), num9, num10, num10), string.Empty, typeicon[type - 1]);
+						GUI.backgroundColor = backgroundColor2;
+					}
+				}
+			}
+			else if (totalSeconds > 0.0)
+			{
+				if (totalSeconds > 0.3)
+				{
+					double num11 = (totalSeconds - 0.3) / 0.7;
+					int num12 = (int)(59.0 + 84.0 * num11);
+					__BaseUI.Label(__BaseUI._rect(280f, num12, 80f, 80f), string.Empty, typeicon[type - 1]);
+					break;
+				}
+				double num13 = totalSeconds / 0.3;
+				int num14 = (int)(11.0 + 48.0 * num13);
+				int num15 = (int)(80.0 * num13);
+				Color backgroundColor3 = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num13);
+				__BaseUI.Label(__BaseUI._rect(280 + (80 - num15) / 2, num14, num15, num15), string.Empty, typeicon[type - 1]);
+				GUI.backgroundColor = backgroundColor3;
+			}
+			break;
+		case 5u:
+			if (totalSeconds > 0.0)
+			{
+				if (totalSeconds > 0.3)
+				{
+					double num16 = (totalSeconds - 0.3) / 0.7;
+					int num17 = (int)(111.0 + 32.0 * num16);
+					int num18 = (int)(416.0 - 136.0 * num16);
+					__BaseUI.Label(__BaseUI._rect(num18, num17, 80f, 80f), string.Empty, typeicon[type - 1]);
+					break;
+				}
+				double num19 = totalSeconds / 0.3;
+				int num20 = (int)(97.0 + 14.0 * num19);
+				int num21 = (int)(475.0 - 59.0 * num19);
+				int num22 = (int)(80.0 * num19);
+				Color backgroundColor4 = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num19);
+				__BaseUI.Label(__BaseUI._rect(num21 + (80 - num22) / 2, num20, num22, num22), string.Empty, typeicon[type - 1]);
+				GUI.backgroundColor = backgroundColor4;
+			}
+			break;
+		case 6u:
+			if (totalSeconds > 0.0)
+			{
+				if (totalSeconds > 0.3)
+				{
+					double num = (totalSeconds - 0.3) / 0.7;
+					int num2 = (int)(59.0 + 84.0 * num);
+					__BaseUI.Label(__BaseUI._rect(280f, num2, 80f, 80f), string.Empty, typeicon[type - 1]);
+					break;
+				}
+				double num3 = totalSeconds / 0.3;
+				int num4 = (int)(11.0 + 48.0 * num3);
+				int num5 = (int)(80.0 * num3);
+				Color backgroundColor = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num3);
+				__BaseUI.Label(__BaseUI._rect(280 + (80 - num5) / 2, num4, num5, num5), string.Empty, typeicon[type - 1]);
+				GUI.backgroundColor = backgroundColor;
+			}
+			break;
+		}
+	}
+
+	private void DrawDragonTitle()
+	{
+		if (m_EnchantTime > DateTime.Now)
+		{
+			double totalSeconds = (m_EnchantTime - DateTime.Now).TotalSeconds;
+			if (totalSeconds > 1.5)
+			{
+				float num = (float)((totalSeconds - 1.5) / 0.5);
+				int num2 = 35;
+				int num3 = 8;
+				float a = 1f - num;
+				Color backgroundColor = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, a);
+				GUI.DrawTexture(__BaseUI._rect(220f - (float)num2 * num, 201f - (float)num3 * num, 232f + (float)(2 * num2) * num, 21f + (float)(2 * num3) * num), DragonTitle);
+				GUI.backgroundColor = backgroundColor;
+			}
+			else if (totalSeconds > 1.2999999523162842)
+			{
+				GUI.DrawTexture(__BaseUI._rect(220f, 201f, 232f, 21f), DragonTitle);
+			}
+			else if (totalSeconds >= 0.0)
+			{
+				double num4 = totalSeconds / 0.2;
+				Color backgroundColor2 = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num4);
+				GUI.DrawTexture(__BaseUI._rect(220f, 201f, 232f, 21f), DragonTitle);
+				GUI.backgroundColor = backgroundColor2;
+			}
+		}
+	}
+
+	private void phaseDig(uint type, bool goldDig)
+	{
+		if (Global.getTemplate("enchant_harvest_chance", type) is _enchant_harvest_chance enchant_harvest_chance)
+		{
+			switch (type)
+			{
+			case 1u:
+			case 2u:
+			case 3u:
+			case 4u:
+			case 7u:
+			{
+				int num2 = enchant_harvest_chance.num * (int)Math.Pow(2.0, Global.character_.enchant_double);
+				m_dragons.Clear();
+				if (Global.character_.enchant_double > 0)
+				{
+					System.Random random = new System.Random();
+					for (int i = 0; i < (int)Math.Pow(2.0, Global.character_.enchant_double); i++)
+					{
+						VecEnchant vecEnchant = new VecEnchant();
+						switch (Global.character_.enchant_double)
+						{
+						case 1:
+							vecEnchant.pos.x = random.Next(-20, 20) + 290;
+							break;
+						case 2:
+							vecEnchant.pos.x = random.Next(-40, 40) + 290;
+							break;
+						case 3:
+							vecEnchant.pos.x = random.Next(-60, 60) + 290;
+							break;
+						case 4:
+							vecEnchant.pos.x = random.Next(-80, 80) + 290;
+							break;
+						case 5:
+							vecEnchant.pos.x = random.Next(-120, 120) + 290;
+							break;
+						}
+						vecEnchant.pos.y = random.Next(-15, 15);
+						vecEnchant.timer = DateTime.Now.AddSeconds((double)random.Next(0, 4) / 10.0 + 1.0);
+						m_dragons.Add(vecEnchant);
+					}
+				}
+				Global.character_.enchant_double = 0;
+				Global.character_.enchant_stone += num2;
+				RootBase._drawBubble(num2, homeRc, __BaseUI._iconEnchant, 1f, 0f, -40f);
+				break;
+			}
+			case 5u:
+			{
+				Global.character_.enchant_double++;
+				int num = (int)Math.Pow(2.0, Global.character_.enchant_double);
+				if (!goldDig && num >= m_diglevel)
+				{
+					AIdig = false;
+					aistate = false;
+					m_EnchantTime = DateTime.Now.AddSeconds(1.899999976158142);
+					m_diglevel = 2;
+				}
+				break;
+			}
+			case 6u:
+				Global.character_.enchant_double = 0;
+				break;
+			}
+		}
+		showTimer = DateTime.Now.AddSeconds(1.0);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip != string.Empty)
+		{
+			tooltipUI.ShowTooltipCommon2(tip, string.Empty, 200);
+		}
+	}
+
+	public void DrawProtectWindow()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rect(148f, 101f, 342f, 201f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 342f, 201f), string.Empty, __BaseUI._bgStyle);
+		__BaseUI.Label(__BaseUI._rect(60f, 24f, 216f, 17f), string.Empty, ui_zi3);
+		__BaseUI.Label(__BaseUI._rect(47f, 48f, 100f, 104f), string.Empty, __BaseUI._box13Style);
+		__BaseUI.Label(__BaseUI._rect(193f, 48f, 100f, 104f), string.Empty, __BaseUI._box13Style);
+		__BaseUI.Label(__BaseUI._rect(47f, 48f, 100f, 104f), string.Empty, icon1);
+		__BaseUI.Label(__BaseUI._rect(193f, 48f, 100f, 104f), string.Empty, icon2);
+		__BaseUI.Label(__BaseUI._rect(45f, 159f, 104f, 12f), string.Empty, ui_zi4);
+		__BaseUI.Label(__BaseUI._rect(182f, 159f, 119f, 12f), string.Empty, ui_zi5);
+		int num = 0;
+		if (Global.getTemplate("enchant_harvest_chance", 4u) is _enchant_harvest_chance enchant_harvest_chance)
+		{
+			num = enchant_harvest_chance.num * (int)Math.Pow(2.0, Global.character_.enchant_double);
+		}
+		__BaseUI.Label(__BaseUI._rect(94f, 129f, 100f, 20f), "x" + num, __BaseUI._textNLeft, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(249f, 129f, 100f, 20f), "x" + 5, __BaseUI._textNLeft, __BaseUI._clrWhite);
+		int num2 = (int)Math.Pow(2.0, Global.character_.enchant_double);
+		__BaseUI.Label(__BaseUI._rect(66f, 157f, 31f, 15f), num2.ToString(), __BaseUI._textNCenter, new Color(0f, 1f, 1f));
+		if (btn_hover[0].Button(IsEnable(), __BaseUI._rect(43f, 47f, 110f, 110f), string.Empty))
+		{
+			cs_enchant_dragon_protect(isProtect: false);
+			subwindow = false;
+		}
+		if (btn_hover[1].Button(IsEnable(), __BaseUI._rect(189f, 47f, 110f, 110f), string.Empty))
+		{
+			cs_enchant_dragon_protect(isProtect: true);
+			subwindow = false;
+		}
+		__BaseUI.EndGroup();
+	}
+}

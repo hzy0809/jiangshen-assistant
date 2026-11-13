@@ -1,0 +1,117 @@
+using UnityEngine;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class TempEventMessage : game.net.data.StoC.TempEventMessage
+{
+	public bool isactive;
+
+	public Texture2D tex;
+
+	public string tooltip_content;
+
+	public TempEventMessage()
+	{
+	}
+
+	public TempEventMessage(game.net.data.StoC.TempEventMessage d)
+	{
+		Set(d);
+	}
+
+	public virtual void reset()
+	{
+		isactive = false;
+	}
+
+	public bool is_active()
+	{
+		return (isactive && base.start_time <= TimeUtil.Now && TimeUtil.Now <= base.end_time) ? true : false;
+	}
+
+	public void Set(game.net.data.StoC.TempEventMessage d)
+	{
+		base.id = d.id;
+		base.name = d.name;
+		base.url = d.url;
+		base.md5 = d.md5;
+		base.start_time = d.start_time;
+		base.end_time = d.end_time;
+		base.quests.Clear();
+		foreach (TempEventQuest quest in d.quests)
+		{
+			base.quests.Add(quest);
+		}
+		makeTooltip();
+	}
+
+	public void makeTooltip()
+	{
+		tooltip_content = string.Empty;
+		int num = 1;
+		foreach (TempEventQuest quest in base.quests)
+		{
+			string text = string.Empty;
+			foreach (TempEventParam item in quest.@params)
+			{
+				string text2 = ((!item.isfinished) ? "#c=ff0000" : "#c=ff00");
+				if (item.name == "income_pay")
+				{
+					string text3 = text;
+					text = text3 + "  " + text2 + __BaseUI.get_string(340u) + "#sx=100 " + item.param + "/" + item.want_param + "\n";
+				}
+				else if (item.name.Length > 7 && item.name.Substring(0, 7) == "income_")
+				{
+					_treasure_type treasureTypeTemplate = Global.getTreasureTypeTemplate(item.name.Substring(7));
+					if (treasureTypeTemplate != null)
+					{
+						string text3 = text;
+						text = text3 + "  " + text2 + __BaseUI.get_string(341u) + treasureTypeTemplate.desc + "#sx=100 " + item.param + "/" + item.want_param + "\n";
+					}
+				}
+				else if (item.name.Length > 8 && item.name.Substring(0, 8) == "consume_")
+				{
+					_treasure_type treasureTypeTemplate2 = Global.getTreasureTypeTemplate(item.name.Substring(8));
+					if (treasureTypeTemplate2 != null)
+					{
+						string text3 = text;
+						text = text3 + "  " + text2 + __BaseUI.get_string(342u) + treasureTypeTemplate2.desc + "#sx=100 " + item.param + "/" + item.want_param + "\n";
+					}
+				}
+			}
+			if (text.Length > 0)
+			{
+				string text3 = tooltip_content;
+				tooltip_content = text3 + ((tooltip_content.Length <= 0) ? string.Empty : "\n") + "#c=FF8000" + quest.name + ":\n" + text;
+			}
+			num++;
+		}
+	}
+
+	public bool canget()
+	{
+		foreach (TempEventQuest quest in base.quests)
+		{
+			if (quest.isfinished && !quest.isgot)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public bool finished()
+	{
+		foreach (TempEventQuest quest in base.quests)
+		{
+			if (!quest.isfinished || !quest.isgot)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

@@ -1,0 +1,69 @@
+Assembly-CSharp.dll TypeDef=0x02000083 .BaseUI::rootUI : .RootUI; Private, Static; declaredOrdinal0=0; FieldDef=0x04000353
+Assembly-CSharp.dll TypeDef=0x02000085 .BattleGuideUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=0; FieldDef=0x04000367
+Assembly-CSharp.dll TypeDef=0x0200008E .BattleUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=1; FieldDef=0x040003EB
+Assembly-CSharp.dll TypeDef=0x0200008E .BattleUI::m_oldUI : .RootMessenger; Private; declaredOrdinal0=2; FieldDef=0x040003EC
+Assembly-CSharp.dll TypeDef=0x0200008E .BattleUI::m_parentUI : .__BaseUI; Public; declaredOrdinal0=67; FieldDef=0x0400042D
+Assembly-CSharp.dll TypeDef=0x020000AC .BuildingMonsterScript::ParentUI : .BaseUI; Private; declaredOrdinal0=0; FieldDef=0x040005BF
+Assembly-CSharp.dll TypeDef=0x020000C3 .CampaignChestScript::ParentUI : .CampaignBaseUI; Private; declaredOrdinal0=0; FieldDef=0x040006D3
+Assembly-CSharp.dll TypeDef=0x020000C6 .CampaignSignScript::ParentUI : .CampaignBaseUI; Private; declaredOrdinal0=0; FieldDef=0x040006F3
+Assembly-CSharp.dll TypeDef=0x020000C7 .CampaignTroopScript::ParentUI : .CampaignBaseUI; Private; declaredOrdinal0=0; FieldDef=0x040006F5
+Assembly-CSharp.dll TypeDef=0x020000C8 .CampaignTroopUI::m_parent : .CampaignBaseUI; Private; declaredOrdinal0=20; FieldDef=0x0400070F
+Assembly-CSharp.dll TypeDef=0x020000DC .ConvoyGuardSelectUI::parentUI : .BaseUI; Private; declaredOrdinal0=1; FieldDef=0x0400082D
+Assembly-CSharp.dll TypeDef=0x020000DD .ConvoyRankingUI::parentUI : .BaseUI; Private; declaredOrdinal0=0; FieldDef=0x04000848
+Assembly-CSharp.dll TypeDef=0x020000DF .CraftCalendarUI::m_subui : .BaseUI; Private, Static; declaredOrdinal0=1; FieldDef=0x04000872
+Assembly-CSharp.dll TypeDef=0x020000E1 .CraftCostRankingUI::parentUI : .BaseUI; Private; declaredOrdinal0=1; FieldDef=0x04000897
+Assembly-CSharp.dll TypeDef=0x020000E2 .CraftMatchReportUI::parentUI : .BaseUI; Private; declaredOrdinal0=2; FieldDef=0x040008A6
+Assembly-CSharp.dll TypeDef=0x020000E3 .CraftMySupportUI::parentUI : .BaseUI; Private; declaredOrdinal0=1; FieldDef=0x040008AE
+Assembly-CSharp.dll TypeDef=0x020000E4 .CraftReportUI::parentUI : .BaseUI; Private; declaredOrdinal0=12; FieldDef=0x040008C4
+Assembly-CSharp.dll TypeDef=0x020000E7 .CraftUI::m_subui : .BaseUI; Private, Static; declaredOrdinal0=4; FieldDef=0x040008DE
+Assembly-CSharp.dll TypeDef=0x020000E8 .CraftWorldCalendarUI::m_subui : .BaseUI; Private, Static; declaredOrdinal0=1; FieldDef=0x0400090A
+Assembly-CSharp.dll TypeDef=0x020000EA .CraftWorldUI::m_subui : .__BaseUI; Private, Static; declaredOrdinal0=2; FieldDef=0x04000931
+Assembly-CSharp.dll TypeDef=0x02000107 .DemonScript::ParentUI : .__BaseUI; Private; declaredOrdinal0=0; FieldDef=0x04000ABD
+Assembly-CSharp.dll TypeDef=0x0200016F .GeneralShengJieLotteryUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=24; FieldDef=0x040010B7
+Assembly-CSharp.dll TypeDef=0x02000175 .GeneralShengJieUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=31; FieldDef=0x040010F9
+Assembly-CSharp.dll TypeDef=0x02000194 .GodListTrainUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=20; FieldDef=0x04001310
+Assembly-CSharp.dll TypeDef=0x02000196 .GodListUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=29; FieldDef=0x04001331
+Assembly-CSharp.dll TypeDef=0x020001A9 .LadderReportUI::parentUI : .BaseUI; Private; declaredOrdinal0=0; FieldDef=0x040013D4
+Assembly-CSharp.dll TypeDef=0x020001AB .LadderUI::m_subui : .BaseUI; Private, Static; declaredOrdinal0=0; FieldDef=0x040013DF
+Assembly-CSharp.dll TypeDef=0x020001AF .MainUI::m_subui : .__BaseUI; Private, Static; declaredOrdinal0=7; FieldDef=0x0400143C
+Assembly-CSharp.dll TypeDef=0x02000200 .NationUI::m_subui : .BaseUI; Private, Static; declaredOrdinal0=4; FieldDef=0x0400178B
+Assembly-CSharp.dll TypeDef=0x0200021F .PresetDuelUI::ui_list : .BaseUI[]; Private; declaredOrdinal0=6; FieldDef=0x04001A56
+Assembly-CSharp.dll TypeDef=0x02000226 .RootUI::level_rmg : .RootMessenger; Private; declaredOrdinal0=4; FieldDef=0x04001AAE
+Assembly-CSharp.dll TypeDef=0x02000226 .RootUI::last_rmg : .RootMessenger; Private; declaredOrdinal0=19; FieldDef=0x04001ABD
+Assembly-CSharp.dll TypeDef=0x02000228 .ScenarioUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=16; FieldDef=0x04001AD8
+Assembly-CSharp.dll TypeDef=0x02000245 .SpiritUI_2::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=43; FieldDef=0x04001CAB
+Assembly-CSharp.dll TypeDef=0x020002DF .<load_git_index>c__Iterator1::<root_ui>__6 : .RootUI; Assembly; declaredOrdinal0=9; FieldDef=0x040021E8
+Assembly-CSharp.dll TypeDef=0x020002E3 .<campaign_troop_clicked>c__Iterator5::<>f__this : .CampaignBaseUI; Assembly; declaredOrdinal0=5; FieldDef=0x0400220D
+Assembly-CSharp.dll TypeDef=0x02000304 .<delayed_quit>c__Iterator26::<>f__this : .RootUI; Assembly; declaredOrdinal0=2; FieldDef=0x040022FE
+SCAN Assembly-CSharp.dll: TypeDefs=790, Fields=9036, directOrGenericMainUIFields=0
+Assembly-CSharp-firstpass.dll TypeDef=0x02000006 .AnimatedBanner::m_ui : .__BaseUI; Private; declaredOrdinal0=0; FieldDef=0x04000031
+Assembly-CSharp-firstpass.dll TypeDef=0x0200001A .BaseAsset::lds : .LoadScreen; Family, Static; declaredOrdinal0=3; FieldDef=0x040000A0
+Assembly-CSharp-firstpass.dll TypeDef=0x0200001A .BaseAsset::rmg : .RootMessenger; Family; declaredOrdinal0=4; FieldDef=0x040000A1
+Assembly-CSharp-firstpass.dll TypeDef=0x02000025 .BattleResultUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=1; FieldDef=0x040000F3
+Assembly-CSharp-firstpass.dll TypeDef=0x0200002B .BonusGetUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=0; FieldDef=0x040001BA
+Assembly-CSharp-firstpass.dll TypeDef=0x0200002B .BonusGetUI::m_parentUI : .__BaseUI; Private; declaredOrdinal0=1; FieldDef=0x040001BB
+Assembly-CSharp-firstpass.dll TypeDef=0x0200002C .BonusUI::m_prevUI : .RootMessenger; Private; declaredOrdinal0=26; FieldDef=0x040001E3
+Assembly-CSharp-firstpass.dll TypeDef=0x020000B1 .DelegateFunc::MainUI_GetSubUI : .delegate_MainUI_GetSubUI; Public, Static; declaredOrdinal0=6; FieldDef=0x04000647
+Assembly-CSharp-firstpass.dll TypeDef=0x020000B1 .DelegateFunc::MainUI_SetSubUI : .delegate_MainUI_SetSubUI; Public, Static; declaredOrdinal0=7; FieldDef=0x04000648
+Assembly-CSharp-firstpass.dll TypeDef=0x020000B1 .DelegateFunc::MainUI_resource_wealth_d : .delegate_MainUI_resource_wealth_d; Public, Static; declaredOrdinal0=19; FieldDef=0x04000654
+Assembly-CSharp-firstpass.dll TypeDef=0x020000B1 .DelegateFunc::SpiritUI_2_SetSubUI : .delegate_MainUI_SetSubUI; Public, Static; declaredOrdinal0=33; FieldDef=0x04000662
+Assembly-CSharp-firstpass.dll TypeDef=0x020000B1 .DelegateFunc::SpiritUI_3_SetSubUI : .delegate_MainUI_SetSubUI; Public, Static; declaredOrdinal0=35; FieldDef=0x04000664
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::oldmainrmg : .RootMessenger; Private; declaredOrdinal0=28; FieldDef=0x04000CF7
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::oldrmg : .RootMessenger; Private; declaredOrdinal0=29; FieldDef=0x04000CF8
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::currmg : .RootMessenger; Private; declaredOrdinal0=30; FieldDef=0x04000CF9
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::oldrmg_bak : .RootMessenger; Private; declaredOrdinal0=31; FieldDef=0x04000CFA
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::oldmainrmg_bak : .RootMessenger; Private; declaredOrdinal0=32; FieldDef=0x04000CFB
+Assembly-CSharp-firstpass.dll TypeDef=0x0200017E .LoadScreen::currmg_bak : .RootMessenger; Private; declaredOrdinal0=33; FieldDef=0x04000CFC
+Assembly-CSharp-firstpass.dll TypeDef=0x02000184 .MessageBox::old_rmg : .RootMessenger; Family; declaredOrdinal0=7; FieldDef=0x04000D52
+Assembly-CSharp-firstpass.dll TypeDef=0x02000194 .PopupUI::_ownerUI : .__BaseUI; Private, Static; declaredOrdinal0=3; FieldDef=0x04000DDA
+Assembly-CSharp-firstpass.dll TypeDef=0x020001AC .RootMessenger::lds : .LoadScreen; Private; declaredOrdinal0=4; FieldDef=0x04000F86
+Assembly-CSharp-firstpass.dll TypeDef=0x020001D3 .SpiritUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=46; FieldDef=0x040011FF
+Assembly-CSharp-firstpass.dll TypeDef=0x020001D5 .SpiritUI_3::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=59; FieldDef=0x0400123F
+Assembly-CSharp-firstpass.dll TypeDef=0x020001DA .TechTreeUI::my_Subui : .__BaseUI; Private, Static; declaredOrdinal0=42; FieldDef=0x04001288
+Assembly-CSharp-firstpass.dll TypeDef=0x02000229 .TooltipUI::ownerUI : .__BaseUI; Private, Static; declaredOrdinal0=1; FieldDef=0x04001420
+Assembly-CSharp-firstpass.dll TypeDef=0x0200022D .WebAssetsManager::lds : .LoadScreen; Private; declaredOrdinal0=8; FieldDef=0x040014C3
+Assembly-CSharp-firstpass.dll TypeDef=0x020002A6 .<Loader>c__Iterator7::<>f__this : .LoadScreen; Assembly; declaredOrdinal0=2; FieldDef=0x04001773
+Assembly-CSharp-firstpass.dll TypeDef=0x020002A7 .<EndLoadingWait>c__Iterator8::<>f__this : .RootMessenger; Assembly; declaredOrdinal0=2; FieldDef=0x04001776
+SCAN Assembly-CSharp-firstpass.dll: TypeDefs=697, Fields=6122, directOrGenericMainUIFields=0
+SCAN pbdata.dll: TypeDefs=2404, Fields=11805, directOrGenericMainUIFields=0
+SCAN dbdata.dll: TypeDefs=1195, Fields=8673, directOrGenericMainUIFields=0

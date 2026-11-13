@@ -1,0 +1,245 @@
+test_abandoned_native_mutex_cannot_acknowledge_pause (tests.test_battle_launch.BattleLaunchRaceTests.test_abandoned_native_mutex_cannot_acknowledge_pause) ... ok
+test_after_enqueue_pause_allows_exact_existing_reply (tests.test_battle_launch.BattleLaunchRaceTests.test_after_enqueue_pause_allows_exact_existing_reply) ... ok
+test_batch_370_nonzero_result_preserves_stock_success_semantics (tests.test_battle_launch.BattleLaunchRaceTests.test_batch_370_nonzero_result_preserves_stock_success_semantics) ... ok
+test_batch_370_rejection_is_unknown_and_never_retried (tests.test_battle_launch.BattleLaunchRaceTests.test_batch_370_rejection_is_unknown_and_never_retried) ... ok
+test_batch_370_success_requires_exact_native_progress_and_no_report (tests.test_battle_launch.BattleLaunchRaceTests.test_batch_370_success_requires_exact_native_progress_and_no_report) ... ok
+test_batch_370_timeout_is_unknown_and_never_retried (tests.test_battle_launch.BattleLaunchRaceTests.test_batch_370_timeout_is_unknown_and_never_retried) ... ok
+test_campaign_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_request_a_valid_response_b_is_blocked_before_stock) ... FAIL
+test_campaign_wrong_campaign_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_wrong_campaign_is_blocked_before_stock) ... FAIL
+test_cancel_event_error_cannot_acknowledge_controller_stop (tests.test_battle_launch.BattleLaunchRaceTests.test_cancel_event_error_cannot_acknowledge_controller_stop) ... ok
+test_changed_role_drops_298_without_native_mutation (tests.test_battle_launch.BattleLaunchRaceTests.test_changed_role_drops_298_without_native_mutation) ... ok
+test_changed_target_drops_initial_response_without_native_mutation (tests.test_battle_launch.BattleLaunchRaceTests.test_changed_target_drops_initial_response_without_native_mutation) ... ok
+test_direct_settled_route_keeps_native_report_handoff (tests.test_battle_launch.BattleLaunchRaceTests.test_direct_settled_route_keeps_native_report_handoff) ... ok
+test_duplicate_298_forwards_native_once (tests.test_battle_launch.BattleLaunchRaceTests.test_duplicate_298_forwards_native_once) ... ok
+test_duplicate_initial_response_forwards_native_once (tests.test_battle_launch.BattleLaunchRaceTests.test_duplicate_initial_response_forwards_native_once) ... ok
+test_duplicate_target_field_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_duplicate_target_field_never_reaches_stock) ... FAIL
+test_echoed_grave_target_mismatch_is_blocked (tests.test_battle_launch.BattleLaunchRaceTests.test_echoed_grave_target_mismatch_is_blocked) ... FAIL
+test_echoed_trial_target_mismatch_is_blocked (tests.test_battle_launch.BattleLaunchRaceTests.test_echoed_trial_target_mismatch_is_blocked) ... FAIL
+test_empty_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_empty_response_never_reaches_stock) ... FAIL
+test_expired_native_lease_does_not_send (tests.test_battle_launch.BattleLaunchRaceTests.test_expired_native_lease_does_not_send) ... ok
+test_fresh_report_requires_exact_operation_handoff (tests.test_battle_launch.BattleLaunchRaceTests.test_fresh_report_requires_exact_operation_handoff) ... ok
+test_friend_building_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_request_a_valid_response_b_is_blocked_before_stock) ... FAIL
+test_friend_building_wrong_friend_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_wrong_friend_is_blocked_before_stock) ... FAIL
+test_matching_campaign_response_preserves_original_stream_once (tests.test_battle_launch.BattleLaunchRaceTests.test_matching_campaign_response_preserves_original_stream_once) ... ok
+test_matching_friend_building_response_preserves_original_stream_once (tests.test_battle_launch.BattleLaunchRaceTests.test_matching_friend_building_response_preserves_original_stream_once) ... ok
+test_matching_own_building_response_preserves_original_stream_once (tests.test_battle_launch.BattleLaunchRaceTests.test_matching_own_building_response_preserves_original_stream_once) ... ok
+test_missing_guard_api_cannot_acknowledge_controller_pause (tests.test_battle_launch.BattleLaunchRaceTests.test_missing_guard_api_cannot_acknowledge_controller_pause) ... ok
+test_missing_initial_handler_stays_unknown_no_retry (tests.test_battle_launch.BattleLaunchRaceTests.test_missing_initial_handler_stays_unknown_no_retry) ... ok
+test_nonzero_stream_position_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_nonzero_stream_position_never_reaches_stock) ... FAIL
+test_null_timeout_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_null_timeout_never_reaches_stock) ... FAIL
+test_optional_grave_target_absence_is_opcode_only (tests.test_battle_launch.BattleLaunchRaceTests.test_optional_grave_target_absence_is_opcode_only) ... ERROR
+test_optional_trial_target_absence_is_opcode_only (tests.test_battle_launch.BattleLaunchRaceTests.test_optional_trial_target_absence_is_opcode_only) ... ERROR
+test_overflow_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_overflow_response_never_reaches_stock) ... FAIL
+test_own_building_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_own_building_request_a_valid_response_b_is_blocked_before_stock) ... FAIL
+test_registered_handler_does_not_release_attempt (tests.test_battle_launch.BattleLaunchRaceTests.test_registered_handler_does_not_release_attempt) ... ok
+test_scenario_cancel_and_new_epoch_never_reopen_old_callback (tests.test_battle_launch.BattleLaunchRaceTests.test_scenario_cancel_and_new_epoch_never_reopen_old_callback) ... ok
+test_scenario_native_continuation_and_report_transfer (tests.test_battle_launch.BattleLaunchRaceTests.test_scenario_native_continuation_and_report_transfer) ... ok
+test_scenario_send_holding_mutex_delays_stop_confirmation (tests.test_battle_launch.BattleLaunchRaceTests.test_scenario_send_holding_mutex_delays_stop_confirmation) ... ok
+test_stamina_delayed_callback_cancelled_after_native_deferral (tests.test_battle_launch.BattleLaunchRaceTests.test_stamina_delayed_callback_cancelled_after_native_deferral) ... ok
+test_stamina_send_holding_mutex_delays_stop_confirmation (tests.test_battle_launch.BattleLaunchRaceTests.test_stamina_send_holding_mutex_delays_stop_confirmation) ... ok
+test_stop_before_pending_298_prevents_attack (tests.test_battle_launch.BattleLaunchRaceTests.test_stop_before_pending_298_prevents_attack) ... ok
+test_stop_drains_start_already_holding_mutex (tests.test_battle_launch.BattleLaunchRaceTests.test_stop_drains_start_already_holding_mutex) ... ok
+test_stop_inside_298_before_attack_prevents_send (tests.test_battle_launch.BattleLaunchRaceTests.test_stop_inside_298_before_attack_prevents_send) ... ok
+test_stopped_late_matching_response_only_applies_the_sent_battle (tests.test_battle_launch.BattleLaunchRaceTests.test_stopped_late_matching_response_only_applies_the_sent_battle) ... ok
+test_stopped_late_wrong_target_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_stopped_late_wrong_target_response_never_reaches_stock) ... FAIL
+test_story_attestation_never_reopens_cancelled_epoch (tests.test_battle_launch.BattleLaunchRaceTests.test_story_attestation_never_reopens_cancelled_epoch) ... ok
+test_story_attestation_rejects_replaced_callback (tests.test_battle_launch.BattleLaunchRaceTests.test_story_attestation_rejects_replaced_callback) ... ok
+test_story_attestation_requires_exact_owned_callback_and_data (tests.test_battle_launch.BattleLaunchRaceTests.test_story_attestation_requires_exact_owned_callback_and_data) ... ok
+test_trial_stamina_drop_is_unknown_and_never_registers_retry (tests.test_battle_launch.BattleLaunchRaceTests.test_trial_stamina_drop_is_unknown_and_never_registers_retry) ... ok
+test_truncated_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_truncated_response_never_reaches_stock) ... FAIL
+test_unknown_schema_field_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_unknown_schema_field_never_reaches_stock) ... FAIL
+test_wrong_wire_type_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_wrong_wire_type_never_reaches_stock) ... FAIL
+test_cancel_does_not_wait_for_bridge_request_lock (tests.test_battle_launch.BridgeLaunchTransportTests.test_cancel_does_not_wait_for_bridge_request_lock) ... ok
+test_explicit_resume_creates_epoch_and_closed_admission_never_self_reopens (tests.test_battle_launch.BridgeLaunchTransportTests.test_explicit_resume_creates_epoch_and_closed_admission_never_self_reopens) ... ok
+test_process_exit_releases_own_handles_and_terminal_stop_is_idempotent (tests.test_battle_launch.BridgeLaunchTransportTests.test_process_exit_releases_own_handles_and_terminal_stop_is_idempotent) ... ok
+test_typed_campaign_captures_epoch_before_serialized_request (tests.test_battle_launch.BridgeLaunchTransportTests.test_typed_campaign_captures_epoch_before_serialized_request) ... ok
+
+======================================================================
+ERROR: test_optional_grave_target_absence_is_opcode_only (tests.test_battle_launch.BattleLaunchRaceTests.test_optional_grave_target_absence_is_opcode_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 483, in test_optional_grave_target_absence_is_opcode_only
+    self.assertEqual(value['response_binding'], 'opcode-only')
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'response_binding'
+
+======================================================================
+ERROR: test_optional_trial_target_absence_is_opcode_only (tests.test_battle_launch.BattleLaunchRaceTests.test_optional_trial_target_absence_is_opcode_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 476, in test_optional_trial_target_absence_is_opcode_only
+    self.assertEqual(value['response_binding'], 'opcode-only')
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'response_binding'
+
+======================================================================
+FAIL: test_campaign_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_request_a_valid_response_b_is_blocked_before_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 391, in test_campaign_request_a_valid_response_b_is_blocked_before_stock
+    self._assert_blocked_response('campaign', 'wrong-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_campaign_wrong_campaign_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_campaign_wrong_campaign_is_blocked_before_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 400, in test_campaign_wrong_campaign_is_blocked_before_stock
+    self._assert_blocked_response('campaign', 'wrong-campaign')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_duplicate_target_field_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_duplicate_target_field_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 431, in test_duplicate_target_field_never_reaches_stock
+    self._assert_blocked_response('own-building', 'duplicate-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_echoed_grave_target_mismatch_is_blocked (tests.test_battle_launch.BattleLaunchRaceTests.test_echoed_grave_target_mismatch_is_blocked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 489, in test_echoed_grave_target_mismatch_is_blocked
+    self._assert_blocked_response('formation', 'wrong-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_echoed_trial_target_mismatch_is_blocked (tests.test_battle_launch.BattleLaunchRaceTests.test_echoed_trial_target_mismatch_is_blocked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 486, in test_echoed_trial_target_mismatch_is_blocked
+    self._assert_blocked_response('stamina', 'wrong-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_empty_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_empty_response_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 428, in test_empty_response_never_reaches_stock
+    self._assert_blocked_response('own-building', 'empty')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_friend_building_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_request_a_valid_response_b_is_blocked_before_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 397, in test_friend_building_request_a_valid_response_b_is_blocked_before_stock
+    self._assert_blocked_response('friend-building', 'wrong-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_friend_building_wrong_friend_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_friend_building_wrong_friend_is_blocked_before_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 403, in test_friend_building_wrong_friend_is_blocked_before_stock
+    self._assert_blocked_response('friend-building', 'wrong-friend')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_nonzero_stream_position_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_nonzero_stream_position_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 443, in test_nonzero_stream_position_never_reaches_stock
+    self._assert_blocked_response('own-building', 'position')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_null_timeout_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_null_timeout_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 450, in test_null_timeout_never_reaches_stock
+    self.assertEqual(counts[3], 0)
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_overflow_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_overflow_response_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 440, in test_overflow_response_never_reaches_stock
+    self._assert_blocked_response('own-building', 'overflow')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_own_building_request_a_valid_response_b_is_blocked_before_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_own_building_request_a_valid_response_b_is_blocked_before_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 394, in test_own_building_request_a_valid_response_b_is_blocked_before_stock
+    self._assert_blocked_response('own-building', 'wrong-target')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_stopped_late_wrong_target_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_stopped_late_wrong_target_response_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 457, in test_stopped_late_wrong_target_response_never_reaches_stock
+    self.assertEqual(value['state'], 'UNKNOWN')
+AssertionError: 'REQUEST_OBSERVED' != 'UNKNOWN'
+- REQUEST_OBSERVED
++ UNKNOWN
+
+
+======================================================================
+FAIL: test_truncated_response_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_truncated_response_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 425, in test_truncated_response_never_reaches_stock
+    self._assert_blocked_response('own-building', 'truncated')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_unknown_schema_field_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_unknown_schema_field_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 437, in test_unknown_schema_field_never_reaches_stock
+    self._assert_blocked_response('own-building', 'unknown-field')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+======================================================================
+FAIL: test_wrong_wire_type_never_reaches_stock (tests.test_battle_launch.BattleLaunchRaceTests.test_wrong_wire_type_never_reaches_stock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 434, in test_wrong_wire_type_never_reaches_stock
+    self._assert_blocked_response('own-building', 'wrong-wire')
+  File "G:\development\enjoy\jiangshen-assistant\tests\test_battle_launch.py", line 383, in _assert_blocked_response
+    self.assertEqual(counts[3], 0, 'wrong/invalid response reached the native callback')
+AssertionError: 1 != 0 : wrong/invalid response reached the native callback
+
+----------------------------------------------------------------------
+Ran 55 tests in 4.065s
+
+FAILED (failures=16, errors=2)
+Launch race artifacts: G:\development\enjoy\jiangshen-assistant\research\battle-lifecycle\launch-guard-validation\initial-response-p1\negative-control-v2
+Battle launch race checks failed or sources changed
+At G:\development\enjoy\jiangshen-assistant\native\unity_bridge\tests\run-battle-launch-race.ps1:64 char:41
++ ...  $stable) { throw 'Battle launch race checks failed or sources change ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Battle launch r...sources changed:String) [], RuntimeException
+    + FullyQualifiedErrorId : Battle launch race checks failed or sources changed
+ 

@@ -1,0 +1,14 @@
+[
+    {
+        "name":  "game.net.data.StoC.SCBuildingMonsterBattle_0x48D",
+        "resolved_in_firstpass":  false
+    },
+    {
+        "name":  "ProtoBuf.Serializer+NonGeneric",
+        "resolved_in_firstpass":  false
+    },
+    {
+        "name":  "Ionic.Zlib.ZlibCodec",
+        "resolved_in_firstpass":  false
+    }
+]

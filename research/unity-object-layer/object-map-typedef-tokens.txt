@@ -1,0 +1,12 @@
+Assembly-CSharp.dll .MainUI TypeDef=0x020001AF
+  FIELD btnTop declaredOrdinal0=21 FieldDef=0x0400144A Attributes=Public Signature=06-15-12-31-01-12-84-4D
+  FIELD btnBottom declaredOrdinal0=38 FieldDef=0x0400145B Attributes=Public Signature=06-15-12-31-01-12-84-4D
+Assembly-CSharp-firstpass.dll ._ButtonMain TypeDef=0x0200001C
+Assembly-CSharp-firstpass.dll ._ButtonStyle TypeDef=0x02000022
+Assembly-CSharp-firstpass.dll Database.Character TypeDef=0x02000071
+Assembly-CSharp-firstpass.dll .Global TypeDef=0x0200014F
+  FIELD character_ declaredOrdinal0=41 FieldDef=0x04000957 Attributes=Public, Static Signature=06-12-81-C4
+pbdata.dll Database._character TypeDef=0x0200002F
+  FIELD level declaredOrdinal0=14 FieldDef=0x04000204 Attributes=Public Signature=06-06
+  FIELD stamina declaredOrdinal0=18 FieldDef=0x04000208 Attributes=Public Signature=06-06
+  FIELD gold declaredOrdinal0=20 FieldDef=0x0400020A Attributes=Public Signature=06-08

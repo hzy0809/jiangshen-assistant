@@ -1,0 +1,16 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSTechBookCopyFree_0x726")]
+public class CSTechBookCopyFree_0x726 : IExtensible
+{
+	private IExtension extensionObject;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

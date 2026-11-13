@@ -1,0 +1,1308 @@
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class RootBase : __BaseUI
+{
+	public enum enumGeneralAutoEquipMode
+	{
+		Attack,
+		Defense,
+		Spell,
+		Unequip
+	}
+
+	public static BubbleManager m_bubble = new BubbleManager();
+
+	public static CSEquipmentNew_0x454 pktDepotNew = new CSEquipmentNew_0x454();
+
+	public static bool bFirstClick = false;
+
+	public static bool bDblClick = false;
+
+	public static bool bWantDblClick = false;
+
+	public static bool bWantDblClick2 = false;
+
+	public static float dblclk_time = 0f;
+
+	public static bool bMouseUp = false;
+
+	public static bool bWantMouseUp = false;
+
+	public static List<delegate_OnClose> vctUIFuncs = new List<delegate_OnClose>();
+
+	private static bool m_bShowDrawArea = false;
+
+	private static Rect m_areaBtnRc = default(Rect);
+
+	private static string m_areaString = string.Empty;
+
+	private static ArrowFace m_areaArrowFace = ArrowFace.Up;
+
+	public static bool wlosended = false;
+
+	public static void AddHandler(bool state)
+	{
+		if (state)
+		{
+			tcp_base client = Global.m_client;
+			client.handler_add(1, sc_message_0x01, null, -1f);
+			client.handler_add(5, sc_server_time_0x05, null, -1f);
+			client.handler_add(18, sc_general_add_0x12, null, -1f);
+			client.handler_add(19, sc_equipment_add_0x13, null, -1f);
+			client.handler_add(20, sc_arena_new_0x14, null, -1f);
+			client.handler_add(21, sc_arena_report_0x15, null, -1f);
+			client.handler_add(22, sc_arena_bonus_0x16, null, -1f);
+			client.handler_add(23, sc_spirit_new_0x17, null, -1f);
+			client.handler_add(24, sc_arena_challengers_refresh_0x18, null, -1f);
+			client.handler_add(25, sc_vip_level_change_0x19, null, -1f);
+			client.handler_add(26, sc_amulet_add_0x1A, null, -1f);
+			client.handler_add(27, sc_gem_add_0x1B, null, -1f);
+			client.handler_add(28, sc_koujinbi_0x1C, null, -1f);
+			client.handler_add(29, sc_character_bonus_add_0x1D, null, -1f);
+			client.handler_add(30, sc_timelimit_message_0x1E, null, -1f);
+			client.handler_add(31, sc_tempevent_message_0x1F, null, -1f);
+			client.handler_add(39, sc_premium_time_new_0x27, null, -1f);
+			client.handler_add(49, sc_pay_0x31, null, -1f);
+			client.handler_add(515, sc_armytype_add_0x203, null, -1f);
+			client.handler_add(516, sc_skill_add_0x204, null, -1f);
+			client.handler_add(528, sc_unread_mail_num_0x210, null, -1f);
+			client.handler_add(1128, sc_pointrace_bonus_0x468, null, -1f);
+			client.handler_add(1152, sc_building_add_0x480, null, -1f);
+			client.handler_add(1153, sc_building_luckyproduct_0x481, null, -1f);
+			client.handler_add(1200, sc_god_enter_0x4B0, null, -1f);
+			client.handler_add(1219, sc_friend_monster_kill_0x4C3, null, -1f);
+			client.handler_add(1220, sc_friend_demon_kill_0x4C4, null, -1f);
+			client.handler_add(1232, sc_gem_swap_0x4D0, null, -1f);
+			client.handler_add(1233, sc_amulet_swap_0x4D1, null, -1f);
+			client.handler_add(856, sc_gold_cosume, null, -1f);
+			client.handler_add(867, sc_festival_cost, null, -1f);
+			client.handler_add(262, handleQuests, null, -1f);
+			client.handler_add(355, handelActvity, null, -1f);
+			client.handler_add(278, handelGuilds, null, -1f);
+			client.handler_add(304, handelApplyList, null, -1f);
+			client.handler_add(309, handelFormUnlock, null, -1f);
+			client.handler_add(318, handelQuiz, null, -1f);
+			client.handler_add(320, handelBrawlEnd, null, -1f);
+			client.handler_add(322, handleBrawlJoinName, null, -1f);
+			client.handler_add(328, handleBrawlRound, null, -1f);
+			client.handler_add(331, handleBrawlHearteningEffect, null, -1f);
+			client.handler_add(350, handelRecruitsClear, null, -1f);
+			client.handler_add(361, handleSealDevilGroup, null, -1f);
+			client.handler_add(363, handleSealDevilUnlock, null, -1f);
+			client.handler_add(371, handleSealDevilEnd, null, -1f);
+			client.handler_add(381, handleSealDevilMemberReady, null, -1f);
+			client.handler_add(511, handleErrorMsg, null, -1f);
+			client.handler_add(386, handle_genswitch, null, -1f);
+			client.handler_add(392, handle_spiritunlockspec, null, -1f);
+			client.handler_add(640, sc_skytower_basic, null, -1f);
+			client.handler_add(1794, sc_daily_ranking_type_refresh_0x702, null, -1f);
+			client.handler_add(1798, sc_sp_general_event_type_refresh_0x706, null, -1f);
+			client.handler_add(1801, sc_game_event_infos_0x709, null, -1f);
+			client.handler_add(2058, sc_return_gift_server_0x80A, null, -1f);
+			client.handler_add(1809, sc_techtree_basic_0x711, null, -1f);
+			client.handler_add(1814, sc_huangcai_event_type_refresh_0x716, null, -1f);
+			client.handler_add(1816, sc_mobile_bind_OK_0x718, null, -1f);
+			client.handler_add(1827, sc_activity_quest_infos_0x723, null, -1f);
+			client.handler_add(1859, sc_godlist_basic_0x743, null, -1f);
+		}
+	}
+
+	public static void Update()
+	{
+		m_bubble.Update();
+		if (!Global.m_bInit)
+		{
+			return;
+		}
+		dblclk_time += Time.deltaTime;
+		if (bDblClick)
+		{
+			bDblClick = false;
+		}
+		if (bWantDblClick2)
+		{
+			bWantDblClick2 = false;
+			bDblClick = true;
+		}
+		if (bWantDblClick && Input.GetMouseButtonUp(0))
+		{
+			bWantDblClick2 = true;
+			bWantDblClick = false;
+		}
+		if (Input.GetMouseButtonDown(0))
+		{
+			if (!bFirstClick)
+			{
+				bFirstClick = true;
+				dblclk_time = 0f;
+			}
+			else if (bFirstClick)
+			{
+				if (dblclk_time < 0.3f)
+				{
+					bWantDblClick = true;
+					dblclk_time = 0f;
+					bFirstClick = false;
+				}
+				else
+				{
+					dblclk_time = 0f;
+				}
+			}
+		}
+		if (bMouseUp)
+		{
+			bMouseUp = false;
+		}
+		if (bWantMouseUp)
+		{
+			bWantMouseUp = false;
+			bMouseUp = true;
+		}
+		if (Input.GetMouseButtonUp(0))
+		{
+			bWantMouseUp = true;
+		}
+	}
+
+	public static void Draw()
+	{
+		m_bubble.Draw();
+		if (m_bShowDrawArea)
+		{
+			__BaseUI.DrawArea(m_areaBtnRc, m_areaString, m_areaArrowFace);
+			m_bShowDrawArea = false;
+		}
+	}
+
+	public static void ShowDrawArea(Rect btnRc, string strTemp, ArrowFace face)
+	{
+		m_bShowDrawArea = true;
+		m_areaBtnRc = btnRc;
+		m_areaString = strTemp;
+		m_areaArrowFace = face;
+	}
+
+	public static void add_UIFunc(delegate_OnClose uifunc)
+	{
+		add_UIFunc(uifunc, bFront: false);
+	}
+
+	public static void add_UIFunc(delegate_OnClose uifunc, bool bFront)
+	{
+		if (uifunc != null && !vctUIFuncs.Contains(uifunc))
+		{
+			if (bFront)
+			{
+				vctUIFuncs.Insert(0, uifunc);
+			}
+			else
+			{
+				vctUIFuncs.Add(uifunc);
+			}
+		}
+	}
+
+	public static void clear_UIFunc()
+	{
+		vctUIFuncs.Clear();
+	}
+
+	public static void _drawStateBubble(string valuekind)
+	{
+		long value = 0L;
+		Rect rc = new Rect(0f, 0f, 0f, 0f);
+		if (valuekind.Contains("stamina"))
+		{
+			value = long.Parse(valuekind.Replace("stamina", string.Empty));
+			rc = __BaseUI._rect(40f, 90f, 200f, 50f);
+		}
+		else if (valuekind.Contains("gravemoney"))
+		{
+			value = long.Parse(valuekind.Replace("gravemoney", string.Empty));
+			rc = __BaseUI._rect(64f, 71f, 200f, 50f);
+		}
+		else if (valuekind.Contains("gravegold"))
+		{
+			value = long.Parse(valuekind.Replace("gravegold", string.Empty));
+			rc = __BaseUI._rect(196f, 71f, 200f, 50f);
+		}
+		else if (valuekind.Contains("graveshard"))
+		{
+			value = long.Parse(valuekind.Replace("graveshard", string.Empty));
+			rc = __BaseUI._rect(64f, 42f, 200f, 50f);
+		}
+		else if (valuekind.Contains("graveessen"))
+		{
+			value = long.Parse(valuekind.Replace("graveessen", string.Empty));
+			rc = __BaseUI._rect(196f, 42f, 200f, 50f);
+		}
+		else if (valuekind.Contains("gold"))
+		{
+			value = long.Parse(valuekind.Replace("gold", string.Empty));
+			rc = __BaseUI._rect(125f, 78f, 200f, 50f);
+		}
+		else if (!valuekind.Contains("spirit_skill_money"))
+		{
+			if (valuekind.Contains("money"))
+			{
+				value = long.Parse(valuekind.Replace("money", string.Empty));
+				rc = __BaseUI._rect(125f, 58f, 200f, 50f);
+			}
+			else if (valuekind.Contains("experience"))
+			{
+				value = long.Parse(valuekind.Replace("experience", string.Empty));
+				rc = __BaseUI._rect(140f, 90f, 200f, 50f);
+			}
+			else if (valuekind.Contains("wood"))
+			{
+				value = long.Parse(valuekind.Replace("wood", string.Empty));
+				rc = __BaseUI._rect(130f, 130f, 200f, 50f);
+			}
+			else if (valuekind.Contains("mine"))
+			{
+				value = long.Parse(valuekind.Replace("mine", string.Empty));
+				rc = __BaseUI._rect(50f, 150f, 200f, 50f);
+			}
+			else if (valuekind.Contains("mana"))
+			{
+				value = long.Parse(valuekind.Replace("mana", string.Empty));
+				rc = __BaseUI._rect(82f, 121f, 200f, 50f);
+			}
+			else if (valuekind.Contains("buildingmaterial"))
+			{
+				value = long.Parse(valuekind.Replace("buildingmaterial", string.Empty));
+				rc = __BaseUI._rect(186f, 121f, 200f, 50f);
+			}
+			else if (valuekind.Contains("friendshippoint"))
+			{
+				value = long.Parse(valuekind.Replace("friendshippoint", string.Empty));
+				rc = __BaseUI._rect(82f, 140f, 200f, 50f);
+			}
+			else if (valuekind.Contains("jiancai"))
+			{
+				value = long.Parse(valuekind.Replace("jiancai", string.Empty));
+				rc = __BaseUI._rect(130f, 150f, 200f, 50f);
+			}
+			else if (valuekind.Contains("youqingdian"))
+			{
+				value = long.Parse(valuekind.Replace("youqingdian", string.Empty));
+				rc = __BaseUI._rect(81f, 150f, 200f, 50f);
+			}
+		}
+		_drawBubble(value, rc, null, 1f, 0f, -20f);
+	}
+
+	public static void _drawBubble(long value, Rect rc, Texture2D texIcon, float duration, float ox, float my)
+	{
+		if (value != 0L)
+		{
+			GUIContent gUIContent = new GUIContent();
+			GUIStyle gUIStyle = new GUIStyle();
+			GUIStyle gUIStyle2 = new GUIStyle();
+			Color target_clr = new Color(0f, 0f, 0f, 0f);
+			if (value > 0)
+			{
+				gUIStyle.normal.textColor = new Color(0.2f, 1f, 0f, 1f);
+				gUIContent.text = "+" + value;
+				target_clr = new Color(0.2f, 1f, 0f, 0f);
+			}
+			else if (value < 0)
+			{
+				gUIStyle.normal.textColor = new Color(1f, 0.2f, 0f, 1f);
+				gUIContent.text = value.ToString();
+				target_clr = new Color(1f, 0.2f, 0f, 0f);
+			}
+			gUIStyle2.normal.textColor = new Color(0f, 0f, 0f, 1f);
+			gUIStyle.font = __BaseUI.DmgFont;
+			gUIStyle.fontSize = 30;
+			gUIStyle2.font = __BaseUI.DmgFont;
+			gUIStyle2.fontSize = 30;
+			m_bubble.AddBubble(gUIContent, gUIStyle, rc, new Vector2(rc.x, rc.y + my), target_clr, duration);
+		}
+		if (texIcon != null)
+		{
+			GUIStyle gUIStyle3 = new GUIStyle();
+			gUIStyle3.normal.textColor = new Color(1f, 1f, 1f, 1f);
+			Rect current_rc = new Rect(rc.x - (float)texIcon.width + ox, rc.y + (float)((30 - texIcon.height) / 2), texIcon.width, texIcon.height);
+			gUIStyle3.normal.background = texIcon;
+			BubbleManager.Bubble bubble = m_bubble.AddBubble(new GUIContent(string.Empty), gUIStyle3, current_rc, new Vector2(current_rc.x, current_rc.y + my), new Color(1f, 1f, 1f, 0f), duration);
+			bubble.setScale(bScale: true, null);
+		}
+	}
+
+	public static void _drawBubble(Rect rcTex, Texture2D texIcon, float duration, BubbleManager.Bubble.delegate_Func func)
+	{
+		GUIStyle gUIStyle = new GUIStyle();
+		gUIStyle.normal.textColor = new Color(1f, 1f, 1f, 1f);
+		gUIStyle.normal.background = texIcon;
+		BubbleManager.Bubble bubble = m_bubble.AddBubble(new GUIContent(string.Empty), gUIStyle, rcTex, new Vector2(rcTex.x, rcTex.y), new Color(1f, 1f, 1f, 0.8f), duration);
+		bubble.setScale(bScale: true, func);
+	}
+
+	public static void cs_equipment_new_0x454()
+	{
+		if (pktDepotNew.ids.Count > 0)
+		{
+			Global.m_client.Send(1108, pktDepotNew, null);
+			pktDepotNew.ids.Clear();
+		}
+	}
+
+	private static void sc_message_0x01(MemoryStream stream, object arg)
+	{
+		SCMessage_0x01 sCMessage_0x = JSProtoBuf.Serializer.Deserialize<SCMessage_0x01>(stream);
+		MessageBox messageBox = __BaseUI.GetMessageBox();
+		messageBox.setMessage(string.Empty, sCMessage_0x.content, null);
+		messageBox.setDepth(-300);
+		messageBox.bModal = true;
+	}
+
+	private static void sc_server_time_0x05(MemoryStream stream, object arg)
+	{
+		SCServerTime_0x05 sCServerTime_0x = JSProtoBuf.Serializer.Deserialize<SCServerTime_0x05>(stream);
+		TimeUtil.setServerTime(sCServerTime_0x.server_time, sCServerTime_0x.time_zone, sCServerTime_0x.offset_time);
+	}
+
+	private static void sc_general_add_0x12(MemoryStream stream, object arg)
+	{
+		SCGeneralAdd_0x12 sCGeneralAdd_0x = JSProtoBuf.Serializer.Deserialize<SCGeneralAdd_0x12>(stream);
+		Global.character_.addGenerals(sCGeneralAdd_0x.general);
+	}
+
+	private static void sc_equipment_add_0x13(MemoryStream stream, object arg)
+	{
+		SCEquipmentAdd_0x13 sCEquipmentAdd_0x = JSProtoBuf.Serializer.Deserialize<SCEquipmentAdd_0x13>(stream);
+		Global.character_.addEquipment(sCEquipmentAdd_0x.equipment);
+	}
+
+	private static void sc_arena_new_0x14(MemoryStream stream, object arg)
+	{
+		SCArenaNew_0x14 sCArenaNew_0x = JSProtoBuf.Serializer.Deserialize<SCArenaNew_0x14>(stream);
+		Global.character_.arena.make(sCArenaNew_0x.arena);
+	}
+
+	private static void sc_arena_report_0x15(MemoryStream stream, object arg)
+	{
+		SCArenaReport_0x15 sCArenaReport_0x = JSProtoBuf.Serializer.Deserialize<SCArenaReport_0x15>(stream);
+		Global.character_.arena.rank = sCArenaReport_0x.rank;
+		Global.character_.arena.reports.Add(new Database.ArenaReport(sCArenaReport_0x.report));
+		Global.character_.arena.new_count++;
+		if (sCArenaReport_0x.challengers != null)
+		{
+			Global.character_.arena.makeChallengers(sCArenaReport_0x.challengers, bChanged: true);
+		}
+	}
+
+	private static void sc_arena_bonus_0x16(MemoryStream stream, object arg)
+	{
+		SCArenaBonus_0x16 sCArenaBonus_0x = JSProtoBuf.Serializer.Deserialize<SCArenaBonus_0x16>(stream);
+		Global.character_.arena.addBonus(sCArenaBonus_0x.bonus);
+	}
+
+	private static void sc_spirit_new_0x17(MemoryStream stream, object arg)
+	{
+		SCSpiritNew_0x17 sCSpiritNew_0x = JSProtoBuf.Serializer.Deserialize<SCSpiritNew_0x17>(stream);
+		Global.character_.spirit.make(sCSpiritNew_0x.spirit);
+	}
+
+	private static void sc_arena_challengers_refresh_0x18(MemoryStream stream, object arg)
+	{
+		SCArenaChallengersRefresh_0x18 sCArenaChallengersRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCArenaChallengersRefresh_0x18>(stream);
+		if (sCArenaChallengersRefresh_0x.challengers != null)
+		{
+			Global.character_.arena.makeChallengers(sCArenaChallengersRefresh_0x.challengers, bChanged: true);
+		}
+	}
+
+	private static void sc_vip_level_change_0x19(MemoryStream stream, object arg)
+	{
+		SCVIPLevelChange_0x19 sCVIPLevelChange_0x = JSProtoBuf.Serializer.Deserialize<SCVIPLevelChange_0x19>(stream);
+		__BaseUI.GetMessageBox().setMessage("VIP等级改变", "VIP等级从" + Global.character_.VIPLEVEL + "级更改为" + sCVIPLevelChange_0x.vip_level + "级", null);
+		Global.character_.setVipLevel((byte)sCVIPLevelChange_0x.vip_level);
+		VipUI.vipchanged = true;
+	}
+
+	private static void sc_amulet_add_0x1A(MemoryStream stream, object arg)
+	{
+		SCAmuletAdd_0x1A sCAmuletAdd_0x1A = JSProtoBuf.Serializer.Deserialize<SCAmuletAdd_0x1A>(stream);
+		Global.character_.addAmulet(sCAmuletAdd_0x1A.amulet);
+		Global.character_.amulet_new = true;
+	}
+
+	private static void sc_gem_add_0x1B(MemoryStream stream, object arg)
+	{
+		SCGemAdd_0x1B sCGemAdd_0x1B = JSProtoBuf.Serializer.Deserialize<SCGemAdd_0x1B>(stream);
+		Global.character_.addGem(sCGemAdd_0x1B.gem);
+		Global.character_.amulet_new = true;
+	}
+
+	private static void sc_koujinbi_0x1C(MemoryStream stream, object arg)
+	{
+		SCKouJinbi_0x1C sCKouJinbi_0x1C = JSProtoBuf.Serializer.Deserialize<SCKouJinbi_0x1C>(stream);
+		Global.character_.gold = sCKouJinbi_0x1C.gold;
+		Global.character_.pay = sCKouJinbi_0x1C.pay;
+		Global.character_.setVipLevel((byte)sCKouJinbi_0x1C.vip_level);
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.format(239u, new object[1] { sCKouJinbi_0x1C.kou_gold }), null);
+	}
+
+	private static void sc_character_bonus_add_0x1D(MemoryStream stream, object arg)
+	{
+		SCCharacterBonusAdd_0x1D sCCharacterBonusAdd_0x1D = JSProtoBuf.Serializer.Deserialize<SCCharacterBonusAdd_0x1D>(stream);
+		_character_bonus character_bonus = new _character_bonus();
+		character_bonus.Set(sCCharacterBonusAdd_0x1D.bonus);
+		Global.character_.character_bonuses.Add(character_bonus);
+	}
+
+	private static void sc_timelimit_message_0x1E(MemoryStream stream, object arg)
+	{
+		SCTimeLimitMessage_0x1E sCTimeLimitMessage_0x1E = JSProtoBuf.Serializer.Deserialize<SCTimeLimitMessage_0x1E>(stream);
+		Global.clearTimeLimitMessages();
+		foreach (game.net.data.StoC.TimeLimitMessage message in sCTimeLimitMessage_0x1E.messages)
+		{
+			Global.add_timelimit_message(message);
+		}
+	}
+
+	private static void sc_tempevent_message_0x1F(MemoryStream stream, object arg)
+	{
+		SCTempEventMessage_0x1F sCTempEventMessage_0x1F = JSProtoBuf.Serializer.Deserialize<SCTempEventMessage_0x1F>(stream);
+		Global.clearTempEventMessages();
+		foreach (game.net.data.StoC.TempEventMessage message in sCTempEventMessage_0x1F.messages)
+		{
+			Global.add_tempevent_message(message);
+		}
+	}
+
+	public static void cs_cooldown_clear_0x20(byte id, delegate_OnClose onClose)
+	{
+		CSCooldownClear_0x20 cSCooldownClear_0x = new CSCooldownClear_0x20();
+		cSCooldownClear_0x.idcooldown = id;
+		Global.m_client.Send(32, cSCooldownClear_0x, sc_cooldown_clear_0x20, onClose);
+	}
+
+	private static void sc_cooldown_clear_0x20(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCCooldownClear_0x20 sCCooldownClear_0x = JSProtoBuf.Serializer.Deserialize<SCCooldownClear_0x20>(stream);
+		if (sCCooldownClear_0x.result == 0)
+		{
+			Global.character_.cooldowns.Remove((byte)sCCooldownClear_0x.idcooldown);
+			Global.character_.gold -= (int)sCCooldownClear_0x.gold_consume;
+			__BaseUI.drawStateBubble("gold-" + sCCooldownClear_0x.gold_consume);
+			if (arg is delegate_OnClose delegate_OnClose)
+			{
+				delegate_OnClose();
+			}
+		}
+	}
+
+	private static void sc_premium_time_new_0x27(MemoryStream stream, object arg)
+	{
+		SCPremiumTimeNew_0x27 sCPremiumTimeNew_0x = JSProtoBuf.Serializer.Deserialize<SCPremiumTimeNew_0x27>(stream);
+		Global.premium_time_new = sCPremiumTimeNew_0x.premium_time_new;
+	}
+
+	private static void sc_daily_ranking_type_refresh_0x702(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCDailyRankingTypeRefresh_0x702 sCDailyRankingTypeRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCDailyRankingTypeRefresh_0x702>(stream);
+		if (sCDailyRankingTypeRefresh_0x.operate != SCDailyRankingTypeRefresh_0x702.Operate.OK)
+		{
+			return;
+		}
+		Global.character_.daily_ranking_types.Clear();
+		foreach (uint item in sCDailyRankingTypeRefresh_0x.daily_ranking_type)
+		{
+			Global.character_.daily_ranking_types.Add(item);
+		}
+	}
+
+	private static void sc_sp_general_event_type_refresh_0x706(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCSpGeneralEventTypeRefresh_0x706 sCSpGeneralEventTypeRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCSpGeneralEventTypeRefresh_0x706>(stream);
+			if (sCSpGeneralEventTypeRefresh_0x.operate == SCSpGeneralEventTypeRefresh_0x706.Operate.OK)
+			{
+				Global.character_.sp_general_event_type = (byte)sCSpGeneralEventTypeRefresh_0x.event_type;
+			}
+		}
+	}
+
+	private static void sc_huangcai_event_type_refresh_0x716(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCHuangCaiEventTypeRefresh_0x716 sCHuangCaiEventTypeRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCHuangCaiEventTypeRefresh_0x716>(stream);
+			if (sCHuangCaiEventTypeRefresh_0x.operate == SCHuangCaiEventTypeRefresh_0x716.Operate.OK)
+			{
+				Global.character_.sp_general_event_type = (byte)sCHuangCaiEventTypeRefresh_0x.event_type;
+			}
+		}
+	}
+
+	private static void sc_activity_quest_infos_0x723(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCActivityQuestInfos_0x723 sCActivityQuestInfos_0x = JSProtoBuf.Serializer.Deserialize<SCActivityQuestInfos_0x723>(stream);
+		if (sCActivityQuestInfos_0x.operate != SCActivityQuestInfos_0x723.Operate.OK)
+		{
+			return;
+		}
+		Global.character_.activity_quest_mgr.m_activityquests.Clear();
+		foreach (db_character_activity_quest activityquest in sCActivityQuestInfos_0x.activityquests)
+		{
+			ActivityQuest activityQuest = new ActivityQuest();
+			activityQuest.Set(activityquest);
+			Global.character_.activity_quest_mgr.m_activityquests.Add(activityQuest.idquest, activityQuest);
+		}
+	}
+
+	private static void sc_mobile_bind_OK_0x718(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCMobileBindOK_0x718 sCMobileBindOK_0x = JSProtoBuf.Serializer.Deserialize<SCMobileBindOK_0x718>(stream);
+			if (sCMobileBindOK_0x.operate == SCMobileBindOK_0x718.Operate.OK)
+			{
+				Global.character_.mobile_bind = (byte)sCMobileBindOK_0x.mobile_bind;
+			}
+		}
+	}
+
+	private static void sc_game_event_infos_0x709(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCGameEventInfos_0x709 sCGameEventInfos_0x = JSProtoBuf.Serializer.Deserialize<SCGameEventInfos_0x709>(stream);
+		if (sCGameEventInfos_0x.operate != SCGameEventInfos_0x709.Operate.OK)
+		{
+			return;
+		}
+		foreach (GameEvent item in sCGameEventInfos_0x.game_event)
+		{
+			switch (item.type)
+			{
+			case "huangyueying":
+				setGameEventHuanhyueying(item);
+				break;
+			case "huangcai":
+				setGameEventHuangcai(item);
+				break;
+			case "assault_battle":
+				setGameEventAssault(item);
+				break;
+			case "fund":
+				setGameEventFund(item);
+				break;
+			case "chinese_new_year_lottery":
+				setGameEventChineseNewYearLottery(item);
+				break;
+			case "rescue_battle":
+				setGameEventRescue(item);
+				break;
+			case "artifact_upgrade_advanced":
+				setGameEventUpgradeAdvanced(item);
+				break;
+			case "grave_event":
+				setEventSetting(item, ref Global.grave_event_setting);
+				break;
+			case "newyear_checkin":
+				setGameEventNewYearCheckin(item);
+				break;
+			}
+		}
+	}
+
+	private static void setGameEventHuanhyueying(GameEvent ge)
+	{
+		if (!(Global.getTemplate("sp_general_event_setting", 1u) is _sp_general_event_setting sp_general_event_setting))
+		{
+			return;
+		}
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					sp_general_event_setting.start_timestamp = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					sp_general_event_setting.end_timestamp = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "lottery_start")
+				{
+					sp_general_event_setting.lottery_startTime = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "lottery_end")
+				{
+					sp_general_event_setting.lottery_endTime = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventHuangcai(GameEvent ge)
+	{
+		if (!(Global.getTemplate("lottery_event_setting", 1u) is _lottery_event_setting lottery_event_setting))
+		{
+			return;
+		}
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					lottery_event_setting.start_timestamp = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					lottery_event_setting.end_timestamp = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "lottery_start")
+				{
+					lottery_event_setting.lottery_startTime = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "lottery_end")
+				{
+					lottery_event_setting.lottery_endTime = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventAssault(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.assault_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.assault_setting.end_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "assault_id")
+				{
+					Global.assault_setting.battleactivity_id = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "assault_type")
+				{
+					Global.assault_setting.battleactivity_type = byte.Parse(array2[1]);
+				}
+				else if (array2[0] == "shop_id")
+				{
+					Global.assault_setting.shop_id = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "special_start")
+				{
+					Global.assault_setting.special_start = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "special_end")
+				{
+					Global.assault_setting.special_end = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventRescue(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.rescue_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.rescue_setting.end_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "rescue_id")
+				{
+					Global.rescue_setting.battleactivity_id = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "rescue_type")
+				{
+					Global.rescue_setting.battleactivity_type = byte.Parse(array2[1]);
+				}
+				else if (array2[0] == "shop_id")
+				{
+					Global.rescue_setting.shop_id = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "special_start")
+				{
+					Global.rescue_setting.special_start = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "special_end")
+				{
+					Global.rescue_setting.special_end = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventUpgradeAdvanced(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.atrifact_upgrade_advanced_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.atrifact_upgrade_advanced_setting.end_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "rate")
+				{
+					Global.atrifact_upgrade_advanced_setting.rate = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventFund(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.fund_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.fund_setting.end_time = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventChineseNewYearLottery(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.chinese_new_year_lottery_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.chinese_new_year_lottery_setting.end_time = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setEventSetting(GameEvent ge, ref Event_Setting event_setting)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					event_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					event_setting.end_time = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void setGameEventNewYearCheckin(GameEvent ge)
+	{
+		string[] array = ge.ge_params.Split(',');
+		for (int i = 0; i < array.Length; i++)
+		{
+			string[] array2 = array[i].Split('=');
+			if (array2.Length > 1)
+			{
+				if (array2[0] == "start")
+				{
+					Global.newyear_checkin_setting.start_time = uint.Parse(array2[1]);
+				}
+				else if (array2[0] == "end")
+				{
+					Global.newyear_checkin_setting.end_time = uint.Parse(array2[1]);
+				}
+			}
+		}
+	}
+
+	private static void sc_pay_0x31(MemoryStream stream, object arg)
+	{
+		SCPay_0x31 sCPay_0x = JSProtoBuf.Serializer.Deserialize<SCPay_0x31>(stream);
+		__BaseUI.GetMessageBox().setMessage(string.Empty, Global.getText(21424u), null);
+		Global.character_.gold = (int)sCPay_0x.gold;
+		Global.character_.pay = sCPay_0x.pay;
+		Global.character_.setVipLevel((byte)sCPay_0x.vip_level);
+		Global.character_.vip5_start_time = sCPay_0x.vip5_start_time;
+		VipUI.vipchanged = true;
+		Global.character_.isordered = true;
+		if (Global.character_.first_order_bonus == 0)
+		{
+			Global.character_.first_order_bonus = 1;
+		}
+		Global.character_.christmasEvent.gold_recharge = sCPay_0x.christmas_gold_recharge;
+	}
+
+	private static void sc_armytype_add_0x203(MemoryStream stream, object arg)
+	{
+		SCArmyTypeAdd_0x203 sCArmyTypeAdd_0x = JSProtoBuf.Serializer.Deserialize<SCArmyTypeAdd_0x203>(stream);
+		Global.character_.addArmyType(sCArmyTypeAdd_0x.data);
+		if (sCArmyTypeAdd_0x.newhint)
+		{
+			Global.character_.newarmyid.Add(sCArmyTypeAdd_0x.data.idarmy_template);
+		}
+	}
+
+	private static void sc_skill_add_0x204(MemoryStream stream, object arg)
+	{
+		SCSkillAdd_0x204 sCSkillAdd_0x = JSProtoBuf.Serializer.Deserialize<SCSkillAdd_0x204>(stream);
+		Global.character_.addSkill(sCSkillAdd_0x.data);
+		if (sCSkillAdd_0x.newhint)
+		{
+			Global.character_.newskillid.Add(sCSkillAdd_0x.data.idskill);
+		}
+	}
+
+	private static void sc_pointrace_bonus_0x468(MemoryStream stream, object arg)
+	{
+		SCPointraceBonus_0x468 sCPointraceBonus_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceBonus_0x468>(stream);
+		Global.character_.pointrace.addBonus(sCPointraceBonus_0x.bonus);
+	}
+
+	private static void sc_building_add_0x480(MemoryStream stream, object arg)
+	{
+		SCBuildingAdd_0x480 sCBuildingAdd_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingAdd_0x480>(stream);
+		if (Global.character_ != null)
+		{
+			Global.character_.addBuilding(sCBuildingAdd_0x.building);
+		}
+	}
+
+	private static void sc_building_luckyproduct_0x481(MemoryStream stream, object arg)
+	{
+		SCBuildingLuckyProduct_0x481 sCBuildingLuckyProduct_0x = JSProtoBuf.Serializer.Deserialize<SCBuildingLuckyProduct_0x481>(stream);
+		Global.makeLuckyProducts(sCBuildingLuckyProduct_0x.lucky_products.lucky_products);
+	}
+
+	private static void sc_god_enter_0x4B0(MemoryStream stream, object arg)
+	{
+		SCGodEnter_0x4B0 sCGodEnter_0x4B = JSProtoBuf.Serializer.Deserialize<SCGodEnter_0x4B0>(stream);
+		Global.character_.makeGodTroops(sCGodEnter_0x4B.troops);
+	}
+
+	private static void sc_friend_monster_kill_0x4C3(MemoryStream stream, object arg)
+	{
+		SCFriendMonsterKill_0x4C3 sCFriendMonsterKill_0x4C = JSProtoBuf.Serializer.Deserialize<SCFriendMonsterKill_0x4C3>(stream);
+		if (Global.character_.building_monsters.ContainsKey((byte)sCFriendMonsterKill_0x4C.id))
+		{
+			Database.BuildingMonster buildingMonster = Global.character_.building_monsters[(byte)sCFriendMonsterKill_0x4C.id];
+			buildingMonster.killed = true;
+			buildingMonster.idkiller = sCFriendMonsterKill_0x4C.idkiller;
+			buildingMonster.killer_name = sCFriendMonsterKill_0x4C.killer_name;
+			if (buildingMonster.mesh != null)
+			{
+				buildingMonster.mesh.animation.Play("dead");
+			}
+		}
+	}
+
+	private static void sc_friend_demon_kill_0x4C4(MemoryStream stream, object arg)
+	{
+		SCFriendDemonKill_0x4C4 sCFriendDemonKill_0x4C = JSProtoBuf.Serializer.Deserialize<SCFriendDemonKill_0x4C4>(stream);
+		if (Global.character_.m_demon != null)
+		{
+			Global.character_.m_demon.killed = true;
+			if (Global.character_.m_demon.mesh != null)
+			{
+				Global.character_.m_demon.mesh.animation.Play("dead");
+			}
+		}
+	}
+
+	private static void sc_gem_swap_0x4D0(MemoryStream stream, object obj)
+	{
+		SCGemSwap_0x4D0 sCGemSwap_0x4D = JSProtoBuf.Serializer.Deserialize<SCGemSwap_0x4D0>(stream);
+		if (sCGemSwap_0x4D.result != 0)
+		{
+		}
+	}
+
+	private static void sc_amulet_swap_0x4D1(MemoryStream stream, object obj)
+	{
+		SCAmuletSwap_0x4D1 sCAmuletSwap_0x4D = JSProtoBuf.Serializer.Deserialize<SCAmuletSwap_0x4D1>(stream);
+		if (sCAmuletSwap_0x4D.result != 0)
+		{
+		}
+	}
+
+	private static void sc_unread_mail_num_0x210(MemoryStream stream, object arg)
+	{
+		SCUnreadMailNum_0x210 sCUnreadMailNum_0x = JSProtoBuf.Serializer.Deserialize<SCUnreadMailNum_0x210>(stream);
+		Global.character_.UnreadMailNum = sCUnreadMailNum_0x.num;
+		MailUI mailUI = __BaseUI.GetMailUI();
+		if (mailUI != null)
+		{
+			mailUI.CheckMail();
+		}
+	}
+
+	private static void sc_skytower_basic(MemoryStream stream, object obj)
+	{
+		SCSkyTowerBasic_0x280 sCSkyTowerBasic_0x = JSProtoBuf.Serializer.Deserialize<SCSkyTowerBasic_0x280>(stream);
+		if (sCSkyTowerBasic_0x != null && sCSkyTowerBasic_0x.info != null)
+		{
+			Global.character_.skytower.Set(sCSkyTowerBasic_0x.info);
+			Global.character_.skytower.tower_list = sCSkyTowerBasic_0x.tower_list;
+		}
+	}
+
+	private static void sc_techtree_basic_0x711(MemoryStream stream, object obj)
+	{
+		if (stream != null)
+		{
+			SCTechTreeBasic_0x711 sCTechTreeBasic_0x = JSProtoBuf.Serializer.Deserialize<SCTechTreeBasic_0x711>(stream);
+			if (sCTechTreeBasic_0x.operate == SCTechTreeBasic_0x711.Operate.OK)
+			{
+				Global.character_.techtree.Set(sCTechTreeBasic_0x.tech_tree);
+			}
+		}
+	}
+
+	private static void sc_godlist_basic_0x743(MemoryStream stream, object obj)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCGodListBasic_0x743 sCGodListBasic_0x = JSProtoBuf.Serializer.Deserialize<SCGodListBasic_0x743>(stream);
+		if (sCGodListBasic_0x.operate != SCGodListBasic_0x743.Operate.OK)
+		{
+			return;
+		}
+		Global.character_.godlist.m_slots.Clear();
+		foreach (db_character_god_list_slot god_list_slot in sCGodListBasic_0x.god_list_slots)
+		{
+			GodListSlot godListSlot = new GodListSlot();
+			godListSlot.Set(god_list_slot);
+			Global.character_.godlist.m_slots.Add(godListSlot.idslot, godListSlot);
+		}
+	}
+
+	public static void cs_weekend_lottery_online()
+	{
+		wlosended = true;
+		CSWeekendLotteryOnline_0x391 pkt = new CSWeekendLotteryOnline_0x391();
+		Global.m_client.Send(913, pkt, sc_weekend_lottery_online);
+	}
+
+	public static void sc_weekend_lottery_online(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		wlosended = false;
+		SCWeekendLotteryOnline_0x391 sCWeekendLotteryOnline_0x = JSProtoBuf.Serializer.Deserialize<SCWeekendLotteryOnline_0x391>(stream);
+		if (sCWeekendLotteryOnline_0x.result == 1)
+		{
+			Global.character_.online_seconds = 0u;
+			Global.character_.online_times_got = 1;
+			if (Global.character_.festival_lottery.lottery_dict.ContainsKey(3u))
+			{
+				Global.character_.festival_lottery.lottery_dict[3u].online_bonus_times++;
+			}
+		}
+	}
+
+	private static void sc_gold_cosume(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCGoldConsume_0x358 sCGoldConsume_0x = JSProtoBuf.Serializer.Deserialize<SCGoldConsume_0x358>(stream);
+			Global.character_.gold_consume = sCGoldConsume_0x.gold_consume;
+		}
+	}
+
+	private static void sc_festival_cost(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCFestivalCost_0x363 sCFestivalCost_0x = JSProtoBuf.Serializer.Deserialize<SCFestivalCost_0x363>(stream);
+			if (Global.character_.festivalconsumes.ContainsKey((int)sCFestivalCost_0x.day))
+			{
+				Global.character_.festivalconsumes[(int)sCFestivalCost_0x.day].gold = (int)sCFestivalCost_0x.gold;
+				Global.character_.festivalconsumes[(int)sCFestivalCost_0x.day].money = (int)sCFestivalCost_0x.money;
+				return;
+			}
+			FestivalConsume festivalConsume = new FestivalConsume();
+			festivalConsume.day = (int)sCFestivalCost_0x.day;
+			festivalConsume.gold = (int)sCFestivalCost_0x.gold;
+			festivalConsume.money = (int)sCFestivalCost_0x.money;
+			Global.character_.festivalconsumes.Add(festivalConsume.day, festivalConsume);
+		}
+	}
+
+	private static void handelGuilds(MemoryStream stream, object arg)
+	{
+		Global.character_.handelGuilds(stream, arg);
+	}
+
+	private static void handleQuests(MemoryStream stream, object arg)
+	{
+		Global.character_.handleQuests(stream, arg);
+	}
+
+	private static void handelActvity(MemoryStream stream, object arg)
+	{
+		Global.character_.handelActvity(stream, arg);
+	}
+
+	private static void handelApplyList(MemoryStream stream, object arg)
+	{
+		Global.character_.handelApplyList(stream, arg);
+	}
+
+	private static void handelFormUnlock(MemoryStream stream, object arg)
+	{
+		Global.character_.handelFormUnlock(stream, arg);
+	}
+
+	private static void handelQuiz(MemoryStream stream, object arg)
+	{
+		Global.character_.handelQuiz(stream, arg);
+	}
+
+	private static void handelBrawlEnd(MemoryStream stream, object arg)
+	{
+		Global.character_.handelBrawlEnd(stream, arg);
+	}
+
+	private static void handleBrawlJoinName(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBrawlJoinMsg_0x142 sCBrawlJoinMsg_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlJoinMsg_0x142>(stream);
+			Global.character_.brawlinfo.joinname(sCBrawlJoinMsg_0x);
+			BrawlInfo.nextround = sCBrawlJoinMsg_0x.nextround;
+		}
+	}
+
+	private static void handleBrawlRound(MemoryStream stream, object arg)
+	{
+		Logger.Log("Braw Round");
+		if (stream == null)
+		{
+			return;
+		}
+		SCBrawlRoundUpdate_0x148 sCBrawlRoundUpdate_0x = JSProtoBuf.Serializer.Deserialize<SCBrawlRoundUpdate_0x148>(stream);
+		Global.character_.brawlinfo.round_update(sCBrawlRoundUpdate_0x.info);
+		Global.character_.brawl.top.Clear();
+		foreach (SCBrawlRankTop item2 in sCBrawlRoundUpdate_0x.list)
+		{
+			Brawl.RankTop item = new Brawl.RankTop(item2);
+			Global.character_.brawl.top.Add(item);
+		}
+	}
+
+	private static void handleBrawlHearteningEffect(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBrawlHearteningEffect_0x14b sCBrawlHearteningEffect_0x14b = JSProtoBuf.Serializer.Deserialize<SCBrawlHearteningEffect_0x14b>(stream);
+			Global.character_.brawlinfo.hearten_effect = sCBrawlHearteningEffect_0x14b.id;
+			if (sCBrawlHearteningEffect_0x14b.id == Global.character_.id && sCBrawlHearteningEffect_0x14b.special)
+			{
+				BrawlInfo.special_round = true;
+			}
+		}
+	}
+
+	private static void handelRecruitsClear(MemoryStream stream, object arg)
+	{
+		Global.character_.handelRecruitsClear(stream, arg);
+	}
+
+	private static void handleSealDevilGroup(MemoryStream stream, object arg)
+	{
+		Global.character_.handleSealDevilGroup(stream, arg);
+	}
+
+	private static void handleSealDevilUnlock(MemoryStream stream, object arg)
+	{
+		Global.character_.handleSealDevilUnlock(stream, arg);
+	}
+
+	private static void handleSealDevilEnd(MemoryStream stream, object arg)
+	{
+		SCSealDevilEnd_0x173 pkt = JSProtoBuf.Serializer.Deserialize<SCSealDevilEnd_0x173>(stream);
+		Global.character_.sd_detail.unpack_result(pkt);
+	}
+
+	private static void handleSealDevilMemberReady(MemoryStream stream, object arg)
+	{
+		SCSealDevilMemberReady_0x17d sCSealDevilMemberReady_0x17d = JSProtoBuf.Serializer.Deserialize<SCSealDevilMemberReady_0x17d>(stream);
+		Global.character_.sd_detail.set_member_ready(sCSealDevilMemberReady_0x17d.id, sCSealDevilMemberReady_0x17d.is_ready);
+	}
+
+	private static void handleErrorMsg(MemoryStream stream, object arg)
+	{
+		Global.character_.handleErrorMsg(stream, arg);
+	}
+
+	private static void handle_genswitch(MemoryStream stream, object arg)
+	{
+		Global.character_.handle_genswitch(stream, arg);
+	}
+
+	private static void handle_spiritunlockspec(MemoryStream stream, object arg)
+	{
+		SCSpiritUnlockSpec_0x188 sCSpiritUnlockSpec_0x = JSProtoBuf.Serializer.Deserialize<SCSpiritUnlockSpec_0x188>(stream);
+		Global.character_.spirit.new_spec(sCSpiritUnlockSpec_0x.spec_type);
+	}
+
+	private static void sc_return_gift_server_0x80A(MemoryStream stream, object arg)
+	{
+		SCReturnGiftServer_0x80A sCReturnGiftServer_0x80A = JSProtoBuf.Serializer.Deserialize<SCReturnGiftServer_0x80A>(stream);
+		Global.is_return_server = sCReturnGiftServer_0x80A.is_return_server;
+	}
+
+	public static void cs_general_auto_equip(int genid, enumGeneralAutoEquipMode mode)
+	{
+		CSGeneralAutoEquip_0x303 cSGeneralAutoEquip_0x = new CSGeneralAutoEquip_0x303();
+		cSGeneralAutoEquip_0x.genid = (uint)genid;
+		cSGeneralAutoEquip_0x.mode = (uint)mode;
+		Global.m_client.Send(771, cSGeneralAutoEquip_0x, sc_general_auto_equip, genid);
+	}
+
+	public static void sc_general_auto_equip(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		int num = (int)arg;
+		SCGeneralAutoEquip_0x303 sCGeneralAutoEquip_0x = JSProtoBuf.Serializer.Deserialize<SCGeneralAutoEquip_0x303>(stream);
+		switch (sCGeneralAutoEquip_0x.operate)
+		{
+		case SCGeneralAutoEquip_0x303.Operate.OK:
+		{
+			if (!Global.character_.form_generals_.ContainsKey((ushort)num))
+			{
+				break;
+			}
+			FormGeneral formGeneral2 = Global.character_.form_generals_[(ushort)num];
+			for (int j = 0; j < formGeneral2.equipments.Length; j++)
+			{
+				Equipment equipment2 = formGeneral2.equipments[j];
+				if (equipment2 != null)
+				{
+					equipment2.idgeneral_template = ushort.MaxValue;
+					formGeneral2.equipments[j] = null;
+				}
+			}
+			for (int k = 0; k < sCGeneralAutoEquip_0x.oneitem.Count; k++)
+			{
+				uint num2 = sCGeneralAutoEquip_0x.oneitem[k];
+				Equipment equipment3 = Global.character_.equipments[(byte)num2];
+				if (equipment3 == null)
+				{
+					continue;
+				}
+				if (Global.character_.form_generals_.ContainsKey(equipment3.idgeneral_template))
+				{
+					FormGeneral formGeneral3 = Global.character_.form_generals_[equipment3.idgeneral_template];
+					if (formGeneral3.equipments[equipment3.main_.idequipment_type - 1] != null)
+					{
+						formGeneral3.equipments[equipment3.main_.idequipment_type - 1] = null;
+					}
+				}
+				equipment3.idgeneral_template = (ushort)num;
+				formGeneral2.equipments[equipment3.main_.idequipment_type - 1] = equipment3;
+			}
+			for (int l = 0; l < sCGeneralAutoEquip_0x.genid.Count; l++)
+			{
+				if (Global.character_.form_generals_.ContainsKey((ushort)sCGeneralAutoEquip_0x.genid[l]))
+				{
+					Global.character_.form_generals_[(ushort)sCGeneralAutoEquip_0x.genid[l]].CalcAllParam();
+				}
+			}
+			break;
+		}
+		case SCGeneralAutoEquip_0x303.Operate.Null:
+		{
+			if (!Global.character_.form_generals_.ContainsKey((ushort)num))
+			{
+				break;
+			}
+			FormGeneral formGeneral = Global.character_.form_generals_[(ushort)num];
+			for (int i = 0; i < formGeneral.equipments.Length; i++)
+			{
+				Equipment equipment = formGeneral.equipments[i];
+				if (equipment != null)
+				{
+					equipment.idgeneral_template = ushort.MaxValue;
+					formGeneral.equipments[i] = null;
+				}
+			}
+			Global.character_.form_generals_[(ushort)num].CalcAllParam();
+			break;
+		}
+		case SCGeneralAutoEquip_0x303.Operate.Error:
+			break;
+		}
+	}
+}

@@ -1,0 +1,144 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCBuildingProduce_0x486")]
+public class SCBuildingProduce_0x486 : IExtensible
+{
+	private uint _result;
+
+	private uint _id = 0u;
+
+	private uint _idproduct = 0u;
+
+	private uint _start_time = 0u;
+
+	private bool _lucky = false;
+
+	private uint _gold_consume = 0u;
+
+	private uint _mana_consume = 0u;
+
+	private bool _is_immediate = false;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "idproduct", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idproduct
+	{
+		get
+		{
+			return _idproduct;
+		}
+		set
+		{
+			_idproduct = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "start_time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint start_time
+	{
+		get
+		{
+			return _start_time;
+		}
+		set
+		{
+			_start_time = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "lucky", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool lucky
+	{
+		get
+		{
+			return _lucky;
+		}
+		set
+		{
+			_lucky = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "gold_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint gold_consume
+	{
+		get
+		{
+			return _gold_consume;
+		}
+		set
+		{
+			_gold_consume = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "mana_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint mana_consume
+	{
+		get
+		{
+			return _mana_consume;
+		}
+		set
+		{
+			_mana_consume = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "is_immediate", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool is_immediate
+	{
+		get
+		{
+			return _is_immediate;
+		}
+		set
+		{
+			_is_immediate = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

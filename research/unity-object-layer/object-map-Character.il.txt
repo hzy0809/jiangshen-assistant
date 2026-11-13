@@ -1,0 +1,41 @@
+// Offline ILSpy -il selected excerpt; original assembly-wide output line references follow.
+// Original output lines 74106-74108
+.class public auto ansi beforefieldinit Database.Character
+	extends [pbdata]Database._character
+{
+// Original output lines 90180-90214
+	.method public hidebysig specialname 
+		instance int64 get_money () cil managed 
+	{
+		// Method begins at RVA 0x364e8
+		// Header size: 1
+		// Code size: 15 (0xf)
+		.maxstack 8
+
+		IL_0000: ldarg.0
+		IL_0001: ldfld int32 [pbdata]Database._character::money
+		IL_0006: conv.i8
+		IL_0007: ldarg.0
+		IL_0008: ldfld int64 [pbdata]Database._character::money64
+		IL_000d: add
+		IL_000e: ret
+	} // end of method Character::get_money
+
+	.method public hidebysig specialname 
+		instance void set_money (
+			int64 'value'
+		) cil managed 
+	{
+		// Method begins at RVA 0x364f8
+		// Header size: 1
+		// Code size: 15 (0xf)
+		.maxstack 8
+
+		IL_0000: ldarg.0
+		IL_0001: ldc.i4.0
+		IL_0002: stfld int32 [pbdata]Database._character::money
+		IL_0007: ldarg.0
+		IL_0008: ldarg.1
+		IL_0009: stfld int64 [pbdata]Database._character::money64
+		IL_000e: ret
+	} // end of method Character::set_money

@@ -1,0 +1,383 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class TrialLevelUI : BaseUI
+{
+	public static Texture2D texStone;
+
+	public static Texture2D texAttack;
+
+	private Database.TrialTroop m_troop;
+
+	private bool m_bClear;
+
+	public static GameObject mesh;
+
+	public static GameObject stone_mesh;
+
+	private GUIStyle ui_bar5 = new GUIStyle();
+
+	private _ButtonStyle button_shilian = new _ButtonStyle();
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	public int tempexp;
+
+	public uint tempstamina;
+
+	private List<DemonArmySoldier> tempsoldier = new List<DemonArmySoldier>();
+
+	private string stamina_tip = __BaseUI.load_str(5u);
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = false;
+	}
+
+	private void Update()
+	{
+		if (stone_mesh != null)
+		{
+			Vector3 eulerAngles = stone_mesh.transform.eulerAngles;
+			eulerAngles.y += Time.deltaTime * 5f;
+			stone_mesh.transform.eulerAngles = eulerAngles;
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		BaseAsset.lds.Visible_sub();
+		AddAsset("ui_trial");
+		string model_name = Global.character_.trial_campaign.m_campaign.model_name;
+		AddAsset("campaign/" + model_name);
+		AddAsset("campaign/arrow_red");
+		for (int i = 0; i < 3; i++)
+		{
+			Database.TrialTroop trialTroop = Global.character_.trial_campaign.troops[i];
+			string text = (Global.getTemplate("troop_animation", trialTroop.idmodel) as _troop_animation).name;
+			AddAsset("battle/" + text, bForce: false);
+		}
+		DisableAll();
+		CollectingStart();
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		if (mesh == null)
+		{
+			string model_name = Global.character_.trial_campaign.m_campaign.model_name;
+			AssetBundle asset = BaseAsset.was.GetAsset("campaign/" + model_name);
+			if (asset != null)
+			{
+				mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+				mesh.transform.parent = base.gameObject.transform;
+			}
+			for (int i = 0; i < 3; i++)
+			{
+				Database.TrialTroop trialTroop = Global.character_.trial_campaign.troops[i];
+				string text = (Global.getTemplate("troop_animation", trialTroop.idmodel) as _troop_animation).name;
+				asset = BaseAsset.was.GetAsset("battle/" + text);
+				if (asset != null)
+				{
+					trialTroop.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+					BaseAsset.SetLayerRecursively(trialTroop.mesh, 9);
+					trialTroop.mesh.transform.position = trialTroop.pos;
+					trialTroop.mesh.transform.eulerAngles = trialTroop.rot;
+					trialTroop.mesh.transform.parent = mesh.transform;
+					trialTroop.mesh.AddComponent<TrialTroopScript>().setTroop(this, trialTroop);
+					if (Global.character_.trial_campaign.finish > i)
+					{
+						trialTroop.killed = true;
+					}
+					if (trialTroop.killed)
+					{
+						trialTroop.mesh.animation.Play("dead");
+					}
+				}
+			}
+		}
+		for (int j = 0; j < 3; j++)
+		{
+			Database.TrialTroop trialTroop2 = Global.character_.trial_campaign.troops[j];
+			if (trialTroop2.mesh != null && j < Global.character_.trial_campaign.finish)
+			{
+				trialTroop2.mesh.animation.Play("dead");
+			}
+		}
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_trial");
+		ui_bar5.normal.background = asset2.Load("ui_bar5") as Texture2D;
+		texAttack = asset2.Load("ui_icon5") as Texture2D;
+		button_shilian.make(asset2, "button_shilian");
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+	}
+
+	public void makeArrow(Database.GodTroop t, int layer)
+	{
+		t.arrow_mesh = (GameObject)Object.Instantiate(BaseAsset.was.GetAsset("campaign/arrow_red").mainAsset);
+		if (!(t.arrow_mesh != null))
+		{
+			return;
+		}
+		float y = 18f;
+		if (t.mesh != null)
+		{
+			BoxCollider boxCollider = t.mesh.collider as BoxCollider;
+			if (boxCollider != null)
+			{
+				y = boxCollider.extents.y * 2f * 2f + 0.5f;
+			}
+		}
+		t.arrow_mesh.transform.position = t.pos + new Vector3(0f, y, 0f);
+		float num = 3f;
+		t.arrow_mesh.transform.localScale = new Vector3(num, num, num);
+		t.arrow_mesh.transform.parent = mesh.transform;
+		BaseAsset.SetLayerRecursively(t.arrow_mesh, layer);
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (mesh != null)
+		{
+			Object.Destroy(mesh);
+			mesh = null;
+		}
+		stone_mesh = null;
+		if (Global.character_.trial_campaign == null || Global.character_.trial_campaign.troops == null)
+		{
+			return;
+		}
+		for (int i = 0; i < Global.character_.trial_campaign.troops.Length; i++)
+		{
+			Database.TrialTroop trialTroop = Global.character_.trial_campaign.troops[i];
+			if (trialTroop != null)
+			{
+				trialTroop.mesh = null;
+				trialTroop.arrow_mesh = null;
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		__BaseUI.my_enabled = IsEnable();
+		Rect rect = __BaseUI._rectC(212f, 33f, 425f, 66f);
+		rect.y = 10f;
+		__BaseUI.Label(rect, string.Empty, ui_bar5);
+		GUI.BeginGroup(rect);
+		__BaseUI.Label(__BaseUI._rect(190f, 41f, 14f, 14f), string.Empty, __BaseUI._energyIcon);
+		__BaseUI.Label(__BaseUI._rect(205f, 40f, 28f, 15f), Global.character_.stamina.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+		GUI.DrawTexture(__BaseUI._rect(131f, 42f, 38f, 14f), __BaseUI._ziStamina);
+		GUI.Label(__BaseUI._rect(17f, 36f, 388f, 22f), new GUIContent(string.Empty, "stamina"), __BaseUI.normalStyle);
+		if (__BaseUI._btnBuy.Button(IsEnable(), __BaseUI._rect(253f, 40f, 52f, 16f), string.Empty))
+		{
+			MainUI component = GetComponent<MainUI>();
+			component._stamina();
+		}
+		GUI.EndGroup();
+		int num = (int)rect.x + 425 + 200;
+		int num2 = (int)rect.y + 20;
+		if (__BaseUI._btnHelp.Button(IsEnable(), __BaseUI._rect(num, 21f, 38f, 57f), new GUIContent(string.Empty, __BaseUI.load_str(454u))))
+		{
+		}
+		if (button_shilian.Button(IsEnable(), __BaseUI._rect(rect.x + 500f, 12f, 67f, 71f), string.Empty))
+		{
+			MainUI._training();
+		}
+		draw_right_bar();
+		drawTooltips();
+		__BaseUI.my_enabled = true;
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void _return()
+	{
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+	}
+
+	public void wantCombat(Database.TrialTroop troop)
+	{
+		m_troop = troop;
+		if (troop.idtroop == Global.character_.trial_campaign.finish + 1)
+		{
+			Hashtable hashtable = new Hashtable();
+			__BaseUI.subui = "NPCBattle";
+			hashtable.Add("subui", __BaseUI.subui);
+			hashtable.Add("campaignid", troop.idtroop);
+			hashtable.Add("troopid", 0);
+			hashtable.Add("substate", "trial_troop");
+			hashtable.Add("viewonly", false);
+			hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+			SendMessage("SubLoading", hashtable, SendMessageOptions.DontRequireReceiver);
+			FormationUI component = GetComponent<FormationUI>();
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		cs_trial_battle_0x334();
+		return true;
+	}
+
+	private void cs_trial_battle_0x334()
+	{
+		if (Global.character_.stamina < 1)
+		{
+			BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>().stFight = OnAttack;
+			EnableAll();
+			BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>()._stamina(__BaseUI.load_str(20003u));
+		}
+		else
+		{
+			BaseAsset.lds.Visible_sub();
+			DisableAll();
+			CSTrialBattle_0x334 cSTrialBattle_0x = new CSTrialBattle_0x334();
+			cSTrialBattle_0x.idtroop = m_troop.idtroop;
+			RootUI.m_client.Send(820, cSTrialBattle_0x, sc_trial_battle_0x334);
+		}
+	}
+
+	private void sc_trial_battle_0x334(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCTrialBattle_0x334 sCTrialBattle_0x = JSProtoBuf.Serializer.Deserialize<SCTrialBattle_0x334>(stream);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCTrialBattle_0x.report, wait_for_end: false, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewDefault;
+		if (sCTrialBattle_0x.iswin)
+		{
+			tempexp = (int)sCTrialBattle_0x.exp;
+		}
+		else
+		{
+			tempsoldier = sCTrialBattle_0x.soldiers;
+		}
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+		BaseAsset.lds.SetBattling(bBattling: true);
+		tempstamina = sCTrialBattle_0x.stamina;
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(bool bWin)
+	{
+		if (bWin)
+		{
+			m_troop.killed = true;
+			List<_Treasure> list = new List<_Treasure>();
+			_Treasure treasure = new _Treasure();
+			treasure.make(8, 0, tempexp);
+			list.Add(treasure);
+			Global.character_.trial_campaign.finish++;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			BattleUI battleUI = BaseUI.GetBattleUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+			battleUI.setClose(BonusOpen);
+		}
+		else
+		{
+			for (int i = 0; i < tempsoldier.Count; i++)
+			{
+				foreach (_character_trial_army item in m_troop.armys_)
+				{
+					if (tempsoldier[i].location == item.location)
+					{
+						item.soldier = tempsoldier[i].soldier;
+						break;
+					}
+				}
+			}
+			FailedOpen();
+		}
+		Global.character_.stamina--;
+		Global.character_.trialinfo.stamina = tempstamina;
+	}
+
+	private void FailedOpen()
+	{
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(428u), rmg);
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().PrepareLoading("nocollecting");
+		__BaseUI.GetBattleResultUI().StartLoading();
+	}
+
+	private void BonusClose()
+	{
+		EnableAll();
+		if (Global.character_.trial_campaign.finish == 3)
+		{
+			Global.character_.trialinfo.cur_level++;
+			TrialUI component = BaseUI.GetRootUI().GetComponent<TrialUI>();
+			MainUI.SetSubUI(component);
+			component.cs_trial_chest();
+		}
+	}
+
+	private string stamina_bar(string key)
+	{
+		_buy_template buy_template = Global.get_buy_template(_buy_template.TYPE.STAMINA, Global.character_.stamina_buy_count + 1);
+		return string.Format(key, Global.character_.stamina, 20, Global.character_.stamina_buy_count, buy_template.gold);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "stamina")
+		{
+			tooltipUI.ShowTooltipCommon2(stamina_bar(__BaseUI.load_str(5u)), string.Empty, 200);
+		}
+		else if (tip != string.Empty)
+		{
+			tooltipUI.ShowTooltipCommon2(tip, string.Empty, 300);
+		}
+		else
+		{
+			tooltipUI.HideTooltip(string.Empty);
+		}
+	}
+}

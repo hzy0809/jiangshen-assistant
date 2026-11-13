@@ -1,0 +1,55 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _vip_rewards_new
+{
+	public uint id;
+
+	public byte vip_level;
+
+	public byte idtreasure_type;
+
+	public ushort param0;
+
+	public uint param1;
+
+	public byte unlock_level;
+
+	public sbyte unlock_uibutton;
+
+	public void Set(_vip_rewards_new d)
+	{
+		id = d.id;
+		vip_level = d.vip_level;
+		idtreasure_type = d.idtreasure_type;
+		param0 = d.param0;
+		param1 = d.param1;
+		unlock_level = d.unlock_level;
+		unlock_uibutton = d.unlock_uibutton;
+	}
+
+	public void Set(db_vip_rewards_new d)
+	{
+		id = d.id;
+		vip_level = (byte)d.vip_level;
+		idtreasure_type = (byte)d.idtreasure_type;
+		param0 = (ushort)d.param0;
+		param1 = d.param1;
+		unlock_level = (byte)d.unlock_level;
+		unlock_uibutton = (sbyte)d.unlock_uibutton;
+	}
+
+	public void Get(ref db_vip_rewards_new d)
+	{
+		d.id = id;
+		d.vip_level = vip_level;
+		d.idtreasure_type = idtreasure_type;
+		d.param0 = param0;
+		d.param1 = param1;
+		d.unlock_level = unlock_level;
+		d.unlock_uibutton = unlock_uibutton;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

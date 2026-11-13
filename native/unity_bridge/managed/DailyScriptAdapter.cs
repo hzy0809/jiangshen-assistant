@@ -1,0 +1,238 @@
+using System;
+
+namespace JiangShen.AssistantRuntime
+{
+    // A single daily activity owns the game UI at a time.
+    internal sealed class DailyScriptAdapter
+    {
+        private int task;
+        private DailyArenaBattleModel arena;
+        private DailyPointRaceModel pointRace;
+        private DailyPointRaceChestModel pointChest;
+        private DailyFlowerModel flower;
+        private DailyOrdinaryBattleModel trial;
+        private DailyGraveModel grave;
+        private DailyMonsterModel monster;
+        private DailyCityGatherModel cityGather;
+        private DailyCityShopModel cityShop;
+        private DailyOnlineGiftModel onlineGift;
+        private DailyDivinityBattleModel divinity;
+        private DailyEventRewardsModel eventRewards;
+        private DailySignSalaryModel signSalary;
+        private DailyTechBookCopyModel techBookCopy;
+
+        internal bool Busy
+        {
+            get { return arena != null && arena.Busy || pointRace != null && pointRace.Busy || pointChest != null && pointChest.Busy || flower != null && flower.Busy ||
+                trial != null && trial.Busy || grave != null && grave.Busy ||
+                monster != null && monster.Busy || cityGather != null && cityGather.Busy || cityShop != null && cityShop.Busy ||
+                onlineGift != null && onlineGift.Busy ||
+                divinity != null && divinity.Busy ||
+                eventRewards != null && eventRewards.Busy || signSalary != null && signSalary.Busy ||
+                techBookCopy != null && techBookCopy.Busy; }
+        }
+
+        internal bool OwnsBattlePresentation { get { return arena != null || pointRace != null; } }
+
+        internal bool PopupHandoffReady { get { return signSalary != null && signSalary.PopupHandoffReady || pointChest != null && pointChest.PopupHandoffReady; } }
+
+        internal bool OwnsRewardPopup(UnityEngine.Component popup, System.Delegate close)
+        {
+            return signSalary != null && signSalary.OwnsRewardPopup(popup, close) ||
+                pointChest != null && pointChest.OwnsRewardPopup(popup, close);
+        }
+
+        internal UnityEngine.Component OwnedBattleReportSource(UnityEngine.Component battle)
+        {
+            return monster == null ? null : monster.OwnedBattleReportSource(battle);
+        }
+
+        internal BattlePresentationOwnership OwnedBattlePresentation(UnityEngine.Component battle)
+        {
+            if (trial != null) return trial.OwnedBattlePresentation(battle);
+            if (grave != null) return grave.OwnedBattlePresentation(battle);
+            if (monster != null) return monster.OwnedBattlePresentation(battle);
+            if (divinity != null) return divinity.OwnedBattlePresentation(battle);
+            return null;
+        }
+
+        internal bool PresentSettledBattle(UnityEngine.Component battle)
+        {
+            return monster != null && monster.TryPresentSettledBattle(battle);
+        }
+
+        internal void Capture(Model model, int requested)
+        {
+            // A task observation cannot abandon an owned page or its callback
+            // taps while a continuous session is still active.
+            if (task != requested && (arena != null && arena.Busy || pointRace != null && pointRace.Busy || pointChest != null && pointChest.Busy ||
+                trial != null && trial.Busy || grave != null && grave.Busy ||
+                monster != null && monster.Busy || cityGather != null && cityGather.Busy || cityShop != null && cityShop.Busy ||
+                onlineGift != null && onlineGift.Busy ||
+                divinity != null && divinity.Busy ||
+                eventRewards != null && eventRewards.Busy || signSalary != null && signSalary.Busy ||
+                techBookCopy != null && techBookCopy.Busy))
+            { Capture(model); return; }
+            if (task != requested)
+            {
+                task = requested;
+                arena = task == 9 ? new DailyArenaBattleModel() : null;
+                pointRace = task == 109 ? new DailyPointRaceModel() : null;
+                pointChest = task == 310 ? new DailyPointRaceChestModel() : null;
+                flower = task == 11 ? new DailyFlowerModel() : null;
+                trial = task == 14 ? (DailyOrdinaryBattleModel)new DailyTrialModel() :
+                    task == 23 ? new DailyTrainingMonsterModel() : null;
+                grave = task == 17 ? new DailyGraveModel() : null;
+                monster = task == 10 || task == 15 || task == 24 ? new DailyMonsterModel() : null;
+                cityGather = task == 306 || task == 307 ? new DailyCityGatherModel() : null;
+                cityShop = task == 308 ? new DailyCityShopModel() : null;
+                onlineGift = task == 309 ? new DailyOnlineGiftModel() : null;
+                divinity = task == 8 ? new DailyDivinityBattleModel() : null;
+                eventRewards = task >= 201 && task <= 205 ? new DailyEventRewardsModel() : null;
+                signSalary = task == 301 || task == 302 || task == 304 || task == 305 ? new DailySignSalaryModel() : null;
+                techBookCopy = task == 303 ? new DailyTechBookCopyModel() : null;
+            }
+            Capture(model);
+        }
+
+        internal void Capture(Model model)
+        {
+            if (monster != null) { monster.Capture(model, task, false); return; }
+            if (cityGather != null) { cityGather.Capture(model, task, false); return; }
+            if (cityShop != null) { cityShop.Capture(model, task, false); return; }
+            if (onlineGift != null) { onlineGift.Capture(model, task, false); return; }
+            if (eventRewards != null) { eventRewards.Capture(model, task, false); return; }
+            if (signSalary != null) { signSalary.Capture(model, task, false); return; }
+            if (techBookCopy != null) { techBookCopy.Capture(model, task, false); return; }
+            SharedDevelopmentContext context = DevelopmentContextReader.DailyWood(model, false);
+            if (arena != null) arena.Capture(context);
+            else if (pointRace != null) pointRace.Capture(context);
+            else if (pointChest != null) pointChest.Capture(context);
+            else if (flower != null) flower.Capture(context);
+            else if (trial != null) trial.Capture(context);
+            else if (grave != null) grave.Capture(context);
+            else if (divinity != null) divinity.Capture(context);
+        }
+
+        internal bool Queue(Command command, out string why)
+        {
+            why = "daily_script_unavailable";
+            if (command.DailyScriptTaskId != task) return false;
+            if (arena != null) return arena.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (pointRace != null) return pointRace.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (pointChest != null) return pointChest.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (flower != null) return flower.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (trial != null) return trial.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (grave != null) return grave.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (monster != null) return monster.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (cityGather != null) return cityGather.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (cityShop != null) return cityShop.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (onlineGift != null) return onlineGift.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (divinity != null) return divinity.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (eventRewards != null) return eventRewards.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (signSalary != null) return signSalary.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            if (techBookCopy != null) return techBookCopy.Queue(task, command.DailyScriptCharacterId, command.OperationId,
+                command.Sequence, command.ExpectedRevision, command.DailyScriptAction, out why);
+            return false;
+        }
+
+        internal bool Execute(Model model, DevelopmentPublication publish, DevelopmentPublication markInvoked, out string why)
+        {
+            if (arena != null) return arena.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            if (pointRace != null) return pointRace.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            if (pointChest != null) return pointChest.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                delegate(DailyPointRaceInvocationCheck sample, DailyPointRaceInvocationCheck check)
+                {
+                    if (!sample() || !check()) return false;
+                    markInvoked();
+                    return true;
+                }, out why);
+            if (flower != null) return flower.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            if (trial != null) return trial.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            if (grave != null) return grave.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            if (monster != null) return monster.ExecuteGui(publish, () => true, out why);
+            if (cityGather != null) return cityGather.ExecuteGui(publish, () => true, out why);
+            if (cityShop != null) return cityShop.ExecuteGui(publish, () => true, out why);
+            if (onlineGift != null) return onlineGift.ExecuteGui(publish, () => true, out why);
+            if (eventRewards != null) return eventRewards.ExecuteGui(publish, () => true, out why);
+            if (signSalary != null) return signSalary.ExecuteGui(publish, () => true, out why);
+            if (techBookCopy != null) return techBookCopy.ExecuteGui(publish, () => true, out why);
+            if (divinity != null) return divinity.ExecuteGui(() => DevelopmentContextReader.DailyWood(model, false), publish,
+                (sample, check) => sample() && check(), out why);
+            why = "daily_script_unavailable"; return false;
+        }
+
+        internal string Json()
+        {
+            if (arena != null) return arena.Json();
+            if (pointRace != null) return pointRace.Json();
+            if (pointChest != null) return pointChest.Json();
+            if (flower != null) return flower.Json();
+            if (trial != null) return trial.Json();
+            if (grave != null) return grave.Json();
+            if (monster != null) return monster.Json();
+            if (cityGather != null) return cityGather.Json();
+            if (cityShop != null) return cityShop.Json();
+            if (onlineGift != null) return onlineGift.Json();
+            if (divinity != null) return divinity.Json();
+            if (eventRewards != null) return eventRewards.Json();
+            if (signSalary != null) return signSalary.Json();
+            if (techBookCopy != null) return techBookCopy.Json();
+            return "null";
+        }
+
+        internal void Stop(string reason)
+        {
+            if (arena != null) arena.Stop(reason);
+            if (pointRace != null) pointRace.Stop(reason);
+            if (pointChest != null) pointChest.Stop(reason);
+            if (flower != null) flower.Stop();
+            if (trial != null) trial.Stop(reason);
+            if (grave != null) grave.Stop(reason);
+            if (monster != null) monster.Stop(reason);
+            if (cityGather != null) cityGather.Stop(reason);
+            if (cityShop != null) cityShop.Stop(reason);
+            if (onlineGift != null) onlineGift.Stop(reason);
+            if (divinity != null) divinity.Stop();
+            if (eventRewards != null) eventRewards.Stop(reason);
+            if (signSalary != null) signSalary.Stop(reason);
+            if (techBookCopy != null) techBookCopy.Stop(reason);
+        }
+
+        internal void NotInvoked(string reason)
+        {
+            if (arena != null) arena.NotInvoked(reason);
+            if (pointRace != null) pointRace.NotInvoked(reason);
+            if (pointChest != null) pointChest.NotInvoked(reason);
+            if (flower != null) flower.NotInvoked(reason);
+            if (trial != null) trial.NotInvoked(reason);
+            if (grave != null) grave.NotInvoked(reason);
+            if (monster != null) monster.NotInvoked(reason);
+            if (cityGather != null) cityGather.NotInvoked(reason);
+            if (cityShop != null) cityShop.NotInvoked(reason);
+            if (onlineGift != null) onlineGift.NotInvoked(reason);
+            if (divinity != null) divinity.NotInvoked(reason);
+            if (eventRewards != null) eventRewards.NotInvoked(reason);
+            if (signSalary != null) signSalary.NotInvoked(reason);
+            if (techBookCopy != null) techBookCopy.NotInvoked(reason);
+        }
+    }
+}

@@ -1,0 +1,75 @@
+using UnityEngine;
+
+public class ArenaSelectUI : BaseUI
+{
+	private GUIStyle ui_title = new GUIStyle();
+
+	private GUIStyle ui_baiwei_bar1 = new GUIStyle();
+
+	private GUIStyle ui_baiwei_bar2 = new GUIStyle();
+
+	private _ButtonStyle btnEnter = new _ButtonStyle();
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_pointrace");
+		AddAsset("ui_arena");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_pointrace");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_arena");
+		ui_baiwei_bar1.normal.background = asset.Load("ui_baiwei_bar1") as Texture2D;
+		ui_baiwei_bar2.normal.background = asset.Load("ui_baiwei_bar2") as Texture2D;
+		ui_title.normal.background = asset2.Load("ui_jingjichang") as Texture2D;
+		btnEnter.make(asset, "button_jinru");
+		BaseAsset.lds.Hide();
+		Visible();
+		EnableAll();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (BeginGUI(660f, 420f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, null))
+		{
+			__BaseUI.Label(__BaseUI._rect(20f, 10f, 150f, 41f), string.Empty, ui_title);
+			__BaseUI.Label(__BaseUI._rect(33f, 55f, 292f, 326f), string.Empty, ui_baiwei_bar1);
+			__BaseUI.Label(__BaseUI._rect(335f, 55f, 292f, 326f), string.Empty, ui_baiwei_bar2);
+			if (btnEnter.Button(bBtn: true, __BaseUI._rect(129f, 311f, 98f, 30f), string.Empty))
+			{
+				Global.setGuideCheck("battle_arena", bCheck: false);
+				Global.setFirstCheck("battle_arena", bCheck: false);
+				arenaMyLoading();
+			}
+			if (btnEnter.Button(bBtn: true, __BaseUI._rect(431f, 311f, 98f, 30f), string.Empty))
+			{
+				BaseUI.GetRootUI().cs_pointrace_enter(BaseAsset.lds.GetCurUI(), null);
+			}
+			if (EndGUI())
+			{
+				MainUI.SetSubUI(null);
+			}
+		}
+	}
+
+	public static void arenaMyLoading()
+	{
+		ArenaUI component = BaseUI.GetRootUI().GetComponent<ArenaUI>();
+		if (MainUI.handle_sub_ui(component, "Arena"))
+		{
+			MainUI.SetSubUI(component);
+			component.MyLoading();
+		}
+	}
+}

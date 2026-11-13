@@ -1,0 +1,63 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class TrialCampaign
+{
+	public _character_trial_troop data_ = new _character_trial_troop();
+
+	public TrialTroop[] troops = new TrialTroop[3];
+
+	public _campaign m_campaign;
+
+	public _campaign_copy_category m_cate;
+
+	public byte finish;
+
+	public TrialCampaign(SCTrialLoadCampaign_0x331 d)
+	{
+		finish = (byte)d.finish;
+		for (int i = 0; i < 3; i++)
+		{
+			troops[i] = new TrialTroop();
+		}
+		data_.idtroop1 = (ushort)d.idtroop1;
+		data_.idtroop2 = (ushort)d.idtroop2;
+		data_.idtroop3 = (ushort)d.idtroop3;
+		m_campaign = Global.getTemplate("campaign", d.idcampaign) as _campaign;
+		byte b = (byte)d.idcategory;
+		m_cate = m_campaign.m_copy.m_categorys[b] as _campaign_copy_category;
+		troops[0].Set(m_campaign.m_troops[m_campaign.m_troopsArray[0]] as _campaign_troop);
+		troops[1].Set(m_campaign.m_troops[m_campaign.m_troopsArray[1]] as _campaign_troop);
+		troops[2].Set(m_campaign.m_troops[m_campaign.m_troopsArray[2]] as _campaign_troop);
+		if (m_cate.m_troops[(byte)data_.idtroop1] is _campaign_copy_troop campaign_copy_troop)
+		{
+			troops[0].name = campaign_copy_troop.name;
+		}
+		if (m_cate.m_troops[(byte)data_.idtroop2] is _campaign_copy_troop campaign_copy_troop2)
+		{
+			troops[1].name = campaign_copy_troop2.name;
+		}
+		if (m_cate.m_troops[(byte)data_.idtroop3] is _campaign_copy_troop campaign_copy_troop3)
+		{
+			troops[2].name = campaign_copy_troop3.name;
+		}
+		troops[0].idtroop = 1;
+		troops[1].idtroop = 2;
+		troops[2].idtroop = 3;
+		for (int j = 0; j < 3; j++)
+		{
+			if (finish > j)
+			{
+				troops[j].killed = true;
+			}
+			else
+			{
+				troops[j].killed = false;
+			}
+			troops[j].level = (short)(Global.character_.trialinfo.trial_rank + Global.character_.trialinfo.cur_level * 2 - 2);
+			troops[j].genPos();
+			troops[j].setArmy(d);
+		}
+	}
+}

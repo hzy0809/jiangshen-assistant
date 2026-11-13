@@ -1,0 +1,1171 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class GraveChooseUI : __BaseUI
+{
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_zi_cishu = new GUIStyle();
+
+	private GUIStyle ui_map1 = new GUIStyle();
+
+	private GUIStyle ui_map2 = new GUIStyle();
+
+	private GUIStyle ui_map3 = new GUIStyle();
+
+	private int m_page = 1;
+
+	private List<_grave> curPageGraves = new List<_grave>();
+
+	private Dictionary<string, Texture2D> texDic = new Dictionary<string, Texture2D>();
+
+	private Dictionary<string, Texture2D> texDicUnable = new Dictionary<string, Texture2D>();
+
+	public static Dictionary<string, Texture2D> texDicName = new Dictionary<string, Texture2D>();
+
+	private GUIStyle ui_lights = new GUIStyle();
+
+	private DateTime lighttimer = default(DateTime);
+
+	private ushort m_curGrave;
+
+	private GUIStyle ui_zi_digong = new GUIStyle();
+
+	private GUIStyle ui_bar1 = new GUIStyle();
+
+	private _ButtonStyle button_pagedown2 = new _ButtonStyle();
+
+	private _ButtonStyle button_pageup2 = new _ButtonStyle();
+
+	private GUIStyle ui_zhendouzhong = new GUIStyle();
+
+	private GUIStyle ui_xin = new GUIStyle();
+
+	private GUIStyle ui_biaoti2 = new GUIStyle();
+
+	private GUIStyle ui_zi_zidong = new GUIStyle();
+
+	private GUIStyle ui_shurukuang = new GUIStyle();
+
+	private _ButtonStyle button_zuida = new _ButtonStyle();
+
+	private GUIStyle ui_zi_zidonggoumai = new GUIStyle();
+
+	private GUIStyle ui_zi_zidongchushou = new GUIStyle();
+
+	private _CheckStyle radioBtn = new _CheckStyle();
+
+	private GUIStyle ui_zi_lvsediaoluo = new GUIStyle();
+
+	private GUIStyle ui_zi_lvlvlan = new GUIStyle();
+
+	private _ButtonStyle button_saodang2 = new _ButtonStyle();
+
+	private _ButtonStyle button_saodang = new _ButtonStyle();
+
+	private Vector2 scrollPos = new Vector2(0f, 0f);
+
+	private int scroll_index;
+
+	private _ButtonStyle button_saodang3 = new _ButtonStyle();
+
+	private DateTime resultTimer = default(DateTime);
+
+	private GUIStyle ui_bar4 = new GUIStyle();
+
+	private GUIStyle ui_zi_15 = new GUIStyle();
+
+	private GUIStyle ui_baoxiang1 = new GUIStyle();
+
+	private GUIStyle ui_baoxiang2 = new GUIStyle();
+
+	private GUIStyle ui_bar3 = new GUIStyle();
+
+	private GUIStyle ui_zi_lun = new GUIStyle();
+
+	private GUIStyle ui_zi_buchai = new GUIStyle();
+
+	private GUIStyle ui_di1 = new GUIStyle();
+
+	private GUIStyle ui_di2 = new GUIStyle();
+
+	private GUIStyle ui_di3 = new GUIStyle();
+
+	private GUIStyle ui_di4 = new GUIStyle();
+
+	private _ButtonStyle button_tiaozhan = new _ButtonStyle();
+
+	private _ButtonStyle button_wabao = new _ButtonStyle();
+
+	private GUIStyle button_tiaozhan_unable = new GUIStyle();
+
+	private int m_max;
+
+	private int m_count = 1;
+
+	private bool m_autobuy;
+
+	private bool m_autosell;
+
+	private bool m_sellblue;
+
+	private bool m_sellgreen;
+
+	private ushort m_autograve;
+
+	private bool scroll_set;
+
+	private float m_fIconflow;
+
+	private DateTime m_Iconflow = default(DateTime);
+
+	private bool m_showSaodang;
+
+	private ushort tempGraveid;
+
+	private ushort tempGraveID;
+
+	private bool send;
+
+	private int m_autoResultId;
+
+	private int m_runtimes;
+
+	private List<ScenarioSection> m_ss = new List<ScenarioSection>();
+
+	private Dictionary<int, _Treasure> dicTresure = new Dictionary<int, _Treasure>();
+
+	private bool m_showResult;
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_grave");
+		CollectingStart(bCollecting: false);
+		foreach (object value in Global.getTemplates("grave").Values)
+		{
+			_grave grave = (_grave)value;
+			Database.Campaign campaign = Global.character_.campaigns_[grave.idcampaign];
+			if (campaign == null)
+			{
+				continue;
+			}
+			foreach (_Treasure drop in campaign.drops)
+			{
+				AddAsset(drop.getIconName());
+			}
+		}
+		StartLoading();
+	}
+
+	public override void Start()
+	{
+		scroll_index = ScrollControl.RegisterInfo();
+		base.Start();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_grave");
+		titleStyle.normal.background = asset.Load("ui_biaoti1") as Texture2D;
+		ui_zi_cishu.normal.background = asset.Load("ui_zi_cishu") as Texture2D;
+		checkGrave();
+		texDic.Clear();
+		texDicUnable.Clear();
+		texDicName.Clear();
+		ui_lights.normal.background = asset.Load("ui_lights") as Texture2D;
+		ui_map1.normal.background = asset.Load("ui_map1") as Texture2D;
+		ui_map2.normal.background = asset.Load("ui_map2") as Texture2D;
+		ui_map3.normal.background = asset.Load("ui_map3") as Texture2D;
+		foreach (_grave curPageGrafe in curPageGraves)
+		{
+			Texture2D texture2D = asset.Load(curPageGrafe.icon) as Texture2D;
+			if (texture2D != null && !texDic.ContainsKey(curPageGrafe.icon))
+			{
+				texDic.Add(curPageGrafe.icon, texture2D);
+			}
+			Texture2D texture2D2 = asset.Load(curPageGrafe.icon_unable) as Texture2D;
+			if (texture2D2 != null && !texDicUnable.ContainsKey(curPageGrafe.icon_unable))
+			{
+				texDicUnable.Add(curPageGrafe.icon_unable, texture2D2);
+			}
+			Texture2D texture2D3 = asset.Load(curPageGrafe.title) as Texture2D;
+			if (texture2D3 != null && !texDicName.ContainsKey(curPageGrafe.title))
+			{
+				texDicName.Add(curPageGrafe.title, texture2D3);
+			}
+			bool flag = false;
+			bool flag2 = false;
+			if (Global.character_.graves.ContainsKey(curPageGrafe.id) && Global.character_.graves[curPageGrafe.id].isopen)
+			{
+				flag = true;
+				flag2 = true;
+			}
+			if (Global.character_.graves.ContainsKey(curPageGrafe.nextid) && Global.character_.graves[curPageGrafe.nextid].isopen)
+			{
+				_grave grave = Global.getTemplate("grave", curPageGrafe.nextid) as _grave;
+				if (grave.min_level <= Global.character_.level)
+				{
+					flag = false;
+				}
+				flag2 = false;
+			}
+			if (flag)
+			{
+				m_page = curPageGrafe.page;
+			}
+			if (flag2)
+			{
+				m_max = curPageGrafe.page;
+			}
+		}
+		ui_bar1.normal.background = asset.Load("ui_bar1") as Texture2D;
+		ui_zi_digong.normal.background = asset.Load("ui_zi_digong") as Texture2D;
+		button_pagedown2.make(asset, "button_pagedown2");
+		button_pageup2.make(asset, "button_pageup2");
+		ui_zhendouzhong.normal.background = asset.Load("ui_zhendouzhong") as Texture2D;
+		ui_xin.normal.background = asset.Load("ui_xin") as Texture2D;
+		ui_biaoti2.normal.background = asset.Load("ui_biaoti2") as Texture2D;
+		button_zuida.make(asset, "button_zuida");
+		button_saodang3.make(asset, "button_saodang3");
+		ui_bar4.normal.background = asset.Load("ui_bar4") as Texture2D;
+		ui_baoxiang1.normal.background = asset.Load("ui_baoxiang1") as Texture2D;
+		ui_baoxiang2.normal.background = asset.Load("ui_baoxiang2") as Texture2D;
+		foreach (object value in Global.getTemplates("grave").Values)
+		{
+			_grave grave2 = (_grave)value;
+			Database.Campaign campaign = Global.character_.campaigns_[grave2.idcampaign];
+			if (campaign == null)
+			{
+				continue;
+			}
+			foreach (_Treasure drop in campaign.drops)
+			{
+				drop.setTexIcon(BaseAsset.LoadTexture(drop.getIconName()));
+			}
+		}
+		ui_zi_zidong.normal.background = asset.Load("ui_zi_zidong") as Texture2D;
+		ui_shurukuang.normal.background = asset.Load("ui_shurukuang") as Texture2D;
+		ui_zi_zidonggoumai.normal.background = asset.Load("ui_zi_zidonggoumai") as Texture2D;
+		ui_zi_zidongchushou.normal.background = asset.Load("ui_zi_zidongchushou") as Texture2D;
+		radioBtn.make(asset, string.Empty, "button");
+		ui_zi_lvsediaoluo.normal.background = asset.Load("ui_zi_lvsediaoluo") as Texture2D;
+		ui_zi_lvlvlan.normal.background = asset.Load("ui_zi_lvlvlan") as Texture2D;
+		ui_zi_15.normal.background = asset.Load("ui_zi_15") as Texture2D;
+		button_saodang.make(asset, "button_saodang");
+		button_saodang2.make(asset, "button_saodang2");
+		ui_bar3.normal.background = asset.Load("ui_bar3") as Texture2D;
+		ui_zi_lun.normal.background = asset.Load("ui_zi_lun") as Texture2D;
+		ui_zi_buchai.normal.background = asset.Load("ui_zi_buchai") as Texture2D;
+		ui_di1.normal.background = asset.Load("ui_di1") as Texture2D;
+		ui_di2.normal.background = asset.Load("ui_di2") as Texture2D;
+		ui_di3.normal.background = asset.Load("ui_di3") as Texture2D;
+		ui_di4.normal.background = asset.Load("ui_di4") as Texture2D;
+		button_tiaozhan.make(asset, "button_tiaozhan");
+		button_wabao.make(asset, "button_wabao");
+		button_tiaozhan_unable.normal.background = asset.Load("button_tiaozhan_unable") as Texture2D;
+		m_showSaodang = false;
+		m_showResult = false;
+		m_Iconflow = DateTime.Now;
+		Visible();
+		EnableAll();
+	}
+
+	private void checkGrave()
+	{
+		curPageGraves.Clear();
+		_grave grave = Global.getTemplate("grave", 1u) as _grave;
+		if (grave == null)
+		{
+			return;
+		}
+		curPageGraves.Add(grave);
+		while (grave.nextid != 0)
+		{
+			grave = Global.getTemplate("grave", grave.nextid) as _grave;
+			if (grave == null)
+			{
+				break;
+			}
+			curPageGraves.Add(grave);
+		}
+	}
+
+	private void DrawBatchWork()
+	{
+		Rect rc = __BaseUI._rectC(261f, 175f, 523f, 350f);
+		__BaseUI.BeginGroup(rc);
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 523f, 350f), string.Empty, __BaseUI._bgStyle);
+		__BaseUI.Label(__BaseUI._rect(20f, 9f, 150f, 41f), string.Empty, ui_biaoti2);
+		__BaseUI.Label(_CalcRect(137, 17, 161, 36, 237, 17), string.Empty, __BaseUI._box15Style);
+		__BaseUI.Label(__BaseUI._rect(174f, 29f, 74f, 15f), string.Empty, ui_zi_cishu);
+		__BaseUI.Label(__BaseUI._rect(265f, 27f, 38f, 15f), Global.character_.grave.times.ToString(), __BaseUI._numCenter, __BaseUI._clrGreen);
+		if (__BaseUI._btnBuy.Button(IsEnable(), __BaseUI._rect(319f, 27f, 52f, 16f), string.Empty))
+		{
+			BuyTime();
+		}
+		if (__BaseUI._btnClose.Button(IsEnable(), __BaseUI._rect(363f, 9f, 150f, 41f), string.Empty))
+		{
+			m_showSaodang = false;
+		}
+		__BaseUI.Label(_CalcRect(22, 57, 92, 92, 410, 205), string.Empty, __BaseUI._boxnew2Style);
+		if (!m_showResult)
+		{
+			__BaseUI.Label(_CalcRect(57, 84, 72, 72, 396, 61), string.Empty, __BaseUI._frameboxStyle);
+			__BaseUI.Label(__BaseUI._rect(116f, 101f, 57f, 17f), string.Empty, ui_zi_zidong);
+			__BaseUI.Label(__BaseUI._rect(182f, 95f, 85f, 27f), string.Empty, __BaseUI._ui_shuru);
+			string s = GUI.TextField(__BaseUI._rect(186f, 98f, 35f, 20f), m_count.ToString(), __BaseUI._numCenter);
+			int result = 1;
+			int num = Global.character_.grave.times;
+			if (m_autobuy)
+			{
+				_vip_template vip_template = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+				num += vip_template.grave_buy_times - Global.character_.grave.buytimes;
+			}
+			if (int.TryParse(s, out result))
+			{
+				if (result < 1)
+				{
+					result = 1;
+				}
+				if (result > num)
+				{
+					result = Global.character_.grave.times;
+				}
+				m_count = result;
+			}
+			if (__BaseUI._btnShang.Button(IsEnable(), __BaseUI._rect(222f, 99f, 19f, 9f), string.Empty) && m_count < num)
+			{
+				m_count++;
+			}
+			if (__BaseUI._btnXia.Button(IsEnable(), __BaseUI._rect(222f, 109f, 19f, 9f), string.Empty) && m_count > 1)
+			{
+				m_count--;
+			}
+			__BaseUI.Label(__BaseUI._rect(247f, 101f, 17f, 16f), string.Empty, ui_zi_lun);
+			if (button_zuida.Button(IsEnable(), __BaseUI._rect(297f, 97f, 80f, 22f), string.Empty))
+			{
+				m_count = Global.character_.grave.times;
+				if (m_autobuy)
+				{
+					_vip_template vip_template2 = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+					m_count += vip_template2.grave_buy_times - Global.character_.grave.buytimes;
+				}
+			}
+			if (__BaseUI._checkBox3.Button(IsEnable(), m_autobuy, __BaseUI._rect(70f, 157f, 29f, 29f), string.Empty))
+			{
+				m_autobuy = !m_autobuy;
+			}
+			__BaseUI.Label(__BaseUI._rect(114f, 164f, 113f, 17f), string.Empty, ui_zi_zidonggoumai);
+			_vip_template vip_template3 = Global.getTemplate("vip_template", Global.character_.VIPLEVEL) as _vip_template;
+			int num2 = vip_template3.grave_buy_times - Global.character_.grave.buytimes;
+			__BaseUI.Label(__BaseUI._rect(236f, 163f, 96f, 15f), __BaseUI.load_str(444u, num2), __BaseUI._textCenter, __BaseUI._clrWhite);
+			__BaseUI.Label(_CalcRect(57, 211, 72, 72, 396, 187), string.Empty, __BaseUI._frameboxStyle);
+			if (radioBtn.Button(IsEnable(), !m_autosell, __BaseUI._rect(75f, 225f, 22f, 22f), string.Empty))
+			{
+				m_autosell = false;
+			}
+			if (radioBtn.Button(IsEnable(), m_autosell && !m_sellblue, __BaseUI._rect(166f, 225f, 22f, 22f), string.Empty))
+			{
+				m_autosell = true;
+				m_sellblue = false;
+			}
+			if (radioBtn.Button(IsEnable(), m_autosell && m_sellblue, __BaseUI._rect(290f, 225f, 22f, 22f), string.Empty))
+			{
+				m_autosell = true;
+				m_sellblue = true;
+			}
+			__BaseUI.Label(__BaseUI._rect(102f, 228f, 45f, 17f), string.Empty, ui_zi_buchai);
+			__BaseUI.Label(__BaseUI._rect(191f, 228f, 87f, 17f), string.Empty, ui_zi_lvsediaoluo);
+			__BaseUI.Label(__BaseUI._rect(318f, 228f, 129f, 17f), string.Empty, ui_zi_lvlvlan);
+			if (button_saodang2.Button(IsEnable(), __BaseUI._rect(205f, 295f, 110f, 40f), string.Empty))
+			{
+				if (m_count == 0)
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(452u), rmg);
+				}
+				else if (Global.character_.gem_slot_count() >= Global.character_.gem_slot_max() || Global.character_.amulet_slot_count() >= Global.character_.amulet_slot_max())
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(728u), rmg);
+				}
+				else
+				{
+					cs_grave_auto();
+				}
+			}
+		}
+		else
+		{
+			double num3 = (resultTimer - DateTime.Now).TotalSeconds;
+			if (num3 < 0.0)
+			{
+				num3 = 0.0;
+			}
+			int num4 = (int)(num3 / 2.0);
+			double num5 = num3 % 2.0;
+			if (Global.getTemplate("grave", (uint)m_autoResultId) is _grave grave && texDic.ContainsKey(grave.icon))
+			{
+				Texture2D texture2D = texDic[grave.icon];
+				if (texture2D != null)
+				{
+					GUI.DrawTexture(__BaseUI._rect(28f, 48f, 120f, 120f), texture2D);
+				}
+				__BaseUI.Label(__BaseUI._rect(45f, 122f, 91f, 17f), string.Empty, ui_bar4);
+				int num6 = m_count - m_runtimes + num4;
+				string str = string.Format(__BaseUI.load_str(453u), num6);
+				__BaseUI.Label(__BaseUI._rect(45f, 122f, 91f, 17f), str, __BaseUI._textCenter, __BaseUI._clrWhite);
+				__BaseUI.Label(_CalcRect(144, 70, 78, 78, 393, 69), string.Empty, __BaseUI._box3Style);
+				__BaseUI.Label(__BaseUI._rect(188f, 85f, 162f, 23f), string.Empty, ui_zi_15);
+				__BaseUI.Label(__BaseUI._rect(254f, 82f, 31f, 23f), (m_runtimes - num4).ToString(), __BaseUI._numCenter, __BaseUI._clrGreen, 18);
+				__BaseUI.Label(__BaseUI._rect(181f, 106f, 183f, 26f), string.Empty, __BaseUI._barBgStyle);
+				int num7 = 161;
+				int num8 = (int)((num5 - 1.5) / 0.5 * (double)num7);
+				if (num8 < 0)
+				{
+					num8 = 0;
+				}
+				if (num8 > num7)
+				{
+					num8 = num7;
+				}
+				GUI.DrawTexture(__BaseUI._rect(192f, 114f, num7 - num8, 10f), __BaseUI._barBlueTex);
+				__BaseUI.Label(_CalcRect(48, 145, 92, 92, 380, 188), string.Empty, __BaseUI._boxnew11Style);
+				ScenarioSection scenarioSection = null;
+				int num9 = 1;
+				bool flag = false;
+				if (num5 > 1.5)
+				{
+					if (m_runtimes - num4 > 1)
+					{
+						scenarioSection = m_ss[m_runtimes - num4 - 2];
+					}
+					if (scroll_set)
+					{
+						scroll_set = false;
+					}
+					__BaseUI.Label(__BaseUI._rect(389f, 77f, 60f, 60f), string.Empty, ui_baoxiang1);
+					if (scenarioSection != null)
+					{
+						num9 = (int)scenarioSection.height;
+					}
+				}
+				else
+				{
+					flag = true;
+					scenarioSection = m_ss[m_runtimes - num4 - 1];
+					num9 = (int)scenarioSection.height;
+					if (!scroll_set)
+					{
+						scroll_set = true;
+						int num10 = num9 - 102;
+						if (num9 < 0)
+						{
+							num9 = 0;
+						}
+						ScrollControl.infos[scroll_index].SetStartPos(new Vector2(0f, num10));
+					}
+					__BaseUI.Label(__BaseUI._rect(389f, 77f, 60f, 60f), string.Empty, ui_baoxiang2);
+				}
+				int num11 = 95;
+				if (m_runtimes - num4 > 1)
+				{
+					num11 = 0;
+				}
+				num11 = 0;
+				scrollPos = ScrollControl.infos[scroll_index].scrollpos;
+				scrollPos = GUIHacks.BeginScrollView(__BaseUI._rect(69f, 165f, 389f, 102f), scrollPos, __BaseUI._rect(0f, 0f, 395f, num9 + num11), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 16, 0, scroll_index);
+				ScrollControl.infos[scroll_index].scrollpos = scrollPos;
+				GUIStyle gUIStyle = new GUIStyle();
+				gUIStyle.fontSize = 14;
+				GUI.BeginGroup(__BaseUI._rect(0f, num11, 400f, num9));
+				if (scenarioSection != null)
+				{
+					foreach (ContentText text in scenarioSection.texts)
+					{
+						if (text.bBold)
+						{
+							gUIStyle.fontStyle = FontStyle.Bold;
+						}
+						else
+						{
+							gUIStyle.fontStyle = FontStyle.Normal;
+						}
+						__BaseUI.Label(new Rect(text.x, text.y, text.width, 16f), text.text, gUIStyle, text.clr);
+					}
+				}
+				for (int i = 0; i < m_runtimes; i++)
+				{
+					if (dicTresure.ContainsKey(i))
+					{
+						int num12 = 0;
+						num12 = ((i < 1) ? (num12 + 16) : ((int)m_ss[i - 1].height));
+						num12 += 8;
+						__BaseUI.Label(__BaseUI._rect(294f, num12, 64f, 64f), string.Empty, __BaseUI._icondiStyle2);
+						_Treasure treasure = dicTresure[i];
+						if (treasure.texIcon != null)
+						{
+							GUI.DrawTexture(__BaseUI._rect(301f, num12 + 7, 50f, 50f), treasure.texIcon);
+						}
+						else
+						{
+							AddAssetSub(treasure.getIconName());
+							StartLoadingSub();
+						}
+						int num13 = treasure.param[0] & 0xFFFF;
+						if (treasure.type == 42)
+						{
+							GUI.Label(__BaseUI._rect(301f, num12 + 7, 50f, 50f), new GUIContent(string.Empty, "gem" + num13), __BaseUI.normalStyle);
+						}
+						else if (treasure.type == 43)
+						{
+							GUI.Label(__BaseUI._rect(301f, num12 + 7, 50f, 50f), new GUIContent(string.Empty, "amulet" + num13), __BaseUI.normalStyle);
+						}
+					}
+				}
+				GUI.EndGroup();
+				GUIHacks.EndScrollView();
+			}
+			__BaseUI.Label(__BaseUI._rect(65f, 165f, 380f, 52f), string.Empty, ui_bar3);
+			if (button_saodang3.Button(IsEnable() && num3 <= 0.0, __BaseUI._rect(205f, 295f, 110f, 40f), string.Empty))
+			{
+				m_showResult = false;
+			}
+			GUI.Button(__BaseUI._rect(0f, 0f, 523f, 350f), string.Empty, __BaseUI.normalStyle);
+		}
+		__BaseUI.EndGroup();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(750f, 456f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			float num2 = (float)(m_Iconflow - DateTime.Now).TotalSeconds;
+			if (num2 < 0f)
+			{
+				m_Iconflow = DateTime.Now.AddSeconds(2.0);
+			}
+			num2 -= 1f;
+			if (num2 < 0f)
+			{
+				num2 = -1f * num2;
+			}
+			m_fIconflow = (float)Math.Cos((double)(num2 / 1f) * Math.PI) * 10f;
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, titleStyle);
+			__BaseUI.Label(__BaseUI._rect(224f, 20f, 302f, 36f), string.Empty, ui_bar1);
+			__BaseUI.Label(__BaseUI._rect(26f, 54f, 699f, 368f), string.Empty, ui_di1);
+			ushort[] array = new ushort[4];
+			foreach (_character_grave value in Global.character_.graves.Values)
+			{
+				if (!value.isfinish && value.isopen)
+				{
+					array[2] = value.idgrave;
+					break;
+				}
+			}
+			foreach (_character_grave value2 in Global.character_.graves.Values)
+			{
+				if (value2.isfinish && Global.getTemplate("grave", value2.idgrave) is _grave grave && grave.nextid == array[2])
+				{
+					array[1] = value2.idgrave;
+					break;
+				}
+			}
+			foreach (_character_grave value3 in Global.character_.graves.Values)
+			{
+				if (value3.isfinish && Global.getTemplate("grave", value3.idgrave) is _grave grave2 && grave2.nextid == array[1])
+				{
+					array[0] = value3.idgrave;
+					break;
+				}
+			}
+			if (Global.getTemplate("grave", array[2]) is _grave grave3)
+			{
+				array[3] = grave3.nextid;
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (array[i] != 0)
+				{
+					DrawGraveButton(array[i], i);
+				}
+			}
+		}
+		if (EndGUI(hasClose: true, hasBlock: true))
+		{
+			DelegateFunc.MainUI_SetSubUI(null);
+		}
+	}
+
+	private void BuyTime()
+	{
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(452u), rmg);
+	}
+
+	private void DrawWabao(ushort graveid)
+	{
+		Rect rc = __BaseUI._rect(254f, 131f, 108f, 123f);
+		rc.y += m_fIconflow;
+		if (button_wabao.Button(IsEnable(), rc, string.Empty))
+		{
+			DisableAll();
+			DelegateFunc.RootUI_startGraveChest(graveid);
+		}
+	}
+
+	private void DrawTiaozhan(ushort graveid)
+	{
+		_grave graveTemplate = Global.getGraveTemplate(graveid);
+		bool flag = graveTemplate.min_level > Global.character_.level;
+		Rect rect = __BaseUI._rect(398f, 129f, 108f, 123f);
+		if (flag)
+		{
+			int num = graveTemplate.min_level - Global.character_.level;
+			GUI.Label(rect, new GUIContent(string.Empty, graveTemplate.min_level + __BaseUI.load_str(468u)), button_tiaozhan_unable);
+			return;
+		}
+		if (Global.character_.grave.finishtoday == 1 && checkGraveBoss())
+		{
+			GUI.Label(rect, new GUIContent(string.Empty, __BaseUI.load_str(469u)), button_tiaozhan_unable);
+			return;
+		}
+		if (Global.character_.grave.times <= 0 && checkGraveFinish())
+		{
+			GUI.Label(rect, new GUIContent(string.Empty, __BaseUI.load_str(474u)), button_tiaozhan_unable);
+			return;
+		}
+		rect.y += m_fIconflow;
+		if (button_tiaozhan.Button(bBtn: true, rect, new GUIContent(string.Empty, string.Format(__BaseUI.load_str(481u), Global.character_.grave.times))))
+		{
+			DisableAll();
+			if (Global.character_.amulet_slot_count() > Global.character_.amulet_slot_max() - 2)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(478u), rmg, Doload, _bCancel: true);
+			}
+			else if (Global.character_.gem_slot_count() > Global.character_.gem_slot_max() - 2)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(479u), rmg, Doload, _bCancel: true);
+			}
+			else
+			{
+				doloadcampaign();
+			}
+		}
+	}
+
+	private bool checkGraveBoss()
+	{
+		if (Global.character_.grave_campaign.showboss && Global.character_.grave_campaign.finish == 5 && Global.character_.grave_campaign.soldier > 0 && Global.character_.grave.reseted != 1)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	private bool checkGraveFinish()
+	{
+		if (Global.character_.grave.reseted == 1)
+		{
+			return true;
+		}
+		if (Global.character_.grave_campaign.soldier <= 0)
+		{
+			return true;
+		}
+		if (!Global.character_.grave_campaign.showboss && Global.character_.grave_campaign.finish == 5)
+		{
+			return true;
+		}
+		if (Global.character_.grave_campaign.showboss && Global.character_.grave_campaign.finish == 6)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private void DrawGraveButton(ushort graveid, int idx)
+	{
+		_grave graveTemplate = Global.getGraveTemplate(graveid);
+		Rect position = __BaseUI._rect(99 + idx * 141, 229f, 120f, 130f);
+		Texture2D texture2D = null;
+		GUIStyle gUIStyle = null;
+		Rect rc = default(Rect);
+		Rect rect = __BaseUI._rect(146 + idx * 141, 347f, 40f, 18f);
+		Rect rect2 = __BaseUI._rect(146 + idx * 141 - 22, 347f, 84f, 18f);
+		Rect rc2 = default(Rect);
+		Rect rect3 = __BaseUI._rect(153 + idx * 141, 349f, 15f, 14f);
+		Rect rect4 = __BaseUI._rect(153 + idx * 141 + 10, 349f, 15f, 14f);
+		Rect rc3 = __BaseUI._rect(103 + idx * 141, 370f, 120f, 15f);
+		switch (idx)
+		{
+		case 0:
+			if (texDicUnable.ContainsKey(graveTemplate.icon_unable))
+			{
+				texture2D = texDicUnable[graveTemplate.icon_unable];
+			}
+			rc = rect;
+			gUIStyle = ui_di2;
+			rc2 = rect3;
+			break;
+		case 1:
+			if (texDic.ContainsKey(graveTemplate.icon))
+			{
+				texture2D = texDic[graveTemplate.icon];
+			}
+			rc = rect;
+			gUIStyle = ui_di2;
+			rc2 = rect3;
+			if (Global.character_.graves.ContainsKey(graveid) && Global.character_.graves[graveid].isfinish)
+			{
+				DrawWabao(graveid);
+			}
+			break;
+		case 2:
+			if (texDic.ContainsKey(graveTemplate.icon))
+			{
+				texture2D = texDic[graveTemplate.icon];
+			}
+			if (graveTemplate.min_level > Global.character_.level)
+			{
+				rc = rect2;
+				gUIStyle = ui_di4;
+				rc2 = rect4;
+			}
+			else
+			{
+				rc = rect;
+				gUIStyle = ui_di2;
+				rc2 = rect3;
+			}
+			DrawTiaozhan(graveid);
+			break;
+		case 3:
+			if (texDic.ContainsKey(graveTemplate.icon))
+			{
+				texture2D = texDic[graveTemplate.icon];
+			}
+			if (graveTemplate.min_level > Global.character_.level)
+			{
+				rc = rect2;
+				gUIStyle = ui_di4;
+				rc2 = rect4;
+			}
+			else
+			{
+				rc = rect;
+				gUIStyle = ui_di2;
+				rc2 = rect3;
+			}
+			break;
+		}
+		if (texture2D != null)
+		{
+			GUI.DrawTexture(position, texture2D);
+		}
+		if (gUIStyle != null)
+		{
+			__BaseUI.Label(rc, string.Empty, gUIStyle);
+		}
+		__BaseUI.Label(rc2, graveTemplate.min_level.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(rc3, string.Empty, ui_di3);
+		if (texDicName.ContainsKey(graveTemplate.title))
+		{
+			GUI.DrawTexture(__BaseUI._rect(103 + idx * 141 + 28, 370f, 63f, 16f), texDicName[graveTemplate.title]);
+		}
+	}
+
+	private void Doload(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			doloadcampaign();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void doloadcampaign()
+	{
+		cs_grave_load_campaign();
+	}
+
+	private void doCancel(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_grave_load_campaign();
+		}
+		rmg.ToEnable();
+	}
+
+	private void DrawGraveDrops()
+	{
+		__BaseUI.Label(__BaseUI._rect(142f, 377f, 74f, 15f), string.Empty, ui_zi_digong);
+		if (!Global.character_.campaigns_.ContainsKey(m_curGrave))
+		{
+			return;
+		}
+		Database.Campaign campaign = Global.character_.campaigns_[m_curGrave];
+		int num = 0;
+		for (int i = 0; i < campaign.drops.Count; i++)
+		{
+			_Treasure treasure = campaign.drops[i];
+			GUI.Label(__BaseUI._rect(235 + 75 * num, 371f, 64f, 64f), new GUIContent(string.Empty, "treasure" + i), __BaseUI._icondiStyle2);
+			if (treasure.texIcon != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(242 + 75 * num, 377f, 50f, 50f), treasure.texIcon);
+			}
+			num++;
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (Global.character_.campaigns_.ContainsKey(m_curGrave))
+		{
+			Database.Campaign campaign = Global.character_.campaigns_[m_curGrave];
+			foreach (_Treasure drop in campaign.drops)
+			{
+				if (drop.texIcon == null && drop.name == AssetName)
+				{
+					drop.setTexIcon(BaseAsset.LoadTexture(AssetName));
+				}
+			}
+		}
+		foreach (_Treasure value in dicTresure.Values)
+		{
+			if (value.texIcon == null && value.getIconName() == AssetName)
+			{
+				value.setTexIcon(BaseAsset.LoadTexture(AssetName));
+			}
+		}
+	}
+
+	public void cs_grave_load()
+	{
+		CSGraveLoad_0x343 pkt = new CSGraveLoad_0x343();
+		Global.m_client.Send(835, pkt, sc_grave_load);
+	}
+
+	public void sc_grave_load(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		if (stream != null)
+		{
+			SCGraveLoad_0x343 d = JSProtoBuf.Serializer.Deserialize<SCGraveLoad_0x343>(stream);
+			Global.character_.grave_campaign = new GraveCampaign(d);
+			MyLoading();
+		}
+	}
+
+	public void cs_grave_load_campaign()
+	{
+		CSGraveLoadCampaign_0x341 pkt = new CSGraveLoadCampaign_0x341();
+		Global.m_client.Send(833, pkt, sc_grave_load_campaign);
+	}
+
+	public void sc_grave_load_campaign(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCGraveLoadCampaign_0x341 sCGraveLoadCampaign_0x = JSProtoBuf.Serializer.Deserialize<SCGraveLoadCampaign_0x341>(stream);
+			Global.character_.grave_campaign = new GraveCampaign(sCGraveLoadCampaign_0x);
+			ushort num = (ushort)sCGraveLoadCampaign_0x.idgrave;
+			if (Global.character_.grave.newgrave == num)
+			{
+				Global.character_.grave.newgrave = 0;
+			}
+			Global.character_.grave.reseted = 0;
+			DelegateFunc.RootUI_startGrave(num);
+		}
+	}
+
+	private void TimeBuyOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_grave_buy_times();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	public void cs_grave_buy_times()
+	{
+		if (!send)
+		{
+			send = true;
+			CSGraveBuyTimes_0x344 pkt = new CSGraveBuyTimes_0x344();
+			Global.m_client.Send(836, pkt, sc_grave_buy_times);
+		}
+	}
+
+	public void sc_grave_buy_times(MemoryStream stream, object arg)
+	{
+		send = false;
+		if (stream != null)
+		{
+			SCGraveBuyTimes_0x344 sCGraveBuyTimes_0x = JSProtoBuf.Serializer.Deserialize<SCGraveBuyTimes_0x344>(stream);
+			if (sCGraveBuyTimes_0x.operate == SCGraveBuyTimes_0x344.Operate.OK)
+			{
+				int gold = (int)sCGraveBuyTimes_0x.gold;
+				Global.character_.gold -= gold;
+				__BaseUI.drawStateBubble("gold" + -gold);
+				Global.character_.grave.times++;
+				Global.character_.grave.buytimes++;
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("treasure"))
+		{
+			string s = tip.Replace("treasure", string.Empty);
+			int index = int.Parse(s);
+			Global.character_.campaigns_[m_curGrave]?.drops[index].PrepTooltip();
+		}
+		else if (tip.Contains("grave_times"))
+		{
+			string text = stamina_bar();
+			tooltipUI.ShowTooltipCommon2(text, string.Empty, 200);
+		}
+		else if (tip.Contains("amulet"))
+		{
+			int num = int.Parse(tip.Replace("amulet", string.Empty));
+			tooltipUI.ShowTooltipAmulet(Global.character_.amulets[(byte)num], string.Empty);
+		}
+		else if (tip.Contains("gem"))
+		{
+			int num2 = int.Parse(tip.Replace("gem", string.Empty));
+			tooltipUI.ShowTooltipGem(Global.character_.gems[(ushort)num2], string.Empty);
+		}
+		else if (tip != string.Empty)
+		{
+			if (tip.Length < 40)
+			{
+				tooltipUI.ShowTooltipCommon2(tip, string.Empty, 200);
+			}
+			else
+			{
+				tooltipUI.ShowTooltipCommon2(tip, string.Empty, 280);
+			}
+		}
+	}
+
+	private int CalcBuyPrice()
+	{
+		int result = 0;
+		int buytimes = Global.character_.grave.buytimes;
+		if (Global.getTemplate("grave_buy_price", (uint)(buytimes + 1)) is _grave_buy_price grave_buy_price)
+		{
+			result = grave_buy_price.gold;
+		}
+		return result;
+	}
+
+	public void cs_grave_auto()
+	{
+		if (!send)
+		{
+			send = true;
+			CSGraveAuto_0x345 cSGraveAuto_0x = new CSGraveAuto_0x345();
+			cSGraveAuto_0x.idgrave = m_autograve;
+			cSGraveAuto_0x.autosell = m_autosell;
+			cSGraveAuto_0x.autobuy = m_autobuy;
+			cSGraveAuto_0x.sellblue = m_sellblue;
+			cSGraveAuto_0x.times = (uint)m_count;
+			Global.m_client.Send(837, cSGraveAuto_0x, sc_grave_auto, m_autograve);
+		}
+	}
+
+	public void sc_grave_auto(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		send = false;
+		ushort num = (ushort)arg;
+		m_autoResultId = num;
+		SCGraveAuto_0x345 sCGraveAuto_0x = JSProtoBuf.Serializer.Deserialize<SCGraveAuto_0x345>(stream);
+		if (sCGraveAuto_0x.operate != SCGraveAuto_0x345.Operate.OK)
+		{
+			return;
+		}
+		m_ss.Clear();
+		dicTresure.Clear();
+		int gold = (int)sCGraveAuto_0x.gold;
+		int buytimes = sCGraveAuto_0x.buytimes;
+		int times = sCGraveAuto_0x.times;
+		uint num2 = (uint)(m_runtimes = (int)sCGraveAuto_0x.runtimes);
+		resultTimer = DateTime.Now.AddSeconds((double)num2 * 2.0 - 1E-05);
+		uint qo = sCGraveAuto_0x.qo;
+		if (num2 != sCGraveAuto_0x.bonuses.Count)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, string.Empty, rmg);
+		}
+		string text = string.Empty;
+		for (int i = 0; i < sCGraveAuto_0x.bonuses.Count; i++)
+		{
+			text += string.Format(__BaseUI.load_str(445u), i + 1);
+			int num3 = 0;
+			int num4 = 0;
+			string text2 = string.Empty;
+			foreach (Treasure bonuse in sCGraveAuto_0x.bonuses[i].bonuses)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make(bonuse);
+				if (treasure.type == 4)
+				{
+					num4 = treasure.param[1];
+					Global.character_.addParam(treasure.name, treasure.param[0], treasure.param[1]);
+				}
+				else if (treasure.type == 8)
+				{
+					num3 = treasure.param[1];
+					Global.character_.addParam(treasure.name, treasure.param[0], treasure.param[1]);
+				}
+				else if (treasure.type == 45)
+				{
+					string text3 = text2;
+					text2 = text3 + "#c=7cfc00" + treasure.strParam[0] + "*" + treasure.param[1];
+					Global.character_.addParam(treasure.name, treasure.param[0], treasure.param[1]);
+				}
+				else if (treasure.type == 46)
+				{
+					string text3 = text2;
+					text2 = text3 + "#c=cc66ff" + treasure.strParam[0] + "*" + treasure.param[1];
+					Global.character_.addParam(treasure.name, treasure.param[0], treasure.param[1]);
+				}
+				else if (treasure.type == 42)
+				{
+					ushort id = (ushort)(treasure.param[0] & 0xFFFF);
+					Gem gem = Global.character_.getGem(id);
+					if (gem == null)
+					{
+						continue;
+					}
+					if (gem.quality <= qo)
+					{
+						Global.character_.remGem(id);
+						continue;
+					}
+					if (Global.getTemplate("item_quality", gem.quality) is _item_quality item_quality)
+					{
+						text2 = text2 + "#c=" + item_quality.color;
+					}
+					text2 += gem.name;
+					AddAssetSub(treasure.getIconName());
+					StartLoadingSub();
+					dicTresure[i] = treasure;
+				}
+				else
+				{
+					if (treasure.type != 43)
+					{
+						continue;
+					}
+					byte id2 = (byte)(treasure.param[0] & 0xFFFF);
+					Amulet amulet = Global.character_.getAmulet(id2);
+					if (amulet == null)
+					{
+						continue;
+					}
+					if (amulet.data.quality <= qo)
+					{
+						Global.character_.remAmulet(id2);
+						continue;
+					}
+					if (Global.getTemplate("item_quality", amulet.data.quality) is _item_quality item_quality2)
+					{
+						text2 = text2 + "#c=" + item_quality2.color;
+					}
+					text2 += amulet.data.name;
+					AddAssetSub(treasure.getIconName());
+					StartLoadingSub();
+					dicTresure[i] = treasure;
+				}
+			}
+			_grave graveTemplate = Global.getGraveTemplate(num);
+			text += string.Format(__BaseUI.load_str(447u), num3);
+			text += string.Format(__BaseUI.load_str(449u), num4);
+			text += string.Format(__BaseUI.load_str(448u), text2);
+			if (i == sCGraveAuto_0x.bonuses.Count - 1 && (Global.character_.gem_slot_count() >= Global.character_.gem_slot_max() || Global.character_.amulet_slot_count() >= Global.character_.amulet_slot_max()))
+			{
+				text += __BaseUI.load_str(450u);
+			}
+			if (sCGraveAuto_0x.lastamuletid != 0)
+			{
+				byte id3 = (byte)sCGraveAuto_0x.lastamuletid;
+				Amulet amulet2 = Global.character_.getAmulet(id3);
+				if (amulet2 != null && amulet2.data.quality <= qo)
+				{
+					Global.character_.remAmulet(id3);
+				}
+			}
+			if (sCGraveAuto_0x.lastgemid != 0)
+			{
+				byte id4 = (byte)sCGraveAuto_0x.lastgemid;
+				Gem gem2 = Global.character_.getGem(id4);
+				if (gem2 != null && gem2.quality <= qo)
+				{
+					Global.character_.remGem(id4);
+				}
+			}
+			ScenarioSection scenarioSection = new ScenarioSection();
+			scenarioSection.max_width = 375;
+			scenarioSection.font_size = 14;
+			scenarioSection.makes_string(text, __BaseUI._textLeft);
+			m_ss.Add(scenarioSection);
+		}
+		ShowResult();
+		Global.character_.gold = gold;
+		Global.character_.grave.times = (short)times;
+		Global.character_.grave.buytimes = (ushort)buytimes;
+	}
+
+	private void ShowResult()
+	{
+		m_showResult = true;
+		m_showSaodang = true;
+	}
+
+	private string stamina_bar()
+	{
+		return string.Format(__BaseUI.load_str(443u), new object[2]
+		{
+			Global.character_.grave.times,
+			12
+		});
+	}
+}

@@ -1,0 +1,2437 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BuddyUI : BaseUI
+{
+	private enum enumbuddyPage
+	{
+		guanzhu,
+		lianxi,
+		pingbi
+	}
+
+	private enum enumbuddyPage2
+	{
+		dongtai,
+		flower,
+		fensi
+	}
+
+	private List<Buddy> Buddys = new List<Buddy>();
+
+	private List<Buddy> TempBuddys = new List<Buddy>();
+
+	private List<Buddy> Blacklist = new List<Buddy>();
+
+	private List<Buddy> Contacts = new List<Buddy>();
+
+	private List<Buddy> Fans = new List<Buddy>();
+
+	private List<Buddy> FansOnly = new List<Buddy>();
+
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private bool m_bShowXianhua;
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_di2 = new GUIStyle();
+
+	private _RadioStyle button_guanzhu = new _RadioStyle();
+
+	private _RadioStyle button_fensi = new _RadioStyle();
+
+	private _RadioStyle button_dongtai = new _RadioStyle();
+
+	private _RadioStyle button_lianxi = new _RadioStyle();
+
+	private _RadioStyle button_pingbi = new _RadioStyle();
+
+	private enumbuddyPage buddyPage;
+
+	private enumbuddyPage2 buddyPage2 = enumbuddyPage2.fensi;
+
+	private _ButtonStyle button_guanzhu2 = new _ButtonStyle();
+
+	private _ButtonStyle button_tianjia = new _ButtonStyle();
+
+	private _ButtonStyle button_quxiao2 = new _ButtonStyle();
+
+	private GUIStyle ui_icon3 = new GUIStyle();
+
+	private GUIStyle ui_icon2 = new GUIStyle();
+
+	private GUIStyle ui_icon1 = new GUIStyle();
+
+	private GUIStyle ui_icon4 = new GUIStyle();
+
+	private GUIStyle ui_icon6 = new GUIStyle();
+
+	private GUIStyle ui_icon5 = new GUIStyle();
+
+	private GUIStyle ui_icon7 = new GUIStyle();
+
+	private GUIStyle ui_icon8 = new GUIStyle();
+
+	private GUIStyle ui_icon9 = new GUIStyle();
+
+	private GUIStyle bg_frame = new GUIStyle();
+
+	private GUIStyle tiaobar = new GUIStyle();
+
+	private _ButtonStyle button_baifang2 = new _ButtonStyle();
+
+	private _ButtonStyle button_pagedown = new _ButtonStyle();
+
+	private _ButtonStyle button_pageup = new _ButtonStyle();
+
+	private _ButtonStyle button_quxiao = new _ButtonStyle();
+
+	private _ButtonStyle button_pingbi2 = new _ButtonStyle();
+
+	private _ButtonStyle button_liaotian = new _ButtonStyle();
+
+	private _ButtonStyle button_baifang = new _ButtonStyle();
+
+	private _ButtonStyle button_guanzhu3 = new _ButtonStyle();
+
+	private _ButtonStyle button_quxiao3 = new _ButtonStyle();
+
+	public _ButtonStyle button_tianjia2 = new _ButtonStyle();
+
+	private _ButtonStyle button_chakan = new _ButtonStyle();
+
+	private _ButtonStyle button_guanbi = new _ButtonStyle();
+
+	private _ButtonStyle button_yincang = new _ButtonStyle();
+
+	private _ButtonStyle button_zhankai = new _ButtonStyle();
+
+	private _RadioStyle btn_guanzhu = new _RadioStyle();
+
+	private _RadioStyle btn_lianxi = new _RadioStyle();
+
+	private _RadioStyle btn_pingbi = new _RadioStyle();
+
+	private _RadioStyle btn_dongtai = new _RadioStyle();
+
+	private _RadioStyle btn_xianhua = new _RadioStyle();
+
+	private _RadioStyle btn_fensi = new _RadioStyle();
+
+	private _ButtonStyle btn_pop = new _ButtonStyle();
+
+	private _ButtonStyle btn_pop2 = new _ButtonStyle();
+
+	private _ButtonStyle btn_pop3 = new _ButtonStyle();
+
+	private _ButtonStyle tempbtn1 = new _ButtonStyle();
+
+	private _ButtonStyle tempbtn2 = new _ButtonStyle();
+
+	private _ButtonStyle btn_guanzhuta = new _ButtonStyle();
+
+	private _ButtonStyle btn_temppop = new _ButtonStyle();
+
+	public _ButtonStyle btn_baifang = new _ButtonStyle();
+
+	public _ButtonStyle btn_qiecuo = new _ButtonStyle();
+
+	private GUIStyle bar3 = new GUIStyle();
+
+	private GUIStyle bar4 = new GUIStyle();
+
+	private _ButtonStyle btn_haoyoupop = new _ButtonStyle();
+
+	private _ButtonStyle Btn_readd = new _ButtonStyle();
+
+	private Texture2D rezitex;
+
+	private float mousePosX;
+
+	private float mousePosY;
+
+	private string popname = string.Empty;
+
+	private Rect rcType;
+
+	private int m_popmenuW = 77;
+
+	private int m_popmenuH = 177;
+
+	private int m_buddyPage;
+
+	private int m_fanPage;
+
+	private int m_blackPage;
+
+	private int m_contactPage;
+
+	private int m_showAddBuddy;
+
+	private int m_flowers;
+
+	private string m_inputname = string.Empty;
+
+	private ulong m_showBuddyDetail;
+
+	private Buddy m_detailBuddy;
+
+	private int m_eventPage;
+
+	public Buddy tempbd = new Buddy();
+
+	private GUIStyle ui_zi_tjgz = new GUIStyle();
+
+	private GUIStyle ui_zi_tjpb = new GUIStyle();
+
+	public int m_newfans;
+
+	public int m_newevent;
+
+	public int m_newflower;
+
+	private Vector2 scrollBuddy = new Vector2(0f, 0f);
+
+	private int scroll_index_buddy;
+
+	private Vector2 scrollFans = new Vector2(0f, 0f);
+
+	private int scroll_index_fans;
+
+	private Vector2 scrollContacts = new Vector2(0f, 0f);
+
+	private int scroll_index_contacts;
+
+	private Vector2 scrollBlacks = new Vector2(0f, 0f);
+
+	private int scroll_index_blacks;
+
+	private Vector2 scrollEvents = new Vector2(0f, 0f);
+
+	private int scroll_index_events;
+
+	private Vector2 scrollFlowers = new Vector2(0f, 0f);
+
+	private int scroll_index_flowers;
+
+	private Vector2 scrollReAddBuddy = new Vector2(0f, 0f);
+
+	private int scroll_index_readdbuddy;
+
+	private Vector2 haoyoupos = new Vector2(0f, 0f);
+
+	private Vector2 lianxirenpos = new Vector2(0f, 0f);
+
+	private Vector2 heimingdanpos = new Vector2(0f, 0f);
+
+	private Vector2 fensipos = new Vector2(0f, 0f);
+
+	private Vector2 dongtaipos = new Vector2(0f, 0f);
+
+	private Vector2 xianhuapos = new Vector2(0f, 0f);
+
+	private bool subreaddwindow;
+
+	private float update_x = 250f;
+
+	private float update_x2;
+
+	private bool moveynz;
+
+	private float update_speed = 20f;
+
+	private bool zyyn = true;
+
+	private bool moveyny;
+
+	private bool hideyn = true;
+
+	private bool ClickAdd;
+
+	private bool haoyou;
+
+	private bool fansi;
+
+	private Rect temprect;
+
+	private Buddy visit_bp;
+
+	private List<string> ReAddName = new List<string>();
+
+	private int idxlabel = -1;
+
+	private int tempc;
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_buddy");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	public override void Start()
+	{
+		scroll_index_buddy = ScrollControl.RegisterInfo();
+		scroll_index_fans = ScrollControl.RegisterInfo();
+		scroll_index_contacts = ScrollControl.RegisterInfo();
+		scroll_index_blacks = ScrollControl.RegisterInfo();
+		scroll_index_events = ScrollControl.RegisterInfo();
+		scroll_index_flowers = ScrollControl.RegisterInfo();
+		scroll_index_readdbuddy = ScrollControl.RegisterInfo();
+		base.Start();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		EnableAll();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		scrollBuddy.y = 0f;
+		scrollFans.y = 0f;
+		scrollBlacks.y = 0f;
+		scrollEvents.y = 0f;
+		scrollBuddy.y = 0f;
+		scrollFlowers.y = 0f;
+		scrollReAddBuddy.y = 0f;
+		subreaddwindow = false;
+		lianxirenpos = new Vector2(3f, 2f);
+		heimingdanpos = new Vector2(3f, 2f);
+		fensipos = new Vector2(1f, 4.5f);
+		xianhuapos = new Vector2(1f, 4.5f);
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_buddy");
+		buddyPage = enumbuddyPage.guanzhu;
+		buddyPage2 = enumbuddyPage2.dongtai;
+		haoyoupos = new Vector2(3f, 2f);
+		dongtaipos = new Vector2(1f, 4.5f);
+		m_bShowXianhua = false;
+		m_showAddBuddy = 0;
+		m_showBuddyDetail = 0uL;
+		ui_di2.normal.background = asset.Load("ui_di2") as Texture2D;
+		ui_di2.border = new RectOffset(40, 40, 40, 40);
+		titleStyle.normal.background = asset.Load("ui_biaoti") as Texture2D;
+		button_guanzhu.make(asset, "button_guanzhu", "button_guanzhu_hover");
+		button_guanzhu.normalStyle.active.background = button_guanzhu.normalStyle.hover.background;
+		button_fensi.make(asset, "button_fensi", "button_fensi_hover");
+		button_fensi.normalStyle.active.background = button_fensi.normalStyle.hover.background;
+		button_dongtai.make(asset, "button_dongtai", "button_dongtai_hover");
+		button_dongtai.normalStyle.active.background = button_dongtai.normalStyle.hover.background;
+		button_lianxi.make(asset, "button_lianxi", "button_lianxi_hover");
+		button_lianxi.normalStyle.active.background = button_lianxi.normalStyle.hover.background;
+		button_pingbi.make(asset, "button_pingbi", "button_pingbi_hover");
+		button_pingbi.normalStyle.active.background = button_pingbi.normalStyle.hover.background;
+		button_guanzhu2.make(asset, "button_guanzhu2");
+		button_tianjia.make(asset, "button_tianjia");
+		button_quxiao2.make(asset, "button_quxiao2");
+		ui_icon3.normal.background = asset.Load("ui_icon3") as Texture2D;
+		ui_icon2.normal.background = asset.Load("ui_icon2") as Texture2D;
+		ui_icon1.normal.background = asset.Load("ui_icon1") as Texture2D;
+		ui_icon5.normal.background = asset.Load("ui_icon5") as Texture2D;
+		ui_icon4.normal.background = asset.Load("ui_icon4") as Texture2D;
+		ui_icon6.normal.background = asset.Load("ui_icon6") as Texture2D;
+		button_baifang2.make(asset, "button_baifang2");
+		button_pagedown.make(asset, "button_pagedown");
+		button_pageup.make(asset, "button_pageup");
+		button_quxiao.make(asset, "button_quxiao");
+		button_liaotian.make(asset, "button_liaotian");
+		button_baifang.make(asset, "button_baifang");
+		button_pingbi2.make(asset, "button_pingbi2");
+		button_guanzhu3.make(asset, "button_guanzhu2");
+		button_quxiao3.make(asset, "button_quxiao3");
+		button_tianjia2.make(asset, "button_tianjia2");
+		ui_zi_tjgz.normal.background = asset.Load("ui_zi_tjgz") as Texture2D;
+		ui_zi_tjpb.normal.background = asset.Load("ui_zi_tjpb") as Texture2D;
+		button_chakan.make(asset, "button_chakan");
+		Btn_readd.make(asset, "button_tianjia3");
+		rezitex = asset.Load("ui_zi_xz") as Texture2D;
+		m_detailBuddy = null;
+		m_buddyPage = 0;
+		m_fanPage = 0;
+		m_blackPage = 0;
+		m_contactPage = 0;
+		m_eventPage = 0;
+		__BaseUI.init_lable(asset, "ui_haoyou_di", ref bg_frame);
+		button_guanbi.make(asset, "button_x");
+		button_zhankai.make(asset, "button_zhankai");
+		button_yincang.make(asset, "button_yincang");
+		btn_guanzhu.make(asset, "button_guanzhu", "button_guanzhu_hover");
+		btn_guanzhu.normalStyle.active.background = btn_guanzhu.normalStyle.hover.background;
+		btn_lianxi.make(asset, "button_lianxi", "button_lianxi_hover");
+		btn_lianxi.normalStyle.active.background = btn_lianxi.normalStyle.hover.background;
+		btn_pingbi.make(asset, "button_pingbi", "button_pingbi_hover");
+		btn_pingbi.normalStyle.active.background = btn_pingbi.normalStyle.hover.background;
+		btn_dongtai.make(asset, "button_dongtai", "button_dongtai_hover");
+		btn_dongtai.normalStyle.active.background = btn_dongtai.normalStyle.hover.background;
+		btn_xianhua.make(asset, "button_xianhua", "button_xianhua_hover");
+		btn_xianhua.normalStyle.active.background = btn_xianhua.normalStyle.hover.background;
+		btn_fensi.make(asset, "button_fensi", "button_fensi_hover");
+		btn_fensi.normalStyle.active.background = btn_fensi.normalStyle.hover.background;
+		btn_pop.make(asset, "ui_bar1");
+		btn_pop.setBorder(new RectOffset(5, 5, 5, 5));
+		btn_pop2.make(asset, "ui_bar1");
+		btn_pop2.setBorder(new RectOffset(5, 5, 5, 5));
+		btn_pop3 = __BaseUI._unable1;
+		btn_pop3.btnStyle.font = __BaseUI.GetFontCache().ChineseFont;
+		btn_pop3.btnStyle.normal.textColor = __BaseUI._clrCyan;
+		btn_pop3.btnStyle.hover.textColor = Color.white;
+		btn_guanzhuta.make(asset, "button_guanzhuta");
+		__BaseUI.init_lable(asset, "ui_bar1_hover", ref tiaobar);
+		tiaobar.border = new RectOffset(5, 5, 5, 5);
+		__BaseUI.init_lable(asset, "ui_icon7", ref ui_icon7);
+		__BaseUI.init_lable(asset, "ui_icon8", ref ui_icon8);
+		__BaseUI.init_lable(asset, "ui_icon9", ref ui_icon9);
+		__BaseUI.init_lable(asset, "ui_bar1_hover", ref bar3);
+		bar3.border = new RectOffset(5, 5, 5, 5);
+		__BaseUI.init_lable(asset, "ui_bar_4_hover", ref bar4);
+		bar4.border = new RectOffset(5, 5, 5, 5);
+		btn_baifang.make(asset, "button_fangwen");
+		btn_qiecuo.make(asset, "button_qiecuo");
+		cs_buddy_load();
+		cs_buddy_load_event(1);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		tooltipUI.ShowTooltipCommonB(tip);
+	}
+
+	private void Update()
+	{
+		if (moveynz)
+		{
+			if (update_x > 125f && update_x2 < 125f)
+			{
+				update_x -= update_speed;
+				update_x2 += update_speed;
+				if (update_x < 125f)
+				{
+					update_x = 125f;
+				}
+				if (update_x2 > 125f)
+				{
+					update_x2 = 125f;
+				}
+			}
+			else
+			{
+				moveynz = false;
+				zyyn = false;
+				hideyn = false;
+			}
+		}
+		if (!moveyny)
+		{
+			return;
+		}
+		zyyn = true;
+		hideyn = true;
+		if (update_x < 250f && update_x2 > 0f)
+		{
+			update_x += update_speed;
+			update_x2 -= update_speed;
+			if (update_x > 250f)
+			{
+				update_x = 250f;
+			}
+			if (update_x2 < 0f)
+			{
+				update_x2 = 0f;
+			}
+		}
+		else
+		{
+			moveyny = false;
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(527f, 441f, __BaseUI.UIDepth_Sub))
+		{
+			return;
+		}
+		if (m_bShowXianhua || m_detailBuddy != null || subreaddwindow)
+		{
+			Disable();
+		}
+		else
+		{
+			Enable();
+		}
+		if (m_showAddBuddy != 0 || m_detailBuddy != null || subreaddwindow)
+		{
+			Disable();
+		}
+		else
+		{
+			Enable();
+		}
+		float x = update_x;
+		if (hideyn)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(x, 0f, 266f, 441f));
+			__BaseUI.Label(__BaseUI._rect(0f, 0f, 252f, 441f), string.Empty, __BaseUI._boxmsgStyle);
+			__BaseUI.Label(__BaseUI._rect(16f, 63f, 221f, 342f), string.Empty, __BaseUI._boxnew6Style);
+			if (zyyn && button_yincang.Button(IsEnable(), __BaseUI._rect(238f, 147f, 32f, 152f), string.Empty))
+			{
+				moveynz = true;
+			}
+			if (btn_dongtai.Button(buddyPage2 != enumbuddyPage2.dongtai, __BaseUI._rect(32f, 38f, 61f, 25f), string.Empty))
+			{
+				cs_buddy_load_event(1);
+			}
+			if (btn_fensi.Button(buddyPage2 != enumbuddyPage2.fensi, __BaseUI._rect(96f, 38f, 61f, 25f), string.Empty))
+			{
+				cs_buddy_load_fans();
+			}
+			if (btn_xianhua.Button(buddyPage2 != enumbuddyPage2.flower, __BaseUI._rect(159f, 38f, 61f, 25f), string.Empty))
+			{
+				cs_buddy_load_event(2);
+			}
+			if (m_newevent != 0)
+			{
+				int num = (int)__BaseUI._numCenter.CalcSize(new GUIContent(m_newevent.ToString())).x;
+				if (num < 29)
+				{
+					num = 29;
+				}
+				__BaseUI.Label(__BaseUI._rect(101 - num, 23f, num, 29f), string.Empty, __BaseUI._markNumStyle);
+				__BaseUI.Label(__BaseUI._rect(100 - num, 23f, num, 29f), m_newevent.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+			}
+			if (m_newfans != 0)
+			{
+				int num2 = (int)__BaseUI._numCenter.CalcSize(new GUIContent(m_newfans.ToString())).x;
+				if (num2 < 29)
+				{
+					num2 = 29;
+				}
+				__BaseUI.Label(__BaseUI._rect(165 - num2, 23f, num2, 29f), string.Empty, __BaseUI._markNumStyle);
+				__BaseUI.Label(__BaseUI._rect(164 - num2, 23f, num2, 29f), m_newfans.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+			}
+			if (m_newflower != 0)
+			{
+				int num3 = (int)__BaseUI._numCenter.CalcSize(new GUIContent(m_newflower.ToString())).x;
+				if (num3 < 29)
+				{
+					num3 = 29;
+				}
+				__BaseUI.Label(__BaseUI._rect(228 - num3, 23f, num3, 29f), string.Empty, __BaseUI._markNumStyle);
+				__BaseUI.Label(__BaseUI._rect(227 - num3, 23f, num3, 29f), m_newflower.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+			}
+			switch (buddyPage2)
+			{
+			case enumbuddyPage2.fensi:
+				Drawfensi();
+				break;
+			case enumbuddyPage2.dongtai:
+				Drawdongtai();
+				break;
+			case enumbuddyPage2.flower:
+				Drawxianhua();
+				break;
+			}
+			if (tempbtn1.Button(IsEnable(), __BaseUI._rect(0f, 0f, 266f, 441f), string.Empty))
+			{
+			}
+			__BaseUI.EndGroup();
+		}
+		float x2 = update_x2;
+		__BaseUI.BeginGroup(__BaseUI._rect(x2, 0f, 270f, 441f));
+		GUI.DrawTexture(__BaseUI._rect(22f, 34f, 92f, 95f), Global.character_.texIcon2);
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 256f, 441f), string.Empty, bg_frame);
+		__BaseUI.Label(__BaseUI._rect(17f, 152f, 219f, 253f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(172f, 98f, 150f, 19f), m_flowers.ToString(), __BaseUI._numLeft, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(101f, 49f, 100f, 21f), Global.character_.name, __BaseUI._textCenter, __BaseUI._clrGreen, 16);
+		__BaseUI.Label(__BaseUI._rect(70f, 98f, 50f, 21f), Buddys.Count + "/100", __BaseUI._numLeft, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(120f, 74f, 50f, 17f), Fans.Count.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+		if (!zyyn && button_zhankai.Button(IsEnable(), __BaseUI._rect(241f, 147f, 32f, 152f), string.Empty))
+		{
+			moveyny = true;
+		}
+		if (btn_guanzhu.Button(buddyPage != enumbuddyPage.guanzhu, __BaseUI._rect(33f, 127f, 59f, 25f), new GUIContent(string.Empty, "haoyou")))
+		{
+			cs_buddy_load();
+		}
+		if (btn_lianxi.Button(buddyPage != enumbuddyPage.lianxi, __BaseUI._rect(95f, 127f, 59f, 25f), new GUIContent(string.Empty, "lianxiren")))
+		{
+			cs_buddy_load_contact();
+		}
+		if (btn_pingbi.Button(buddyPage != enumbuddyPage.pingbi, __BaseUI._rect(157f, 127f, 59f, 25f), new GUIContent(string.Empty, "heimingdan")))
+		{
+			cs_buddy_load_black();
+		}
+		if (button_guanbi.Button(IsEnable(), __BaseUI._rect(215f, 12f, 24f, 24f), string.Empty))
+		{
+			MainUI.SetSubUI(null);
+			Hide();
+		}
+		if (buddyPage == enumbuddyPage.pingbi)
+		{
+			if (button_tianjia2.Button(IsEnable(), __BaseUI._rect(92f, 408f, 80f, 22f), string.Empty))
+			{
+				m_showAddBuddy = 1;
+				m_inputname = string.Empty;
+			}
+		}
+		else if (button_guanzhu2.Button(IsEnable(), __BaseUI._rect(92f, 408f, 80f, 22f), string.Empty))
+		{
+			m_showAddBuddy = 2;
+			m_inputname = string.Empty;
+		}
+		switch (buddyPage)
+		{
+		case enumbuddyPage.guanzhu:
+			Drawguanzhu();
+			break;
+		case enumbuddyPage.pingbi:
+			Drawheimingdan();
+			break;
+		case enumbuddyPage.lianxi:
+			Drawlianxi();
+			break;
+		}
+		if (tempbtn2.Button(IsEnable(), __BaseUI._rect(0f, 0f, 270f, 441f), string.Empty))
+		{
+		}
+		__BaseUI.EndGroup();
+		if (m_showAddBuddy != 0)
+		{
+			DrawAddBuddy(m_showAddBuddy - 1);
+			ClickAdd = true;
+		}
+		else
+		{
+			ClickAdd = false;
+		}
+		if (m_detailBuddy != null)
+		{
+			DrawBuddyDetail(m_detailBuddy);
+		}
+		if (subreaddwindow)
+		{
+			ClickAdd = true;
+			DrawReAddBuddy();
+		}
+		EndGUI(hasClose: false);
+	}
+
+	private void OnDisable()
+	{
+	}
+
+	private void Drawxianhua()
+	{
+		int num = Math.Max(6, Global.character_.FlowerEvents.Count + 1) * 55;
+		if (num > 340)
+		{
+			scrollFlowers = ScrollControl.infos[scroll_index_flowers].scrollpos;
+			scrollFlowers = GUIHacks.BeginScrollView(__BaseUI._rect(17f, 63f, 221f, 340f), scrollFlowers, __BaseUI._rect(0f, 0f, 221f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 55, 0, scroll_index_flowers);
+			ScrollControl.infos[scroll_index_flowers].scrollpos = scrollFlowers;
+		}
+		else
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(17f, 63f, 221f, 340f));
+		}
+		if (Global.character_.FlowerEvents.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(xianhuapos.x, xianhuapos.y, 214f, 44f), string.Empty, bar4);
+			for (int i = 0; i < Global.character_.FlowerEvents.Count; i++)
+			{
+				EventTimeline eventTimeline = Global.character_.FlowerEvents[i];
+				if (eventTimeline.eventid == 4)
+				{
+					Drawxianhua(eventTimeline, i);
+				}
+			}
+		}
+		if (num > 340)
+		{
+			GUIHacks.EndScrollView();
+		}
+		else
+		{
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void Drawxianhua(EventTimeline e, int idx)
+	{
+		TimeSpan timeSpan = TimeSpan.FromSeconds(TimeUtil.Now - e.time);
+		string empty = string.Empty;
+		if (timeSpan.TotalDays >= 1.0)
+		{
+			empty = (int)timeSpan.TotalDays + "天前";
+		}
+		else if (timeSpan.TotalHours >= 1.0)
+		{
+			empty = (int)timeSpan.TotalHours + "小时前";
+		}
+		else if (timeSpan.TotalMinutes >= 1.0)
+		{
+			empty = (int)timeSpan.TotalMinutes + "分钟前";
+		}
+		else if (timeSpan.TotalSeconds >= 1.0)
+		{
+			empty = (int)timeSpan.TotalSeconds + "秒前";
+		}
+		if (!(Global.getTemplate("buddy_event", e.eventid) is _buddy_event buddy_event))
+		{
+			return;
+		}
+		string empty2 = string.Empty;
+		empty2 = buddy_event.event_desc.Replace("%t", "|%t|");
+		empty2 = empty2.Replace("%p", e.param.ToString());
+		string[] array = empty2.Split('|');
+		GUIStyle iStyle = new GUIStyle();
+		GetIconStyle(ref iStyle, buddy_event.icon);
+		if (btn_pop.Button(IsEnable(), __BaseUI._rect(1f, (float)(idx * 55) + 4.5f, 214f, 44f), string.Empty))
+		{
+			popname = "xianhua";
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			foreach (Buddy buddy2 in Buddys)
+			{
+				if (buddy2.name == e.name)
+				{
+					tempbd = buddy2;
+					haoyou = true;
+					break;
+				}
+				haoyou = false;
+			}
+			foreach (Buddy item in FansOnly)
+			{
+				if (item.name == e.name)
+				{
+					tempbd = item;
+					fansi = true;
+				}
+				else
+				{
+					fansi = false;
+				}
+			}
+			if (!haoyou && !fansi)
+			{
+				Buddy buddy = new Buddy();
+				buddy.name = e.name;
+				buddy.isfan = false;
+				buddy.isspecial = false;
+				tempbd = buddy;
+			}
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			xianhuapos.y = (float)(idx * 55) + 4.5f;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		__BaseUI.Label(__BaseUI._rect(3f, idx * 55 + 7, 31f, 28f), string.Empty, iStyle);
+		e.sstext.draw(__BaseUI._rect(3f, idx * 55 + 13, 240f, 50f), __BaseUI._textLeft);
+	}
+
+	private void Drawdongtai()
+	{
+		int num = Math.Max(7, Global.character_.Events.Count + 1) * 44;
+		if (num > 340)
+		{
+			scrollEvents = ScrollControl.infos[scroll_index_events].scrollpos;
+			scrollEvents = GUIHacks.BeginScrollView(__BaseUI._rect(17f, 63f, 221f, 340f), scrollEvents, __BaseUI._rect(0f, 0f, 221f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 44, 0, scroll_index_events);
+			ScrollControl.infos[scroll_index_events].scrollpos = scrollEvents;
+		}
+		else
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(17f, 63f, 221f, 340f));
+		}
+		if (Global.character_.Events.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(dongtaipos.x, dongtaipos.y, 214f, 44f), string.Empty, bar4);
+			for (int i = 0; i < Global.character_.Events.Count; i++)
+			{
+				EventTimeline eventTimeline = Global.character_.Events[i];
+				if (eventTimeline.eventid != 4)
+				{
+					Drawdongtai(eventTimeline, i);
+				}
+			}
+		}
+		if (num > 340)
+		{
+			GUIHacks.EndScrollView();
+		}
+		else
+		{
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void Drawdongtai(EventTimeline e, int idx)
+	{
+		TimeSpan timeSpan = TimeSpan.FromSeconds(TimeUtil.Now - e.time);
+		string empty = string.Empty;
+		if (timeSpan.TotalDays >= 1.0)
+		{
+			empty = __BaseUI.load_str(20129u, (int)timeSpan.TotalDays);
+		}
+		else if (timeSpan.TotalHours >= 1.0)
+		{
+			empty = __BaseUI.load_str(20130u, (int)timeSpan.TotalHours);
+		}
+		else if (timeSpan.TotalMinutes >= 1.0)
+		{
+			empty = __BaseUI.load_str(20131u, (int)timeSpan.TotalMinutes);
+		}
+		else if (timeSpan.TotalSeconds >= 1.0)
+		{
+			empty = __BaseUI.load_str(20132u, (int)timeSpan.TotalSeconds);
+		}
+		if (!(Global.getTemplate("buddy_event", e.eventid) is _buddy_event buddy_event))
+		{
+			return;
+		}
+		string empty2 = string.Empty;
+		empty2 = buddy_event.event_desc.Replace("%t", "|%t|");
+		empty2 = empty2.Replace("%p", e.param.ToString());
+		string[] array = empty2.Split('|');
+		GUIStyle iStyle = new GUIStyle();
+		GetIconStyle(ref iStyle, buddy_event.icon);
+		if (btn_pop.Button(IsEnable(), __BaseUI._rect(1f, (float)(idx * 44) + 4.5f, 214f, 44f), string.Empty))
+		{
+			popname = "dongtai";
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			foreach (Buddy buddy2 in Buddys)
+			{
+				if (buddy2.name == e.name)
+				{
+					tempbd = buddy2;
+					haoyou = true;
+					break;
+				}
+				haoyou = false;
+			}
+			foreach (Buddy item in FansOnly)
+			{
+				if (item.name == e.name)
+				{
+					tempbd = item;
+					fansi = true;
+				}
+				else
+				{
+					fansi = false;
+				}
+			}
+			if (!haoyou && !fansi)
+			{
+				Buddy buddy = new Buddy();
+				buddy.name = e.name;
+				buddy.isfan = false;
+				buddy.isspecial = false;
+				tempbd = buddy;
+			}
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			dongtaipos.y = (float)(idx * 44) + 4.5f;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		__BaseUI.Label(__BaseUI._rect(3f, idx * 44 + 6, 31f, 28f), string.Empty, iStyle);
+		e.sstext.draw(__BaseUI._rect(3f, idx * 44 + 15, 221f, 44f), __BaseUI._textLeft);
+	}
+
+	private void DrawEvent(EventTimeline e, int idx)
+	{
+		__BaseUI.Label(__BaseUI._rect(0f, 158 + idx * 28 - 158, 453f, 21f), string.Empty, __BaseUI._box5Style);
+		TimeSpan timeSpan = TimeSpan.FromSeconds(TimeUtil.Now - e.time);
+		string strtemp = string.Empty;
+		if (timeSpan.TotalDays >= 1.0)
+		{
+			strtemp = __BaseUI.load_str(20129u, (int)timeSpan.TotalDays);
+		}
+		else if (timeSpan.TotalHours >= 1.0)
+		{
+			strtemp = __BaseUI.load_str(20130u, (int)timeSpan.TotalHours);
+		}
+		else if (timeSpan.TotalMinutes >= 1.0)
+		{
+			strtemp = __BaseUI.load_str(20131u, (int)timeSpan.TotalMinutes);
+		}
+		else if (timeSpan.TotalSeconds >= 1.0)
+		{
+			strtemp = __BaseUI.load_str(20132u, (int)timeSpan.TotalSeconds);
+		}
+		if (!(Global.getTemplate("buddy_event", e.eventid) is _buddy_event buddy_event))
+		{
+			return;
+		}
+		string empty = string.Empty;
+		empty = buddy_event.event_desc.Replace("%t", "|%t|");
+		empty = empty.Replace("%p", e.param.ToString());
+		string[] array = empty.Split('|');
+		GUIStyle iStyle = new GUIStyle();
+		GetIconStyle(ref iStyle, buddy_event.icon);
+		__BaseUI.Label(__BaseUI._rect(12f, 153 + idx * 28 - 158, 31f, 28f), string.Empty, iStyle);
+		GUILayout.BeginArea(new Rect(59f, 162 + idx * 28 - 158, 393f, 20f));
+		GUILayout.BeginHorizontal();
+		LayoutLabel(strtemp, __BaseUI._textLeft, __BaseUI._clrYellowDark);
+		LayoutLabel("，", __BaseUI._textLeft, __BaseUI._clrWhite);
+		for (int i = 0; i < array.Length; i++)
+		{
+			string text = array[i];
+			Color clr = __BaseUI._clrWhite;
+			if (text.Contains("%t"))
+			{
+				text = text.Replace("%t", e.name);
+				clr = __BaseUI._clrGreen;
+			}
+			LayoutLabel(text, __BaseUI._textLeft, clr);
+		}
+		GUILayout.EndHorizontal();
+		GUILayout.EndArea();
+	}
+
+	private void LayoutLabel(string strtemp, GUIStyle textStyle, Color clr)
+	{
+		Color textColor = textStyle.normal.textColor;
+		textStyle.normal.textColor = clr;
+		GUILayout.Label(strtemp, textStyle, GUILayout.ExpandWidth(expand: false));
+		textStyle.normal.textColor = textColor;
+	}
+
+	private void GetIconStyle(ref GUIStyle iStyle, short iconid)
+	{
+		switch (iconid)
+		{
+		case 1:
+			iStyle = ui_icon1;
+			break;
+		case 2:
+			iStyle = ui_icon2;
+			break;
+		case 3:
+			iStyle = ui_icon3;
+			break;
+		case 4:
+			iStyle = ui_icon4;
+			break;
+		case 5:
+			iStyle = ui_icon5;
+			break;
+		case 6:
+			iStyle = ui_icon6;
+			break;
+		}
+	}
+
+	private void DrawBuddyDetail(Buddy bp)
+	{
+		Enable();
+		__BaseUI.Label(__BaseUI._rectC(176f, 110f, 353f, 220f), string.Empty, __BaseUI._boxmsgStyle);
+		GUI.BeginGroup(__BaseUI._rectC(176f, 110f, 353f, 220f));
+		__BaseUI.Label(_CalcRect(68, 12, 161, 36, 116, 12), string.Empty, __BaseUI._box15Style);
+		Color clr = __BaseUI._clrGreen;
+		if (!bp.isonline)
+		{
+			clr = new Color(0.5f, 0.5f, 0.5f, 1f);
+		}
+		__BaseUI.Label(__BaseUI._rect(68f, 13f, 208f, 36f), bp.name, __BaseUI._textCenter, clr);
+		__BaseUI.Label(_CalcRect(44, 52, 14, 16, 297, 119), string.Empty, __BaseUI._box5Style);
+		__BaseUI.Label(__BaseUI._rect(153f, 69f, 128f, 21f), string.Empty, __BaseUI._box5Style);
+		__BaseUI.Label(__BaseUI._rect(153f, 99f, 128f, 21f), string.Empty, __BaseUI._box5Style);
+		__BaseUI.Label(__BaseUI._rect(48f, 57f, 74f, 74f), string.Empty, __BaseUI._icon4Style);
+		if (bp.faceicon != null)
+		{
+			GUI.DrawTexture(__BaseUI._rect(57f, 66f, 56f, 56f), bp.faceicon);
+		}
+		else
+		{
+			AddAssetSub("face" + bp.icon);
+			StartLoadingSub();
+		}
+		__BaseUI.Label(__BaseUI._rect(157f, 65f, 31f, 28f), string.Empty, ui_icon2);
+		__BaseUI.Label(__BaseUI._rect(156f, 94f, 31f, 28f), string.Empty, ui_icon1);
+		__BaseUI.Label(__BaseUI._rect(190f, 69f, 81f, 19f), bp.fans.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(190f, 99f, 81f, 19f), bp.flowers.ToString(), __BaseUI._numCenter, __BaseUI._clrWhite);
+		if (bp.type == Buddy.enumBuddyType.Buddy)
+		{
+			if (button_quxiao.Button(IsEnable(), __BaseUI._rect(42f, 143f, 80f, 22f), string.Empty))
+			{
+				cs_buddy_del_buddy(bp.id);
+			}
+		}
+		else
+		{
+			bool flag = false;
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				if (Buddys[i].id == bp.id)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (flag)
+			{
+				if (button_quxiao.Button(IsEnable(), __BaseUI._rect(42f, 143f, 80f, 22f), string.Empty))
+				{
+					cs_buddy_del_buddy(bp.id);
+				}
+			}
+			else if (button_guanzhu3.Button(IsEnable(), __BaseUI._rect(42f, 143f, 80f, 22f), string.Empty))
+			{
+				cs_buddy_add_buddy(bp.name);
+			}
+		}
+		if (bp.type != Buddy.enumBuddyType.Black)
+		{
+			bool flag2 = false;
+			for (int j = 0; j < Blacklist.Count; j++)
+			{
+				if (Blacklist[j].id == bp.id)
+				{
+					flag2 = true;
+					break;
+				}
+			}
+			if (flag2)
+			{
+				if (button_quxiao2.Button(IsEnable(), __BaseUI._rect(139f, 143f, 80f, 22f), string.Empty))
+				{
+					cs_buddy_del_blacklist(bp.id);
+				}
+			}
+			else if (button_pingbi2.Button(IsEnable(), __BaseUI._rect(139f, 143f, 80f, 22f), string.Empty))
+			{
+				cs_buddy_add_blacklist(bp.name);
+			}
+		}
+		else if (button_quxiao2.Button(IsEnable(), __BaseUI._rect(139f, 143f, 80f, 22f), string.Empty))
+		{
+			cs_buddy_del_blacklist(bp.id);
+		}
+		if (button_liaotian.Button(IsEnable(), __BaseUI._rect(235f, 143f, 80f, 22f), string.Empty))
+		{
+			BaseUI.GetRootUI().GetComponent<MessengerUI>().Open(bp.name);
+		}
+		if (bp.type == Buddy.enumBuddyType.Buddy && !BaseAsset.lds.IsBattling())
+		{
+			if (Global.character_.checkUI(52u) && button_baifang.Button(IsEnable(), __BaseUI._rect(42f, 173f, 80f, 22f), string.Empty))
+			{
+				cs_friend_visit_0x4C0(bp);
+			}
+		}
+		else
+		{
+			bool flag3 = false;
+			for (int k = 0; k < Buddys.Count; k++)
+			{
+				if (Buddys[k].id == bp.id)
+				{
+					flag3 = true;
+					break;
+				}
+			}
+			if (flag3 && !BaseAsset.lds.IsBattling() && Global.character_.checkUI(52u) && button_baifang.Button(IsEnable(), __BaseUI._rect(42f, 173f, 80f, 22f), string.Empty))
+			{
+				cs_friend_visit_0x4C0(bp);
+			}
+		}
+		if (button_quxiao3.Button(IsEnable(), __BaseUI._rect(235f, 173f, 80f, 22f), string.Empty))
+		{
+			m_detailBuddy = null;
+		}
+		if (button_chakan.Button(IsEnable(), __BaseUI._rect(139f, 173f, 80f, 22f), string.Empty))
+		{
+			BaseUI.GetRootUI().GetComponent<InspectUI>().SubLoading(bp.name);
+		}
+		GUI.EndGroup();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if ("face" + Global.character_.icon == AssetName)
+		{
+			Global.character_.texIcon2 = BaseAsset.LoadTexture("face" + Global.character_.icon);
+		}
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (AssetName == "face" + Buddys[i].icon)
+			{
+				Buddys[i].faceicon = BaseAsset.LoadTexture(AssetName);
+			}
+		}
+		for (int j = 0; j < Fans.Count; j++)
+		{
+			if (AssetName == "face" + Fans[j].icon)
+			{
+				Fans[j].faceicon = BaseAsset.LoadTexture(AssetName);
+			}
+		}
+		for (int k = 0; k < Blacklist.Count; k++)
+		{
+			if (AssetName == "face" + Blacklist[k].icon)
+			{
+				Blacklist[k].faceicon = BaseAsset.LoadTexture(AssetName);
+			}
+		}
+		for (int l = 0; l < Contacts.Count; l++)
+		{
+			if (AssetName == "face" + Contacts[l].icon)
+			{
+				Contacts[l].faceicon = BaseAsset.LoadTexture(AssetName);
+			}
+		}
+	}
+
+	private void Drawfensi()
+	{
+		FansOnly.Clear();
+		for (int i = 0; i < Fans.Count; i++)
+		{
+			bool flag = false;
+			for (int j = 0; j < Buddys.Count; j++)
+			{
+				if (Fans[i].id == Buddys[j].id)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				FansOnly.Add(Fans[i]);
+			}
+		}
+		int num = Math.Max(13, FansOnly.Count + 1) * 25;
+		if (num > 340)
+		{
+			scrollBuddy = ScrollControl.infos[scroll_index_fans].scrollpos;
+			scrollBuddy = GUIHacks.BeginScrollView(__BaseUI._rect(17f, 63f, 221f, 340f), scrollBuddy, __BaseUI._rect(0f, 0f, 221f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 25, 0, scroll_index_fans);
+			ScrollControl.infos[scroll_index_fans].scrollpos = scrollBuddy;
+		}
+		else
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(17f, 63f, 221f, 340f));
+		}
+		if (FansOnly.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(fensipos.x, fensipos.y, 198f, 24f), string.Empty, bar4);
+			for (int k = 0; k < FansOnly.Count; k++)
+			{
+				Buddy bp = FansOnly[k];
+				Drawfensi(bp, k);
+			}
+		}
+		if (num > 340)
+		{
+			GUIHacks.EndScrollView();
+		}
+		else
+		{
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void Drawguanzhu()
+	{
+		int num = Math.Max(10, Buddys.Count + 1) * 24;
+		scrollBuddy = ScrollControl.infos[scroll_index_buddy].scrollpos;
+		if (ClickAdd)
+		{
+			GUI.enabled = false;
+		}
+		else
+		{
+			GUI.enabled = true;
+		}
+		scrollBuddy = GUIHacks.BeginScrollView(__BaseUI._rect(15f, 154f, 222f, 246f), scrollBuddy, __BaseUI._rect(0f, 0f, 222f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 24, 0, scroll_index_buddy);
+		ScrollControl.infos[scroll_index_buddy].scrollpos = scrollBuddy;
+		if (Buddys.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(haoyoupos.x, haoyoupos.y, 198f, 24f), string.Empty, bar4);
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				Buddy bp = Buddys[i];
+				Drawhaoyou(bp, i);
+			}
+		}
+		GUIHacks.EndScrollView();
+		GUI.enabled = true;
+	}
+
+	private void Drawlianxi()
+	{
+		int num = Math.Max(10, Contacts.Count + 1) * 24;
+		scrollContacts = ScrollControl.infos[scroll_index_contacts].scrollpos;
+		if (ClickAdd)
+		{
+			GUI.enabled = false;
+		}
+		else
+		{
+			GUI.enabled = true;
+		}
+		scrollContacts = GUIHacks.BeginScrollView(__BaseUI._rect(15f, 154f, 222f, 246f), scrollContacts, __BaseUI._rect(0f, 0f, 222f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 24, 0, scroll_index_contacts);
+		ScrollControl.infos[scroll_index_contacts].scrollpos = scrollContacts;
+		if (Contacts.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(lianxirenpos.x, lianxirenpos.y, 200f, 24f), string.Empty, bar4);
+			for (int i = 0; i < Contacts.Count; i++)
+			{
+				Buddy bp = Contacts[i];
+				Drawlianxiren(bp, i);
+			}
+		}
+		GUIHacks.EndScrollView();
+		GUI.enabled = true;
+	}
+
+	private void Drawheimingdan()
+	{
+		int num = Math.Max(10, Blacklist.Count + 1) * 24;
+		scrollBlacks = ScrollControl.infos[scroll_index_blacks].scrollpos;
+		if (ClickAdd)
+		{
+			GUI.enabled = false;
+		}
+		else
+		{
+			GUI.enabled = true;
+		}
+		scrollBlacks = GUIHacks.BeginScrollView(__BaseUI._rect(15f, 154f, 222f, 246f), scrollBlacks, __BaseUI._rect(0f, 0f, 222f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 24, 0, scroll_index_blacks);
+		ScrollControl.infos[scroll_index_blacks].scrollpos = scrollBlacks;
+		if (Blacklist.Count > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(heimingdanpos.x, heimingdanpos.y, 200f, 24f), string.Empty, bar4);
+			for (int i = 0; i < Blacklist.Count; i++)
+			{
+				Buddy bp = Blacklist[i];
+				Drawheimingdan(bp, i);
+			}
+		}
+		GUIHacks.EndScrollView();
+		GUI.enabled = true;
+	}
+
+	private void Drawhaoyou(Buddy bp, int idx)
+	{
+		if (btn_haoyoupop.Button(IsEnable(), __BaseUI._rect(38f, 24 * idx + 2, 180f, 24f), string.Empty))
+		{
+			popname = "haoyou";
+			tempbd = bp;
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			haoyoupos.y = 24 * idx + 2;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		Rect rc = __BaseUI._rect(3f, 24 * idx + 2, 198f, 24f);
+		Vector2 point = new Vector2(Input.mousePosition.x - __BaseUI._rcCur.x, (float)Screen.height - Input.mousePosition.y - __BaseUI._rcCur.y);
+		if (rc.Contains(point))
+		{
+			__BaseUI.Label(rc, string.Empty, bar3);
+		}
+		if (!BaseAsset.lds.IsBattling() && btn_baifang.Button(IsEnable(), __BaseUI._rect(3f, 24 * idx + 3, 20f, 20f), string.Empty))
+		{
+			cs_friend_visit_0x4C0(bp);
+		}
+		if (bp.isfan)
+		{
+			__BaseUI.Label(__BaseUI._rect(153f, 24 * idx + 5, 21f, 22f), string.Empty, ui_icon8);
+		}
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+		if (bp.ismonster && Global.character_.monster_assist_count < 5)
+		{
+			__BaseUI.Label(__BaseUI._rect(133f, 24 * idx + 5, 21f, 22f), string.Empty, ui_icon9);
+		}
+		if (bp.isspecial)
+		{
+			__BaseUI.Label(__BaseUI._rect(173f, 24 * idx + 4, 21f, 22f), string.Empty, ui_icon7);
+		}
+	}
+
+	private void DrawBuddys(Buddy bp, int idx)
+	{
+		int num = idx % 2;
+		int num2 = idx / 2;
+		__BaseUI.Label(__BaseUI._rect(59 + num * 277 - 53, 125 + num2 * 91 - 119, 267f, 88f), string.Empty, __BaseUI._box4Style);
+		__BaseUI.Label(__BaseUI._rect(80 + num * 277 - 53, 143 + num2 * 91 - 119, 181f, 22f), string.Empty, __BaseUI._barStyle);
+		if (bp.isfan)
+		{
+			__BaseUI.Label(__BaseUI._rect(85 + num * 277 - 53, 138 + num2 * 91 - 119, 31f, 28f), string.Empty, ui_icon3);
+		}
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(115 + num * 277 - 53, 144 + num2 * 91 - 119, 94f, 18f), bp.name, __BaseUI._textCenter, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(115 + num * 277 - 53, 144 + num2 * 91 - 119, 94f, 18f), bp.name, __BaseUI._textCenter, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+		__BaseUI.Label(__BaseUI._rect(212 + num * 277 - 53, 144 + num2 * 91 - 119, 42f, 18f), __BaseUI.load_str(20088u, bp.level), __BaseUI._textCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(83 + num * 277 - 53, 173 + num2 * 91 - 119, 173f, 21f), string.Empty, __BaseUI._box5Style);
+		__BaseUI.Label(__BaseUI._rect(87 + num * 277 - 53, 168 + num2 * 91 - 119, 31f, 28f), string.Empty, ui_icon2);
+		__BaseUI.Label(__BaseUI._rect(115 + num * 277 - 53, 173 + num2 * 91 - 119, 52f, 19f), bp.fans.ToString(), __BaseUI._textCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(175 + num * 277 - 53, 168 + num2 * 91 - 119, 31f, 28f), string.Empty, ui_icon1);
+		__BaseUI.Label(__BaseUI._rect(203 + num * 277 - 53, 173 + num2 * 91 - 119, 52f, 19f), bp.flowers.ToString(), __BaseUI._textCenter, __BaseUI._clrWhite);
+		if (Global.character_.checkUI(52u) && !BaseAsset.lds.IsBattling() && button_baifang2.Button(IsEnable(), __BaseUI._rect(265 + num * 277 - 53, 144 + num2 * 91 - 119, 46f, 46f), string.Empty))
+		{
+			cs_friend_visit_0x4C0(bp);
+		}
+		if (__BaseUI._hover3Button.Button(IsEnable(), __BaseUI._rect(59 + num * 277 - 53, 125 + num2 * 91 - 119, 267f, 88f), string.Empty))
+		{
+			m_detailBuddy = bp;
+		}
+		if (bp.ismonster)
+		{
+			__BaseUI.Label(__BaseUI._rect(297 + num * 277 - 53, 145 + num2 * 91 - 119, 11f, 22f), string.Empty, ui_icon5);
+		}
+	}
+
+	private void Drawfensi(Buddy bp, int idx)
+	{
+		if (btn_temppop.Button(IsEnable(), __BaseUI._rect(1f, (float)(idx * 25) + 4.5f, 135f, 25f), string.Empty))
+		{
+			popname = "fensi";
+			tempbd = bp;
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			fensipos.y = (float)(idx * 25) + 4.5f;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		temprect = __BaseUI._rect(1f, (float)(idx * 25) + 4.5f, 198f, 24f);
+		Vector2 point = new Vector2(Input.mousePosition.x - __BaseUI._rcCur.x, (float)Screen.height - Input.mousePosition.y - __BaseUI._rcCur.y);
+		if (temprect.Contains(point))
+		{
+			__BaseUI.Label(temprect, string.Empty, tiaobar);
+		}
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(10f, idx * 25 + 7, 96f, 22f), bp.name, __BaseUI._textLeft, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(10f, idx * 25 + 7, 96f, 22f), bp.name, __BaseUI._textLeft, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+		if (btn_guanzhuta.Button(IsEnable(), __BaseUI._rect(138f, idx * 25 + 9, 52f, 16f), string.Empty))
+		{
+			DisableAll();
+			cs_buddy_add_buddy(bp.name);
+			if (idx == FansOnly.Count - 1)
+			{
+				fensipos = new Vector2(1f, 4.5f);
+			}
+		}
+	}
+
+	private void Drawlianxiren(Buddy bp, int idx)
+	{
+		if (btn_pop2.Button(IsEnable(), __BaseUI._rect(3f, 24 * idx + 2, 200f, 24f), string.Empty))
+		{
+			popname = "lianxiren";
+			tempbd = bp;
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			lianxirenpos.y = 24 * idx + 2;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+	}
+
+	private void Drawheimingdan(Buddy bp, int idx)
+	{
+		if (btn_pop2.Button(IsEnable(), __BaseUI._rect(3f, 24 * idx + 2, 200f, 24f), string.Empty))
+		{
+			popname = "heimingdan";
+			tempbd = bp;
+			mousePosX = Input.mousePosition.x;
+			mousePosY = (float)Screen.height - Input.mousePosition.y;
+			rcType = __BaseUI._rect(mousePosX, mousePosY, m_popmenuW, m_popmenuH);
+			heimingdanpos.y = 24 * idx + 2;
+			PopupUI.Register(PoP_up, popname, this);
+		}
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(26f, 24 * idx + 5, 94f, 18f), bp.name, __BaseUI._textLeft, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+	}
+
+	private void DrawFans(Buddy bp, int idx)
+	{
+		int num = idx % 3;
+		int num2 = idx / 3;
+		__BaseUI.Label(__BaseUI._rect(39 + num * 194 - 33, 134 + num2 * 91 - 128, 187f, 88f), string.Empty, __BaseUI._box4Style);
+		__BaseUI.Label(__BaseUI._rect(55 + num * 194 - 33, 152 + num2 * 91 - 128, 157f, 22f), string.Empty, __BaseUI._barStyle);
+		if (bp.isonline)
+		{
+			__BaseUI.Label(__BaseUI._rect(55 + num * 194 - 33, 152 + num2 * 91 - 128, 96f, 22f), bp.name, __BaseUI._textCenter, __BaseUI._clrGreen);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(55 + num * 194 - 33, 152 + num2 * 91 - 128, 96f, 22f), bp.name, __BaseUI._textCenter, new Color(0.5f, 0.5f, 0.5f, 1f));
+		}
+		__BaseUI.Label(__BaseUI._rect(161 + num * 194 - 33, 152 + num2 * 91 - 128, 42f, 22f), __BaseUI.load_str(20088u, bp.level), __BaseUI._textCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(58 + num * 194 - 33, 182 + num2 * 91 - 128, 155f, 21f), string.Empty, __BaseUI._box5Style);
+		__BaseUI.Label(__BaseUI._rect(66 + num * 194 - 33, 177 + num2 * 91 - 128, 31f, 28f), string.Empty, ui_icon2);
+		__BaseUI.Label(__BaseUI._rect(88 + num * 194 - 33, 182 + num2 * 91 - 128, 43f, 19f), bp.fans.ToString(), __BaseUI._textCenter, __BaseUI._clrWhite);
+		__BaseUI.Label(__BaseUI._rect(130 + num * 194 - 33, 176 + num2 * 91 - 128, 31f, 28f), string.Empty, ui_icon1);
+		__BaseUI.Label(__BaseUI._rect(161 + num * 194 - 33, 182 + num2 * 91 - 128, 52f, 19f), bp.flowers.ToString(), __BaseUI._textCenter, __BaseUI._clrWhite);
+		if (__BaseUI._hover3Button.Button(IsEnable(), __BaseUI._rect(39 + num * 194 - 33, 134 + num2 * 91 - 128, 187f, 88f), string.Empty))
+		{
+			m_detailBuddy = bp;
+		}
+	}
+
+	public void cs_friend_visit_0x4C0(Buddy bp)
+	{
+		DisableAll();
+		visit_bp = bp;
+		CSFriendVisit_0x4C0 cSFriendVisit_0x4C = new CSFriendVisit_0x4C0();
+		cSFriendVisit_0x4C.id = bp.id;
+		RootUI.m_client.Send(1216, cSFriendVisit_0x4C, sc_friend_visit_0x4C0);
+	}
+
+	private void sc_friend_visit_0x4C0(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		if (stream == null)
+		{
+			return;
+		}
+		SCFriendVisit_0x4C0 sCFriendVisit_0x4C = JSProtoBuf.Serializer.Deserialize<SCFriendVisit_0x4C0>(stream);
+		if (sCFriendVisit_0x4C.result == 0)
+		{
+			if (BaseAsset.lds.GetCurUI().LevelID == "CapitalFriend")
+			{
+				CapitalFriendUI component = GameObject.Find("CapitalFriend/CapitalFriendUI").GetComponent<CapitalFriendUI>();
+				component.Destroy();
+				CapitalFriendUI.myfriend = new Friend(sCFriendVisit_0x4C.friend_info);
+				BaseAsset.lds.GetCurUI().LevelStart();
+			}
+			else
+			{
+				CapitalFriendUI.myfriend = new Friend(sCFriendVisit_0x4C.friend_info);
+				BaseUI.GetRootUI().LoadLevel("CapitalFriend", BaseAsset.lds.GetCurUI());
+			}
+			Hide();
+		}
+		else if (sCFriendVisit_0x4C.result == 1)
+		{
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20133u), __BaseUI.load_str(20134u, visit_bp.name), null);
+		}
+	}
+
+	public bool isFans(ulong id)
+	{
+		bool result = false;
+		foreach (Buddy fan in Fans)
+		{
+			if (fan.id == id)
+			{
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+
+	private void DrawAddBuddy(int wnd)
+	{
+		Enable();
+		__BaseUI.Label(__BaseUI._rectC(163f, 110f, 327f, 220f), string.Empty, __BaseUI._boxmsgStyle);
+		GUI.BeginGroup(__BaseUI._rectC(163f, 110f, 327f, 220f));
+		switch (wnd)
+		{
+		case 1:
+			__BaseUI.Label(__BaseUI._rect(124f, 22f, 79f, 14f), string.Empty, ui_zi_tjgz);
+			break;
+		case 0:
+			__BaseUI.Label(__BaseUI._rect(124f, 22f, 79f, 14f), string.Empty, ui_zi_tjpb);
+			break;
+		}
+		__BaseUI.Label(__BaseUI._rect(77f, 80f, 173f, 21f), string.Empty, __BaseUI._box5Style);
+		m_inputname = GUI.TextField(__BaseUI._rect(77f, 80f, 173f, 21f), m_inputname, __BaseUI._textCenter);
+		if (m_inputname.Length > 12)
+		{
+			m_inputname = m_inputname.Substring(0, 12);
+		}
+		switch (wnd)
+		{
+		case 1:
+			__BaseUI.Label(__BaseUI._rect(21f, 108f, 284f, 25f), __BaseUI.load_str(20135u), __BaseUI._textCenter, __BaseUI._clrCyan);
+			break;
+		case 0:
+			__BaseUI.Label(__BaseUI._rect(21f, 108f, 284f, 25f), __BaseUI.load_str(20136u), __BaseUI._textCenter, __BaseUI._clrCyan);
+			break;
+		}
+		if (button_tianjia.Button(IsEnable(), __BaseUI._rect(75f, 150f, 80f, 22f), string.Empty))
+		{
+			if (m_inputname.Length < 1)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20137u), rmg);
+			}
+			else if (wnd == 1)
+			{
+				cs_buddy_add_buddy(m_inputname);
+			}
+			else
+			{
+				cs_buddy_add_blacklist(m_inputname);
+			}
+		}
+		if (button_quxiao3.Button(IsEnable(), __BaseUI._rect(172f, 150f, 80f, 22f), string.Empty))
+		{
+			m_showAddBuddy = 0;
+		}
+		GUI.EndGroup();
+	}
+
+	public void cs_buddy_load()
+	{
+		CSBuddyLoad_0x31E pkt = new CSBuddyLoad_0x31E();
+		RootUI.m_client.Send(798, pkt, sc_buddy_load);
+	}
+
+	public void sc_buddy_load(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyLoad_0x31E sCBuddyLoad_0x31E = JSProtoBuf.Serializer.Deserialize<SCBuddyLoad_0x31E>(stream);
+		switch (sCBuddyLoad_0x31E.operate)
+		{
+		case SCBuddyLoad_0x31E.Operate.OK:
+		{
+			Buddys.Clear();
+			for (int i = 0; i < sCBuddyLoad_0x31E.buddys.Count; i++)
+			{
+				if (sCBuddyLoad_0x31E.buddys[i].isspecial && sCBuddyLoad_0x31E.buddys[i].isonline == 1)
+				{
+					Buddy item = new Buddy(sCBuddyLoad_0x31E.buddys[i]);
+					Buddys.Add(item);
+				}
+			}
+			for (int j = 0; j < sCBuddyLoad_0x31E.buddys.Count; j++)
+			{
+				if (sCBuddyLoad_0x31E.buddys[j].isspecial && sCBuddyLoad_0x31E.buddys[j].isonline == 0)
+				{
+					Buddy item2 = new Buddy(sCBuddyLoad_0x31E.buddys[j]);
+					Buddys.Add(item2);
+				}
+			}
+			for (int k = 0; k < sCBuddyLoad_0x31E.buddys.Count; k++)
+			{
+				if (!sCBuddyLoad_0x31E.buddys[k].isspecial && sCBuddyLoad_0x31E.buddys[k].isonline == 1 && sCBuddyLoad_0x31E.buddys[k].isfan == 1)
+				{
+					Buddy item3 = new Buddy(sCBuddyLoad_0x31E.buddys[k]);
+					Buddys.Add(item3);
+				}
+			}
+			for (int l = 0; l < sCBuddyLoad_0x31E.buddys.Count; l++)
+			{
+				if (!sCBuddyLoad_0x31E.buddys[l].isspecial && sCBuddyLoad_0x31E.buddys[l].isonline == 0 && sCBuddyLoad_0x31E.buddys[l].isfan == 1)
+				{
+					Buddy item4 = new Buddy(sCBuddyLoad_0x31E.buddys[l]);
+					Buddys.Add(item4);
+				}
+			}
+			for (int m = 0; m < sCBuddyLoad_0x31E.buddys.Count; m++)
+			{
+				if (!sCBuddyLoad_0x31E.buddys[m].isspecial && sCBuddyLoad_0x31E.buddys[m].isonline == 1 && sCBuddyLoad_0x31E.buddys[m].isfan == 0)
+				{
+					Buddy item5 = new Buddy(sCBuddyLoad_0x31E.buddys[m]);
+					Buddys.Add(item5);
+				}
+			}
+			for (int n = 0; n < sCBuddyLoad_0x31E.buddys.Count; n++)
+			{
+				if (!sCBuddyLoad_0x31E.buddys[n].isspecial && sCBuddyLoad_0x31E.buddys[n].isonline == 0 && sCBuddyLoad_0x31E.buddys[n].isfan == 0)
+				{
+					Buddy item6 = new Buddy(sCBuddyLoad_0x31E.buddys[n]);
+					Buddys.Add(item6);
+				}
+			}
+			Fans.Clear();
+			for (int num = 0; num < sCBuddyLoad_0x31E.fans.Count; num++)
+			{
+				if (sCBuddyLoad_0x31E.fans[num].isonline == 1)
+				{
+					Buddy item7 = new Buddy(sCBuddyLoad_0x31E.fans[num]);
+					Fans.Add(item7);
+				}
+			}
+			for (int num2 = 0; num2 < sCBuddyLoad_0x31E.fans.Count; num2++)
+			{
+				if (sCBuddyLoad_0x31E.fans[num2].isonline == 0)
+				{
+					Buddy item8 = new Buddy(sCBuddyLoad_0x31E.fans[num2]);
+					Fans.Add(item8);
+				}
+			}
+			Blacklist.Clear();
+			for (int num3 = 0; num3 < sCBuddyLoad_0x31E.blacks.Count; num3++)
+			{
+				Buddy item9 = new Buddy(sCBuddyLoad_0x31E.blacks[num3]);
+				Blacklist.Add(item9);
+			}
+			Contacts.Clear();
+			for (int num4 = 0; num4 < sCBuddyLoad_0x31E.contacts.Count; num4++)
+			{
+				Buddy item10 = new Buddy(sCBuddyLoad_0x31E.contacts[num4]);
+				Contacts.Add(item10);
+			}
+			Global.character_.Events.Clear();
+			Global.character_.FlowerEvents.Clear();
+			for (int num5 = 0; num5 < sCBuddyLoad_0x31E.events.Count; num5++)
+			{
+				EventTimeline eventTimeline = new EventTimeline(sCBuddyLoad_0x31E.events[num5]);
+				if (eventTimeline.eventid != 4)
+				{
+					Global.character_.Events.Add(eventTimeline);
+				}
+				else
+				{
+					Global.character_.FlowerEvents.Add(eventTimeline);
+				}
+			}
+			Global.character_.Events.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+			Global.character_.FlowerEvents.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+			m_newfans = (int)sCBuddyLoad_0x31E.newfans;
+			m_newevent = (int)sCBuddyLoad_0x31E.newevent;
+			m_flowers = (int)sCBuddyLoad_0x31E.flowers;
+			m_newflower = (int)sCBuddyLoad_0x31E.newflower;
+			if (!IsVisible())
+			{
+				Visible();
+			}
+			else
+			{
+				buddyPage = enumbuddyPage.guanzhu;
+			}
+			break;
+		}
+		case SCBuddyLoad_0x31E.Operate.Error:
+			if (!IsVisible())
+			{
+				MainUI.SetSubUI(null);
+			}
+			break;
+		}
+	}
+
+	public void cs_buddy_load_fans()
+	{
+		CSBuddyLoadFensi_0x31F pkt = new CSBuddyLoadFensi_0x31F();
+		RootUI.m_client.Send(799, pkt, sc_buddy_load_fans);
+	}
+
+	public void sc_buddy_load_fans(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyLoadFensi_0x31F sCBuddyLoadFensi_0x31F = JSProtoBuf.Serializer.Deserialize<SCBuddyLoadFensi_0x31F>(stream);
+		switch (sCBuddyLoadFensi_0x31F.operate)
+		{
+		case SCBuddyLoadFensi_0x31F.Operate.OK:
+		{
+			Fans.Clear();
+			for (int i = 0; i < sCBuddyLoadFensi_0x31F.buddys.Count; i++)
+			{
+				Buddy item = new Buddy(sCBuddyLoadFensi_0x31F.buddys[i]);
+				Fans.Add(item);
+			}
+			m_newfans = (int)sCBuddyLoadFensi_0x31F.newfans;
+			m_newevent = (int)sCBuddyLoadFensi_0x31F.newevent;
+			m_flowers = (int)sCBuddyLoadFensi_0x31F.flowers;
+			buddyPage2 = enumbuddyPage2.fensi;
+			m_newflower = (int)sCBuddyLoadFensi_0x31F.newflower;
+			break;
+		}
+		case SCBuddyLoadFensi_0x31F.Operate.Error:
+			if (!IsVisible())
+			{
+				MainUI.SetSubUI(null);
+			}
+			break;
+		}
+	}
+
+	public void cs_buddy_load_black()
+	{
+		CSBuddyLoadBlack_0x325 pkt = new CSBuddyLoadBlack_0x325();
+		RootUI.m_client.Send(805, pkt, sc_buddy_load_black);
+	}
+
+	public void sc_buddy_load_black(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyLoadBlack_0x325 sCBuddyLoadBlack_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyLoadBlack_0x325>(stream);
+		switch (sCBuddyLoadBlack_0x.operate)
+		{
+		case SCBuddyLoadBlack_0x325.Operate.OK:
+		{
+			Blacklist.Clear();
+			for (int i = 0; i < sCBuddyLoadBlack_0x.buddys.Count; i++)
+			{
+				Buddy item = new Buddy(sCBuddyLoadBlack_0x.buddys[i]);
+				Blacklist.Add(item);
+			}
+			m_newfans = (int)sCBuddyLoadBlack_0x.newfans;
+			m_newevent = (int)sCBuddyLoadBlack_0x.newevent;
+			m_flowers = (int)sCBuddyLoadBlack_0x.flowers;
+			buddyPage = enumbuddyPage.pingbi;
+			m_newflower = (int)sCBuddyLoadBlack_0x.newflower;
+			break;
+		}
+		case SCBuddyLoadBlack_0x325.Operate.Error:
+			if (!IsVisible())
+			{
+				MainUI.SetSubUI(null);
+			}
+			break;
+		}
+	}
+
+	public void cs_buddy_load_contact()
+	{
+		CSBuddyLoadContact_0x324 pkt = new CSBuddyLoadContact_0x324();
+		RootUI.m_client.Send(804, pkt, sc_buddy_load_contact);
+	}
+
+	public void sc_buddy_load_contact(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyLoadContact_0x324 sCBuddyLoadContact_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyLoadContact_0x324>(stream);
+		switch (sCBuddyLoadContact_0x.operate)
+		{
+		case SCBuddyLoadContact_0x324.Operate.OK:
+		{
+			Contacts.Clear();
+			for (int i = 0; i < sCBuddyLoadContact_0x.buddys.Count; i++)
+			{
+				Buddy item = new Buddy(sCBuddyLoadContact_0x.buddys[i]);
+				Contacts.Add(item);
+			}
+			m_newfans = (int)sCBuddyLoadContact_0x.newfans;
+			m_newevent = (int)sCBuddyLoadContact_0x.newevent;
+			m_flowers = (int)sCBuddyLoadContact_0x.flowers;
+			buddyPage = enumbuddyPage.lianxi;
+			m_newflower = (int)sCBuddyLoadContact_0x.newflower;
+			break;
+		}
+		case SCBuddyLoadContact_0x324.Operate.Error:
+			if (!IsVisible())
+			{
+				MainUI.SetSubUI(null);
+			}
+			break;
+		}
+	}
+
+	public void cs_buddy_load_event(int a)
+	{
+		CSBuddyLoadEvent_0x326 cSBuddyLoadEvent_0x = new CSBuddyLoadEvent_0x326();
+		cSBuddyLoadEvent_0x.id = (uint)a;
+		RootUI.m_client.Send(806, cSBuddyLoadEvent_0x, sc_buddy_load_event, a);
+	}
+
+	public void sc_buddy_load_event(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyLoadEvent_0x326 sCBuddyLoadEvent_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyLoadEvent_0x326>(stream);
+		switch (sCBuddyLoadEvent_0x.operate)
+		{
+		case SCBuddyLoadEvent_0x326.Operate.OK:
+		{
+			Global.character_.Events.Clear();
+			Global.character_.FlowerEvents.Clear();
+			for (int i = 0; i < sCBuddyLoadEvent_0x.events.Count; i++)
+			{
+				EventTimeline eventTimeline = new EventTimeline(sCBuddyLoadEvent_0x.events[i]);
+				if (eventTimeline.eventid != 4)
+				{
+					Global.character_.Events.Add(eventTimeline);
+				}
+				else
+				{
+					Global.character_.FlowerEvents.Add(eventTimeline);
+				}
+			}
+			Global.character_.Events.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+			Global.character_.FlowerEvents.Sort((EventTimeline y, EventTimeline x) => x.time.CompareTo(y.time));
+			m_newfans = (int)sCBuddyLoadEvent_0x.newfans;
+			m_newevent = (int)sCBuddyLoadEvent_0x.newevent;
+			m_flowers = (int)sCBuddyLoadEvent_0x.flowers;
+			m_newflower = (int)sCBuddyLoadEvent_0x.newflower;
+			switch ((int)arg)
+			{
+			case 1:
+				buddyPage2 = enumbuddyPage2.dongtai;
+				break;
+			case 2:
+				buddyPage2 = enumbuddyPage2.flower;
+				break;
+			}
+			break;
+		}
+		case SCBuddyLoadEvent_0x326.Operate.Error:
+			if (!IsVisible())
+			{
+				MainUI.SetSubUI(null);
+			}
+			break;
+		}
+	}
+
+	public void cs_buddy_add_buddy(string name)
+	{
+		CSBuddyAddBuddy_0x320 cSBuddyAddBuddy_0x = new CSBuddyAddBuddy_0x320();
+		cSBuddyAddBuddy_0x.name = name;
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (name == Buddys[i].name)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20138u), null);
+				return;
+			}
+		}
+		RootUI.m_client.Send(800, cSBuddyAddBuddy_0x, sc_buddy_add_buddy);
+	}
+
+	public void sc_buddy_add_buddy(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			EnableAll();
+			return;
+		}
+		SCBuddyAddBuddy_0x320 sCBuddyAddBuddy_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyAddBuddy_0x320>(stream);
+		switch (sCBuddyAddBuddy_0x.operate)
+		{
+		case SCBuddyAddBuddy_0x320.Operate.OK:
+		{
+			Buddy item = new Buddy(sCBuddyAddBuddy_0x.buddy);
+			Buddys.Add(item);
+			m_showAddBuddy = 0;
+			if (m_detailBuddy != null)
+			{
+				m_detailBuddy = null;
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20139u), rmg);
+			TempBuddys.Clear();
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				TempBuddys.Add(Buddys[i]);
+			}
+			Buddys.Clear();
+			for (int j = 0; j < TempBuddys.Count; j++)
+			{
+				if (TempBuddys[j].isspecial && TempBuddys[j].isonline)
+				{
+					Buddys.Add(TempBuddys[j]);
+				}
+			}
+			for (int k = 0; k < TempBuddys.Count; k++)
+			{
+				if (TempBuddys[k].isspecial && !TempBuddys[k].isonline)
+				{
+					Buddys.Add(TempBuddys[k]);
+				}
+			}
+			for (int l = 0; l < TempBuddys.Count; l++)
+			{
+				if (!TempBuddys[l].isspecial && TempBuddys[l].isonline && TempBuddys[l].isfan)
+				{
+					Buddys.Add(TempBuddys[l]);
+				}
+			}
+			for (int m = 0; m < TempBuddys.Count; m++)
+			{
+				if (!TempBuddys[m].isspecial && !TempBuddys[m].isonline && TempBuddys[m].isfan)
+				{
+					Buddys.Add(TempBuddys[m]);
+				}
+			}
+			for (int n = 0; n < TempBuddys.Count; n++)
+			{
+				if (!TempBuddys[n].isspecial && TempBuddys[n].isonline && !TempBuddys[n].isfan)
+				{
+					Buddys.Add(TempBuddys[n]);
+				}
+			}
+			for (int num = 0; num < TempBuddys.Count; num++)
+			{
+				if (!TempBuddys[num].isspecial && !TempBuddys[num].isonline && !TempBuddys[num].isfan)
+				{
+					Buddys.Add(TempBuddys[num]);
+				}
+			}
+			break;
+		}
+		case SCBuddyAddBuddy_0x320.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20140u), rmg);
+			break;
+		case SCBuddyAddBuddy_0x320.Operate.Full:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20141u), rmg);
+			break;
+		case SCBuddyAddBuddy_0x320.Operate.Many:
+			ReAddName.Clear();
+			ReAddName = sCBuddyAddBuddy_0x.names;
+			idxlabel = 1;
+			subreaddwindow = true;
+			break;
+		}
+		EnableAll();
+	}
+
+	private void DrawReAddBuddy()
+	{
+		Enable();
+		__BaseUI.BeginGroup(__BaseUI._rectC(167f, 110f, 335f, 221f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 335f, 221f), string.Empty, __BaseUI._boxmsgStyle);
+		__BaseUI.Box(__BaseUI._rect(93f, 20f, 146f, 15f), rezitex);
+		__BaseUI.Label(__BaseUI._rect(27f, 40f, 281f, 155f), string.Empty, __BaseUI._boxnew6Style);
+		int num = Math.Max(5, ReAddName.Count) * 24;
+		scrollReAddBuddy = ScrollControl.infos[scroll_index_readdbuddy].scrollpos;
+		scrollReAddBuddy = GUIHacks.BeginScrollView(__BaseUI._rect(35f, 53f, 264f, 123f), scrollReAddBuddy, __BaseUI._rect(0f, 0f, 264f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 24, 0, scroll_index_readdbuddy);
+		ScrollControl.infos[scroll_index_readdbuddy].scrollpos = scrollReAddBuddy;
+		for (int i = 0; i < ReAddName.Count; i++)
+		{
+			__BaseUI.Label(__BaseUI._rect(15f, 3 + i * 24, 200f, 20f), ReAddName[i], __BaseUI._textNLeft, __BaseUI._clrWhite);
+			if (Btn_readd.Button(IsEnable(), __BaseUI._rect(180f, 4 + i * 24, 52f, 16f), string.Empty))
+			{
+				switch (idxlabel)
+				{
+				case 1:
+					cs_buddy_add_buddy(ReAddName[i]);
+					subreaddwindow = false;
+					ClickAdd = false;
+					idxlabel = -1;
+					break;
+				case 2:
+					cs_buddy_add_blacklist(ReAddName[i]);
+					subreaddwindow = false;
+					ClickAdd = false;
+					idxlabel = -1;
+					break;
+				}
+			}
+		}
+		GUIHacks.EndScrollView();
+		if (button_guanbi.Button(IsEnable(), __BaseUI._rect(297f, 14f, 24f, 24f), string.Empty))
+		{
+			subreaddwindow = false;
+			ClickAdd = false;
+			idxlabel = -1;
+		}
+		__BaseUI.EndGroup();
+	}
+
+	public void cs_buddy_del_buddy(ulong buddyid)
+	{
+		CSBuddyDelBuddy_0x321 cSBuddyDelBuddy_0x = new CSBuddyDelBuddy_0x321();
+		cSBuddyDelBuddy_0x.id = buddyid;
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (buddyid == Buddys[i].id)
+			{
+				RootUI.m_client.Send(801, cSBuddyDelBuddy_0x, sc_buddy_del_buddy, buddyid);
+				return;
+			}
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20142u), rmg);
+	}
+
+	public void sc_buddy_del_buddy(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		ulong num = (ulong)arg;
+		SCBuddyDelBuddy_0x321 sCBuddyDelBuddy_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyDelBuddy_0x321>(stream);
+		switch (sCBuddyDelBuddy_0x.operate)
+		{
+		case SCBuddyDelBuddy_0x321.Operate.OK:
+		{
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				if (Buddys[i].id == num)
+				{
+					haoyoupos = new Vector2(0f, 5f);
+					Buddys.RemoveAt(i);
+					break;
+				}
+			}
+			m_detailBuddy = null;
+			break;
+		}
+		case SCBuddyDelBuddy_0x321.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20143u), rmg);
+			break;
+		}
+	}
+
+	public void cs_buddy_del_blacklist(ulong buddyid)
+	{
+		CSBuddyDelBlacklist_0x323 cSBuddyDelBlacklist_0x = new CSBuddyDelBlacklist_0x323();
+		cSBuddyDelBlacklist_0x.id = buddyid;
+		for (int i = 0; i < Blacklist.Count; i++)
+		{
+			if (buddyid == Blacklist[i].id)
+			{
+				RootUI.m_client.Send(803, cSBuddyDelBlacklist_0x, sc_buddy_del_blacklist, buddyid);
+				return;
+			}
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20144u), rmg);
+	}
+
+	public void sc_buddy_del_blacklist(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		ulong num = (ulong)arg;
+		SCBuddyDelBlacklist_0x323 sCBuddyDelBlacklist_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyDelBlacklist_0x323>(stream);
+		switch (sCBuddyDelBlacklist_0x.operate)
+		{
+		case SCBuddyDelBlacklist_0x323.Operate.OK:
+		{
+			for (int i = 0; i < Blacklist.Count; i++)
+			{
+				if (Blacklist[i].id == num)
+				{
+					heimingdanpos = new Vector2(3f, 2f);
+					Blacklist.RemoveAt(i);
+					break;
+				}
+			}
+			m_detailBuddy = null;
+			break;
+		}
+		case SCBuddyDelBlacklist_0x323.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20145u), rmg);
+			break;
+		}
+	}
+
+	public void cs_buddy_add_special(ulong buddyid)
+	{
+		CSBuddyAddSpecial_0x353 cSBuddyAddSpecial_0x = new CSBuddyAddSpecial_0x353();
+		cSBuddyAddSpecial_0x.id = buddyid;
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (buddyid == Buddys[i].id && !Buddys[i].isspecial)
+			{
+				RootUI.m_client.Send(851, cSBuddyAddSpecial_0x, sc_buddy_add_special, buddyid);
+				return;
+			}
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20146u), rmg);
+	}
+
+	public void sc_buddy_add_special(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		ulong num = (ulong)arg;
+		SCBuddyAddSpecial_0x353 sCBuddyAddSpecial_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyAddSpecial_0x353>(stream);
+		switch (sCBuddyAddSpecial_0x.operate)
+		{
+		case SCBuddyAddSpecial_0x353.Operate.OK:
+		{
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				if (num == Buddys[i].id && !Buddys[i].isspecial)
+				{
+					Buddys[i].isspecial = true;
+					break;
+				}
+			}
+			TempBuddys.Clear();
+			for (int j = 0; j < Buddys.Count; j++)
+			{
+				TempBuddys.Add(Buddys[j]);
+			}
+			Buddys.Clear();
+			for (int k = 0; k < TempBuddys.Count; k++)
+			{
+				if (TempBuddys[k].isspecial && TempBuddys[k].isonline)
+				{
+					Buddys.Add(TempBuddys[k]);
+				}
+			}
+			for (int l = 0; l < TempBuddys.Count; l++)
+			{
+				if (TempBuddys[l].isspecial && !TempBuddys[l].isonline)
+				{
+					Buddys.Add(TempBuddys[l]);
+				}
+			}
+			for (int m = 0; m < TempBuddys.Count; m++)
+			{
+				if (!TempBuddys[m].isspecial && TempBuddys[m].isonline && TempBuddys[m].isfan)
+				{
+					Buddys.Add(TempBuddys[m]);
+				}
+			}
+			for (int n = 0; n < TempBuddys.Count; n++)
+			{
+				if (!TempBuddys[n].isspecial && !TempBuddys[n].isonline && TempBuddys[n].isfan)
+				{
+					Buddys.Add(TempBuddys[n]);
+				}
+			}
+			for (int num2 = 0; num2 < TempBuddys.Count; num2++)
+			{
+				if (!TempBuddys[num2].isspecial && TempBuddys[num2].isonline && !TempBuddys[num2].isfan)
+				{
+					Buddys.Add(TempBuddys[num2]);
+				}
+			}
+			for (int num3 = 0; num3 < TempBuddys.Count; num3++)
+			{
+				if (!TempBuddys[num3].isspecial && !TempBuddys[num3].isonline && !TempBuddys[num3].isfan)
+				{
+					Buddys.Add(TempBuddys[num3]);
+				}
+			}
+			break;
+		}
+		case SCBuddyAddSpecial_0x353.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20147u), rmg);
+			break;
+		}
+	}
+
+	public void cs_buddy_del_special(ulong buddyid)
+	{
+		CSBuddyRemoveSpecial_0x354 cSBuddyRemoveSpecial_0x = new CSBuddyRemoveSpecial_0x354();
+		cSBuddyRemoveSpecial_0x.id = buddyid;
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (buddyid == Buddys[i].id && Buddys[i].isspecial)
+			{
+				RootUI.m_client.Send(852, cSBuddyRemoveSpecial_0x, sc_buddy_del_special, buddyid);
+				return;
+			}
+		}
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20148u), rmg);
+	}
+
+	public void sc_buddy_del_special(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		ulong num = (ulong)arg;
+		SCBuddyRemoveSpecial_0x354 sCBuddyRemoveSpecial_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyRemoveSpecial_0x354>(stream);
+		switch (sCBuddyRemoveSpecial_0x.operate)
+		{
+		case SCBuddyRemoveSpecial_0x354.Operate.OK:
+		{
+			for (int i = 0; i < Buddys.Count; i++)
+			{
+				if (num == Buddys[i].id && Buddys[i].isspecial)
+				{
+					Buddys[i].isspecial = false;
+					break;
+				}
+			}
+			TempBuddys.Clear();
+			for (int j = 0; j < Buddys.Count; j++)
+			{
+				TempBuddys.Add(Buddys[j]);
+			}
+			Buddys.Clear();
+			for (int k = 0; k < TempBuddys.Count; k++)
+			{
+				if (TempBuddys[k].isspecial && TempBuddys[k].isonline)
+				{
+					Buddys.Add(TempBuddys[k]);
+				}
+			}
+			for (int l = 0; l < TempBuddys.Count; l++)
+			{
+				if (TempBuddys[l].isspecial && !TempBuddys[l].isonline)
+				{
+					Buddys.Add(TempBuddys[l]);
+				}
+			}
+			for (int m = 0; m < TempBuddys.Count; m++)
+			{
+				if (!TempBuddys[m].isspecial && TempBuddys[m].isonline && TempBuddys[m].isfan)
+				{
+					Buddys.Add(TempBuddys[m]);
+				}
+			}
+			for (int n = 0; n < TempBuddys.Count; n++)
+			{
+				if (!TempBuddys[n].isspecial && !TempBuddys[n].isonline && TempBuddys[n].isfan)
+				{
+					Buddys.Add(TempBuddys[n]);
+				}
+			}
+			for (int num2 = 0; num2 < TempBuddys.Count; num2++)
+			{
+				if (!TempBuddys[num2].isspecial && TempBuddys[num2].isonline && !TempBuddys[num2].isfan)
+				{
+					Buddys.Add(TempBuddys[num2]);
+				}
+			}
+			for (int num3 = 0; num3 < TempBuddys.Count; num3++)
+			{
+				if (!TempBuddys[num3].isspecial && !TempBuddys[num3].isonline && !TempBuddys[num3].isfan)
+				{
+					Buddys.Add(TempBuddys[num3]);
+				}
+			}
+			break;
+		}
+		case SCBuddyRemoveSpecial_0x354.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20149u), rmg);
+			break;
+		}
+	}
+
+	public void cs_buddy_add_blacklist(string name)
+	{
+		CSBuddyAddBlacklist_0x322 cSBuddyAddBlacklist_0x = new CSBuddyAddBlacklist_0x322();
+		cSBuddyAddBlacklist_0x.name = name;
+		for (int i = 0; i < Blacklist.Count; i++)
+		{
+			if (name == Blacklist[i].name)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20150u), rmg);
+				return;
+			}
+		}
+		RootUI.m_client.Send(802, cSBuddyAddBlacklist_0x, sc_buddy_add_blacklist);
+	}
+
+	public void sc_buddy_add_blacklist(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBuddyAddBlacklist_0x322 sCBuddyAddBlacklist_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyAddBlacklist_0x322>(stream);
+		switch (sCBuddyAddBlacklist_0x.operate)
+		{
+		case SCBuddyAddBlacklist_0x322.Operate.OK:
+		{
+			Buddy buddy = new Buddy(sCBuddyAddBlacklist_0x.black);
+			Blacklist.Add(buddy);
+			if (m_detailBuddy != null)
+			{
+				m_detailBuddy = null;
+			}
+			if (m_showAddBuddy != 0)
+			{
+				m_showAddBuddy = 0;
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20151u, buddy.name), rmg);
+			break;
+		}
+		case SCBuddyAddBlacklist_0x322.Operate.Error:
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20152u), rmg);
+			break;
+		case SCBuddyAddBlacklist_0x322.Operate.Many:
+			ReAddName.Clear();
+			ReAddName = sCBuddyAddBlacklist_0x.names;
+			idxlabel = 2;
+			subreaddwindow = true;
+			break;
+		case SCBuddyAddBlacklist_0x322.Operate.Had:
+		case SCBuddyAddBlacklist_0x322.Operate.Full:
+			break;
+		}
+	}
+
+	public void handleNewMessage(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBuddyNewMessage_0x327 sCBuddyNewMessage_0x = JSProtoBuf.Serializer.Deserialize<SCBuddyNewMessage_0x327>(stream);
+			m_newevent = (int)sCBuddyNewMessage_0x.newevent;
+			m_newfans = (int)sCBuddyNewMessage_0x.newfans;
+			m_newflower = (int)sCBuddyNewMessage_0x.newflower;
+		}
+	}
+
+	public int getCount()
+	{
+		return m_newfans + m_newevent + m_newflower;
+	}
+
+	public void setCount(int ifans, int ievents)
+	{
+		m_newfans = ifans;
+		m_newevent = ievents;
+	}
+
+	private bool PoP_up()
+	{
+		__BaseUI.BeginGroup(rcType);
+		int num = (int)__BaseUI.CalcSize(__BaseUI.load_str(20153u), btn_pop3.btnStyle, __BaseUI._fontSize).x;
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, num + 16 + 2, tempc * 18 + 15), string.Empty, __BaseUI._bgTooltip);
+		tempc = 0;
+		for (int i = 0; i < Buddys.Count; i++)
+		{
+			if (tempbd.id == Buddys[i].id)
+			{
+				tempbd.ishaoyou = true;
+				if (Buddys[i].isspecial)
+				{
+					tempbd.isspecial = true;
+				}
+				break;
+			}
+			tempbd.ishaoyou = false;
+		}
+		for (int j = 0; j < Blacklist.Count; j++)
+		{
+			if (tempbd.id == Blacklist[j].id)
+			{
+				tempbd.isheimingdan = true;
+				break;
+			}
+			tempbd.isheimingdan = false;
+		}
+		if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20153u)))
+		{
+			BaseUI.GetRootUI().GetComponent<InspectUI>().SubLoading(tempbd.name);
+			PopupUI.EndPopup(popname);
+		}
+		if (!tempbd.isheimingdan && btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20154u)))
+		{
+			BaseUI.GetRootUI().GetComponent<MessengerUI>().Open(tempbd.name);
+			PopupUI.EndPopup(popname);
+		}
+		if (tempbd.ishaoyou && !tempbd.isspecial && !tempbd.isheimingdan)
+		{
+			if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20155u)))
+			{
+				cs_buddy_add_special(tempbd.id);
+				PopupUI.EndPopup(popname);
+			}
+		}
+		else if (!tempbd.isspecial && !tempbd.isheimingdan && btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20156u)))
+		{
+			cs_buddy_add_buddy(tempbd.name);
+			PopupUI.EndPopup(popname);
+		}
+		if (tempbd.isspecial)
+		{
+			if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20157u)))
+			{
+				cs_buddy_del_special(tempbd.id);
+				PopupUI.EndPopup(popname);
+			}
+		}
+		else if (tempbd.ishaoyou && btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20158u)))
+		{
+			cs_buddy_del_buddy(tempbd.id);
+			PopupUI.EndPopup(popname);
+		}
+		if (tempbd.isheimingdan)
+		{
+			if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20159u)))
+			{
+				cs_buddy_del_blacklist(tempbd.id);
+				PopupUI.EndPopup(popname);
+			}
+		}
+		else if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20160u)))
+		{
+			cs_buddy_add_blacklist(tempbd.name);
+			PopupUI.EndPopup(popname);
+		}
+		if (!tempbd.isheimingdan && !BaseAsset.lds.IsBattling() && Global.character_.checkUI(52u) && btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20161u)))
+		{
+			cs_friend_visit_0x4C0(tempbd);
+			PopupUI.EndPopup(popname);
+		}
+		if (btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(20162u)))
+		{
+			BuddyFlowerUI component = GameObject.Find("/Root/RootUI").GetComponent<BuddyFlowerUI>();
+			if (MainUI.handle_sub_ui(component, "buddyflower"))
+			{
+				MainUI.SetSubUI(component);
+				component.cs_buddy_flower_info(tempbd.name);
+			}
+			PopupUI.EndPopup(popname);
+		}
+		if (tempbd.isfan && tempbd.isonline && btn_pop3.Button(IsEnable(), __BaseUI._rect(8f, tempc++ * 18 + 10, 57f, 18f), __BaseUI.load_str(21282u)))
+		{
+			if (SimpleDuelUI.GetInstance().isBusy() || PresetDuelUI.GetInstance().isBusy())
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(21296u), rmg);
+			}
+			else
+			{
+				DuelSelectUI component2 = GetComponent<DuelSelectUI>();
+				if (MainUI.handle_sub_ui(component2, "duel"))
+				{
+					component2.SubLoading(tempbd.name);
+				}
+			}
+			PopupUI.EndPopup(popname);
+		}
+		__BaseUI.EndGroup();
+		if (!rcType.Contains(Event.current.mousePosition))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public override void Hide()
+	{
+		base.Hide();
+	}
+}

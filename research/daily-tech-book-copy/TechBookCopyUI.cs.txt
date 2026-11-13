@@ -1,0 +1,421 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class TechBookCopyUI : BaseUI
+{
+	private class FlyEffect
+	{
+		public Vector2 target_pos;
+
+		public Vector2 current_pos;
+
+		public float effectSize;
+
+		public int texIndex;
+
+		public bool updateOK;
+
+		private float full_dist;
+
+		private double delay;
+
+		private DateTime time = default(DateTime);
+
+		private Vector2 base_pos;
+
+		private Vector2 offset = Vector2.zero;
+
+		public int myGroup;
+
+		public FlyEffect(Vector2 _curPos, Vector2 _tarPos, float _size, int _myGroup)
+		{
+			target_pos = _tarPos;
+			current_pos = _curPos;
+			base_pos = _curPos;
+			effectSize = _size;
+			texIndex = UnityEngine.Random.Range(3, 5);
+			full_dist = (target_pos - _curPos).magnitude;
+			delay = UnityEngine.Random.Range(0f, 0.5f);
+			time = DateTime.Now;
+			int num = UnityEngine.Random.Range(0, 2);
+			int num2 = UnityEngine.Random.Range(20, 41);
+			switch (num)
+			{
+			case 0:
+				offset = new Vector2(num2, 0f);
+				break;
+			case 1:
+				offset = new Vector2(-1 * num2, 0f);
+				break;
+			}
+			myGroup = _myGroup;
+		}
+
+		public void Update()
+		{
+			if (!((DateTime.Now - time).TotalSeconds < delay))
+			{
+				updateOK = true;
+				base_pos = Vector2.MoveTowards(base_pos, target_pos, Time.deltaTime * 260f);
+				float num = Mathf.Sin((base_pos - target_pos).magnitude / full_dist * (float)Math.PI);
+				current_pos = base_pos + offset * num;
+				if (effectSize < 46f)
+				{
+					effectSize += Time.deltaTime * 92f;
+				}
+			}
+		}
+
+		public bool AtTarget()
+		{
+			return current_pos == target_pos;
+		}
+	}
+
+	private Texture2D texTitle;
+
+	private GUIStyle ui_bg_chaolu = new GUIStyle();
+
+	private _ButtonStyle btnFreeCopy = new _ButtonStyle();
+
+	private _ButtonStyle btnFreeCopyGet = new _ButtonStyle();
+
+	private _ButtonStyle btnGoldCopy = new _ButtonStyle();
+
+	private GUIStyle ui_cl_zi1 = new GUIStyle();
+
+	private GUIStyle ui_cl_zi2 = new GUIStyle();
+
+	private GUIStyle ui_cl_zi3 = new GUIStyle();
+
+	private Texture2D texCrit;
+
+	private Texture2D ui_canjuan1;
+
+	private int flytimes;
+
+	private Vector2 soulCurPos;
+
+	private Vector2 soulTargetPos;
+
+	private bool m_bMoving;
+
+	private Dictionary<int, bool> m_bMovingEnd = new Dictionary<int, bool>();
+
+	private Dictionary<int, int> techBookAdd = new Dictionary<int, int>();
+
+	private Dictionary<int, FlyEffect> fly_effects = new Dictionary<int, FlyEffect>();
+
+	private bool sended;
+
+	public override void Start()
+	{
+		base.Start();
+		soulCurPos = Vector2.zero;
+		soulTargetPos = Vector2.zero;
+	}
+
+	private void Update()
+	{
+		if (!m_bMoving)
+		{
+			return;
+		}
+		Dictionary<int, int> dictionary = new Dictionary<int, int>();
+		foreach (KeyValuePair<int, FlyEffect> fly_effect in fly_effects)
+		{
+			fly_effect.Value.Update();
+			if (fly_effect.Value.AtTarget())
+			{
+				dictionary[fly_effect.Key] = fly_effect.Value.myGroup;
+			}
+		}
+		foreach (KeyValuePair<int, int> item in dictionary)
+		{
+			fly_effects.Remove(item.Key);
+			m_bMovingEnd[item.Value] = true;
+			foreach (KeyValuePair<int, FlyEffect> fly_effect2 in fly_effects)
+			{
+				if (fly_effect2.Value.myGroup == item.Value)
+				{
+					m_bMovingEnd[item.Value] = false;
+				}
+			}
+		}
+		dictionary.Clear();
+		if (fly_effects.Count == 0)
+		{
+			m_bMoving = false;
+		}
+	}
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_techbookcopy");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_techbookcopy");
+		texTitle = asset.Load("ui_biaoti_chaolu") as Texture2D;
+		ui_bg_chaolu.normal.background = asset.Load("ui_bg_chaolu") as Texture2D;
+		btnFreeCopy.make(asset, "button_chaolu");
+		btnFreeCopyGet.make(asset, "button_shouhuo");
+		btnGoldCopy.make(asset, "button_gxchaolu");
+		ui_cl_zi1.normal.background = asset.Load("ui_cl_zi1") as Texture2D;
+		ui_cl_zi2.normal.background = asset.Load("ui_cl_zi2") as Texture2D;
+		ui_cl_zi3.normal.background = asset.Load("ui_cl_zi3") as Texture2D;
+		texCrit = asset.Load("ui_baoji1") as Texture2D;
+		ui_canjuan1 = asset.Load("ui_canjuan1") as Texture2D;
+		soulCurPos.y = (Screen.height - 454) / 2 + 375;
+		soulTargetPos = new Vector2(Screen.width / 2, Screen.height / 2 - 227 + 170);
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(__BaseUI._rectC(199f, 227f, 398f, 454f), __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, texTitle))
+		{
+			return;
+		}
+		__BaseUI.Label(__BaseUI._rectCT(179f, 50f, 358f, 279f), string.Empty, ui_bg_chaolu);
+		__BaseUI.Label(__BaseUI._rectCT(50f, 176f, 100f, 30f), Global.character_.tech_book.ToString(), __BaseUI._numNCenter, __BaseUI._clrWhite, 20);
+		__BaseUI.Label(__BaseUI._rectCT(174f, 337f, 346f, 83f), string.Empty, __BaseUI._boxnew6Style);
+		if (!(Global.getTemplate("tech_book_copy_setting", 1u) is _tech_book_copy_setting tech_book_copy_setting))
+		{
+			return;
+		}
+		int num = (int)((Global.character_.tech_book_copy_finish_time > TimeUtil.Now) ? (Global.character_.tech_book_copy_finish_time - TimeUtil.Now) : 0);
+		if (num > 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(70f, 350f, 116f, 16f), string.Empty, ui_cl_zi2);
+			__BaseUI.Label(__BaseUI._rect(133f, 349f, 100f, 16f), Global.getFormatTime(num), __BaseUI._numNLeft, __BaseUI._clrRed, __BaseUI._fontSize);
+		}
+		else if (Global.character_.tech_book_copy_free_times < tech_book_copy_setting.free_copy_times)
+		{
+			__BaseUI.Label(__BaseUI._rect(70f, 350f, 116f, 16f), string.Empty, ui_cl_zi1);
+			__BaseUI.Label(__BaseUI._rect(157f, 349f, 15f, 16f), (tech_book_copy_setting.free_copy_times - Global.character_.tech_book_copy_free_times).ToString(), __BaseUI._numNCenter, __BaseUI._clrGreen, __BaseUI._fontSize);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(70f, 350f, 116f, 16f), string.Empty, ui_cl_zi3);
+		}
+		if (btnFreeCopy.Button(IsEnable(), __BaseUI._rect(71f, 375f, 110f, 36f), new GUIContent(string.Empty, "tips:" + __BaseUI.load_str(9229u))))
+		{
+			if (num > 0)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9228u), rmg);
+			}
+			else if (Global.character_.tech_book_copy_free_times < tech_book_copy_setting.free_copy_times)
+			{
+				cs_tech_book_copy_free_0x726();
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9227u), rmg);
+			}
+		}
+		if (btnGoldCopy.Button(IsEnable(), __BaseUI._rect(217f, 375f, 110f, 36f), new GUIContent(string.Empty, "tips:" + __BaseUI.load_str(9230u))))
+		{
+			DisableAll();
+			__BaseUI.GetConsumeUI().setConsume((int)tech_book_copy_setting.gold_copy_cost, 107, GoldcopyOK);
+		}
+		if (EndGUI() && OnClose == null)
+		{
+			MainUI.SetSubUI(null);
+		}
+		if (m_bMoving)
+		{
+			foreach (FlyEffect value in fly_effects.Values)
+			{
+				if (!value.AtTarget() && value.updateOK)
+				{
+					GUI.DrawTexture(__BaseUI._rect(value.current_pos.x, value.current_pos.y, value.effectSize, value.effectSize), ui_canjuan1);
+				}
+			}
+		}
+		Dictionary<int, int> dictionary = new Dictionary<int, int>();
+		foreach (KeyValuePair<int, bool> item in m_bMovingEnd)
+		{
+			int key = item.Key;
+			if (item.Value)
+			{
+				Global.character_.tech_book += techBookAdd[key];
+				RootBase._drawBubble(techBookAdd[key], __BaseUI._rectCT(50f, Screen.height / 2 - 227 + 170, 100f, 30f), null, 0.6f, 50f, -20f);
+				dictionary[key] = key;
+				techBookAdd.Remove(key);
+			}
+		}
+		foreach (int value2 in dictionary.Values)
+		{
+			m_bMovingEnd.Remove(value2);
+		}
+		dictionary.Clear();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("tips:"))
+		{
+			string text = tip.Replace("tips:", string.Empty);
+			tooltipUI.ShowTooltipContent(string.Empty, text, 200, __BaseUI._fontSize);
+		}
+	}
+
+	public void cs_tech_book_copy_free_0x726()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSTechBookCopyFree_0x726 pkt = new CSTechBookCopyFree_0x726();
+			RootUI.m_client.Send(1830, pkt, sc_tech_book_copy_free_0x726);
+		}
+	}
+
+	public void sc_tech_book_copy_free_0x726(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			sended = false;
+			return;
+		}
+		sended = false;
+		SCTechBookCopyFree_0x726 sCTechBookCopyFree_0x = JSProtoBuf.Serializer.Deserialize<SCTechBookCopyFree_0x726>(stream);
+		if (sCTechBookCopyFree_0x.operate == SCTechBookCopyFree_0x726.Operate.OK)
+		{
+			Global.character_.tech_book_copy_free_times++;
+			Global.character_.tech_book_copy_finish_time = sCTechBookCopyFree_0x.tech_book_copy_finish_time;
+			if (sCTechBookCopyFree_0x.isCrit)
+			{
+				flytimes++;
+				soulCurPos.x = (Screen.width - 398) / 2 + 199 - 110 - 18 + 70;
+				techBookAdd[flytimes] = (int)sCTechBookCopyFree_0x.tech_book_copy_num;
+				addFlyEffect((int)(sCTechBookCopyFree_0x.tech_book_copy_num - 2));
+				RootBase._drawBubble(0L, __BaseUI._rect((Screen.width - 398) / 2 + 199 - 110 - 18 + 70, (Screen.height - 454) / 2 + 375, 100f, 30f), texCrit, 0.6f, 100f, -20f);
+			}
+			else
+			{
+				Global.character_.tech_book += (int)sCTechBookCopyFree_0x.tech_book_copy_num;
+				RootBase._drawBubble((int)sCTechBookCopyFree_0x.tech_book_copy_num, __BaseUI._rectCT(50f, Screen.height / 2 - 227 + 170, 100f, 30f), null, 0.6f, 50f, -20f);
+			}
+		}
+		else if (sCTechBookCopyFree_0x.operate != SCTechBookCopyFree_0x726.Operate.Copying && sCTechBookCopyFree_0x.operate != SCTechBookCopyFree_0x726.Operate.NoTimes)
+		{
+		}
+	}
+
+	private void GoldcopyOK(bool bOK, object[] objs)
+	{
+		EnableAll();
+		if (bOK)
+		{
+			cs_tech_book_copy_gold_0x727();
+		}
+	}
+
+	public void cs_tech_book_copy_gold_0x727()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSTechBookCopyGold_0x727 pkt = new CSTechBookCopyGold_0x727();
+			RootUI.m_client.Send(1831, pkt, sc_tech_book_copy_gold_0x727);
+		}
+	}
+
+	public void sc_tech_book_copy_gold_0x727(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			sended = false;
+			return;
+		}
+		sended = false;
+		SCTechBookCopyGold_0x727 sCTechBookCopyGold_0x = JSProtoBuf.Serializer.Deserialize<SCTechBookCopyGold_0x727>(stream);
+		if (sCTechBookCopyGold_0x.operate == SCTechBookCopyGold_0x727.Operate.OK)
+		{
+			Global.character_.gold -= (int)sCTechBookCopyGold_0x.gold_consume;
+			__BaseUI.drawStateBubble("gold-" + sCTechBookCopyGold_0x.gold_consume);
+			if (sCTechBookCopyGold_0x.isCrit)
+			{
+				flytimes++;
+				soulCurPos.x = (Screen.width - 398) / 2 + 199 + 18 + 70;
+				techBookAdd[flytimes] = (int)sCTechBookCopyGold_0x.tech_book_copy_num;
+				addFlyEffect((int)(sCTechBookCopyGold_0x.tech_book_copy_num - 2));
+				RootBase._drawBubble(0L, __BaseUI._rect((Screen.width - 398) / 2 + 199 + 18 + 70, (Screen.height - 454) / 2 + 375, 100f, 30f), texCrit, 0.6f, 100f, -20f);
+			}
+			else
+			{
+				Global.character_.tech_book += (int)sCTechBookCopyGold_0x.tech_book_copy_num;
+				RootBase._drawBubble((int)sCTechBookCopyGold_0x.tech_book_copy_num, __BaseUI._rectCT(50f, Screen.height / 2 - 227 + 170, 100f, 30f), null, 0.6f, 50f, -20f);
+			}
+		}
+		else if (sCTechBookCopyGold_0x.operate != SCTechBookCopyGold_0x727.Operate.NoGold)
+		{
+		}
+	}
+
+	public void cs_tech_book_copy_free_get_0x728()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSTechBookCopyFreeGet_0x728 pkt = new CSTechBookCopyFreeGet_0x728();
+			RootUI.m_client.Send(1832, pkt, sc_tech_book_copy_free_get_0x728);
+		}
+	}
+
+	public void sc_tech_book_copy_free_get_0x728(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			sended = false;
+			return;
+		}
+		sended = false;
+		SCTechBookCopyFreeGet_0x728 sCTechBookCopyFreeGet_0x = JSProtoBuf.Serializer.Deserialize<SCTechBookCopyFreeGet_0x728>(stream);
+		if (sCTechBookCopyFreeGet_0x.operate == SCTechBookCopyFreeGet_0x728.Operate.OK)
+		{
+			Global.character_.is_tech_book_copying = false;
+			if (sCTechBookCopyFreeGet_0x.isCrit)
+			{
+				flytimes++;
+				soulCurPos.x = (Screen.width - 398) / 2 + 199 - 110 - 18 + 70;
+				techBookAdd[flytimes] = (int)sCTechBookCopyFreeGet_0x.tech_book_copy_num;
+				addFlyEffect((int)(sCTechBookCopyFreeGet_0x.tech_book_copy_num - 2));
+				RootBase._drawBubble(0L, __BaseUI._rect((Screen.width - 398) / 2 + 199 - 110 - 18 + 70, (Screen.height - 454) / 2 + 375, 100f, 30f), texCrit, 0.6f, 100f, -20f);
+			}
+			else
+			{
+				Global.character_.tech_book += (int)sCTechBookCopyFreeGet_0x.tech_book_copy_num;
+				RootBase._drawBubble((int)sCTechBookCopyFreeGet_0x.tech_book_copy_num, __BaseUI._rectCT(50f, Screen.height / 2 - 227 + 170, 100f, 30f), null, 0.6f, 50f, -20f);
+			}
+		}
+		else if (sCTechBookCopyFreeGet_0x.operate != SCTechBookCopyFreeGet_0x728.Operate.NotFinish)
+		{
+		}
+	}
+
+	private void addFlyEffect(int count)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			FlyEffect value = new FlyEffect(soulCurPos, soulTargetPos, 5f, flytimes);
+			int key = flytimes * 100 + i + 1;
+			fly_effects.Add(key, value);
+		}
+		m_bMoving = true;
+	}
+}

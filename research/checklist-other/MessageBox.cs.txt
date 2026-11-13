@@ -1,0 +1,392 @@
+using UnityEngine;
+
+public class MessageBox : __BaseUI
+{
+	private delegate_OnOK OnOK;
+
+	private object[] OnOK_objs;
+
+	private int my_depth = __BaseUI.UIDepth_Message;
+
+	private float m_fAnimTime;
+
+	protected string Title;
+
+	protected string Message;
+
+	protected Texture2D Tex;
+
+	protected RootMessenger old_rmg;
+
+	protected bool bCancel;
+
+	public bool bNoButton;
+
+	public bool bModal;
+
+	private bool bGoButton;
+
+	private bool m_bWantClose;
+
+	private bool m_bMouseDown;
+
+	private Rect m_rectStatic = new Rect(0f, 0f, 382f, 250f);
+
+	private Rect m_rect = new Rect(0f, 0f, 382f, 250f);
+
+	public GUIStyle bgStyle = new GUIStyle();
+
+	public GUIStyle titleStyle = new GUIStyle();
+
+	public GUIStyle btnOK = new GUIStyle();
+
+	public GUIStyle btnCancel = new GUIStyle();
+
+	public GUIStyle btnGo = new GUIStyle();
+
+	public GUIStyle textStyle = new GUIStyle();
+
+	public GUIStyle btnCharge = new GUIStyle();
+
+	public Texture2D texWarning;
+
+	public Texture2D texError;
+
+	public Texture2D texHelp;
+
+	public Texture2D texOK;
+
+	private Texture2D texMark;
+
+	private ScenarioSection Text;
+
+	private Vector2 scrollPos = Vector2.zero;
+
+	private Texture2D titlePic;
+
+	private Texture2D msgPic;
+
+	private Texture2D namePic;
+
+	private bool isPicMode;
+
+	private Rect titleRc = default(Rect);
+
+	private Rect msgRc = default(Rect);
+
+	private Rect nameRc = new Rect(146f, 107f, 63f, 16f);
+
+	public GUIStyle btnGo_Phone = new GUIStyle();
+
+	public GUIStyle btnOK_Phone = new GUIStyle();
+
+	public GUIStyle btnCancel_Phone = new GUIStyle();
+
+	private bool isGold;
+
+	private float margin;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public void ButtonOK(bool bOK)
+	{
+		m_rect = m_rectStatic;
+		Hide();
+		isPicMode = false;
+		if (OnOK != null)
+		{
+			OnOK(bOK, OnOK_objs);
+		}
+		else if (OnClose != null)
+		{
+			OnClose();
+		}
+		else if (old_rmg != null)
+		{
+			old_rmg.ToEnable();
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (isPicMode)
+		{
+			m_rect.width = 355f;
+			m_rect.height = 175f;
+		}
+		if (!BeginGUI(m_rect.width, m_rect.height, my_depth, bgStyle, null))
+		{
+			return;
+		}
+		GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, bgStyle);
+		float num = 20f;
+		if (isPicMode)
+		{
+			if (titlePic != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(titleRc), titlePic);
+			}
+			if (msgPic != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(msgRc), msgPic);
+			}
+			if (namePic != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(nameRc), namePic);
+			}
+		}
+		else
+		{
+			if (Title != string.Empty)
+			{
+				__BaseUI.Label(__BaseUI._rect(0f, 20f, w, 18f), Title, __BaseUI._textCenter, __BaseUI._clrYellow, 16);
+				num = 56f;
+			}
+			if (Tex != null)
+			{
+				__BaseUI.Box(__BaseUI._rect(w / 2f - (float)(Tex.width / 2), num, Tex.width, Tex.height), Tex);
+			}
+			else
+			{
+				int num2 = 100;
+				if (texMark != null)
+				{
+					GUI.DrawTexture(__BaseUI._rect(30f, 35f, 50f, 50f), texMark);
+				}
+				else
+				{
+					num2 = 40;
+				}
+				int num3 = (int)(h - num - 20f);
+				if (!bNoButton)
+				{
+					num3 -= 50;
+				}
+				__BaseUI.BeginGroup(__BaseUI._rect(num2, num, w - margin, num3));
+				if (__BaseUI._vertScroll1[0] != null)
+				{
+					GUI.skin.customStyles = __BaseUI._vertScroll1;
+					scrollPos = GUI.BeginScrollView(__BaseUI._rect(0f, 0f, __BaseUI._rcCur.width, __BaseUI._rcCur.height), scrollPos, __BaseUI._rect(0f, 0f, __BaseUI._rcCur.width - 24f, Text.height), __BaseUI.normalStyle, __BaseUI._vertScroll1[0]);
+				}
+				float x = 0f;
+				float num4 = 0f;
+				if (Title == string.Empty)
+				{
+					num4 = __BaseUI._rcCur.height / 2f - Text.height / 2f;
+				}
+				if (num4 < 0f)
+				{
+					num4 = 0f;
+				}
+				Text.draw(x, num4, Text.width, Text.height, textStyle);
+				if (__BaseUI._vertScroll1[0] != null)
+				{
+					GUI.EndScrollView();
+				}
+				__BaseUI.EndGroup();
+			}
+		}
+		if (!bNoButton)
+		{
+			float left = w / 2f - 49f;
+			if (bCancel)
+			{
+				left = w / 2f - 20f - 98f;
+			}
+			if (isGold)
+			{
+				if (GUI.Button(new Rect(left, h - 55f, 98f, 30f), string.Empty, btnCharge))
+				{
+					DelegateFunc.OnCoin();
+				}
+				if (__BaseUI._btnX.Button(bBtn: true, __BaseUI._rect(w - 24f - 14f, 14f, 24f, 24f), string.Empty))
+				{
+					ButtonOK(bOK: false);
+				}
+			}
+			else if (GUI.Button(new Rect(left, h - 55f, 98f, 30f), string.Empty, (!bGoButton) ? btnOK : btnGo))
+			{
+				ButtonOK(bOK: true);
+			}
+		}
+		if (bCancel && GUI.Button(new Rect(m_rect.width / 2f + 20f, h - 55f, 98f, 30f), string.Empty, btnCancel))
+		{
+			ButtonOK(bOK: false);
+		}
+		if (IsVisible())
+		{
+			if (m_bWantClose)
+			{
+				if (!m_bMouseDown || Input.GetMouseButtonUp(0))
+				{
+					ButtonOK(bOK: false);
+					m_bWantClose = false;
+					m_bMouseDown = false;
+				}
+			}
+			else if (bNoButton && !bModal && Input.anyKeyDown)
+			{
+				if (Input.GetMouseButtonDown(0))
+				{
+					m_bMouseDown = true;
+				}
+				m_bWantClose = true;
+			}
+		}
+		EndGUI(hasClose: false);
+	}
+
+	public void setMessage(bool picmode, Texture2D titleTex, Rect rctitle, Texture2D msgTex, Rect rcmsg, Texture2D nameTex, RootMessenger _rmg, delegate_OnClose onclose)
+	{
+		isPicMode = picmode;
+		titlePic = titleTex;
+		titleRc = rctitle;
+		msgPic = msgTex;
+		msgRc = rcmsg;
+		namePic = nameTex;
+		setMessage(string.Empty, string.Empty, _rmg, onclose);
+	}
+
+	public void setMessage(string title, string message, Texture2D tex, RootMessenger _rmg, delegate_OnOK onok, delegate_OnClose onclose, bool _bCancel, object[] objs)
+	{
+		setMessage(title, message, tex, _rmg, onok, onclose, _bCancel, _bGo: false, 1, objs);
+	}
+
+	public void setMessage(string title, string message, Texture2D tex, RootMessenger _rmg, delegate_OnOK onok, delegate_OnClose onclose, bool _bCancel, bool _bGo, int markid, object[] objs)
+	{
+		setMessage(title, message, tex, _rmg, onok, onclose, _bCancel, _bGo, markid, objs, isgold: false);
+	}
+
+	public void setMessage(string title, string message, Texture2D tex, RootMessenger _rmg, delegate_OnOK onok, delegate_OnClose onclose, bool _bCancel, bool _bGo, int markid, object[] objs, bool isgold)
+	{
+		m_fAnimTime = 0f;
+		Title = title;
+		Tex = tex;
+		Message = message;
+		old_rmg = _rmg;
+		OnOK = onok;
+		OnOK_objs = objs;
+		OnClose = onclose;
+		bCancel = _bCancel;
+		bNoButton = !bCancel;
+		bModal = false;
+		bGoButton = _bGo;
+		my_depth = __BaseUI.UIDepth_Message;
+		scrollPos = Vector2.zero;
+		float num = 382f;
+		isGold = isgold;
+		if (isGold)
+		{
+			bNoButton = false;
+		}
+		if (markid == 0)
+		{
+			texMark = null;
+			num += 70f;
+			margin = 100f;
+		}
+		else
+		{
+			texMark = texWarning;
+			margin = 140f;
+		}
+		Text = new ScenarioSection();
+		if (bNoButton)
+		{
+			Text.setParams((int)(num - 140f));
+		}
+		else
+		{
+			Text.setParams((int)(num - 200f));
+		}
+		Text.makes_string("#c=CCFFFF" + Message, textStyle);
+		int num2 = 280;
+		if (bCancel)
+		{
+			num2 = 320;
+		}
+		m_rect.width = Text.width + margin;
+		if (m_rect.width < (float)num2)
+		{
+			m_rect.width = num2;
+		}
+		m_rect.height = Text.height + 100f;
+		if (Title != string.Empty)
+		{
+			m_rect.height += 30f;
+			if (m_rect.height < 150f)
+			{
+				m_rect.height = 150f;
+			}
+			if (m_rect.height > 500f)
+			{
+				m_rect.height = 500f;
+			}
+		}
+		else
+		{
+			if (m_rect.height < 120f)
+			{
+				m_rect.height = 120f;
+			}
+			if (m_rect.height > 400f)
+			{
+				m_rect.height = 400f;
+			}
+		}
+		if (!bNoButton)
+		{
+			m_rect.height += 50f;
+		}
+		Visible();
+		Enable();
+	}
+
+	public void setMessage(string title, string message, RootMessenger _rmg)
+	{
+		setMessage(title, message, null, _rmg, null, null, _bCancel: false, null);
+	}
+
+	public void setMessage(string title, string message, RootMessenger _rmg, int markid)
+	{
+		setMessage(title, message, null, _rmg, null, null, _bCancel: false, _bGo: false, markid, null);
+	}
+
+	public void setMessage(string title, string message, RootMessenger _rmg, delegate_OnOK onok, bool _bCancel)
+	{
+		setMessage(title, message, null, _rmg, onok, null, _bCancel, null);
+	}
+
+	public void setMessage(string title, string message, RootMessenger _rmg, delegate_OnOK onok, bool _bCancel, object[] objs)
+	{
+		setMessage(title, message, null, _rmg, onok, null, _bCancel, objs);
+	}
+
+	public void setMessage(string title, string message, RootMessenger _rmg, delegate_OnClose onclose)
+	{
+		setMessage(title, message, null, _rmg, null, onclose, _bCancel: false, null);
+	}
+
+	public void setMessage(string title, Texture2D tex, RootMessenger _rmg, Rect rc)
+	{
+		setMessage(title, string.Empty, tex, _rmg, null, null, _bCancel: false, null);
+		m_rect = rc;
+	}
+
+	public void setRect(Rect rc)
+	{
+		m_rect = rc;
+	}
+
+	public void setDepth(int d)
+	{
+		my_depth = d;
+	}
+}

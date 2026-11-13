@@ -1,0 +1,142 @@
+{
+  "utc": "2026-10-30T17:10:39.899980+00:00",
+  "mode": "offline",
+  "mono_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "layout": {
+    "accessors": {
+      "mono_field_get_name": {
+        "rva": 91642,
+        "offset": 4,
+        "bytes": "558bec8b45088b40045dc3"
+      },
+      "mono_field_get_parent": {
+        "rva": 237583,
+        "offset": 8,
+        "bytes": "558bec8b45088b40085dc3"
+      },
+      "mono_field_get_offset": {
+        "rva": 91631,
+        "offset": 12,
+        "bytes": "558bec8b45088b400c5dc3"
+      },
+      "mono_domain_get_id": {
+        "rva": 163756,
+        "offset": 96,
+        "bytes": "558bec8b45088b40605dc3"
+      },
+      "mono_field_get_type": {
+        "rva": 160955,
+        "bytes": "558bec8b45088b005dc3"
+      },
+      "mono_type_get_type": {
+        "rva": 352122,
+        "bytes": "558bec8b45080fbe40065dc3"
+      },
+      "mono_type_is_byref": {
+        "rva": 352105,
+        "bytes": "558bec8b45088b4004c1e81e83e0015dc3"
+      },
+      "mono_type_get_class": {
+        "rva": 160955,
+        "bytes": "558bec8b45088b005dc3"
+      },
+      "mono_field_get_flags": {
+        "rva": 91617,
+        "bytes": "558bec8b45088b000fb740045dc3"
+      },
+      "mono_object_get_class": {
+        "rva": 390293,
+        "bytes": "558bec8b45088b008b005dc3"
+      },
+      "mono_object_get_domain": {
+        "rva": 390280,
+        "bytes": "558bec8b45088b008b40085dc3"
+      }
+    },
+    "proofs": {
+      "class_field_array": {
+        "rva": 107119,
+        "bytes": "807e2000597522837e6400741c8b4674eb138b4d088b5164c1e20403517483c0103bc273048907"
+      },
+      "class_runtime_info_domain_vtable": {
+        "rva": 398104,
+        "bytes": "8b86a40000008b550885c074198b4a60570fb7383bf95f7c0d8d44880483380074048b00eb0d"
+      },
+      "ordinary_static_field_address": {
+        "rva": 397217,
+        "bytes": "8b400c03c1"
+      },
+      "ordinary_instance_field_address": {
+        "rva": 388853,
+        "bytes": "8b400c034508"
+      },
+      "class_initialized_fast_path": {
+        "rva": 398719,
+        "bytes": "f6471c02740733c0e96f030000"
+      },
+      "class_init_success_failure_bits": {
+        "rva": 399544,
+        "bytes": "8b471ca804750683c80289471c"
+      }
+    },
+    "domain_registry": {
+      "count_slot_rva": 2041208,
+      "array_slot_rva": 2041216,
+      "count_instruction_rva": 162576,
+      "count_instruction": "0fb73d78251f10",
+      "array_instruction_rva": 162609,
+      "array_instruction": "ff3580251f10"
+    },
+    "managed_sha256": {
+      "Assembly-CSharp.dll": "c1c8ebac7ddef4173c873a00774975a5ca366f95b19164c4ca775165eb994911",
+      "Assembly-CSharp-firstpass.dll": "29d8fa2cb55e800ccdf1cdc6c5b274b924ea7d03c989296dfa569731e02a8d87",
+      "pbdata.dll": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab"
+    },
+    "field_specs": {
+      "character_": {
+        "ordinal": 41,
+        "metadata_token": 67111255,
+        "signature": "06-12-81-C4",
+        "mono_type": 18,
+        "flags": 22
+      },
+      "level": {
+        "ordinal": 14,
+        "metadata_token": 67109380,
+        "signature": "06-06",
+        "mono_type": 6,
+        "flags": 6,
+        "format": "<h"
+      },
+      "stamina": {
+        "ordinal": 18,
+        "metadata_token": 67109384,
+        "signature": "06-06",
+        "mono_type": 6,
+        "flags": 6,
+        "format": "<h"
+      },
+      "gold": {
+        "ordinal": 20,
+        "metadata_token": 67109386,
+        "signature": "06-08",
+        "mono_type": 8,
+        "flags": 6,
+        "format": "<i"
+      }
+    },
+    "class_failure_offset": 32,
+    "field_count_offset": 100,
+    "field_array_offset": 116,
+    "field_stride": 16,
+    "class_runtime_info_offset": 164,
+    "vtable_class_offset": 0,
+    "vtable_domain_offset": 8,
+    "vtable_static_data_offset": 12,
+    "vtable_init_flags_offset": 28,
+    "initialized_mask": 2,
+    "init_failed_mask": 4
+  },
+  "status": "PASS",
+  "coverage": "offline pinned native layout and managed hashes only; no process APIs called"
+}

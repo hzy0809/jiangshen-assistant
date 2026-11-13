@@ -1,0 +1,221 @@
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class TimeLimitMessageUI : BaseUI
+{
+	private Texture2D texTitle;
+
+	private _ButtonStyle btnGet = new _ButtonStyle();
+
+	private Texture2D texGot;
+
+	private int msg_idx;
+
+	private List<Database.TimeLimitMessage> msgs = new List<Database.TimeLimitMessage>();
+
+	private List<Database.TempEventMessage> te_msgs = new List<Database.TempEventMessage>();
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public void MyLoading()
+	{
+		AddAsset("ui_timelimit");
+		msgs.Clear();
+		foreach (Database.TimeLimitMessage timelimit_message in Global.timelimit_messages)
+		{
+			if (timelimit_message.start_time < TimeUtil.Now && timelimit_message.end_time > TimeUtil.Now)
+			{
+				if (timelimit_message.tex == null)
+				{
+					AddAsset(timelimit_message.name, bForce: true, isimage: true);
+				}
+				msgs.Add(timelimit_message);
+			}
+		}
+		te_msgs.Clear();
+		foreach (Database.TempEventMessage tempevent_message in Global.tempevent_messages)
+		{
+			if (tempevent_message.start_time < TimeUtil.Now && tempevent_message.end_time > TimeUtil.Now)
+			{
+				if (tempevent_message.tex == null)
+				{
+					AddAsset(tempevent_message.name, bForce: true, isimage: true);
+				}
+				te_msgs.Add(tempevent_message);
+			}
+		}
+		BaseAsset.lds.Visible_sub();
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_timelimit");
+		texTitle = asset.Load("ui_biaoti1") as Texture2D;
+		btnGet.make(asset, "button_lingqu");
+		texGot = asset.Load("ui_ling") as Texture2D;
+		foreach (Database.TimeLimitMessage msg in msgs)
+		{
+			if (msg.tex == null)
+			{
+				msg.tex = BaseAsset.was.GetAssetAsTexture(msg.name);
+			}
+		}
+		foreach (Database.TempEventMessage te_msg in te_msgs)
+		{
+			if (te_msg.tex == null)
+			{
+				te_msg.tex = BaseAsset.was.GetAssetAsTexture(te_msg.name);
+			}
+		}
+		BaseAsset.lds.Hide();
+		Visible();
+		Enable();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(__BaseUI._rectC(341f, 219f, 683f, 438f), __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, null, null, __BaseUI._rect(0f, 10f, 683f, 428f)))
+		{
+			return;
+		}
+		__BaseUI.Box(__BaseUI._rect(w / 2f - 111f, 1f, 223f, 44f), texTitle);
+		if (msg_idx >= msgs.Count + te_msgs.Count)
+		{
+			msg_idx = 0;
+		}
+		__BaseUI.Label(__BaseUI._rect(22f, 38f, 641f, 385f), string.Empty, __BaseUI._boxnewStyle);
+		if (msg_idx < msgs.Count)
+		{
+			Database.TimeLimitMessage timeLimitMessage = msgs[msg_idx];
+			if (timeLimitMessage.tex != null)
+			{
+				__BaseUI.Box(__BaseUI._rect(w / 2f - (float)(timeLimitMessage.tex.width / 2), 50f, timeLimitMessage.tex.width, timeLimitMessage.tex.height), timeLimitMessage.tex);
+			}
+		}
+		else if (msg_idx < msgs.Count + te_msgs.Count)
+		{
+			Database.TempEventMessage tempEventMessage = te_msgs[msg_idx - msgs.Count];
+			if (tempEventMessage.tex != null)
+			{
+				__BaseUI.Box(__BaseUI._rect(w / 2f - (float)(tempEventMessage.tex.width / 2), 50f, tempEventMessage.tex.width, tempEventMessage.tex.height), tempEventMessage.tex);
+				if (btnGet.Button(tempEventMessage.canget(), __BaseUI._rect(200f, 365f, 113f, 40f), new GUIContent(string.Empty, "tempevent" + (msg_idx - msgs.Count))))
+				{
+					cs_tempeventmessage_bonus_0x4E2(tempEventMessage.id);
+				}
+				if (tempEventMessage.finished())
+				{
+					__BaseUI.Box(__BaseUI._rect(220f, 360f, 71f, 49f), texGot);
+				}
+			}
+		}
+		if (msg_idx > 0 && __BaseUI._btnPageDown5.Button(bBtn: true, __BaseUI._rect(10f, h / 2f - 30f, 48f, 61f), string.Empty))
+		{
+			msg_idx--;
+		}
+		if (msg_idx < msgs.Count + te_msgs.Count - 1 && __BaseUI._btnPageUp5.Button(bBtn: true, __BaseUI._rect(w - 60f, h / 2f - 30f, 48f, 61f), string.Empty))
+		{
+			msg_idx++;
+		}
+		bool flag = false;
+		if (__BaseUI._btnClose.Button(bBtn: true, new Rect(w * __BaseUI._screenScale - 159f, 19f, 150f, 41f), string.Empty))
+		{
+			flag = true;
+		}
+		EndGUI(hasClose: false);
+		if (flag)
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("tempevent"))
+		{
+			int index = int.Parse(tip.Replace("tempevent", string.Empty));
+			if (te_msgs[index].tooltip_content.Length > 0)
+			{
+				tooltipUI.ShowTooltipContent("TimeLimitUI", te_msgs[index].tooltip_content, 300, __BaseUI._fontSize);
+			}
+		}
+	}
+
+	public void cs_timelimitui_open_0x4E1()
+	{
+		CSTimeLimitUIOpen_0x4E1 pkt = new CSTimeLimitUIOpen_0x4E1();
+		RootUI.m_client.Send(1249, pkt, sc_timelimitui_open_0x4E1);
+	}
+
+	private void sc_timelimitui_open_0x4E1(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCTimeLimitUIOpen_0x4E1 sCTimeLimitUIOpen_0x4E = JSProtoBuf.Serializer.Deserialize<SCTimeLimitUIOpen_0x4E1>(stream);
+			Global.clearTempEventMessages();
+			foreach (game.net.data.StoC.TempEventMessage message in sCTimeLimitUIOpen_0x4E.messages)
+			{
+				Global.add_tempevent_message(message);
+			}
+		}
+		MyLoading();
+	}
+
+	public void cs_tempeventmessage_bonus_0x4E2(uint idmessage)
+	{
+		CSTempEventMessageBonus_0x4E2 cSTempEventMessageBonus_0x4E = new CSTempEventMessageBonus_0x4E2();
+		cSTempEventMessageBonus_0x4E.idmessage = idmessage;
+		RootUI.m_client.Send(1250, cSTempEventMessageBonus_0x4E, sc_tempeventmessage_bonus_0x4E2);
+	}
+
+	private void sc_tempeventmessage_bonus_0x4E2(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCTempEventMessageBonus_0x4E2 sCTempEventMessageBonus_0x4E = JSProtoBuf.Serializer.Deserialize<SCTempEventMessageBonus_0x4E2>(stream);
+		if (sCTempEventMessageBonus_0x4E.result == 0)
+		{
+			if (sCTempEventMessageBonus_0x4E.msg != null)
+			{
+				foreach (Database.TempEventMessage tempevent_message in Global.tempevent_messages)
+				{
+					if (tempevent_message.id == sCTempEventMessageBonus_0x4E.msg.id)
+					{
+						tempevent_message.Set(sCTempEventMessageBonus_0x4E.msg);
+						break;
+					}
+				}
+				foreach (Database.TempEventMessage te_msg in te_msgs)
+				{
+					if (te_msg.id == sCTempEventMessageBonus_0x4E.msg.id)
+					{
+						te_msg.Set(sCTempEventMessageBonus_0x4E.msg);
+						break;
+					}
+				}
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(334u), null);
+		}
+		else if (sCTempEventMessageBonus_0x4E.result == 1)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(335u), null);
+		}
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

@@ -1,0 +1,820 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _character
+{
+	public ulong id;
+
+	public ulong ACCID;
+
+	public ushort PLATFORMID;
+
+	public uint ZONEID;
+
+	public uint OFFLINETIME;
+
+	public uint register_time;
+
+	public uint last_login;
+
+	public string name;
+
+	public bool gm;
+
+	public bool sex;
+
+	public byte idstyle;
+
+	public byte vip_level;
+
+	public int icon;
+
+	public int experience;
+
+	public short level;
+
+	public short strength;
+
+	public short leadership;
+
+	public short power;
+
+	public short stamina;
+
+	public short energy;
+
+	public int gold;
+
+	public int bind_gold;
+
+	public int money;
+
+	public int practice;
+
+	public int last_change_army;
+
+	public int train_fatigue;
+
+	public int last_train_time;
+
+	public byte city_style;
+
+	public byte treasure_count;
+
+	public byte treasure_filter_count;
+
+	public bool treasure_filter;
+
+	public int spirit_food;
+
+	public int enchant_stone;
+
+	public int mana;
+
+	public int stone;
+
+	public uint reputation;
+
+	public uint nation_reputation;
+
+	public int train_capable;
+
+	public ushort bagslots;
+
+	public ushort bagslot_buy;
+
+	public ushort idcampaign;
+
+	public byte rank;
+
+	public byte nation_side;
+
+	public int nation_ranking;
+
+	public int nation_contribution;
+
+	public int patrol_times;
+
+	public int patrol_refresh;
+
+	public int patrol_event;
+
+	public int patrol_last_event;
+
+	public int patrol_today;
+
+	public int patrol_point;
+
+	public int patrol_last_time;
+
+	public int next_dongtian_time;
+
+	public ulong campaign_entity_single;
+
+	public ulong campaign_entity_multi;
+
+	public int campaign_entity_single_mana;
+
+	public int campaign_entity_multi_mana;
+
+	public int campaign_entity_single_mana_max;
+
+	public int campaign_entity_multi_mana_max;
+
+	public int act1_refresh_time;
+
+	public int act2_refresh_time;
+
+	public int act3_refresh_time;
+
+	public int act4_refresh_time;
+
+	public int idcampaign_group;
+
+	public int campaign_group_location;
+
+	public string managather_cards;
+
+	public int managather_times;
+
+	public int managather_refresh;
+
+	public int pvp_point;
+
+	public int pvp_rob_time;
+
+	public int pvp_siege_time;
+
+	public ulong pvp_siege;
+
+	public int patrol_specialtimes;
+
+	public int special_card1;
+
+	public int special_card2;
+
+	public int special_card3;
+
+	public int managather_cardtoday;
+
+	public int special_card1value;
+
+	public int special_card2value;
+
+	public int special_card3value;
+
+	public int managather_buytimes;
+
+	public int managather_nextcard;
+
+	public uint last_refresh_time;
+
+	public int battle_fail_count;
+
+	public uint last_command_time;
+
+	public int heaven_hp;
+
+	public int heaven_hp_time;
+
+	public byte campaign_version;
+
+	public sbyte resource_take_count;
+
+	public sbyte resource_rob_count;
+
+	public byte last_faction_level;
+
+	public uint next_resource_time;
+
+	public int resource_rob_time;
+
+	public int max_level;
+
+	public int stamina_buy_count;
+
+	public int energy_buy_count;
+
+	public int rank_list_level;
+
+	public int rank_list_campaign;
+
+	public int rank_list_instance;
+
+	public int rank_list_total_gen_level;
+
+	public int rank_list_pvp_point;
+
+	public int rank_list_guild_level;
+
+	public int rank_list_guild_rep;
+
+	public int gold_training_today;
+
+	public int dongtian_speedup_today;
+
+	public int general_carry_slot_bought;
+
+	public int last_levelup_time;
+
+	public ushort quest_version;
+
+	public ushort activity_version;
+
+	public int generalsoul_blue;
+
+	public int generalsoul_purple;
+
+	public int generalsoul_orange;
+
+	public int generalsoul_red;
+
+	public ushort star_tech;
+
+	public ushort building_quest_version;
+
+	public uint next_monster_time;
+
+	public uint online_accumulated_time;
+
+	public bool anti_addicted_on;
+
+	public byte god_challenge_level;
+
+	public byte god_bonus_today;
+
+	public byte generalsoul_blue_times;
+
+	public byte generalsoul_purple_times;
+
+	public byte generalsoul_orange_times;
+
+	public byte artifact_remind;
+
+	public byte monster_assist_count;
+
+	public uint last_battle_score;
+
+	public uint pay;
+
+	public uint money_consume;
+
+	public uint gold_consume;
+
+	public uint online_time;
+
+	public uint noreg_end_time;
+
+	public uint notalk_end_time;
+
+	public ushort client_version;
+
+	public ushort campaign_progress;
+
+	public ushort anecdote_elite_progress;
+
+	public byte troop_try_count;
+
+	public byte troop_elite_try_count;
+
+	public byte abnormal_monster_ratio;
+
+	public bool quiz_assist;
+
+	public uint meditation_start;
+
+	public uint meditation_exp;
+
+	public uint next_demon_time;
+
+	public bool newbie_gift;
+
+	public byte purple_gen_award;
+
+	public ushort reputation_level;
+
+	public uint next_stamina_time;
+
+	public int sliver_pick;
+
+	public short gold_pick_times;
+
+	public sbyte enchant_double;
+
+	public sbyte buy_silverpick;
+
+	public uint battle_score;
+
+	public uint battle_initiative;
+
+	public int gem_shard;
+
+	public int gem_essence;
+
+	public ushort shop_open;
+
+	public bool anecdote_new;
+
+	public bool amulet_new;
+
+	public uint last_mystery_shop_refresh;
+
+	public bool building_immediate;
+
+	public uint genquest_version;
+
+	public uint hardcode_version;
+
+	public ushort next_dummy_challenge_level;
+
+	public short practice_exchange;
+
+	public short practice_exchange_gold;
+
+	public int skill_point;
+
+	public byte quest22;
+
+	public bool add_favorite;
+
+	public int fruit1;
+
+	public int fruit2;
+
+	public int fruit3;
+
+	public int fruit4;
+
+	public int fruit5;
+
+	public sbyte gold_fruit;
+
+	public ushort sdcampaign_version;
+
+	public byte quest69;
+
+	public bool enchant_dragon_protect;
+
+	public byte enchant_no_dragon;
+
+	public byte enchant_no_dragon_silver;
+
+	public uint hero_token;
+
+	public uint hero_token_time;
+
+	public int dark_iron;
+
+	public byte equipment_forge;
+
+	public sbyte hequ_online_gift;
+
+	public int diamond;
+
+	public int talent_times;
+
+	public int talent_buy_times;
+
+	public byte talent_battling;
+
+	public byte purple_gen_free;
+
+	public uint login_days;
+
+	public uint daily_ranking_param1;
+
+	public uint daily_ranking_param2;
+
+	public uint daily_ranking_rank1;
+
+	public uint daily_ranking_rank2;
+
+	public int gold_ios;
+
+	public int gold_android;
+
+	public short anecdote_hero_try;
+
+	public short anecdote_hero_buy;
+
+	public uint online_seconds;
+
+	public byte firstday_exp;
+
+	public byte firstcharge_bonus;
+
+	public uint pc_online_seconds;
+
+	public byte pc_awards_got;
+
+	public sbyte online_times_got;
+
+	public byte first_order_bonus;
+
+	public uint checkin_times;
+
+	public byte checkin_today;
+
+	public byte sp_general_event_type;
+
+	public int high_stone;
+
+	public uint artifact_luck;
+
+	public uint high_stone_buy_times;
+
+	public uint general_public_exp;
+
+	public uint general_star_challenge_free_times;
+
+	public uint general_star_challenge_times;
+
+	public bool return_gift;
+
+	public short return_gift_status;
+
+	public int building_material;
+
+	public int friend_point;
+
+	public string ACCTEMPID;
+
+	public uint amulet_slot;
+
+	public uint gem_slot;
+
+	public byte huangcai_event_type;
+
+	public bool got_huangcai;
+
+	public int honor_point;
+
+	public int tech_book;
+
+	public ushort first_recharge_got;
+
+	public byte mobile_bind;
+
+	public short general_star_revive_free_times;
+
+	public int assault_score;
+
+	public int assault_stamina;
+
+	public bool vip_gift_today;
+
+	public byte gift_bag_got;
+
+	public byte show_buddy_list;
+
+	public uint last_guild_invite_time;
+
+	public byte hero_statue_today;
+
+	public byte tech_book_copy_free_times;
+
+	public uint tech_book_copy_finish_time;
+
+	public bool is_tech_book_copying;
+
+	public byte hero_statue_interact_today;
+
+	public uint vip5_start_time;
+
+	public uint everyday_login_days;
+
+	public uint everyday_login_opentime;
+
+	public int dragon_soul;
+
+	public int spirit_skill_essence_blue;
+
+	public int spirit_skill_essence_purple;
+
+	public int spirit_skill_essence_orange;
+
+	public int craft_point;
+
+	public sbyte chinese_new_year_lottery_times;
+
+	public int rescue_token_green;
+
+	public int rescue_token_blue;
+
+	public int rescue_token_purple;
+
+	public int rescue_token_orange;
+
+	public int craft_bet_point;
+
+	public byte hero_statue_today_new;
+
+	public int laketemple_point;
+
+	public int amulet_forge_tool;
+
+	public int formation_set;
+
+	public int cur_formation_set;
+
+	public bool newyear_checkin_today;
+
+	public int divine_soul;
+
+	public int practice_money_exchange_times;
+
+	public uint ladder_score;
+
+	public short ladder_challenge_times;
+
+	public int general_seal;
+
+	public uint zhenyaota_challenge_times;
+
+	public uint zhenyaota_challenge_level;
+
+	public int card_lottery_ticket;
+
+	public ushort today_ladder_challenge_times;
+
+	public byte ladder_challenge_bouns_got;
+
+	public int ladder_gift;
+
+	public long money64;
+
+	public void Set(db_character d)
+	{
+		id = d.id;
+		ACCID = d.ACCID;
+		PLATFORMID = (ushort)d.PLATFORMID;
+		ZONEID = d.ZONEID;
+		OFFLINETIME = d.OFFLINETIME;
+		register_time = d.register_time;
+		last_login = d.last_login;
+		name = d.name;
+		gm = d.gm;
+		sex = d.sex;
+		idstyle = (byte)d.idstyle;
+		vip_level = (byte)d.vip_level;
+		icon = d.icon;
+		experience = d.experience;
+		level = (short)d.level;
+		strength = (short)d.strength;
+		leadership = (short)d.leadership;
+		power = (short)d.power;
+		stamina = (short)d.stamina;
+		energy = (short)d.energy;
+		gold = d.gold;
+		bind_gold = d.bind_gold;
+		money = d.money;
+		practice = d.practice;
+		last_change_army = d.last_change_army;
+		train_fatigue = d.train_fatigue;
+		last_train_time = d.last_train_time;
+		city_style = (byte)d.city_style;
+		treasure_count = (byte)d.treasure_count;
+		treasure_filter_count = (byte)d.treasure_filter_count;
+		treasure_filter = d.treasure_filter;
+		spirit_food = d.spirit_food;
+		enchant_stone = d.enchant_stone;
+		mana = d.mana;
+		stone = d.stone;
+		reputation = d.reputation;
+		nation_reputation = d.nation_reputation;
+		train_capable = d.train_capable;
+		bagslots = (ushort)d.bagslots;
+		bagslot_buy = (ushort)d.bagslot_buy;
+		idcampaign = (ushort)d.idcampaign;
+		rank = (byte)d.rank;
+		nation_side = (byte)d.nation_side;
+		nation_ranking = d.nation_ranking;
+		nation_contribution = d.nation_contribution;
+		patrol_times = d.patrol_times;
+		patrol_refresh = d.patrol_refresh;
+		patrol_event = d.patrol_event;
+		patrol_last_event = d.patrol_last_event;
+		patrol_today = d.patrol_today;
+		patrol_point = d.patrol_point;
+		patrol_last_time = d.patrol_last_time;
+		next_dongtian_time = d.next_dongtian_time;
+		campaign_entity_single = d.campaign_entity_single;
+		campaign_entity_multi = d.campaign_entity_multi;
+		campaign_entity_single_mana = d.campaign_entity_single_mana;
+		campaign_entity_multi_mana = d.campaign_entity_multi_mana;
+		campaign_entity_single_mana_max = d.campaign_entity_single_mana_max;
+		campaign_entity_multi_mana_max = d.campaign_entity_multi_mana_max;
+		act1_refresh_time = d.act1_refresh_time;
+		act2_refresh_time = d.act2_refresh_time;
+		act3_refresh_time = d.act3_refresh_time;
+		act4_refresh_time = d.act4_refresh_time;
+		idcampaign_group = d.idcampaign_group;
+		campaign_group_location = d.campaign_group_location;
+		managather_cards = d.managather_cards;
+		managather_times = d.managather_times;
+		managather_refresh = d.managather_refresh;
+		pvp_point = d.pvp_point;
+		pvp_rob_time = d.pvp_rob_time;
+		pvp_siege_time = d.pvp_siege_time;
+		pvp_siege = d.pvp_siege;
+		patrol_specialtimes = d.patrol_specialtimes;
+		special_card1 = d.special_card1;
+		special_card2 = d.special_card2;
+		special_card3 = d.special_card3;
+		managather_cardtoday = d.managather_cardtoday;
+		special_card1value = d.special_card1value;
+		special_card2value = d.special_card2value;
+		special_card3value = d.special_card3value;
+		managather_buytimes = d.managather_buytimes;
+		managather_nextcard = d.managather_nextcard;
+		last_refresh_time = d.last_refresh_time;
+		battle_fail_count = d.battle_fail_count;
+		last_command_time = d.last_command_time;
+		heaven_hp = d.heaven_hp;
+		heaven_hp_time = d.heaven_hp_time;
+		campaign_version = (byte)d.campaign_version;
+		resource_take_count = (sbyte)d.resource_take_count;
+		resource_rob_count = (sbyte)d.resource_rob_count;
+		last_faction_level = (byte)d.last_faction_level;
+		next_resource_time = d.next_resource_time;
+		resource_rob_time = d.resource_rob_time;
+		max_level = d.max_level;
+		stamina_buy_count = d.stamina_buy_count;
+		energy_buy_count = d.energy_buy_count;
+		rank_list_level = d.rank_list_level;
+		rank_list_campaign = d.rank_list_campaign;
+		rank_list_instance = d.rank_list_instance;
+		rank_list_total_gen_level = d.rank_list_total_gen_level;
+		rank_list_pvp_point = d.rank_list_pvp_point;
+		rank_list_guild_level = d.rank_list_guild_level;
+		rank_list_guild_rep = d.rank_list_guild_rep;
+		gold_training_today = d.gold_training_today;
+		dongtian_speedup_today = d.dongtian_speedup_today;
+		general_carry_slot_bought = d.general_carry_slot_bought;
+		last_levelup_time = d.last_levelup_time;
+		quest_version = (ushort)d.quest_version;
+		activity_version = (ushort)d.activity_version;
+		generalsoul_blue = d.generalsoul_blue;
+		generalsoul_purple = d.generalsoul_purple;
+		generalsoul_orange = d.generalsoul_orange;
+		generalsoul_red = d.generalsoul_red;
+		star_tech = (ushort)d.star_tech;
+		building_quest_version = (ushort)d.building_quest_version;
+		next_monster_time = d.next_monster_time;
+		online_accumulated_time = d.online_accumulated_time;
+		anti_addicted_on = d.anti_addicted_on;
+		god_challenge_level = (byte)d.god_challenge_level;
+		god_bonus_today = (byte)d.god_bonus_today;
+		generalsoul_blue_times = (byte)d.generalsoul_blue_times;
+		generalsoul_purple_times = (byte)d.generalsoul_purple_times;
+		generalsoul_orange_times = (byte)d.generalsoul_orange_times;
+		artifact_remind = (byte)d.artifact_remind;
+		monster_assist_count = (byte)d.monster_assist_count;
+		last_battle_score = d.last_battle_score;
+		pay = d.pay;
+		money_consume = d.money_consume;
+		gold_consume = d.gold_consume;
+		online_time = d.online_time;
+		noreg_end_time = d.noreg_end_time;
+		notalk_end_time = d.notalk_end_time;
+		client_version = (ushort)d.client_version;
+		campaign_progress = (ushort)d.campaign_progress;
+		anecdote_elite_progress = (ushort)d.anecdote_elite_progress;
+		troop_try_count = (byte)d.troop_try_count;
+		troop_elite_try_count = (byte)d.troop_elite_try_count;
+		abnormal_monster_ratio = (byte)d.abnormal_monster_ratio;
+		quiz_assist = d.quiz_assist;
+		meditation_start = d.meditation_start;
+		meditation_exp = d.meditation_exp;
+		next_demon_time = d.next_demon_time;
+		newbie_gift = d.newbie_gift;
+		purple_gen_award = (byte)d.purple_gen_award;
+		reputation_level = (ushort)d.reputation_level;
+		next_stamina_time = d.next_stamina_time;
+		sliver_pick = d.sliver_pick;
+		gold_pick_times = (short)d.gold_pick_times;
+		enchant_double = (sbyte)d.enchant_double;
+		buy_silverpick = (sbyte)d.buy_silverpick;
+		battle_score = d.battle_score;
+		battle_initiative = d.battle_initiative;
+		gem_shard = d.gem_shard;
+		gem_essence = d.gem_essence;
+		shop_open = (ushort)d.shop_open;
+		anecdote_new = d.anecdote_new;
+		amulet_new = d.amulet_new;
+		last_mystery_shop_refresh = d.last_mystery_shop_refresh;
+		building_immediate = d.building_immediate;
+		genquest_version = d.genquest_version;
+		hardcode_version = d.hardcode_version;
+		next_dummy_challenge_level = (ushort)d.next_dummy_challenge_level;
+		practice_exchange = (short)d.practice_exchange;
+		practice_exchange_gold = (short)d.practice_exchange_gold;
+		skill_point = d.skill_point;
+		quest22 = (byte)d.quest22;
+		add_favorite = d.add_favorite;
+		fruit1 = d.fruit1;
+		fruit2 = d.fruit2;
+		fruit3 = d.fruit3;
+		fruit4 = d.fruit4;
+		fruit5 = d.fruit5;
+		gold_fruit = (sbyte)d.gold_fruit;
+		sdcampaign_version = (ushort)d.sdcampaign_version;
+		quest69 = (byte)d.quest69;
+		enchant_dragon_protect = d.enchant_dragon_protect;
+		enchant_no_dragon = (byte)d.enchant_no_dragon;
+		enchant_no_dragon_silver = (byte)d.enchant_no_dragon_silver;
+		hero_token = d.hero_token;
+		hero_token_time = d.hero_token_time;
+		dark_iron = d.dark_iron;
+		equipment_forge = (byte)d.equipment_forge;
+		hequ_online_gift = (sbyte)d.hequ_online_gift;
+		diamond = d.diamond;
+		talent_times = d.talent_times;
+		talent_buy_times = d.talent_buy_times;
+		talent_battling = (byte)d.talent_battling;
+		purple_gen_free = (byte)d.purple_gen_free;
+		login_days = d.login_days;
+		daily_ranking_param1 = d.daily_ranking_param1;
+		daily_ranking_param2 = d.daily_ranking_param2;
+		daily_ranking_rank1 = d.daily_ranking_rank1;
+		daily_ranking_rank2 = d.daily_ranking_rank2;
+		gold_ios = d.gold_ios;
+		gold_android = d.gold_android;
+		anecdote_hero_try = (short)d.anecdote_hero_try;
+		anecdote_hero_buy = (short)d.anecdote_hero_buy;
+		online_seconds = d.online_seconds;
+		firstday_exp = (byte)d.firstday_exp;
+		firstcharge_bonus = (byte)d.firstcharge_bonus;
+		pc_online_seconds = d.pc_online_seconds;
+		pc_awards_got = (byte)d.pc_awards_got;
+		online_times_got = (sbyte)d.online_times_got;
+		first_order_bonus = (byte)d.first_order_bonus;
+		checkin_times = d.checkin_times;
+		checkin_today = (byte)d.checkin_today;
+		sp_general_event_type = (byte)d.sp_general_event_type;
+		high_stone = d.high_stone;
+		artifact_luck = d.artifact_luck;
+		high_stone_buy_times = d.high_stone_buy_times;
+		general_public_exp = d.general_public_exp;
+		general_star_challenge_free_times = d.general_star_challenge_free_times;
+		general_star_challenge_times = d.general_star_challenge_times;
+		return_gift = d.return_gift;
+		return_gift_status = (short)d.return_gift_status;
+		building_material = d.building_material;
+		friend_point = d.friend_point;
+		ACCTEMPID = d.ACCTEMPID;
+		amulet_slot = d.amulet_slot;
+		gem_slot = d.gem_slot;
+		huangcai_event_type = (byte)d.huangcai_event_type;
+		got_huangcai = d.got_huangcai;
+		honor_point = d.honor_point;
+		tech_book = d.tech_book;
+		first_recharge_got = (ushort)d.first_recharge_got;
+		mobile_bind = (byte)d.mobile_bind;
+		general_star_revive_free_times = (short)d.general_star_revive_free_times;
+		assault_score = d.assault_score;
+		assault_stamina = d.assault_stamina;
+		vip_gift_today = d.vip_gift_today;
+		gift_bag_got = (byte)d.gift_bag_got;
+		show_buddy_list = (byte)d.show_buddy_list;
+		last_guild_invite_time = d.last_guild_invite_time;
+		hero_statue_today = (byte)d.hero_statue_today;
+		tech_book_copy_free_times = (byte)d.tech_book_copy_free_times;
+		tech_book_copy_finish_time = d.tech_book_copy_finish_time;
+		is_tech_book_copying = d.is_tech_book_copying;
+		hero_statue_interact_today = (byte)d.hero_statue_interact_today;
+		vip5_start_time = d.vip5_start_time;
+		everyday_login_days = d.everyday_login_days;
+		everyday_login_opentime = d.everyday_login_opentime;
+		dragon_soul = d.dragon_soul;
+		spirit_skill_essence_blue = d.spirit_skill_essence_blue;
+		spirit_skill_essence_purple = d.spirit_skill_essence_purple;
+		spirit_skill_essence_orange = d.spirit_skill_essence_orange;
+		craft_point = d.craft_point;
+		chinese_new_year_lottery_times = (sbyte)d.chinese_new_year_lottery_times;
+		rescue_token_green = d.rescue_token_green;
+		rescue_token_blue = d.rescue_token_blue;
+		rescue_token_purple = d.rescue_token_purple;
+		rescue_token_orange = d.rescue_token_orange;
+		craft_bet_point = d.craft_bet_point;
+		hero_statue_today_new = (byte)d.hero_statue_today_new;
+		laketemple_point = d.laketemple_point;
+		amulet_forge_tool = d.amulet_forge_tool;
+		formation_set = d.formation_set;
+		cur_formation_set = d.cur_formation_set;
+		newyear_checkin_today = d.newyear_checkin_today;
+		divine_soul = d.divine_soul;
+		practice_money_exchange_times = d.practice_money_exchange_times;
+		ladder_score = d.ladder_score;
+		ladder_challenge_times = (short)d.ladder_challenge_times;
+		general_seal = d.general_seal;
+		zhenyaota_challenge_times = d.zhenyaota_challenge_times;
+		zhenyaota_challenge_level = d.zhenyaota_challenge_level;
+		card_lottery_ticket = d.card_lottery_ticket;
+		today_ladder_challenge_times = (ushort)d.today_ladder_challenge_times;
+		ladder_challenge_bouns_got = (byte)d.ladder_challenge_bouns_got;
+		ladder_gift = d.ladder_gift;
+		money64 = d.money64;
+	}
+}

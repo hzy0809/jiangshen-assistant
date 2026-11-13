@@ -1,0 +1,675 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class SignInUI : BaseUI
+{
+	private enum enumPage
+	{
+		Normal,
+		NewYear
+	}
+
+	private GUIStyle bgSty = new GUIStyle();
+
+	private GUIStyle ui_qiandao_di2 = new GUIStyle();
+
+	private GUIStyle ui_qiandao_di3 = new GUIStyle();
+
+	private _ButtonStyle btnClose = new _ButtonStyle();
+
+	private _ButtonStyle btnSalary = new _ButtonStyle();
+
+	private _ButtonStyle btnArena = new _ButtonStyle();
+
+	private _ButtonStyle btnPointRace = new _ButtonStyle();
+
+	private GUIStyle ui_zi_ling = new GUIStyle();
+
+	private _ButtonStyle btnSignIn = new _ButtonStyle();
+
+	private GUIStyle ui_zi_jryq = new GUIStyle();
+
+	private GUIStyle killnumstyle = new GUIStyle();
+
+	private Dictionary<int, _Treasure> treasuresDic = new Dictionary<int, _Treasure>();
+
+	private List<int> treasuresDicKeys = new List<int>();
+
+	private GUIStyle ui_yiqian = new GUIStyle();
+
+	private GUIStyle ui_mengban = new GUIStyle();
+
+	private GUIStyle[] ui_zi = new GUIStyle[6];
+
+	private GUIStyle ui_zi7 = new GUIStyle();
+
+	private GUIStyle ui_zi8 = new GUIStyle();
+
+	private enumPage page;
+
+	private _RadioStyle[] btnPage = new _RadioStyle[7];
+
+	private GUIStyle ui_di1 = new GUIStyle();
+
+	private GUIStyle ui_zaichongzhi = new GUIStyle();
+
+	private GUIStyle ui_zuigao = new GUIStyle();
+
+	private GUIStyle ui_xianshi = new GUIStyle();
+
+	private _ButtonStyle btnSignIn2 = new _ButtonStyle();
+
+	private GUIStyle ui_zi_jryq2 = new GUIStyle();
+
+	private GUIStyle ui_yiqian2 = new GUIStyle();
+
+	private bool sended;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+	}
+
+	public void MyLoading(bool isnewyear)
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		AddAsset("ui_signin");
+		if (isnewyear)
+		{
+			page = enumPage.NewYear;
+		}
+		else
+		{
+			page = enumPage.Normal;
+		}
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_signin");
+		bgSty.normal.background = asset.Load("ui_qiandao_di2") as Texture2D;
+		ui_qiandao_di2.normal.background = asset.Load("ui_qiandao_di2") as Texture2D;
+		ui_qiandao_di3.normal.background = asset.Load("ui_qiandao_di3") as Texture2D;
+		btnClose.make(asset, "button_guanbi");
+		btnSalary.make(asset, "button_fenglu1");
+		btnArena.make(asset, "button_fenglu2");
+		btnPointRace.make(asset, "button_fenglu3");
+		ui_zi_ling.normal.background = asset.Load("ui_zi_ling") as Texture2D;
+		btnSignIn.make(asset, "button_qiandao");
+		ui_zi_jryq.normal.background = asset.Load("ui_zi_jryq") as Texture2D;
+		killnumstyle.font = __BaseUI.GetFontCache().NumFont;
+		killnumstyle.fontSize = 35;
+		killnumstyle.alignment = TextAnchor.MiddleCenter;
+		ui_yiqian.normal.background = asset.Load("ui_yiqian") as Texture2D;
+		ui_mengban.normal.background = asset.Load("ui_mengban") as Texture2D;
+		for (int i = 0; i < 6; i++)
+		{
+			ui_zi[i] = new GUIStyle();
+			ui_zi[i].normal.background = asset.Load("ui_zi" + (i + 1)) as Texture2D;
+		}
+		ui_zi7.normal.background = asset.Load("ui_zi7") as Texture2D;
+		ui_zi8.normal.background = asset.Load("ui_zi8") as Texture2D;
+		for (int j = 0; j < 5; j++)
+		{
+			btnPage[j] = new _RadioStyle();
+			btnPage[j].make(asset, "button_jiangchi" + (j + 1));
+		}
+		btnPage[5] = new _RadioStyle();
+		btnPage[5].make(asset, "button_jiangchi");
+		btnPage[6] = new _RadioStyle();
+		btnPage[6].make(asset, "button_xinnian");
+		ui_di1.normal.background = asset.Load("ui_di1") as Texture2D;
+		ui_zaichongzhi.normal.background = asset.Load("ui_zaichongzhi") as Texture2D;
+		ui_zuigao.normal.background = asset.Load("ui_zuigao") as Texture2D;
+		ui_xianshi.normal.background = asset.Load("ui_xianshi") as Texture2D;
+		btnSignIn2.make(asset, "button_qiandao2");
+		ui_zi_jryq2.normal.background = asset.Load("ui_zi_jryq2") as Texture2D;
+		ui_yiqian2.normal.background = asset.Load("ui_yiqian2") as Texture2D;
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+		treasuresDic.Clear();
+		treasuresDicKeys.Clear();
+		setTreasures();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		foreach (_Treasure value in treasuresDic.Values)
+		{
+			if (value != null && AssetName == value.getIconName())
+			{
+				value.setTexIcon(BaseAsset.LoadTexture(value.getIconName()));
+			}
+		}
+		foreach (List<_Treasure> value2 in Global.character_.m_newYearCheckinAwards.Values)
+		{
+			foreach (_Treasure item in value2)
+			{
+				if (item != null && AssetName == item.getIconName())
+				{
+					item.setTexIcon(BaseAsset.LoadTexture(AssetName));
+				}
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (Global.character_.isNewYearCheckinVisible() && page == enumPage.NewYear)
+		{
+			if (!BeginGUI(667f, 376f, __BaseUI.UIDepth_Sub, ui_qiandao_di3, null))
+			{
+				return;
+			}
+		}
+		else if (!BeginGUI(667f, 376f, __BaseUI.UIDepth_Sub, ui_qiandao_di2, null))
+		{
+			return;
+		}
+		if (Global.character_.isNewYearCheckinVisible())
+		{
+			drawSignInBtnPage();
+		}
+		else
+		{
+			drawSignInTitle();
+		}
+		if (page == enumPage.Normal)
+		{
+			drawSignIn();
+		}
+		else if (page == enumPage.NewYear)
+		{
+			drawNewYearCheckin();
+		}
+		if (btnClose.Button(bBtn: true, __BaseUI._rect(630f, 14f, 27f, 32f), new GUIContent(string.Empty, string.Empty)))
+		{
+			Hide();
+			MainUI.SetSubUI(null);
+		}
+		EndGUI(hasClose: false);
+		drawTooltips();
+	}
+
+	private void drawSignIn()
+	{
+		drawSignInBonus();
+		drawAllBonus();
+		drawSignInInfo();
+	}
+
+	private void drawNewYearCheckin()
+	{
+		uint newYearCheckinRank = Global.character_.getNewYearCheckinRank();
+		uint newYearCheckinMaxRank = Global.character_.getNewYearCheckinMaxRank();
+		int num = 0;
+		if (Global.character_.m_newYearCheckinAwards.ContainsKey(newYearCheckinRank))
+		{
+			foreach (_Treasure item in Global.character_.m_newYearCheckinAwards[newYearCheckinRank])
+			{
+				if (item.texIcon != null)
+				{
+					__BaseUI.Box(__BaseUI._rect(132 + 91 * num, 88f, 43f, 43f), new GUIContent(string.Empty, "newyearbonus:" + newYearCheckinRank + "," + num), item.texIcon);
+					if (Global.character_.newyear_checkin_today)
+					{
+						__BaseUI.Label(__BaseUI._rect(132 + 91 * num, 88f, 43f, 43f), string.Empty, ui_mengban);
+						__BaseUI.Label(__BaseUI._rect(132 + 91 * num + 23, 112f, 27f, 26f), string.Empty, ui_yiqian2);
+					}
+				}
+				else
+				{
+					AddAssetSub(item.getIconName());
+					StartLoadingSub();
+				}
+				num++;
+			}
+		}
+		if (newYearCheckinRank < newYearCheckinMaxRank)
+		{
+			__BaseUI.Label(__BaseUI._rect(90f, 153f, 307f, 84f), string.Empty, ui_zaichongzhi);
+			if (Global.getTemplate("newyear_checkin", newYearCheckinRank + 1) is _newyear_checkin newyear_checkin)
+			{
+				__BaseUI.Label(__BaseUI._rect(150f, 152f, 67f, 20f), ((newyear_checkin.pay - Global.character_.pay) * 10).ToString(), __BaseUI._numCenter, __BaseUI._fontSize, __BaseUI._clrYellow);
+			}
+			int num2 = 0;
+			if (Global.character_.m_newYearCheckinAwards.ContainsKey(newYearCheckinRank + 1))
+			{
+				foreach (_Treasure item2 in Global.character_.m_newYearCheckinAwards[newYearCheckinRank + 1])
+				{
+					if (item2.texIcon != null)
+					{
+						__BaseUI.Box(__BaseUI._rect(132 + 91 * num2, 186f, 43f, 43f), new GUIContent(string.Empty, "newyearbonus:" + (newYearCheckinRank + 1) + "," + num2), item2.texIcon);
+					}
+					else
+					{
+						AddAssetSub(item2.getIconName());
+						StartLoadingSub();
+					}
+					num2++;
+				}
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(142f, 173f, 206f, 41f), string.Empty, ui_zuigao);
+		}
+		__BaseUI.Label(__BaseUI._rect(445f, 146f, 104f, 40f), (Global.character_.pay * 10).ToString(), __BaseUI._numCenter, 17, __BaseUI._clrGreen);
+		if (!Global.character_.newyear_checkin_today)
+		{
+			if (btnSignIn2.Button(IsEnable(), __BaseUI._rectCT(103f, 269f, 206f, 75f), new GUIContent(string.Empty, string.Empty)))
+			{
+				if (Global.character_.isNewYearCheckinOpen())
+				{
+					cs_newyear_checkin_award_get();
+				}
+				else
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(9258u), rmg);
+				}
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rectCT(103f, 269f, 206f, 75f), string.Empty, ui_zi_jryq2);
+		}
+		__BaseUI.Label(__BaseUI._rect(409f, 277f, 87f, 51f), string.Empty, ui_xianshi);
+		__BaseUI.Label(__BaseUI._rect(300f, 337f, 200f, 20f), Global.getFormatDateAndTime(Global.newyear_checkin_setting.start_time) + "-" + Global.getFormatDateAndTime(Global.newyear_checkin_setting.end_time), __BaseUI._textNLeft, __BaseUI._fontSize, __BaseUI._clrWhite);
+	}
+
+	private void drawSignInBtnPage()
+	{
+		uint signInLevel = getSignInLevel();
+		uint num = 5u;
+		if (signInLevel >= num)
+		{
+			if (btnPage[5].Button(page != enumPage.Normal, __BaseUI._rect(131f, 0f, 186f, 36f), string.Empty))
+			{
+				page = enumPage.Normal;
+			}
+		}
+		else if (btnPage[signInLevel].Button(page != enumPage.Normal, __BaseUI._rect(131f, 0f, 186f, 36f), string.Empty))
+		{
+			page = enumPage.Normal;
+		}
+		if (btnPage[6].Button(page != enumPage.NewYear, __BaseUI._rect(355f, 0f, 186f, 36f), string.Empty))
+		{
+			page = enumPage.NewYear;
+		}
+	}
+
+	private void drawSignInTitle()
+	{
+		uint signInLevel = getSignInLevel();
+		uint num = 5u;
+		__BaseUI.Label(__BaseUI._rectCT(82f, 0f, 164f, 36f), string.Empty, ui_di1);
+		if (signInLevel >= num)
+		{
+			__BaseUI.Label(__BaseUI._rectCT(48f, 0f, 96f, 32f), string.Empty, ui_zi7);
+			return;
+		}
+		__BaseUI.Label(__BaseUI._rect(237f, 0f, 96f, 32f), string.Empty, ui_zi7);
+		__BaseUI.Label(__BaseUI._rect(333f, 0f, 97f, 34f), string.Empty, ui_zi8);
+		__BaseUI.Label(__BaseUI._rect(367f, 2f, 30f, 30f), string.Empty, ui_zi[signInLevel]);
+	}
+
+	private uint getSignInLevel()
+	{
+		uint num = 0u;
+		uint num2 = 5u;
+		uint num3 = Global.character_.checkin_times;
+		if (num3 % 30 == 0 && Global.character_.checkin_today == 0)
+		{
+			num3 = Global.character_.checkin_times + 1;
+		}
+		num = ((num3 % 30 != 0) ? (Global.character_.checkin_times / 30) : (Global.character_.checkin_times / 30 - 1));
+		if (num3 == 0)
+		{
+			num = 0u;
+		}
+		return num;
+	}
+
+	private void drawSignInBonus()
+	{
+		int num = 1;
+		foreach (int treasuresDicKey in treasuresDicKeys)
+		{
+			if (treasuresDic.ContainsKey(treasuresDicKey))
+			{
+				if (treasuresDic[treasuresDicKey].texIcon != null)
+				{
+					__BaseUI.Label(__BaseUI._rect(103 + 62 * (num % 8), 38 + 54 * (num / 8), 30f, 30f), new GUIContent(treasuresDic[treasuresDicKey].texIcon, "bonus" + treasuresDicKey), __BaseUI.normalStyle, GUI.color);
+				}
+				else
+				{
+					AddAssetSub(treasuresDic[treasuresDicKey].getIconName(), isimage: false);
+					StartLoadingSub();
+				}
+				if (!showNextMonthBonus() && treasuresDicKey <= getSignInTimes())
+				{
+					__BaseUI.Label(__BaseUI._rect(103 + 62 * (num % 8), 38 + 54 * (num / 8), 30f, 30f), string.Empty, ui_mengban);
+					__BaseUI.Label(__BaseUI._rect(103 + 62 * (num % 8) + 14, 38 + 54 * (num / 8) + 12, 23f, 22f), string.Empty, ui_yiqian);
+				}
+				num++;
+			}
+		}
+	}
+
+	private void drawAllBonus()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rect(-168f, -65f, 10000f, 10000f));
+		if (Global.character_.gotSalary())
+		{
+			__BaseUI.Label(__BaseUI._rect(258f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(464u)), btnSalary.normalStyle, GUI.color);
+			__BaseUI.Label(__BaseUI._rect(258f, 360f, 62f, 62f), string.Empty, ui_zi_ling);
+		}
+		else if (btnSalary.Button(IsEnable() && MainUI.checkUI("reputation"), __BaseUI._rect(258f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(464u))))
+		{
+			getSalary();
+		}
+		if (!MainUI.checkUI("battle_arena"))
+		{
+			btnArena.Button(bBtn: false, __BaseUI._rect(324f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(463u)));
+		}
+		else if (Global.character_.checkArenaToday() == -1)
+		{
+			__BaseUI.Label(__BaseUI._rect(324f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(463u)), btnArena.normalStyle, GUI.color);
+			__BaseUI.Label(__BaseUI._rect(324f, 360f, 62f, 62f), string.Empty, ui_zi_ling);
+		}
+		else if (btnArena.Button(IsEnable(), __BaseUI._rect(324f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(463u))))
+		{
+			getArenaBonus();
+		}
+		if (Global.character_.checkPointRaceToday() == -1 && Global.character_.pointrace.isgot)
+		{
+			__BaseUI.Label(__BaseUI._rect(390f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(9100u)), btnPointRace.normalStyle, GUI.color);
+			__BaseUI.Label(__BaseUI._rect(390f, 360f, 62f, 62f), string.Empty, ui_zi_ling);
+		}
+		else if (Global.character_.checkPointRaceToday() == -1 && !Global.character_.pointrace.isgot)
+		{
+			btnPointRace.Button(bBtn: false, __BaseUI._rect(390f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(9100u)));
+		}
+		else if (btnPointRace.Button(IsEnable() && MainUI.checkUI("battle_arena"), __BaseUI._rect(390f, 360f, 62f, 62f), new GUIContent(string.Empty, __BaseUI.load_str(9100u))))
+		{
+			getPointRaceBonus();
+		}
+		__BaseUI.EndGroup();
+	}
+
+	private void drawSignInInfo()
+	{
+		if (Global.character_.checkin_today == 0)
+		{
+			if (btnSignIn.Button(IsEnable(), __BaseUI._rect(410f, 280f, 206f, 75f), new GUIContent(string.Empty, string.Empty)))
+			{
+				cs_all_bonus_get_new();
+			}
+		}
+		else if (Global.character_.checkin_today == 1)
+		{
+			__BaseUI.Label(__BaseUI._rect(410f, 280f, 206f, 75f), string.Empty, ui_zi_jryq);
+		}
+		__BaseUI.ShadowLabel(__BaseUI._rect(297f, 317f, 100f, 40f), getSignInTimes().ToString(), killnumstyle, __BaseUI._clrWhite, 35);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		base.drawTooltips(tip);
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("newyearbonus:"))
+		{
+			string text = tip.Replace("newyearbonus:", string.Empty);
+			string[] array = text.Split(',');
+			uint key = uint.Parse(array[0]);
+			int num = int.Parse(array[1]);
+			if (Global.character_.m_newYearCheckinAwards.ContainsKey(key) && Global.character_.m_newYearCheckinAwards[key].Count > num)
+			{
+				Global.character_.m_newYearCheckinAwards[key][num].PrepTooltip();
+			}
+		}
+		else if (tip.Contains("bonus"))
+		{
+			int key2 = int.Parse(tip.Replace("bonus", string.Empty));
+			if (treasuresDic.ContainsKey(key2))
+			{
+				treasuresDic[key2].PrepTooltip();
+			}
+		}
+		else if (tip != null)
+		{
+			tooltipUI.ShowTooltipContent(string.Empty, tip, 200, __BaseUI._fontSize);
+		}
+	}
+
+	private void setTreasures()
+	{
+		int num = 0;
+		Hashtable templates = Global.getTemplates("checkin_award_once");
+		foreach (object value in templates.Values)
+		{
+			if (value is _checkin_award_once checkin_award_once && num < checkin_award_once.day)
+			{
+				num = checkin_award_once.day;
+			}
+		}
+		uint num2 = Global.character_.checkin_times;
+		if (showNextMonthBonus())
+		{
+			num2 = Global.character_.checkin_times + 1;
+		}
+		if (num2 <= num)
+		{
+			int num3 = ((num2 % 30 != 0) ? ((int)Global.character_.checkin_times / 30) : ((int)Global.character_.checkin_times / 30 - 1));
+			if (num2 == 0)
+			{
+				num3 = 0;
+			}
+			Hashtable templates2 = Global.getTemplates("checkin_award_once");
+			foreach (object value2 in templates2.Values)
+			{
+				if (value2 is _checkin_award_once checkin_award_once2)
+				{
+					int num4 = ((checkin_award_once2.day % 30 != 0) ? (checkin_award_once2.day / 30) : (checkin_award_once2.day / 30 - 1));
+					int num5 = ((checkin_award_once2.day % 30 != 0) ? (checkin_award_once2.day % 30) : 30);
+					if (num3 == num4)
+					{
+						treasuresDicKeys.Add(num5);
+						_Treasure treasure = new _Treasure();
+						treasure.make((byte)checkin_award_once2.treasure_type, checkin_award_once2.param0, checkin_award_once2.param1);
+						AddAssetSub(treasure.getIconName(), isimage: false);
+						treasuresDic[num5] = treasure;
+					}
+				}
+			}
+		}
+		else
+		{
+			Hashtable templates3 = Global.getTemplates("checkin_award");
+			foreach (object value3 in templates3.Values)
+			{
+				if (value3 is _checkin_award checkin_award)
+				{
+					treasuresDicKeys.Add(checkin_award.day);
+					_Treasure treasure2 = new _Treasure();
+					treasure2.make((byte)checkin_award.treasure_type, checkin_award.param0, checkin_award.param1);
+					AddAssetSub(treasure2.getIconName(), isimage: false);
+					treasuresDic[checkin_award.day] = treasure2;
+				}
+			}
+		}
+		StartLoadingSub();
+		treasuresDicKeys.Sort();
+	}
+
+	private bool showNextMonthBonus()
+	{
+		if (Global.character_.checkin_times % 30 == 0 && Global.character_.checkin_today == 0)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	private uint getSignInTimes()
+	{
+		uint num = Global.character_.checkin_times;
+		if (num != 0)
+		{
+			num = ((Global.character_.checkin_times % 30 != 0) ? (Global.character_.checkin_times % 30) : 30u);
+		}
+		return num;
+	}
+
+	private void getSalary()
+	{
+		ReputationUI component = BaseUI.GetRootUI().GetComponent<ReputationUI>();
+		if (component != null)
+		{
+			component.cs_reputation_salary();
+		}
+	}
+
+	private void getArenaBonus()
+	{
+		ArenaUI component = BaseUI.GetRootUI().GetComponent<ArenaUI>();
+		if (component != null)
+		{
+			int idx = Global.character_.checkArenaToday();
+			component.cs_arena_bonusget_0x462(bFindBack: false, idx, closeBonus);
+		}
+	}
+
+	private void getPointRaceBonus()
+	{
+		PointraceUI component = BaseUI.GetRootUI().GetComponent<PointraceUI>();
+		if (component != null)
+		{
+			int idx = Global.character_.checkPointRaceToday();
+			component.cs_pointrace_bonusget_0x466(bFindBack: false, idx, closeBonus);
+		}
+	}
+
+	private void closeBonus()
+	{
+		EnableAll();
+	}
+
+	public void cs_all_bonus_get_new()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSAllBonusGetNew_0x394 pkt = new CSAllBonusGetNew_0x394();
+			RootUI.m_client.Send(916, pkt, sc_all_bonus_get_new);
+		}
+	}
+
+	public void sc_all_bonus_get_new(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		sended = false;
+		SCAllBonusGetNew_0x394 sCAllBonusGetNew_0x = JSProtoBuf.Serializer.Deserialize<SCAllBonusGetNew_0x394>(stream);
+		if (sCAllBonusGetNew_0x.arena)
+		{
+			foreach (_character_arena_bonus bonuse in Global.character_.arena.bonuses)
+			{
+				if (bonuse.time == sCAllBonusGetNew_0x.arenatime)
+				{
+					Global.character_.arena.bonuses.Remove(bonuse);
+					break;
+				}
+			}
+		}
+		if (sCAllBonusGetNew_0x.salary)
+		{
+			Global.character_.patrol_last_time = (int)sCAllBonusGetNew_0x.salarytime;
+		}
+		if (sCAllBonusGetNew_0x.pointrace)
+		{
+			foreach (_character_pointrace_bonus bonuse2 in Global.character_.pointrace.bonuses)
+			{
+				if (bonuse2.time == sCAllBonusGetNew_0x.pointracetime)
+				{
+					Global.character_.pointrace.bonuses.Remove(bonuse2);
+					break;
+				}
+			}
+		}
+		if (sCAllBonusGetNew_0x.checkin)
+		{
+			Global.character_.checkin_times++;
+			Global.character_.checkin_today = 1;
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		foreach (Treasure bonuse3 in sCAllBonusGetNew_0x.bonuses)
+		{
+			_Treasure treasure = new _Treasure();
+			treasure.make(bonuse3);
+			list.Add(treasure);
+		}
+		if (list.Count > 0)
+		{
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+			battleResultUI.PrepareLoading("nocollecting");
+			battleResultUI.StartLoading();
+		}
+	}
+
+	public void cs_newyear_checkin_award_get()
+	{
+		if (!sended)
+		{
+			sended = true;
+			CSNewYearCheckinAwardGet_0x748 pkt = new CSNewYearCheckinAwardGet_0x748();
+			RootUI.m_client.Send(1864, pkt, sc_newyear_checkin_award_get);
+		}
+	}
+
+	public void sc_newyear_checkin_award_get(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		sended = false;
+		SCNewYearCheckinAwardGet_0x748 sCNewYearCheckinAwardGet_0x = JSProtoBuf.Serializer.Deserialize<SCNewYearCheckinAwardGet_0x748>(stream);
+		if (sCNewYearCheckinAwardGet_0x.operate == SCNewYearCheckinAwardGet_0x748.Operate.OK)
+		{
+			Global.character_.newyear_checkin_today = true;
+			List<_Treasure> list = new List<_Treasure>();
+			foreach (Treasure bonuse in sCNewYearCheckinAwardGet_0x.bonuses)
+			{
+				_Treasure treasure = new _Treasure();
+				treasure.make(bonuse);
+				list.Add(treasure);
+			}
+			if (list.Count > 0)
+			{
+				BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+				battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, EnableAll);
+				battleResultUI.PrepareLoading("nocollecting");
+				battleResultUI.StartLoading();
+			}
+		}
+		else if (sCNewYearCheckinAwardGet_0x.operate != SCNewYearCheckinAwardGet_0x748.Operate.Error)
+		{
+		}
+	}
+}

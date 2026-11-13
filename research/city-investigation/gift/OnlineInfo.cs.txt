@@ -1,0 +1,38 @@
+using Database;
+
+public class OnlineInfo
+{
+	public int refresh_time;
+
+	public int got;
+
+	public int next_get_time;
+
+	public void refresh()
+	{
+		got = 0;
+		if (Global.getTemplate("online_awards_template", (uint)(got + 1)) is _online_awards_template online_awards_template)
+		{
+			next_get_time = (int)(TimeUtil.Now + online_awards_template.time * 60);
+		}
+	}
+
+	public void setNextTime()
+	{
+		if (Global.getTemplate("online_awards_template", (uint)(got + 1)) is _online_awards_template online_awards_template)
+		{
+			next_get_time = (int)(TimeUtil.Now + online_awards_template.time * 60);
+		}
+	}
+
+	public bool isNextAvailable()
+	{
+		if (Global.getTemplate("online_awards_template", (uint)(got + 1)) is _online_awards_template)
+		{
+			return true;
+		}
+		return false;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

@@ -1,0 +1,65 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "db_building_type")]
+public class db_building_type : IExtensible
+{
+	private uint _id;
+
+	private string _name = "";
+
+	private string _desc = "";
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = false, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "desc", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string desc
+	{
+		get
+		{
+			return _desc;
+		}
+		set
+		{
+			_desc = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

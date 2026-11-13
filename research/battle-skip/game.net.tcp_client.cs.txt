@@ -1,0 +1,233 @@
+using System;
+using System.IO;
+using System.Net.Sockets;
+using System.Threading;
+using UnityEngine;
+
+namespace game.net;
+
+public class tcp_client : tcp_base
+{
+	private TcpClient m_client;
+
+	private NetworkStream m_stream;
+
+	public tcp_client()
+	{
+		Logger.Log("tcp_client");
+	}
+
+	private void ConnectCallback(IAsyncResult ar)
+	{
+		TcpClient tcpClient = (TcpClient)ar.AsyncState;
+		try
+		{
+			if (tcpClient.Connected)
+			{
+				Logger.Log("连接成功");
+				tcp_base.connecting_flag = 3;
+				tcpClient.EndConnect(ar);
+				Logger.Log("连接线程完成");
+			}
+			else
+			{
+				Logger.Log("连接失败");
+				tcp_base.connecting_flag = 2;
+				tcpClient.EndConnect(ar);
+			}
+		}
+		catch (SocketException ex)
+		{
+			Logger.Log("连接发生错误ConnCallBack.......:" + ex.Message);
+		}
+	}
+
+	protected override void Connect(string hostName, int portNum)
+	{
+		if (m_client == null || !m_client.Connected)
+		{
+			try
+			{
+				m_client = new TcpClient((!hostName.Contains(":")) ? AddressFamily.InterNetwork : AddressFamily.InterNetworkV6);
+				m_client.ReceiveTimeout = 10;
+				Logger.Log("正在建立连接到 " + hostName + ":" + portNum);
+				Global.ExternalCall("ServerConnect");
+				if (Application.platform == RuntimePlatform.WindowsWebPlayer || Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+				{
+					Security.PrefetchSocketPolicy(hostName, portNum);
+				}
+				if (tcp_base.connecting_flag == 0 || tcp_base.connecting_flag == 2)
+				{
+					tcp_base.connecting_flag = 1;
+				}
+				m_client.BeginConnect(hostName, portNum, ConnectCallback, m_client);
+				return;
+			}
+			catch (Exception ex)
+			{
+				Logger.Log(ex.Message + "  Conn.......");
+				m_hostIdx++;
+				if (m_hostIdx >= m_hosts.Count)
+				{
+					EndConnect(state: false);
+				}
+				else
+				{
+					Connect(m_hosts[m_hostIdx].hostname, m_hosts[m_hostIdx].port);
+				}
+				return;
+			}
+		}
+		EndConnect(state: true);
+	}
+
+	public override void ConnectCallBackEnd()
+	{
+		if (m_client != null && m_client.Connected)
+		{
+			m_bConnectLost = !m_client.Connected;
+			m_stream = m_client.GetStream();
+			m_data = new byte[m_client.ReceiveBufferSize];
+			Logger.Log("old Blocking = " + m_client.Client.Blocking);
+			m_client.Client.Blocking = false;
+			Logger.Log("连接完成:ReceiveBufferSize(" + m_client.ReceiveBufferSize + ")");
+			Global.ExternalCall("ServerConnected");
+			StartReceive();
+			m_bConnectLost = false;
+			tcp_base.connecting_flag = 0;
+			EndConnect(state: true);
+		}
+		else
+		{
+			m_hostIdx++;
+			if (m_hostIdx >= m_hosts.Count)
+			{
+				EndConnect(state: false);
+			}
+			else
+			{
+				Connect(m_hosts[m_hostIdx].hostname, m_hosts[m_hostIdx].port);
+			}
+		}
+	}
+
+	public void connect(string hostName, int portNum)
+	{
+		m_client = new TcpClient();
+		m_client.Connect(hostName, portNum);
+		m_stream = m_client.GetStream();
+		m_data = new byte[m_client.ReceiveBufferSize];
+		StartReceive();
+	}
+
+	public override void Send(byte[] _data, int size)
+	{
+		if (m_stream == null || !m_client.Connected)
+		{
+			Logger.Log("client connect close when send");
+			ConnectLost();
+			return;
+		}
+		SendData sendData = new SendData();
+		sendData.data = new byte[size];
+		Array.Copy(_data, sendData.data, size);
+		Monitor.Enter(this);
+		if (m_bSending)
+		{
+			m_sendDatas.Add(sendData);
+		}
+		else
+		{
+			StartSend(sendData.data, size);
+		}
+		Monitor.Exit(this);
+	}
+
+	private void StartSend(byte[] data, int size)
+	{
+		m_stream.BeginWrite(data, 0, size, SendCallback, this);
+	}
+
+	private static void SendCallback(IAsyncResult result)
+	{
+		tcp_client tcp_client2 = (tcp_client)result.AsyncState;
+		tcp_client2.m_stream.EndWrite(result);
+		tcp_client2.Send();
+	}
+
+	private void Send()
+	{
+		Monitor.Enter(this);
+		if (m_sendDatas.Count > 0)
+		{
+			StartSend(m_sendDatas[0].data, m_sendDatas[0].data.Length);
+			m_sendDatas.RemoveAt(0);
+		}
+		else
+		{
+			m_bSending = false;
+		}
+		Monitor.Exit(this);
+	}
+
+	private void StartReceive()
+	{
+		m_stream.BeginRead(m_data, 0, m_data.Length, ReceiveCallback, this);
+	}
+
+	private static void ReceiveCallback(IAsyncResult result)
+	{
+		tcp_client tcp_client2 = (tcp_client)result.AsyncState;
+		try
+		{
+			if (tcp_client2.m_client == null || !tcp_client2.m_client.Connected)
+			{
+				Logger.Log("client connect closed");
+				tcp_client2.ConnectLost();
+				return;
+			}
+			int num = tcp_client2.m_stream.EndRead(result);
+			if (num <= 0)
+			{
+				Logger.Log("server connect closed");
+				tcp_client2.ConnectLost();
+				return;
+			}
+			tcp_client2.m_receiveBuffer.buffer_add(tcp_client2.m_data, num);
+			tcp_client2.Parse();
+		}
+		catch (ArgumentNullException ex)
+		{
+			Logger.Log("ReceiveCallback ArgumentNullException:" + ex.Message);
+		}
+		catch (ArgumentException ex2)
+		{
+			Logger.Log("ReceiveCallback ArgumentException:" + ex2.Message);
+		}
+		catch (InvalidOperationException ex3)
+		{
+			Logger.Log("ReceiveCallback InvalidOperationException:" + ex3.Message);
+		}
+		catch (EndOfStreamException ex4)
+		{
+			Logger.Log(string.Concat("ReceiveCallback EndOfStreamException DataLength:", tcp_client2.m_receiveBuffer.Length, " Type:", ex4.GetType(), " Message:", ex4.Message, " Source:", ex4.Source, " ", ex4));
+		}
+		catch (IOException ex5)
+		{
+			Logger.Log("ReceiveCallback IOException:" + ex5.Message);
+		}
+		catch (Exception ex6)
+		{
+			Logger.Log(string.Concat("ReceiveCallback Exception DataLength:", tcp_client2.m_receiveBuffer.Length, " Type:", ex6.GetType(), " Message:", ex6.Message, " Source:", ex6.Source, " ", ex6));
+		}
+		tcp_client2.StartReceive();
+	}
+
+	public override void Disconnect()
+	{
+		if (m_client != null)
+		{
+			m_client.Close();
+		}
+	}
+}

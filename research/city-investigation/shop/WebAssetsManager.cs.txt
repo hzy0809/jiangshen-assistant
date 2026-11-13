@@ -1,0 +1,1149 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
+using Database;
+using UnityEngine;
+
+public class WebAssetsManager : MonoBehaviour
+{
+	private class CDNTest
+	{
+		public string cdn;
+
+		public string asset;
+
+		public string failed;
+
+		public int speed;
+
+		public string detail;
+
+		public CDNTest(string _cdn, string _asset, string _failed, int _speed, string _detail)
+		{
+			cdn = _cdn;
+			asset = _asset;
+			failed = _failed;
+			speed = _speed;
+			detail = _detail;
+		}
+	}
+
+	private class AssetLoader
+	{
+		public BaseAsset owner;
+
+		public bool sub;
+
+		public bool isimage;
+
+		public AssetLoader(BaseAsset _owner, bool _sub, bool _isimage)
+		{
+			owner = _owner;
+			sub = _sub;
+			isimage = _isimage;
+		}
+
+		public void LoadSuccess(string name)
+		{
+			if (sub)
+			{
+				owner.LoadSuccessSub(name);
+			}
+			else
+			{
+				owner.LoadSuccess(name);
+			}
+		}
+
+		public void LoadFail(string name)
+		{
+			if (sub)
+			{
+				owner.LoadFailSub(name);
+			}
+			else
+			{
+				owner.LoadFail(name);
+			}
+		}
+	}
+
+	private Hashtable AssetsNotCachecd = new Hashtable();
+
+	private List<string> ImageAssets = new List<string>();
+
+	private Hashtable ListLoading = new Hashtable();
+
+	public static string LoadingNames = string.Empty;
+
+	public bool isloading;
+
+	public string local_asset_path = string.Empty;
+
+	public string server_asset_path = string.Empty;
+
+	private WebAssetBGLoader wabl;
+
+	private LoadScreen lds;
+
+	public TextAsset depend_data;
+
+	public List<string> and_buildin_files = new List<string>();
+
+	private Hashtable dependency_tbl;
+
+	private Dictionary<int, List<string>> ldlist = new Dictionary<int, List<string>>();
+
+	private List<string> bglist = new List<string>();
+
+	private List<string> local_list = new List<string>();
+
+	public static int perc = 0;
+
+	public static int speed = 0;
+
+	private long size;
+
+	private float timer;
+
+	private float last_loaded;
+
+	private int last_file_size;
+
+	private int speed_cdn;
+
+	private float timer_cdn;
+
+	private float last_loaded_cdn;
+
+	private int count_cdn;
+
+	private List<CDNTest> cdntests = new List<CDNTest>();
+
+	private bool m_bCDNTesting;
+
+	private bool cdn_report;
+
+	private float stop_timer;
+
+	private float wifi_timer;
+
+	private static bool show_downloadmsg = false;
+
+	private bool waitbgload;
+
+	private List<WWW> wwwlists = new List<WWW>();
+
+	private int cur_wwwcount;
+
+	public static string error = string.Empty;
+
+	private static Hashtable server_md5;
+
+	private static bool md5_prep;
+
+	private WWW cache_www;
+
+	public bool iscache_loading;
+
+	public int curbgid;
+
+	private static Dictionary<string, string> hashcodes = new Dictionary<string, string>();
+
+	private static bool needsave = false;
+
+	private static float savetimer = 0f;
+
+	private string[] sub_dirs = new string[17]
+	{
+		"assets/amulet", "assets/battle", "assets/campaign", "assets/capital0", "assets/char_model", "assets/city_event", "assets/divinity", "assets/fairy", "assets/font", "assets/music",
+		"assets/nation_war", "assets/premium", "assets/spirit", "assets/yabiao", "assets/generalbook", "assets/rune", "assets/teamfight"
+	};
+
+	private void Awake()
+	{
+		if (dependency_tbl == null)
+		{
+			MemoryStream memoryStream = new MemoryStream(depend_data.bytes);
+			if (memoryStream != null)
+			{
+				BinaryFormatter binaryFormatter = new BinaryFormatter();
+				dependency_tbl = (Hashtable)binaryFormatter.Deserialize(memoryStream);
+				memoryStream.Close();
+			}
+		}
+	}
+
+	public string GetDependency(string name)
+	{
+		return (dependency_tbl == null) ? null : ((!dependency_tbl.ContainsKey(name)) ? null : ((string)dependency_tbl[name]));
+	}
+
+	public void Localpath_netcafe()
+	{
+		if (Global.jsnetcafe)
+		{
+			local_asset_path = Application.dataPath + "/assets/";
+		}
+		CheckPath_netcafe();
+		md5_prep = false;
+	}
+
+	public void Start()
+	{
+		wabl = GetComponent<WebAssetBGLoader>();
+		if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor)
+		{
+			if (!Global.jsnetcafe)
+			{
+				local_asset_path = Application.persistentDataPath + "/assets/";
+				CheckPath();
+				md5_prep = false;
+			}
+		}
+		else
+		{
+			md5_prep = true;
+		}
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			server_asset_path = "AndroidAssets/";
+			local_asset_path = Application.persistentDataPath + "/assets/";
+			CheckPath();
+		}
+		else if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer || Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.OSXPlayer)
+		{
+			server_asset_path = "WebAssets/";
+		}
+		else if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			if (Global.i18n == "zh-tw")
+			{
+				server_asset_path = "IOSAssets_tw/";
+			}
+			else
+			{
+				server_asset_path = "IOSAssets/";
+			}
+			local_asset_path = Application.persistentDataPath + "/assets/";
+			CheckPath();
+		}
+		IPHostEntry stateObject = new IPHostEntry();
+		Dns.BeginGetHostByName("jsk.xdcdn.net", dns_result, stateObject);
+		LoadFileHash();
+		lds = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+	}
+
+	private void dns_result(IAsyncResult result)
+	{
+		try
+		{
+			IPHostEntry iPHostEntry = Dns.EndGetHostByName(result);
+			IPAddress[] addressList = iPHostEntry.AddressList;
+			foreach (IPAddress iPAddress in addressList)
+			{
+				Logger.Log("DNS " + iPAddress.ToString());
+			}
+		}
+		catch (Exception ex)
+		{
+			Logger.Log("DNS ERROR" + ex.Message);
+		}
+	}
+
+	public void Update()
+	{
+		if (needsave && !lds.IsBattling())
+		{
+			if (savetimer > 0f)
+			{
+				savetimer -= Time.deltaTime;
+			}
+			else
+			{
+				SaveFileHash();
+				needsave = false;
+				savetimer = 5f;
+			}
+		}
+		if (isloading)
+		{
+			WWW wWW = wwwlists[cur_wwwcount];
+			if (wWW != null && !wWW.isDone)
+			{
+				timer += Time.deltaTime;
+				timer_cdn += Time.deltaTime;
+				float progress = wWW.progress;
+				perc = (int)(progress * 100f);
+				if (progress == last_loaded)
+				{
+					stop_timer += Time.deltaTime;
+				}
+				else
+				{
+					stop_timer = 0f;
+				}
+				if (stop_timer > 5f)
+				{
+					Logger.Log("Too Slow, Restart " + LoadingNames);
+					StopCoroutine("LoadAssetFromServer");
+					isloading = false;
+					cur_wwwcount++;
+					stop_timer = 0f;
+					LoadFailed(LoadingNames);
+				}
+				if (timer > 1f)
+				{
+					speed = (int)((float)size * (progress - last_loaded) + (float)last_file_size);
+					last_file_size = 0;
+					last_loaded = progress;
+					timer = 0f;
+				}
+				if (timer_cdn > 6f)
+				{
+					speed_cdn = (int)((float)size * (progress - last_loaded_cdn));
+					if (count_cdn < ServerSetting.url_assets.Count && speed_cdn < 10240)
+					{
+						if (cdn_report)
+						{
+							CDNTest item = new CDNTest(ServerSetting.url_assets[count_cdn], LoadingNames, "speed low", speed_cdn, string.Empty);
+							cdntests.Add(item);
+						}
+						LoadFailed(LoadingNames);
+					}
+				}
+			}
+		}
+		if (!isloading && !iscache_loading)
+		{
+			LoadNext();
+		}
+		if (!m_bCDNTesting && cdntests.Count > 0)
+		{
+			StartCoroutine(cdn_test(cdntests[0]));
+			cdntests.RemoveAt(0);
+		}
+		if (waitbgload)
+		{
+			perc = (int)(wabl.last_loaded * 100f);
+		}
+	}
+
+	private IEnumerator cdn_test(CDNTest ct)
+	{
+		m_bCDNTesting = true;
+		WWWForm form = new WWWForm();
+		string url = string.Empty;
+		ServerSetting.MakeFormURL(ref form, ref url);
+		form.AddField("command", "cdn_test");
+		form.AddField("cdn", ct.cdn);
+		form.AddField("asset", ct.asset);
+		form.AddField("failed", ct.failed);
+		form.AddField("speed", ct.speed.ToString());
+		form.AddField("detail", ct.detail);
+		yield return new WWW(url, form);
+		m_bCDNTesting = false;
+	}
+
+	private void CreateDirectroy(string dpath)
+	{
+		dpath = Path.Combine(Application.persistentDataPath, dpath);
+		Debug.Log("Create Directory " + dpath.ToString());
+		if (!Directory.Exists(dpath))
+		{
+			DirectoryInfo directoryInfo = Directory.CreateDirectory(dpath);
+		}
+	}
+
+	private void CreateDirectory_netcafe(string dpath)
+	{
+		dpath = Path.Combine(Application.dataPath, dpath);
+		Debug.Log("Create Directory " + dpath.ToString());
+		if (!Directory.Exists(dpath))
+		{
+			DirectoryInfo directoryInfo = Directory.CreateDirectory(dpath);
+		}
+	}
+
+	public void Clear()
+	{
+		ListLoading.Clear();
+	}
+
+	private bool HasLoader(List<AssetLoader> loaders, BaseAsset owner, bool sub)
+	{
+		foreach (AssetLoader loader in loaders)
+		{
+			if (loader.owner == owner && loader.sub == sub)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void LoadAsset(BaseAsset owner, string AssetName, int count, bool sub, bool isimage)
+	{
+		if (AssetsNotCachecd.Contains(AssetName))
+		{
+			LoadFinishedImmediate(owner, AssetName, sub);
+			return;
+		}
+		if (ListLoading.Contains(AssetName))
+		{
+			List<AssetLoader> list = ListLoading[AssetName] as List<AssetLoader>;
+			if (!HasLoader(list, owner, sub))
+			{
+				list.Add(new AssetLoader(owner, sub, isimage));
+			}
+			return;
+		}
+		List<AssetLoader> list2 = new List<AssetLoader>();
+		list2.Add(new AssetLoader(owner, sub, isimage));
+		ListLoading[AssetName] = list2;
+		if (!isloading && ListLoading.Count > 1 && count == 0)
+		{
+		}
+	}
+
+	private void LoadFinished(string AssetName)
+	{
+		if (!ListLoading.ContainsKey(AssetName))
+		{
+			return;
+		}
+		List<AssetLoader> list = ListLoading[AssetName] as List<AssetLoader>;
+		foreach (AssetLoader item in list)
+		{
+			item.LoadSuccess(AssetName);
+		}
+		ListLoading.Remove(AssetName);
+	}
+
+	private void LoadFinishedImmediate(BaseAsset owner, string AssetName, bool sub)
+	{
+		if (sub)
+		{
+			owner.LoadSuccessSub(AssetName);
+		}
+		else
+		{
+			owner.LoadSuccess(AssetName);
+		}
+	}
+
+	private void LoadFailed(string AssetName)
+	{
+		Application.ExternalCall("LoadError", AssetName);
+		if (!ListLoading.ContainsKey(AssetName))
+		{
+			return;
+		}
+		List<AssetLoader> list = ListLoading[AssetName] as List<AssetLoader>;
+		ListLoading.Remove(AssetName);
+		foreach (AssetLoader item in list)
+		{
+			item.LoadFail(AssetName);
+		}
+	}
+
+	private void LoadNext()
+	{
+		if (isloading || ListLoading.Count <= 0)
+		{
+			return;
+		}
+		IDictionaryEnumerator dictionaryEnumerator = ListLoading.GetEnumerator();
+		try
+		{
+			if (!dictionaryEnumerator.MoveNext())
+			{
+				return;
+			}
+			DictionaryEntry dictionaryEntry = (DictionaryEntry)dictionaryEnumerator.Current;
+			List<AssetLoader> list = dictionaryEntry.Value as List<AssetLoader>;
+			if (CheckFileHash(dictionaryEntry.Key as string) || CheckBuildInFile((dictionaryEntry.Key as string) + ".unity3d"))
+			{
+				LoadAssetCheck(dictionaryEntry.Key as string, 0, list[0].isimage);
+			}
+			else if (CheckDownloadPermission())
+			{
+				LoadAssetCheck(dictionaryEntry.Key as string, 0, list[0].isimage);
+			}
+			else if (!show_downloadmsg)
+			{
+				MessageBox messageBox = __BaseUI.GetMessageBox();
+				if (__BaseUI.get_string(21359u) != string.Empty)
+				{
+					messageBox.setMessage(string.Empty, __BaseUI.get_string(21359u), null, ConfirmDownloadPermission, _bCancel: false);
+				}
+				else
+				{
+					messageBox.setMessage(string.Empty, "提示：由于当前WIFI未连接，继续游戏所需的资源下载会产生数据流量。", null, ConfirmDownloadPermission, _bCancel: false);
+				}
+				messageBox.bNoButton = false;
+				messageBox.setDepth(-300);
+				show_downloadmsg = true;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = dictionaryEnumerator as IDisposable;
+			if (disposable != null)
+			{
+				disposable.Dispose();
+			}
+		}
+	}
+
+	private void ConfirmDownloadPermission(bool bOK, object[] objs)
+	{
+	}
+
+	private void LoadAssetCheck(string AssetName, int count, bool isimage)
+	{
+		if (AssetsNotCachecd.ContainsKey(AssetName))
+		{
+			LoadFinished(AssetName);
+		}
+		else if (wabl != null && wabl.LoadingNames == AssetName)
+		{
+			waitbgload = true;
+			wabl.OnLoadEnd = WaitBgEnd;
+			LoadingNames = AssetName;
+			size = AssetMD5.GetSize(AssetName);
+		}
+		else
+		{
+			StartCoroutine(LoadAssetFromServer(AssetName, count, isimage));
+		}
+	}
+
+	private void WaitBgEnd(string AssetName, AssetBundle bundle)
+	{
+		waitbgload = false;
+		if (bundle == null)
+		{
+			LoadFailed(AssetName);
+			return;
+		}
+		AssetsNotCachecd[AssetName] = bundle;
+		LoadFinished(AssetName);
+		float num = 1f - last_loaded;
+		last_file_size += (int)((float)size * num);
+		last_loaded = 0f;
+	}
+
+	public string get_editor_string()
+	{
+		return "file://" + Application.dataPath + "/../WebAssets/";
+	}
+
+	private IEnumerator LoadAssetFromServer(string AssetName, int count, bool isimage)
+	{
+		bool local = false;
+		bool buildin = false;
+		DateTime startTime = DateTime.Now;
+		isloading = true;
+		LoadingNames = AssetName;
+		count_cdn = count;
+		timer_cdn = 0f;
+		string url = AssetName + ".unity3d";
+		string server_code = string.Empty;
+		if (isimage)
+		{
+			ImageMessage im = Global.get_image_message(AssetName);
+			url = im.url;
+			size = im.len;
+			local = false;
+			buildin = false;
+			if ((Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer) && File.Exists(local_asset_path + AssetName))
+			{
+				local = true;
+				url = ((Application.platform != RuntimePlatform.WindowsPlayer) ? ("file://" + local_asset_path + AssetName) : ("file:///" + local_asset_path + AssetName));
+			}
+		}
+		else if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor)
+		{
+			url = get_editor_string() + url;
+			if (AssetName != "asset_md5")
+			{
+				size = AssetMD5.GetSize(AssetName);
+			}
+		}
+		else if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer)
+		{
+			Application.ExternalCall("StartDownload", AssetName);
+			url = LoadIndexScript.getDataUrl(server_asset_path + url);
+			if (AssetName == "asset_md5")
+			{
+				size = 0L;
+			}
+			else
+			{
+				if (count > 0)
+				{
+					url = url + "?" + count;
+				}
+				size = AssetMD5.GetSize(AssetName);
+			}
+		}
+		else if (Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			if (AssetName == "asset_md5")
+			{
+				url = LoadIndexScript.getDataUrl(server_asset_path + url);
+				size = 0L;
+			}
+			else
+			{
+				string tempurl = local_asset_path + url;
+				server_code = GetCode(AssetName);
+				size = GetSize(AssetName);
+				string local_code = GetLocalMD5(AssetName);
+				if (server_code != local_code)
+				{
+					url = LoadIndexScript.getDataUrl(server_asset_path + url);
+					if (count > 0)
+					{
+						url = url + "?" + count;
+					}
+					local = false;
+				}
+				else
+				{
+					url = "file:///" + tempurl;
+					local = true;
+				}
+			}
+		}
+		else if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			size = AssetMD5.GetSize(AssetName);
+			string filename = url;
+			if (CheckBuildInFile(url))
+			{
+				if (Application.platform == RuntimePlatform.Android)
+				{
+					url = "jar:file://" + Application.dataPath + "!/assets/AndroidAssets/" + url;
+				}
+				else if (Application.platform == RuntimePlatform.IPhonePlayer)
+				{
+					string path = ((!(Global.i18n == "zh-tw")) ? ("file://" + Application.dataPath + "/../IOSAssets/") : ("file://" + Application.dataPath + "/../IOSAssets_tw/"));
+					url = path + url;
+				}
+				size = 0L;
+				local = true;
+				buildin = true;
+			}
+			else if (!CheckFileHash(AssetName))
+			{
+				url = LoadIndexScript.getDataUrl(server_asset_path + filename);
+				local = false;
+				buildin = false;
+			}
+			else
+			{
+				url = "file://" + local_asset_path + filename;
+				local = true;
+				buildin = false;
+			}
+			Logger.Log("url " + url + " local " + local);
+		}
+		WWW asset_www = new WWW(url);
+		int wwwcount = cur_wwwcount;
+		if (wwwlists.Count <= cur_wwwcount)
+		{
+			wwwlists.Add(asset_www);
+		}
+		else
+		{
+			wwwlists[cur_wwwcount] = asset_www;
+		}
+		yield return asset_www;
+		if (Application.platform != RuntimePlatform.WindowsEditor && Application.platform != RuntimePlatform.OSXEditor && !local && AssetName != "asset_md5")
+		{
+			if (!isimage && string.IsNullOrEmpty(asset_www.error) && asset_www.assetBundle != null)
+			{
+				try
+				{
+					File.WriteAllBytes(string.Concat(str1: AssetName + ".unity3d", str0: local_asset_path), asset_www.bytes);
+					WriteFileHash(AssetName, url);
+				}
+				catch
+				{
+				}
+			}
+			if (isimage && string.IsNullOrEmpty(asset_www.error) && asset_www.texture != null)
+			{
+				try
+				{
+					File.WriteAllBytes(local_asset_path + AssetName, asset_www.bytes);
+				}
+				catch
+				{
+				}
+			}
+		}
+		isloading = false;
+		perc = 0;
+		if (wwwcount != cur_wwwcount)
+		{
+			yield break;
+		}
+		if (string.IsNullOrEmpty(asset_www.error) && ((!isimage && asset_www.assetBundle != null) || (isimage && (bool)asset_www.texture)))
+		{
+			if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer)
+			{
+				TimeSpan ts = DateTime.Now - startTime;
+				Application.ExternalCall("FinishDownload", AssetName, ts.TotalMilliseconds);
+			}
+			if (AssetName == "asset_md5")
+			{
+				AssetBundle bundle = asset_www.assetBundle;
+				TextAsset asset = bundle.Load("asset_md5") as TextAsset;
+				AssetMD5.Make(asset.bytes);
+				SetMd5(asset.bytes);
+			}
+			if (isimage)
+			{
+				AssetsNotCachecd[AssetName] = asset_www.texture;
+				ImageAssets.Add(AssetName);
+			}
+			else
+			{
+				AssetsNotCachecd[AssetName] = asset_www.assetBundle;
+			}
+			LoadFinished(AssetName);
+			float progress = 1f - last_loaded;
+			last_file_size += (int)((float)size * progress);
+			last_loaded = 0f;
+		}
+		else
+		{
+			if (!string.IsNullOrEmpty(asset_www.error))
+			{
+				Logger.Log(asset_www.error);
+			}
+			if (local && !buildin)
+			{
+				RemoveFileHash(AssetName);
+			}
+			if (buildin)
+			{
+				and_buildin_files.Remove(AssetName + ".unity3d");
+			}
+			if (count >= 5)
+			{
+				DataError(AssetName, count);
+			}
+			else
+			{
+				LoadFailed(AssetName);
+			}
+		}
+	}
+
+	public AssetBundle GetAsset(string AssetName)
+	{
+		if (AssetsNotCachecd.ContainsKey(AssetName))
+		{
+			return AssetsNotCachecd[AssetName] as AssetBundle;
+		}
+		return null;
+	}
+
+	public Texture2D GetAssetAsTexture(string AssetName)
+	{
+		if (AssetsNotCachecd.ContainsKey(AssetName))
+		{
+			return AssetsNotCachecd[AssetName] as Texture2D;
+		}
+		return null;
+	}
+
+	public static void SetMd5(byte[] bytes)
+	{
+		Logger.Log("SetMd5");
+		MemoryStream memoryStream = new MemoryStream(bytes);
+		if (memoryStream != null)
+		{
+			BinaryFormatter binaryFormatter = new BinaryFormatter();
+			server_md5 = (Hashtable)binaryFormatter.Deserialize(memoryStream);
+			memoryStream.Close();
+		}
+		md5_prep = true;
+	}
+
+	private long GetSize(string name)
+	{
+		if (server_md5.Contains(name))
+		{
+			return (long)((Hashtable)server_md5[name])["size"];
+		}
+		return 0L;
+	}
+
+	public string GetLocalMD5(string AssetName)
+	{
+		string filepath = Path.Combine(local_asset_path, AssetName + ".unity3d");
+		return GetLocalMD5_withpath(filepath);
+	}
+
+	public string GetLocalMD5_withpath(string filepath)
+	{
+		if (File.Exists(filepath))
+		{
+			MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+			FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192);
+			string text = BitConverter.ToString(mD5CryptoServiceProvider.ComputeHash(fileStream), 4, 8);
+			fileStream.Close();
+			text = text.Replace("-", string.Empty);
+			return text.ToLower();
+		}
+		Logger.Log("No file " + filepath);
+		return null;
+	}
+
+	public static string GetBytesMd5(byte[] bytes)
+	{
+		MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+		string text = BitConverter.ToString(mD5CryptoServiceProvider.ComputeHash(bytes), 4, 8);
+		text = text.Replace("-", string.Empty);
+		return text.ToLower();
+	}
+
+	public string GetCode(string name)
+	{
+		if (server_md5.Contains(name))
+		{
+			return ((Hashtable)server_md5[name])["md5"] as string;
+		}
+		return null;
+	}
+
+	public static void Clear_Loading_Status()
+	{
+		LoadingNames = string.Empty;
+		perc = 0;
+		speed = 0;
+		error = string.Empty;
+	}
+
+	public bool RemoveAssets(string AssetName, string owner)
+	{
+		if (AssetsNotCachecd.Contains(AssetName))
+		{
+			if (ImageAssets.Contains(AssetName))
+			{
+				AssetsNotCachecd[AssetName] = null;
+			}
+			else
+			{
+				(AssetsNotCachecd[AssetName] as AssetBundle).Unload(unloadAllLoadedObjects: true);
+			}
+			AssetsNotCachecd.Remove(AssetName);
+			return true;
+		}
+		return false;
+	}
+
+	public bool RemoveAssetBundleOnly(string AssetName)
+	{
+		if (AssetsNotCachecd.Contains(AssetName))
+		{
+			if (ImageAssets.Contains(AssetName))
+			{
+				AssetsNotCachecd[AssetName] = null;
+			}
+			else
+			{
+				(AssetsNotCachecd[AssetName] as AssetBundle).Unload(unloadAllLoadedObjects: false);
+			}
+			AssetsNotCachecd.Remove(AssetName);
+			return true;
+		}
+		return false;
+	}
+
+	public bool RemoveIcons(string AssetName)
+	{
+		if (AssetsNotCachecd.Contains(AssetName))
+		{
+			if (ImageAssets.Contains(AssetName))
+			{
+				AssetsNotCachecd[AssetName] = null;
+			}
+			else
+			{
+				(AssetsNotCachecd[AssetName] as AssetBundle).Unload(unloadAllLoadedObjects: false);
+			}
+			AssetsNotCachecd.Remove(AssetName);
+			return true;
+		}
+		return false;
+	}
+
+	private void DataError(string AssetName, int count)
+	{
+		StartCoroutine(LoadAssetFromCache(AssetName, count));
+	}
+
+	private IEnumerator LoadAssetFromCache(string AssetName, int count)
+	{
+		iscache_loading = true;
+		Logger.Log("LoadAssetFromCache " + AssetName);
+		string url = AssetName + ".unity3d";
+		bool local = false;
+		DateTime startTime = DateTime.Now;
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor)
+		{
+			string path = "file://" + Application.dataPath + "/../WebAssets/";
+			url = path + url;
+			if (AssetName != "asset_md5")
+			{
+				size = AssetMD5.GetSize(AssetName);
+			}
+		}
+		else if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer)
+		{
+			url = LoadIndexScript.getDataUrl(server_asset_path + url);
+			if (AssetName == "asset_md5")
+			{
+				size = 0L;
+			}
+		}
+		else if (Application.platform == RuntimePlatform.WindowsPlayer)
+		{
+			if (AssetName == "asset_md5")
+			{
+				url = LoadIndexScript.getDataUrl(server_asset_path + url);
+				size = 0L;
+			}
+			else
+			{
+				string tempurl = local_asset_path + url;
+				string server_code = GetCode(AssetName);
+				size = GetSize(AssetName);
+				string local_code = GetLocalMD5(AssetName);
+				if (server_code != local_code)
+				{
+					url = LoadIndexScript.getDataUrl(server_asset_path + url);
+					local = false;
+				}
+				else
+				{
+					url = "file:///" + tempurl;
+					local = true;
+				}
+			}
+		}
+		else if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			string path2 = ((!(Global.i18n == "zh-tw")) ? ("file://" + Application.dataPath + "/../IOSAssets/") : ("file://" + Application.dataPath + "/../IOSAssets_tw/"));
+			url = path2 + url;
+			size = AssetMD5.GetSize(AssetName);
+		}
+		else if (Application.platform == RuntimePlatform.Android)
+		{
+			string path3 = "file://" + Application.dataPath + "/../AndroidAssets/";
+			url = path3 + url;
+			size = AssetMD5.GetSize(AssetName);
+		}
+		cache_www = WWW.LoadFromCacheOrDownload(url, 0);
+		yield return cache_www;
+		if ((Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.WindowsPlayer) && !local && cache_www.error == null && cache_www.assetBundle != null && GetCode(AssetName) == GetBytesMd5(cache_www.bytes))
+		{
+			try
+			{
+				File.WriteAllBytes(string.Concat(str1: AssetName + ".unity3d", str0: local_asset_path), cache_www.bytes);
+			}
+			catch
+			{
+			}
+		}
+		iscache_loading = false;
+		perc = 0;
+		if (cache_www.error == null && cache_www.assetBundle != null)
+		{
+			if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer)
+			{
+				TimeSpan ts = DateTime.Now - startTime;
+				Application.ExternalCall("FinishDownload", AssetName, ts.TotalMilliseconds);
+			}
+			AssetsNotCachecd[AssetName] = cache_www.assetBundle;
+			LoadFinished(AssetName);
+			float progress = 1f - last_loaded;
+			last_file_size += (int)((float)size * progress);
+			last_loaded = 0f;
+		}
+		else
+		{
+			if (cache_www.error != null)
+			{
+				Logger.Log(cache_www.error);
+			}
+			LoadFailed(AssetName);
+			Logger.Log("Cache Failed " + AssetName);
+		}
+	}
+
+	public bool isloaded(string AssetName)
+	{
+		return AssetsNotCachecd.ContainsKey(AssetName);
+	}
+
+	public void bglist_addline(string line)
+	{
+	}
+
+	public void bglist_changeid(int id)
+	{
+		if (!ldlist.ContainsKey(id))
+		{
+			ldlist[id] = new List<string>();
+		}
+		curbgid = id;
+	}
+
+	public int getAssetCount()
+	{
+		return AssetsNotCachecd.Count;
+	}
+
+	public void LoadFileHash()
+	{
+		string path = local_asset_path + "file_hash.txt";
+		if (File.Exists(path))
+		{
+			string[] array = File.ReadAllLines(path);
+			string[] array2 = array;
+			foreach (string text in array2)
+			{
+				string[] array3 = text.Split('|');
+				if (array3.Length == 2)
+				{
+					hashcodes[array3[0]] = array3[1];
+				}
+			}
+			Logger.Log("file_hash " + hashcodes.Count);
+		}
+		else
+		{
+			Debug.Log("no file_hash.txt");
+			File.Create(path);
+		}
+	}
+
+	public void WriteFileHash(string AssetName, string url)
+	{
+		hashcodes[AssetName] = url;
+		if (!needsave)
+		{
+			needsave = true;
+		}
+	}
+
+	public void RemoveFileHash(string AssetName)
+	{
+		if (hashcodes.ContainsKey(AssetName))
+		{
+			hashcodes.Remove(AssetName);
+			if (!needsave)
+			{
+				needsave = true;
+			}
+		}
+	}
+
+	public void SaveFileHash()
+	{
+		string path = local_asset_path + "file_hash.txt";
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, string> hashcode in hashcodes)
+		{
+			list.Add(hashcode.Key + "|" + hashcode.Value);
+		}
+		File.WriteAllLines(path, list.ToArray());
+		Logger.Log("file hash saved");
+	}
+
+	public string GetLocalHash(string AssetName)
+	{
+		if (hashcodes.ContainsKey(AssetName))
+		{
+			return hashcodes[AssetName];
+		}
+		return string.Empty;
+	}
+
+	public bool CheckFileHash(string AssetName)
+	{
+		if (!File.Exists(local_asset_path + AssetName + ".unity3d"))
+		{
+			return false;
+		}
+		string localHash = GetLocalHash(AssetName);
+		if (localHash == string.Empty)
+		{
+			return false;
+		}
+		string dataUrl = LoadIndexScript.getDataUrl(server_asset_path + AssetName + ".unity3d");
+		if (localHash != dataUrl)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	private void CheckPath()
+	{
+		if (!Directory.Exists("assets"))
+		{
+			CreateDirectroy("assets");
+		}
+		string[] array = sub_dirs;
+		foreach (string text in array)
+		{
+			if (!Directory.Exists(text))
+			{
+				CreateDirectroy(text);
+			}
+		}
+	}
+
+	private void CheckPath_netcafe()
+	{
+		if (!Directory.Exists("assets"))
+		{
+			CreateDirectory_netcafe("assets");
+		}
+		string[] array = sub_dirs;
+		foreach (string text in array)
+		{
+			if (!Directory.Exists(text))
+			{
+				CreateDirectory_netcafe(text);
+			}
+		}
+	}
+
+	public bool CheckDownloadPermission()
+	{
+		return true;
+	}
+
+	public bool CheckWifi()
+	{
+		return true;
+	}
+
+	public bool CheckBuildInFile(string url)
+	{
+		return false;
+	}
+}

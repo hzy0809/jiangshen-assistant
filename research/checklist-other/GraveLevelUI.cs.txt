@@ -1,0 +1,614 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class GraveLevelUI : BaseUI
+{
+	public static Texture2D texStone;
+
+	public static Texture2D texAttack;
+
+	private GraveTroop m_troop;
+
+	private bool m_bClear;
+
+	public static GameObject mesh;
+
+	public static GameObject stone_mesh;
+
+	private GUIStyle ui_bar_tanbao = new GUIStyle();
+
+	private GUIStyle ui_bar_tanbao2 = new GUIStyle();
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	public int tempexp;
+
+	public uint tempstamina;
+
+	private List<DemonArmySoldier> tempsoldier = new List<DemonArmySoldier>();
+
+	private Texture2D ui_icon_cangbaotu;
+
+	private Texture2D ui_icon_shouhushen;
+
+	private Texture2D ui_zi_faxain;
+
+	private Texture2D ui_zi_haojin;
+
+	private Texture2D ui_zi_jingxing;
+
+	private Texture2D icon_fangqi;
+
+	private GUIStyle ui_bar6 = new GUIStyle();
+
+	private GUIStyle dropStyle = new GUIStyle();
+
+	private GUIStyle rareDropStyle = new GUIStyle();
+
+	private GUIStyle ui_bar7 = new GUIStyle();
+
+	private GUIStyle ui_bar5 = new GUIStyle();
+
+	private ushort _graveid;
+
+	private Treasures m_ts = new Treasures();
+
+	private bool isOver;
+
+	private ushort idnewgrave;
+
+	private int tempsoldiernum;
+
+	private bool tempendgrave;
+
+	private bool tempshowboss;
+
+	private string stamina_tip = __BaseUI.load_str(5u);
+
+	public ushort graveid
+	{
+		get
+		{
+			return _graveid;
+		}
+		set
+		{
+			_graveid = value;
+		}
+	}
+
+	public override void Start()
+	{
+		base.Start();
+		visible_count = false;
+	}
+
+	private void Update()
+	{
+		if (stone_mesh != null)
+		{
+			Vector3 eulerAngles = stone_mesh.transform.eulerAngles;
+			eulerAngles.y += Time.deltaTime * 5f;
+			stone_mesh.transform.eulerAngles = eulerAngles;
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_grave");
+		string model_name = Global.character_.grave_campaign.m_campaign.model_name;
+		AddAsset("campaign/" + model_name);
+		AddAsset("campaign/arrow_red");
+		for (int i = 0; i < 6; i++)
+		{
+			GraveTroop graveTroop = Global.character_.grave_campaign.troops[i];
+			string text = (Global.getTemplate("troop_animation", graveTroop.idmodel) as _troop_animation).name;
+			AddAsset("battle/" + text, bForce: false);
+		}
+		CollectingStart();
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		if (mesh == null)
+		{
+			string model_name = Global.character_.grave_campaign.m_campaign.model_name;
+			AssetBundle asset = BaseAsset.was.GetAsset("campaign/" + model_name);
+			if (asset != null)
+			{
+				mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+				mesh.transform.parent = base.gameObject.transform;
+			}
+			for (int i = 0; i < 6; i++)
+			{
+				GraveTroop graveTroop = Global.character_.grave_campaign.troops[i];
+				string text = (Global.getTemplate("troop_animation", graveTroop.idmodel) as _troop_animation).name;
+				asset = BaseAsset.was.GetAsset("battle/" + text);
+				if (!(asset != null))
+				{
+					continue;
+				}
+				graveTroop.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+				BaseAsset.SetLayerRecursively(graveTroop.mesh, 9);
+				graveTroop.mesh.transform.position = graveTroop.pos;
+				graveTroop.mesh.transform.eulerAngles = graveTroop.rot;
+				graveTroop.mesh.transform.parent = mesh.transform;
+				graveTroop.mesh.AddComponent<GraveTroopScript>().setTroop(this, graveTroop);
+				if (Global.character_.grave_campaign.finish > i)
+				{
+					graveTroop.killed = true;
+				}
+				if (graveTroop.killed && graveTroop.mesh.animation["dead"] != null)
+				{
+					graveTroop.mesh.animation["dead"].time = graveTroop.mesh.animation["dead"].length;
+					graveTroop.mesh.animation["dead"].enabled = true;
+					graveTroop.mesh.animation.Sample();
+				}
+				if (i == 5)
+				{
+					if (Global.character_.grave_campaign.showboss)
+					{
+						graveTroop.mesh.SetActiveRecursively(state: true);
+						continue;
+					}
+					graveTroop.mesh.SetActiveRecursively(state: false);
+					graveTroop.mesh.transform.parent = null;
+				}
+			}
+		}
+		for (int j = 0; j < 6; j++)
+		{
+			GraveTroop graveTroop2 = Global.character_.grave_campaign.troops[j];
+			if (graveTroop2.mesh != null && j < Global.character_.grave_campaign.finish && graveTroop2.mesh.animation["dead"] != null)
+			{
+				graveTroop2.mesh.animation["dead"].time = graveTroop2.mesh.animation["dead"].length;
+				graveTroop2.mesh.animation["dead"].enabled = true;
+				graveTroop2.mesh.animation.Sample();
+			}
+		}
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_grave");
+		ui_bar_tanbao.normal.background = asset2.Load("ui_bar_tanbao") as Texture2D;
+		texAttack = asset2.Load("ui_icon5") as Texture2D;
+		ui_bar_tanbao2.normal.background = asset2.Load("ui_bar_tanbao2") as Texture2D;
+		ui_icon_cangbaotu = asset2.Load("ui_icon_cangbaotu") as Texture2D;
+		ui_icon_shouhushen = asset2.Load("ui_icon_shouhushen") as Texture2D;
+		ui_zi_faxain = asset2.Load("ui_zi_faxain") as Texture2D;
+		ui_zi_haojin = asset2.Load("ui_zi_haojin") as Texture2D;
+		ui_zi_jingxing = asset2.Load("ui_zi_jingxing") as Texture2D;
+		icon_fangqi = asset2.Load("icon_fangqi_normal") as Texture2D;
+		btnRight.Add(new _ButtonMain(icon_fangqi, "fangqi", 62f, __BaseUI._iconMask2, _surrender, null));
+		ui_bar6.normal.background = asset2.Load("ui_bar6") as Texture2D;
+		ui_bar5.normal.background = asset2.Load("ui_bar5") as Texture2D;
+		ui_bar7.normal.background = asset2.Load("ui_bar7") as Texture2D;
+		if (Global.getTemplate("grave", graveid) is _grave grave)
+		{
+			dropStyle.normal.background = asset2.Load(grave.drop) as Texture2D;
+			rareDropStyle.normal.background = asset2.Load(grave.raredrop) as Texture2D;
+		}
+		Visible();
+	}
+
+	public void makeArrow(Database.GodTroop t, int layer)
+	{
+		t.arrow_mesh = (GameObject)Object.Instantiate(BaseAsset.was.GetAsset("campaign/arrow_red").mainAsset);
+		if (!(t.arrow_mesh != null))
+		{
+			return;
+		}
+		float y = 18f;
+		if (t.mesh != null)
+		{
+			BoxCollider boxCollider = t.mesh.collider as BoxCollider;
+			if (boxCollider != null)
+			{
+				y = boxCollider.extents.y * 2f * 2f + 0.5f;
+			}
+		}
+		t.arrow_mesh.transform.position = t.pos + new Vector3(0f, y, 0f);
+		float num = 3f;
+		t.arrow_mesh.transform.localScale = new Vector3(num, num, num);
+		t.arrow_mesh.transform.parent = mesh.transform;
+		BaseAsset.SetLayerRecursively(t.arrow_mesh, layer);
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (mesh != null)
+		{
+			Object.Destroy(mesh);
+			mesh = null;
+		}
+		stone_mesh = null;
+		if (Global.character_.grave_campaign == null || Global.character_.grave_campaign.troops == null)
+		{
+			return;
+		}
+		for (int i = 0; i < Global.character_.grave_campaign.troops.Length; i++)
+		{
+			GraveTroop graveTroop = Global.character_.grave_campaign.troops[i];
+			if (graveTroop != null)
+			{
+				graveTroop.mesh = null;
+				graveTroop.arrow_mesh = null;
+			}
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		__BaseUI.my_enabled = IsEnable();
+		Rect rect = __BaseUI._rectC(212f, 33f, 425f, 66f);
+		rect.y = 10f;
+		__BaseUI.Label(rect, string.Empty, ui_bar_tanbao);
+		GUI.BeginGroup(rect);
+		if (Global.getTemplate("grave", Global.character_.grave_campaign.idgrave) is _grave { soldier_base: var soldier_base })
+		{
+			int soldier = Global.character_.grave_campaign.soldier;
+			float num = (float)soldier / (float)soldier_base;
+			Texture2D image = __BaseUI._barGreenTex;
+			if ((double)num < 0.4)
+			{
+				image = __BaseUI._barRedTex;
+			}
+			if (num < 0f)
+			{
+				num = 0f;
+			}
+			GUI.DrawTexture(__BaseUI._rect(137f, 43f, 241f * num, 10f), image);
+			GUI.Label(__BaseUI._rect(136f, 42f, 242f, 12f), new GUIContent(string.Empty, __BaseUI.load_str(20850u)), ui_bar_tanbao2);
+			if (__BaseUI._rect(136f, 42f, 242f, 12f).Contains(Event.current.mousePosition))
+			{
+				__BaseUI.OutlinedLabel(__BaseUI._rect(136f, 42f, 242f, 12f), soldier + "/" + soldier_base, __BaseUI._numCenter, __BaseUI._clrWhite);
+			}
+		}
+		GUI.EndGroup();
+		int num2 = Screen.width - 341;
+		__BaseUI.Label(__BaseUI._rect(num2, 27f, 242f, 59f), string.Empty, ui_bar6);
+		__BaseUI.Label(__BaseUI._rect(num2, 95f, 242f, 59f), string.Empty, ui_bar6);
+		num2 = Screen.width - 119;
+		__BaseUI.Label(__BaseUI._rect(num2, 24f, 79f, 64f), string.Empty, ui_bar7);
+		__BaseUI.Label(__BaseUI._rect(num2, 92f, 79f, 64f), string.Empty, ui_bar5);
+		num2 = Screen.width - 316;
+		__BaseUI.Label(__BaseUI._rect(num2, 48f, 190f, 18f), string.Empty, dropStyle);
+		num2 = Screen.width - 269;
+		__BaseUI.Label(__BaseUI._rect(num2, 117f, 92f, 18f), string.Empty, rareDropStyle);
+		int num3 = Screen.width - 119 + 40;
+		int num4 = 160;
+		if (__BaseUI._btnHelp.Button(IsEnable(), __BaseUI._rect(num3, num4, 38f, 57f), new GUIContent(string.Empty, __BaseUI.load_str(455u))))
+		{
+		}
+		draw_right_bar();
+		drawTooltips();
+		__BaseUI.my_enabled = true;
+	}
+
+	private void draw_right_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			if (!(item.name == "fangqi") || Global.character_.grave.times != 0)
+			{
+				__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+				if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+				{
+					num++;
+				}
+				__BaseUI.EndGroup();
+			}
+		}
+	}
+
+	private void _return()
+	{
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+			return;
+		}
+		GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		RootBase.add_UIFunc(MainUI._grave);
+	}
+
+	public void wantCombat(GraveTroop troop)
+	{
+		m_troop = troop;
+		if (troop.idtroop == Global.character_.grave_campaign.finish + 1)
+		{
+			Hashtable hashtable = new Hashtable();
+			__BaseUI.subui = "NPCBattle";
+			hashtable.Add("subui", __BaseUI.subui);
+			hashtable.Add("campaignid", troop.idtroop);
+			hashtable.Add("troopid", 0);
+			hashtable.Add("substate", "grave_troop");
+			hashtable.Add("viewonly", false);
+			hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+			SendMessage("SubLoading", hashtable, SendMessageOptions.DontRequireReceiver);
+			FormationUI component = GetComponent<FormationUI>();
+			MainUI.SetSubUI(component);
+		}
+	}
+
+	private bool OnAttack()
+	{
+		DisableAll();
+		cs_grave_battle_0x342();
+		return true;
+	}
+
+	private void _surrender()
+	{
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(475u), rmg, surrenderOK, _bCancel: true);
+	}
+
+	private void surrenderOK(bool bOK, object[] arg)
+	{
+		if (bOK)
+		{
+			cs_grave_surrender_0x34D();
+		}
+	}
+
+	private void cs_grave_surrender_0x34D()
+	{
+		CSGraveSurrender_0x34D pkt = new CSGraveSurrender_0x34D();
+		RootUI.m_client.Send(845, pkt, sc_grave_surrender_0x34D);
+	}
+
+	private void sc_grave_surrender_0x34D(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCGraveSurrender_0x34D sCGraveSurrender_0x34D = JSProtoBuf.Serializer.Deserialize<SCGraveSurrender_0x34D>(stream);
+			if (sCGraveSurrender_0x34D.operate == SCGraveSurrender_0x34D.Operate.OK)
+			{
+				Global.character_.grave.reseted = 1;
+				_return();
+			}
+		}
+	}
+
+	private void cs_grave_battle_0x342()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSGraveBattle_0x342 cSGraveBattle_0x = new CSGraveBattle_0x342();
+		cSGraveBattle_0x.idtroop = m_troop.idtroop;
+		RootUI.m_client.Send(834, cSGraveBattle_0x, sc_grave_battle_0x342);
+	}
+
+	private void sc_grave_battle_0x342(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCGraveBattle_0x342 sCGraveBattle_0x = JSProtoBuf.Serializer.Deserialize<SCGraveBattle_0x342>(stream);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(rmg);
+		battleUI.setReport(sCGraveBattle_0x.report, wait_for_end: false, use_battle_end: true, this, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewDefault;
+		if (sCGraveBattle_0x.iswin)
+		{
+			m_ts = sCGraveBattle_0x.bonuses;
+		}
+		else
+		{
+			tempsoldier = sCGraveBattle_0x.soldiers;
+		}
+		tempendgrave = sCGraveBattle_0x.endgrave;
+		tempsoldiernum = sCGraveBattle_0x.soldier;
+		tempshowboss = sCGraveBattle_0x.showboss;
+		BaseUI.GetRootUI().battle_enter(fslds: false);
+		BaseAsset.lds.SetBattling(bBattling: true);
+		MainUI.SetSubUI(null);
+	}
+
+	public void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		idnewgrave = 0;
+		Global.character_.grave_campaign.soldier -= tempsoldiernum;
+		if (pkt.iswin)
+		{
+			m_troop.killed = true;
+			List<_Treasure> list = new List<_Treasure>();
+			_Treasure treasure = new _Treasure();
+			if (m_ts.bonuses != null)
+			{
+				foreach (Treasure bonuse in m_ts.bonuses)
+				{
+					if (bonuse.idtreasure_type == 3)
+					{
+						for (int i = 0; i < bonuse.param1; i++)
+						{
+							treasure = new _Treasure();
+							treasure.make((byte)bonuse.idtreasure_type, bonuse.param0, 1);
+							list.Add(treasure);
+						}
+					}
+					else
+					{
+						treasure = new _Treasure();
+						treasure.make((byte)bonuse.idtreasure_type, bonuse.param0, bonuse.param1);
+						list.Add(treasure);
+					}
+				}
+			}
+			Global.character_.grave_campaign.finish++;
+			BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+			if (tempshowboss)
+			{
+				Global.character_.grave_campaign.showboss = true;
+				Global.character_.grave_campaign.troops[5].mesh.transform.parent = mesh.transform;
+				if (Global.character_.grave_campaign.finish == 5)
+				{
+					isOver = true;
+					Global.character_.grave.finishtoday = 1;
+				}
+			}
+			else if (Global.character_.grave_campaign.finish == 5)
+			{
+				isOver = true;
+				Global.character_.grave.finishtoday = 1;
+			}
+			if (Global.character_.grave_campaign.finish == 6)
+			{
+				if (Global.character_.graves.ContainsKey(Global.character_.grave_campaign.idgrave))
+				{
+					Global.character_.graves[Global.character_.grave_campaign.idgrave].isfinish = true;
+				}
+				if (Global.getTemplate("grave", Global.character_.grave_campaign.idgrave) is _grave grave)
+				{
+					Global.character_.shop_open = (ushort)grave.shop;
+					if (Global.getTemplate("grave", grave.nextid) is _grave && !Global.character_.graves.ContainsKey(grave.nextid))
+					{
+						_character_grave character_grave = new _character_grave();
+						character_grave.idgrave = grave.nextid;
+						character_grave.isopen = true;
+						character_grave.isfinish = false;
+						Global.character_.graves.Add(grave.nextid, character_grave);
+						Global.character_.grave.newgrave = character_grave.idgrave;
+						idnewgrave = character_grave.idgrave;
+					}
+				}
+				isOver = true;
+				Global.character_.grave.finishtoday = 1;
+			}
+			if (Global.character_.grave_campaign.finish == 5)
+			{
+			}
+			BattleUI battleUI = BaseUI.GetBattleUI();
+			battleResultUI.Set(rmg, string.Empty, string.Empty, 0, 0, list, BonusClose);
+			if (list.Count > 0)
+			{
+				battleUI.setClose(BonusOpen);
+			}
+			else
+			{
+				battleUI.setClose(BonusClose);
+			}
+			return;
+		}
+		for (int j = 0; j < tempsoldier.Count; j++)
+		{
+			foreach (_character_grave_army item in m_troop.armys_)
+			{
+				if (tempsoldier[j].location == item.location)
+				{
+					item.soldier = tempsoldier[j].soldier;
+					break;
+				}
+			}
+		}
+		FailedOpen();
+	}
+
+	protected override void PostInit()
+	{
+		if (Global.character_.grave_campaign.soldier < 0)
+		{
+			__BaseUI.GetMessageBox().setMessage(picmode: true, ui_zi_haojin, new Rect(62f, 39f, 227f, 69f), null, new Rect(0f, 0f, 0f, 0f), null, rmg, OkOver);
+			if (Global.character_.grave_campaign.finish >= 5)
+			{
+			}
+		}
+	}
+
+	private void OkOver()
+	{
+		_return();
+		EnableAll();
+	}
+
+	private void Over()
+	{
+		_return();
+		EnableAll();
+	}
+
+	private void FailedOpen()
+	{
+		__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(428u), rmg);
+	}
+
+	private void BonusOpen()
+	{
+		BaseAsset.lds.GetCurUI().ToDisable();
+		__BaseUI.GetBattleResultUI().MyLoading();
+	}
+
+	private void BonusClose()
+	{
+		if (tempshowboss)
+		{
+			DisableAll();
+			__BaseUI.GetMessageBox().setMessage(picmode: true, ui_zi_jingxing, new Rect(64f, 19f, 235f, 32f), ui_icon_shouhushen, new Rect(94f, 45f, 152f, 122f), null, rmg, Endboss);
+		}
+		else if (isOver)
+		{
+			if (idnewgrave > 0)
+			{
+				if (Global.getTemplate("grave", idnewgrave) is _grave grave && GraveChooseUI.texDicName.ContainsKey(grave.title))
+				{
+					__BaseUI.GetMessageBox().setMessage(picmode: true, ui_zi_faxain, new Rect(104f, 19f, 142f, 32f), ui_icon_cangbaotu, new Rect(100f, 34f, 152f, 122f), GraveChooseUI.texDicName[grave.title], rmg, Over);
+				}
+				isOver = false;
+			}
+			else
+			{
+				isOver = false;
+				Over();
+			}
+		}
+		else if (Global.character_.grave_campaign.finish == 5)
+		{
+			EnableAll();
+			_return();
+		}
+	}
+
+	private void Endboss()
+	{
+		EnableAll();
+	}
+
+	private string stamina_bar(string key)
+	{
+		_buy_template buy_template = Global.get_buy_template(_buy_template.TYPE.STAMINA, Global.character_.stamina_buy_count + 1);
+		return string.Format(key, Global.character_.stamina, 20, Global.character_.stamina_buy_count, buy_template.gold);
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "stamina")
+		{
+			tooltipUI.ShowTooltipCommon2(stamina_bar(__BaseUI.load_str(5u)), string.Empty, 200);
+		}
+		else if (!(tip == "fangqi"))
+		{
+			if (tip != string.Empty)
+			{
+				tooltipUI.ShowTooltipCommon2(tip, string.Empty, 300);
+			}
+			else
+			{
+				tooltipUI.HideTooltip(string.Empty);
+			}
+		}
+	}
+}

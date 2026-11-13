@@ -1,0 +1,629 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BaseAsset : EventDispatcher
+{
+	protected class _Asset
+	{
+		public string name;
+
+		public bool force;
+
+		public int count;
+
+		public bool isimage;
+	}
+
+	private const int asset_clean_schedule = 600;
+
+	private static string warn_msg_20052 = "下载{0}出错，将返回原来界面";
+
+	protected static WebAssetsManager was = null;
+
+	protected static LoadScreen lds = null;
+
+	protected RootMessenger rmg;
+
+	protected bool LoadingFinished;
+
+	protected List<_Asset> asset_names = new List<_Asset>();
+
+	protected List<_Asset> asset_names_sub = new List<_Asset>();
+
+	protected List<string> used_assets = new List<string>();
+
+	private bool prepare_to_clear_resource;
+
+	private static Dictionary<string, int> AssetRefCount = new Dictionary<string, int>();
+
+	private static Dictionary<string, uint> AssetNotUsed = new Dictionary<string, uint>();
+
+	private static bool clean_schecduled = false;
+
+	protected List<GameObject> game_objects = new List<GameObject>();
+
+	protected bool loading;
+
+	protected bool collecting;
+
+	protected bool m_bInit;
+
+	public static int memory_policy = 0;
+
+	public static bool _PHONEUI = false;
+
+	public static bool isipad = false;
+
+	protected List<string> clear_list = new List<string>();
+
+	private void AddToUsedAsset(string asset_name)
+	{
+		if (!used_assets.Contains(asset_name))
+		{
+			used_assets.Add(asset_name);
+			IncrAssetRef(asset_name);
+		}
+	}
+
+	protected static void IncrAssetRef(string asset_name)
+	{
+		if (!AssetRefCount.ContainsKey(asset_name))
+		{
+			AssetRefCount.Add(asset_name, 1);
+		}
+		else
+		{
+			Dictionary<string, int> assetRefCount;
+			Dictionary<string, int> dictionary = (assetRefCount = AssetRefCount);
+			string key2;
+			string key = (key2 = asset_name);
+			int num = assetRefCount[key2];
+			dictionary[key] = num + 1;
+		}
+		if (AssetNotUsed.ContainsKey(asset_name))
+		{
+			AssetNotUsed.Remove(asset_name);
+		}
+	}
+
+	protected static void DecrAssetRef(string asset_name)
+	{
+		if (AssetRefCount.ContainsKey(asset_name))
+		{
+			if (AssetRefCount[asset_name] == 0)
+			{
+				return;
+			}
+			Dictionary<string, int> assetRefCount;
+			Dictionary<string, int> dictionary = (assetRefCount = AssetRefCount);
+			string key2;
+			string key = (key2 = asset_name);
+			int num = assetRefCount[key2];
+			if ((dictionary[key] = num - 1) == 0)
+			{
+				if (memory_policy == 0)
+				{
+					was.RemoveAssets(asset_name, string.Empty);
+				}
+				else
+				{
+					AssetNotUsed[asset_name] = TimeUtil.Now;
+				}
+			}
+		}
+		else
+		{
+			Debug.Log(asset_name + " not referenced");
+		}
+	}
+
+	public static void CleanAssets()
+	{
+		foreach (string key in AssetNotUsed.Keys)
+		{
+			was.RemoveAssets(key, string.Empty);
+		}
+		AssetNotUsed.Clear();
+	}
+
+	private void CleanAssetsSchedule()
+	{
+		if (!clean_schecduled)
+		{
+			clean_schecduled = true;
+			StartCoroutine(DoCleanSchedule());
+		}
+	}
+
+	private IEnumerator DoCleanSchedule()
+	{
+		yield return new WaitForEndOfFrame();
+		foreach (string one in AssetNotUsed.Keys)
+		{
+			if (AssetNotUsed[one] < TimeUtil.Now - 600)
+			{
+				was.RemoveAssets(one, string.Empty);
+			}
+		}
+		clean_schecduled = false;
+	}
+
+	public virtual void Awake()
+	{
+		if (was == null && GameObject.Find("/AssetManager") != null)
+		{
+			was = GameObject.Find("/AssetManager").GetComponent<WebAssetsManager>();
+		}
+		if (lds == null && GameObject.Find("/LoadUI") != null)
+		{
+			lds = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+		}
+		rmg = base.transform.root.GetComponent<RootMessenger>();
+	}
+
+	public virtual void Start()
+	{
+		if (was == null)
+		{
+			was = GameObject.Find("/AssetManager").GetComponent<WebAssetsManager>();
+		}
+		if (lds == null)
+		{
+			lds = GameObject.Find("/LoadUI").GetComponent<LoadScreen>();
+		}
+		rmg = base.transform.root.GetComponent<RootMessenger>();
+	}
+
+	protected void CollectingStart()
+	{
+		CollectingStart(bCollecting: true);
+	}
+
+	protected void CollectingStart(bool bCollecting)
+	{
+		if (asset_names.Count != 0)
+		{
+			if (bCollecting)
+			{
+				collecting = true;
+				SendMessageUpwards("CollectLoading");
+			}
+			lds.SetMaxCount(asset_names.Count);
+		}
+	}
+
+	public virtual void PrepareLoading(string id)
+	{
+	}
+
+	public virtual void StartLoading()
+	{
+		if (asset_names.Count > 0 && !loading)
+		{
+			Load(asset_names[0].name, asset_names[0].count, sub: false, asset_names[0].isimage);
+		}
+	}
+
+	public void StartLoadingSub()
+	{
+		if (asset_names_sub.Count > 0 && !loading)
+		{
+			Load(asset_names_sub[0].name, asset_names_sub[0].count, sub: true, asset_names_sub[0].isimage);
+		}
+	}
+
+	protected void Load(string AssetName, int count, bool sub, bool isimage)
+	{
+		if (!sub)
+		{
+			loading = true;
+		}
+		was.LoadAsset(this, AssetName, count, sub, isimage);
+	}
+
+	public bool IsLoading()
+	{
+		return loading;
+	}
+
+	protected virtual void Show()
+	{
+	}
+
+	protected virtual void Phone_Show()
+	{
+		Show();
+	}
+
+	public virtual void LoadSuccess(string AssetName)
+	{
+		if (!loading || asset_names.Count <= 0 || !(asset_names[0].name == AssetName))
+		{
+			return;
+		}
+		lds.SetCurCount(-1);
+		AddToUsedAsset(AssetName);
+		asset_names.RemoveAt(0);
+		if (asset_names.Count == 0)
+		{
+			loading = false;
+			if (_PHONEUI)
+			{
+				Phone_Show();
+			}
+			else
+			{
+				Show();
+			}
+			if (collecting)
+			{
+				SendMessageUpwards("CollectFinish");
+				collecting = false;
+			}
+			else
+			{
+				StartLoadingSub();
+			}
+		}
+		else
+		{
+			Load(asset_names[0].name, asset_names[0].count, sub: false, asset_names[0].isimage);
+		}
+	}
+
+	protected virtual void ResourceLoadFailed(bool bOK, object[] objs)
+	{
+		lds.Clear();
+		was.Clear();
+		rmg.Clear();
+		RootMessenger curUI = lds.GetCurUI();
+		if ((bool)curUI)
+		{
+			curUI.ToEnable();
+		}
+		else
+		{
+			Application.ExternalCall("RegisterURL");
+		}
+		DelegateFunc.BaseAsset_ResourceLoadFailed(this);
+	}
+
+	public virtual void LoadFail(string AssetName)
+	{
+		Logger.Log(ToString() + " loading " + AssetName + " failed");
+		if (asset_names.Count <= 0 || !(asset_names[0].name == AssetName))
+		{
+			return;
+		}
+		_Asset asset = asset_names[0];
+		if (asset.count < 4)
+		{
+			Logger.Log("load " + AssetName + " failed,now reload");
+			asset.count++;
+			Load(asset.name, asset.count, sub: false, asset.isimage);
+			return;
+		}
+		if (asset.force)
+		{
+			asset_names.Clear();
+			MessageBox messageBox = __BaseUI.GetMessageBox();
+			if (__BaseUI.get_string(20052u).Length > 0)
+			{
+				messageBox.setMessage(string.Empty, __BaseUI.format(20052u, new object[1] { AssetName }), rmg, ResourceLoadFailed, _bCancel: false);
+			}
+			else
+			{
+				messageBox.setMessage(string.Empty, string.Format(warn_msg_20052, AssetName), rmg, ResourceLoadFailed, _bCancel: false);
+			}
+			messageBox.setDepth(-300);
+			return;
+		}
+		lds.SetCurCount(-1);
+		asset_names.RemoveAt(0);
+		Logger.Log("load " + AssetName + " failed");
+		if (asset_names.Count == 0)
+		{
+			Show();
+			if (collecting)
+			{
+				SendMessageUpwards("CollectFinish");
+				collecting = false;
+			}
+			loading = false;
+		}
+		else
+		{
+			Load(asset_names[0].name, asset_names[0].count, sub: false, asset_names[0].isimage);
+		}
+	}
+
+	protected virtual void AssetUnloaded(string assetName)
+	{
+	}
+
+	protected void ClearResource()
+	{
+		if (prepare_to_clear_resource)
+		{
+			return;
+		}
+		prepare_to_clear_resource = true;
+		foreach (string used_asset in used_assets)
+		{
+			clear_list.Add(used_asset);
+			AssetUnloaded(used_asset);
+		}
+		used_assets.Clear();
+		StartCoroutine(_clear_resource());
+	}
+
+	private IEnumerator _clear_resource()
+	{
+		yield return new WaitForEndOfFrame();
+		for (int i = 0; i < clear_list.Count; i++)
+		{
+			DecrAssetRef(clear_list[i]);
+		}
+		clear_list.Clear();
+		prepare_to_clear_resource = false;
+	}
+
+	public void AddAsset(string AssetName)
+	{
+		AddAsset(AssetName, bForce: true);
+	}
+
+	public bool HasAsset(string AssetName)
+	{
+		foreach (_Asset asset_name in asset_names)
+		{
+			if (asset_name.name == AssetName)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void AddAsset(string AssetName, bool bForce)
+	{
+		AddAsset(AssetName, bForce, isimage: false);
+	}
+
+	public void AddAsset(string AssetName, bool bForce, bool isimage)
+	{
+		if (AssetName != null && !(AssetName == string.Empty) && !HasAsset(AssetName))
+		{
+			string dependency = was.GetDependency(AssetName);
+			if (dependency != null && !HasAsset(dependency))
+			{
+				_Asset asset = new _Asset();
+				asset.name = dependency;
+				asset.force = bForce;
+				asset.count = 0;
+				asset.isimage = isimage;
+				asset_names.Add(asset);
+			}
+			_Asset asset2 = new _Asset();
+			asset2.name = AssetName;
+			asset2.force = bForce;
+			asset2.count = 0;
+			asset2.isimage = isimage;
+			asset_names.Add(asset2);
+		}
+	}
+
+	protected virtual void AssetLoaded(string AssetName)
+	{
+	}
+
+	public virtual void LoadSuccessSub(string AssetName)
+	{
+		if (asset_names_sub.Count > 0 && asset_names_sub[0].name == AssetName)
+		{
+			AddToUsedAsset(AssetName);
+			asset_names_sub.RemoveAt(0);
+			if (base.enabled)
+			{
+				AssetLoaded(AssetName);
+			}
+			if (asset_names_sub.Count != 0 && base.enabled && !loading)
+			{
+				Load(asset_names_sub[0].name, asset_names_sub[0].count, sub: true, asset_names_sub[0].isimage);
+			}
+		}
+	}
+
+	public virtual void LoadFailSub(string AssetName)
+	{
+		if (asset_names_sub.Count <= 0 || !(asset_names_sub[0].name == AssetName))
+		{
+			return;
+		}
+		_Asset asset = asset_names_sub[0];
+		if (asset.count < 4)
+		{
+			Logger.Log("load " + AssetName + " failed,now reload");
+			asset.count++;
+			if (base.enabled && !loading)
+			{
+				Load(asset.name, asset.count, sub: true, asset.isimage);
+			}
+		}
+		else
+		{
+			asset_names_sub.RemoveAt(0);
+			Logger.Log("load " + AssetName + " failed");
+			if (asset_names_sub.Count != 0 && base.enabled && !loading)
+			{
+				Load(asset_names_sub[0].name, asset_names_sub[0].count, sub: true, asset_names_sub[0].isimage);
+			}
+		}
+	}
+
+	public void AddAssetSub(string AssetName)
+	{
+		AddAssetSub(AssetName, isimage: false);
+	}
+
+	public void AddAssetSub(string AssetName, bool isimage)
+	{
+		if (AssetName != null && !(AssetName == string.Empty) && !HasAssetSub(AssetName))
+		{
+			string dependency = was.GetDependency(AssetName);
+			if (dependency != null && !HasAssetSub(dependency))
+			{
+				_Asset asset = new _Asset();
+				asset.name = dependency;
+				asset.force = false;
+				asset.count = 0;
+				asset.isimage = isimage;
+				asset_names_sub.Add(asset);
+			}
+			_Asset asset2 = new _Asset();
+			asset2.name = AssetName;
+			asset2.force = false;
+			asset2.count = 0;
+			asset2.isimage = isimage;
+			asset_names_sub.Add(asset2);
+		}
+	}
+
+	public bool HasAssetSub(string AssetName)
+	{
+		foreach (_Asset item in asset_names_sub)
+		{
+			if (item.name == AssetName)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public virtual void Destroy()
+	{
+		foreach (GameObject game_object in game_objects)
+		{
+			UnityEngine.Object.Destroy(game_object);
+		}
+		game_objects.Clear();
+	}
+
+	public RootMessenger get_rmg()
+	{
+		return rmg;
+	}
+
+	public static UnityEngine.Object Instantiate_mainAsset(string asset_name)
+	{
+		AssetBundle asset = was.GetAsset(asset_name);
+		if (asset == null)
+		{
+			return null;
+		}
+		if (asset.mainAsset == null)
+		{
+			return null;
+		}
+		return UnityEngine.Object.Instantiate(asset.mainAsset);
+	}
+
+	public static GameObject Instantiate_named(string asset_name, string obj_name)
+	{
+		UnityEngine.Object obj = Instantiate_named(asset_name, obj_name, typeof(GameObject));
+		return (!(obj == null)) ? (obj as GameObject) : new GameObject();
+	}
+
+	public static UnityEngine.Object Instantiate_named(string asset_name, string obj_name, Type type)
+	{
+		if (obj_name == null || obj_name.Length == 0)
+		{
+			return null;
+		}
+		AssetBundle asset = was.GetAsset(asset_name);
+		if (asset == null)
+		{
+			Debug.Log("Instantiate_named from " + asset_name + " failed");
+			return null;
+		}
+		if (!asset.Contains(obj_name))
+		{
+			Debug.Log("assetbundle " + asset_name + "does not contains " + obj_name);
+			return null;
+		}
+		UnityEngine.Object obj = asset.Load(obj_name, type);
+		if (obj == null)
+		{
+			Debug.Log("Load " + obj_name + " from " + asset_name + " failed");
+			return null;
+		}
+		return UnityEngine.Object.Instantiate(obj);
+	}
+
+	public static UnityEngine.Object LoadAsset_named(string asset_name, string obj_name)
+	{
+		if (obj_name == null || obj_name.Length == 0)
+		{
+			return null;
+		}
+		AssetBundle asset = was.GetAsset(asset_name);
+		if (asset == null)
+		{
+			Debug.Log("Instantiate_named from " + asset_name + " failed");
+			return null;
+		}
+		if (!asset.Contains(obj_name))
+		{
+			Debug.Log("assetbundle " + asset_name + " does not contains " + obj_name);
+			return null;
+		}
+		return asset.Load(obj_name);
+	}
+
+	public static Texture2D LoadTexture(string asset_name)
+	{
+		if (asset_name == null)
+		{
+			return null;
+		}
+		AssetBundle asset = was.GetAsset(asset_name);
+		if (asset == null)
+		{
+			return null;
+		}
+		return asset.mainAsset as Texture2D;
+	}
+
+	public static void SetLayerRecursively(GameObject obj, int newLayer)
+	{
+		obj.layer = newLayer;
+		foreach (Transform item in obj.transform)
+		{
+			SetLayerRecursively(item.gameObject, newLayer);
+		}
+	}
+
+	public static GameObject Instantiate_mainAsset_OnScreen(string asset_name, Camera cam, Vector3 pos)
+	{
+		UnityEngine.Object obj = Instantiate_mainAsset(asset_name);
+		if (obj == null)
+		{
+			return null;
+		}
+		try
+		{
+			GameObject gameObject = (GameObject)obj;
+			Rect pixelRect = cam.pixelRect;
+			gameObject.transform.position = cam.ScreenToWorldPoint(new Vector3(pixelRect.x + pos.x, pixelRect.y + pixelRect.height - pos.y, pos.z));
+			gameObject.transform.rotation = cam.transform.rotation;
+			return gameObject;
+		}
+		catch
+		{
+			return null;
+		}
+	}
+}

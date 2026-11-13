@@ -1,0 +1,413 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Threading;
+using UnityEngine;
+
+namespace game.net;
+
+public abstract class tcp_base
+{
+	public enum CONNECTION_STATE
+	{
+		PREPARE,
+		WAIT,
+		RECONNECTING,
+		OK
+	}
+
+	public struct tcp_host
+	{
+		public string hostname;
+
+		public ushort port;
+
+		public tcp_host(string _hostname, ushort _port)
+		{
+			hostname = _hostname;
+			port = _port;
+		}
+	}
+
+	public struct PktHdr
+	{
+		public uint size;
+
+		public ushort op;
+
+		public byte[] ToBytes()
+		{
+			MemoryStream memoryStream = new MemoryStream();
+			BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
+			binaryWriter.Write(size);
+			binaryWriter.Write(op);
+			byte[] result = memoryStream.ToArray();
+			binaryWriter.Close();
+			memoryStream.Close();
+			return result;
+		}
+
+		public void ToStruct(byte[] bytes)
+		{
+			MemoryStream memoryStream = new MemoryStream(bytes);
+			BinaryReader binaryReader = new BinaryReader(memoryStream);
+			size = binaryReader.ReadUInt32();
+			op = binaryReader.ReadUInt16();
+			binaryReader.Close();
+			memoryStream.Close();
+		}
+	}
+
+	protected class Handler
+	{
+		private delegate_handler handler;
+
+		private object arg;
+
+		public float life;
+
+		public Handler(delegate_handler _handler, float _life, object _arg)
+		{
+			handler = _handler;
+			arg = _arg;
+			life = _life;
+		}
+
+		public void handle(MemoryStream stream)
+		{
+			handler(stream, arg);
+		}
+	}
+
+	protected class SendData
+	{
+		public int offset;
+
+		public byte[] data;
+
+		public SendData()
+		{
+			offset = 0;
+			data = null;
+		}
+	}
+
+	private class HandleMessage
+	{
+		public ushort op;
+
+		public MemoryStream stream;
+
+		public HandleMessage(ushort _op, byte[] _buf, uint sz)
+		{
+			op = _op;
+			byte[] array = new byte[sz];
+			Array.Copy(_buf, array, sz);
+			stream = new MemoryStream(array);
+		}
+	}
+
+	public delegate void delegate_LostFunc();
+
+	public delegate void delegate_handler(MemoryStream stream, object arg);
+
+	public delegate void dele_TryConnectEnd(bool state);
+
+	public static CONNECTION_STATE connection_state = CONNECTION_STATE.OK;
+
+	public delegate_LostFunc delegate_lostFunc;
+
+	protected List<tcp_host> m_hosts = new List<tcp_host>();
+
+	protected int m_hostIdx;
+
+	protected bool m_bConnectLost;
+
+	protected byte[] m_data;
+
+	protected net_buffer m_sendBuffer = new net_buffer();
+
+	protected net_buffer m_receiveBuffer = new net_buffer();
+
+	protected Dictionary<ushort, Handler> m_handlers = new Dictionary<ushort, Handler>();
+
+	public dele_TryConnectEnd OnTryConnectEnd_Backup;
+
+	public dele_TryConnectEnd OnTryConnectEnd;
+
+	protected static int connecting_flag;
+
+	private List<tcp_host> lost_hosts = new List<tcp_host>();
+
+	protected List<SendData> m_sendDatas = new List<SendData>();
+
+	protected bool m_bSending;
+
+	private List<HandleMessage> messages = new List<HandleMessage>();
+
+	public tcp_base()
+	{
+	}
+
+	public void host_add(string hostname, ushort port)
+	{
+		try
+		{
+			IPAddress[] hostAddresses = Dns.GetHostAddresses(hostname);
+			IPAddress[] array = hostAddresses;
+			foreach (IPAddress iPAddress in array)
+			{
+				m_hosts.Add(new tcp_host(iPAddress.ToString(), port));
+			}
+		}
+		catch (Exception)
+		{
+		}
+	}
+
+	public void host_hardip()
+	{
+		if (m_hosts.Count == 0)
+		{
+			m_hosts.Add(new tcp_host("101.251.223.228", 443));
+			m_hosts.Add(new tcp_host("101.251.223.228", 80));
+			m_hosts.Add(new tcp_host("101.251.223.229", 443));
+			m_hosts.Add(new tcp_host("101.251.223.229", 80));
+			m_hosts.Add(new tcp_host("101.251.223.230", 443));
+			m_hosts.Add(new tcp_host("101.251.223.230", 80));
+		}
+	}
+
+	public void host_clear()
+	{
+		m_hosts.Clear();
+		m_hostIdx = 0;
+	}
+
+	public void TryConnect(dele_TryConnectEnd func)
+	{
+		if (m_hosts.Count == 0)
+		{
+			if (func == null)
+			{
+				return;
+			}
+			func(state: false);
+		}
+		m_hostIdx = 0;
+		OnTryConnectEnd = func;
+		OnTryConnectEnd_Backup = OnTryConnectEnd;
+		Connect(m_hosts[0].hostname, m_hosts[0].port);
+	}
+
+	public void EndConnect(bool state)
+	{
+		if (OnTryConnectEnd != null)
+		{
+			OnTryConnectEnd(state);
+			OnTryConnectEnd = null;
+		}
+	}
+
+	protected abstract void Connect(string hostName, int portNum);
+
+	public abstract void ConnectCallBackEnd();
+
+	public void handler_add(ushort op, delegate_handler handler, object arg, float life)
+	{
+		Monitor.Enter(this);
+		Handler value = new Handler(handler, life, arg);
+		m_handlers[op] = value;
+		Monitor.Exit(this);
+	}
+
+	public void handler_rem(ushort op)
+	{
+		if (m_handlers.ContainsKey(op))
+		{
+			m_handlers.Remove(op);
+		}
+	}
+
+	public void ConnectLost()
+	{
+		if (connection_state != CONNECTION_STATE.OK)
+		{
+			m_hostIdx++;
+			if (m_hostIdx >= m_hosts.Count)
+			{
+				Logger.Log("connect lost host max");
+				m_bConnectLost = true;
+				connecting_flag = 2;
+				Disconnect();
+				if (OnTryConnectEnd_Backup != null)
+				{
+					OnTryConnectEnd_Backup(state: false);
+					OnTryConnectEnd_Backup = null;
+				}
+				foreach (tcp_host lost_host in lost_hosts)
+				{
+					m_hosts.Remove(lost_host);
+				}
+				foreach (tcp_host lost_host2 in lost_hosts)
+				{
+					m_hosts.Add(lost_host2);
+				}
+				lost_hosts.Clear();
+			}
+			else
+			{
+				Logger.Log("connect lost host " + m_hostIdx);
+				lost_hosts.Add(m_hosts[m_hostIdx - 1]);
+				Connect(m_hosts[m_hostIdx].hostname, m_hosts[m_hostIdx].port);
+			}
+		}
+		else
+		{
+			Logger.Log("connect lost");
+			m_bConnectLost = true;
+			if (m_hostIdx < m_hosts.Count)
+			{
+				tcp_host item = m_hosts[m_hostIdx];
+				m_hosts.RemoveAt(m_hostIdx);
+				m_hosts.Add(item);
+			}
+		}
+	}
+
+	public bool IsReconnectLost()
+	{
+		return connection_state == CONNECTION_STATE.RECONNECTING && m_bConnectLost;
+	}
+
+	public void Send<T>(ushort op, T pkt, delegate_handler handler)
+	{
+		Send(op, pkt, handler, null);
+	}
+
+	public void Send<T>(ushort op, T pkt, delegate_handler handler, object arg)
+	{
+		if (handler != null)
+		{
+			handler_add(op, handler, arg, 10f);
+		}
+		MemoryStream memoryStream = new MemoryStream();
+		JSProtoBuf.Serializer.Serialize(memoryStream, pkt);
+		Send(op, memoryStream.ToArray());
+		memoryStream.Close();
+	}
+
+	public void Send(ushort op, byte[] data)
+	{
+		PktHdr pktHdr = new PktHdr
+		{
+			size = (uint)data.Length,
+			op = op
+		};
+		byte[] data2 = pktHdr.ToBytes();
+		m_sendBuffer.buffer_clear();
+		m_sendBuffer.buffer_add(data2, 6);
+		m_sendBuffer.buffer_add(data, data.Length);
+		Send(m_sendBuffer.Buffer, m_sendBuffer.Length);
+	}
+
+	public void Send(string data)
+	{
+		byte[] bytes = Encoding.UTF8.GetBytes(data);
+		Send(bytes, bytes.Length);
+	}
+
+	public abstract void Send(byte[] _data, int size);
+
+	protected void Parse()
+	{
+		while (m_receiveBuffer.Length >= 6)
+		{
+			PktHdr pktHdr = default(PktHdr);
+			pktHdr.ToStruct(m_receiveBuffer.Buffer);
+			uint num = pktHdr.size & 0xFFFFFF;
+			if ((int)(num + 6) > m_receiveBuffer.Length)
+			{
+				break;
+			}
+			ushort op = pktHdr.op;
+			m_receiveBuffer.buffer_drain(6);
+			Monitor.Enter(this);
+			if (m_handlers.ContainsKey(op))
+			{
+				if (op == 16)
+				{
+					Logger.Log("receive op 16");
+				}
+				HandleMessage item = new HandleMessage(op, m_receiveBuffer.Buffer, num);
+				messages.Add(item);
+			}
+			Monitor.Exit(this);
+			m_receiveBuffer.buffer_drain((int)num);
+		}
+	}
+
+	protected virtual void run_data()
+	{
+	}
+
+	public void Run()
+	{
+		if (connecting_flag == 0 && m_bConnectLost && !Global.relogin)
+		{
+			if (delegate_lostFunc != null)
+			{
+				delegate_lostFunc();
+			}
+			return;
+		}
+		run_data();
+		Monitor.Enter(this);
+		if (messages.Count > 0)
+		{
+			HandleMessage handleMessage = messages[0];
+			messages.RemoveAt(0);
+			if (m_handlers.ContainsKey(handleMessage.op))
+			{
+				Handler handler = m_handlers[handleMessage.op];
+				if (handler != null)
+				{
+					if (handler.life > 0f)
+					{
+						m_handlers.Remove(handleMessage.op);
+					}
+					handler.handle(handleMessage.stream);
+					handleMessage.stream.Close();
+				}
+			}
+		}
+		List<ushort> list = new List<ushort>();
+		foreach (KeyValuePair<ushort, Handler> handler2 in m_handlers)
+		{
+			Handler value = handler2.Value;
+			if (value.life > 0f)
+			{
+				value.life -= Time.deltaTime;
+				if (value.life <= 0f && !LoadIndexScript._TEST)
+				{
+					Logger.Log("handle " + handler2.Key + " no reponse");
+					value.handle(null);
+					list.Add(handler2.Key);
+				}
+			}
+		}
+		foreach (ushort item in list)
+		{
+			m_handlers.Remove(item);
+		}
+		Monitor.Exit(this);
+		if (connecting_flag == 2 || connecting_flag == 3)
+		{
+			ConnectCallBackEnd();
+		}
+	}
+
+	public abstract void Disconnect();
+}

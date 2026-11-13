@@ -1,0 +1,46 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class Activity : _character_activity
+{
+	public _activity temp;
+
+	public Activity(db_character_activity d)
+	{
+		Set(d);
+		temp = Global.getTemplate("activity", idactivity) as _activity;
+		if (temp == null)
+		{
+			temp = new _activity();
+		}
+		if (condition_param > temp.cond_param)
+		{
+			condition_param = (byte)temp.cond_param;
+		}
+		else if (_check_act_closecondition())
+		{
+			condition_param = (byte)temp.cond_param;
+		}
+	}
+
+	public bool _check_act_closecondition()
+	{
+		switch (idactivity)
+		{
+		case 6:
+			if (Global.character_.spirit != null && Global.character_.spirit.level == 100)
+			{
+				return true;
+			}
+			break;
+		case 17:
+			if (Global.character_.isGraveEnd())
+			{
+				return true;
+			}
+			break;
+		}
+		return false;
+	}
+}

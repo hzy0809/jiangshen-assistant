@@ -1,0 +1,95 @@
+using System.Collections;
+using System.Collections.Generic;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class Pointrace : _character_pointrace
+{
+	public bool m_bChallengerChanged;
+
+	public List<PointraceChallenger> challengers = new List<PointraceChallenger>();
+
+	public List<PointraceReport> reports = new List<PointraceReport>();
+
+	public List<_character_pointrace_bonus> bonuses = new List<_character_pointrace_bonus>();
+
+	public List<PointraceRank> rankers = new List<PointraceRank>();
+
+	public uint rank_refresh_time;
+
+	public void make(game.net.data.StoC.Pointrace d)
+	{
+		Set(d.pointrace);
+		if (d.challengers != null)
+		{
+			makeChallengers(d.challengers, bChanged: false);
+		}
+		reports.Clear();
+		if (d.reports != null)
+		{
+			foreach (game.net.data.StoC.PointraceReport report in d.reports.reports)
+			{
+				reports.Add(new PointraceReport(report));
+			}
+		}
+		bonuses.Clear();
+		foreach (db_character_pointrace_bonus bonuse in d.bonuses)
+		{
+			_character_pointrace_bonus character_pointrace_bonus = new _character_pointrace_bonus();
+			character_pointrace_bonus.Set(bonuse);
+			bonuses.Add(character_pointrace_bonus);
+			bonuses.Sort((_character_pointrace_bonus _a, _character_pointrace_bonus _b) => _b.time.CompareTo(_a.time));
+		}
+	}
+
+	public void makeChallengers(PointraceChallengers acs, bool bChanged)
+	{
+		challengers.Clear();
+		foreach (game.net.data.StoC.PointraceChallenger challenger in acs.challengers)
+		{
+			challengers.Add(new PointraceChallenger(challenger));
+		}
+		m_bChallengerChanged = bChanged;
+	}
+
+	public PointraceChallenger getChallenger(ulong idother)
+	{
+		foreach (PointraceChallenger challenger in challengers)
+		{
+			if (challenger.id == idother)
+			{
+				return challenger;
+			}
+		}
+		return null;
+	}
+
+	public void addBonus(db_character_pointrace_bonus d)
+	{
+		foreach (_character_pointrace_bonus bonuse in bonuses)
+		{
+			if (bonuse.time == d.time)
+			{
+				return;
+			}
+		}
+		_character_pointrace_bonus character_pointrace_bonus = new _character_pointrace_bonus();
+		character_pointrace_bonus.Set(d);
+		bonuses.Add(character_pointrace_bonus);
+	}
+
+	public static _pointrace_bonus getPointraceBonus(uint rank)
+	{
+		Hashtable templates = Global.getTemplates("pointrace_bonus");
+		foreach (DictionaryEntry item in templates)
+		{
+			_pointrace_bonus pointrace_bonus = item.Value as _pointrace_bonus;
+			if (pointrace_bonus.level_min <= rank && pointrace_bonus.level_max >= rank)
+			{
+				return pointrace_bonus;
+			}
+		}
+		return templates[14u] as _pointrace_bonus;
+	}
+}

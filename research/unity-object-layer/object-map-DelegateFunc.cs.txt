@@ -1,0 +1,204 @@
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+
+public class DelegateFunc
+{
+	public delegate void Void_Noarg();
+
+	public delegate void Void_Uint(uint arg);
+
+	public delegate void Void_Boolarg(bool arg);
+
+	public delegate void delegate_Brawl_MakeLegion(uint pos, uint team, BrawlInfo.Legion legion);
+
+	public delegate void delegate_Building_makeMesh(GameObject mesh, Building d);
+
+	public delegate void delegate_BaseAsset_ResourceLoadFailed(BaseAsset ui);
+
+	public delegate void delegate_OnCoin();
+
+	public delegate void delegate_Demon_make(GameObject mesh, __BaseUI parentUI, Demon demon, bool bFriend);
+
+	public delegate void delegate_Building_playAnim(GameObject mesh, Building d);
+
+	public delegate __BaseUI delegate_MainUI_GetSubUI();
+
+	public delegate void delegate_MainUI_SetSubUI(__BaseUI ui);
+
+	public delegate void delegate_PremiumUI_EverydayLogin();
+
+	public delegate void delegate_BetUI_SetSubUI();
+
+	public delegate void delegate_ChristmasLotteryShopBuyUI();
+
+	public delegate void delegate_Fairy();
+
+	public delegate void delegate_BuddyUI_cs_buddy_add_buddy(string name);
+
+	public delegate void delegate_MessengerUI_open(string name);
+
+	public delegate void delegate_BuddyFlowerUI_cs_buddy_flower_info(string name);
+
+	public delegate void delegate_RootUI_drawStateBubble(string valuekind);
+
+	public delegate void delegate_RootUI_sealdevil_enter();
+
+	public delegate void delegate_RootUI_GodlistCheck_enter();
+
+	public delegate void delegate_MainUI_resource_wealth_d(__BaseUI.delegate_OnClose _onclose);
+
+	public delegate void delegate_BattleResult_set(RootMessenger prevUI, string defenderName, string msg, int lvl, int iTreasureCount, List<_Treasure> vctBonuses, __BaseUI.delegate_OnClose onClose);
+
+	public delegate void delegate_SpiritUI(bool isnew, int skills_id, bool upskill);
+
+	public delegate void detegate_RootUI_load_spiritascend(ushort idcampaign, RootMessenger rmg);
+
+	public delegate void detegate_RootUI_load_rescueformation(uint idcampaign);
+
+	public delegate void detegate_RootUI_BattleView(byte[] report, bool isreport);
+
+	public delegate void detegate_Godlist_setdrag(bool pre_drag, int dragid);
+
+	public delegate bool delegate_OnAttack();
+
+	public delegate void delegate_newSpiritUI(int id);
+
+	public delegate void delegate_GetnewSpiritUI(int id);
+
+	public delegate void delegate_FormationUI_wantBattle(string subui, ushort id_spirit_ascend_campaign, byte idtroop, delegate_OnAttack OnAttack, bool viewonly);
+
+	public delegate void delegate_BattleUI_SetReport(RootMessenger rmg, byte[] report, bool needyijian);
+
+	public delegate void delegate_Exchange_Equipment(int leaveid, int joinid);
+
+	public delegate void GeneralSwitch_Myloading(string uiname);
+
+	public delegate void Void_Ushort(ushort id);
+
+	public delegate void Void_LoadLevel(string id, RootMessenger rmg);
+
+	public delegate void detegate_TeamFightUI_Open(RootMessenger rmg);
+
+	public static delegate_Brawl_MakeLegion brawl_make_legion;
+
+	public static delegate_Building_makeMesh Building_makeMesh;
+
+	public static delegate_BaseAsset_ResourceLoadFailed BaseAsset_ResourceLoadFailed;
+
+	public static delegate_OnCoin OnCoin;
+
+	public static delegate_Demon_make Demon_make;
+
+	public static delegate_Building_playAnim Building_playAnim;
+
+	public static delegate_MainUI_GetSubUI MainUI_GetSubUI;
+
+	public static delegate_MainUI_SetSubUI MainUI_SetSubUI;
+
+	public static delegate_PremiumUI_EverydayLogin PremiumUI_EverydayLogin;
+
+	public static delegate_BetUI_SetSubUI BetUI_SetSubUI;
+
+	public static delegate_ChristmasLotteryShopBuyUI m_ChristmasLotteryShopBuyUI;
+
+	public static delegate_Fairy FairySelect;
+
+	public static delegate_BuddyUI_cs_buddy_add_buddy BuddyUI_cs_buddy_add_buddy;
+
+	public static delegate_BuddyUI_cs_buddy_add_buddy BuddyUI_cs_buddy_add_blacklist;
+
+	public static delegate_MessengerUI_open MessengerUI_open;
+
+	public static delegate_BuddyFlowerUI_cs_buddy_flower_info BuddyFlowerUI_cs_buddy_flower_info;
+
+	public static delegate_RootUI_drawStateBubble RootUI_DrawStateBubble;
+
+	public static delegate_RootUI_sealdevil_enter RootUI_sealdevil_enter;
+
+	public static delegate_RootUI_sealdevil_enter RootUI_GodlistCheck_enter;
+
+	public static delegate_MainUI_resource_wealth_d MainUI_resource_wealth_d;
+
+	public static delegate_BattleResult_set BattleResult_set_open;
+
+	public static Void_Noarg MainUI_amulet;
+
+	public static Void_Noarg MainUI_army_star;
+
+	public static Void_Noarg MainUI_genius_ui;
+
+	public static Void_Boolarg MainUI_formation_ui;
+
+	public static Void_Noarg MainUI_equipment_ui;
+
+	public static delegate_SpiritUI MainUI_spirit_ui;
+
+	public static detegate_RootUI_load_spiritascend RootUI_load_spiritascend;
+
+	public static detegate_RootUI_load_rescueformation RootUI_load_rescueformation;
+
+	public static detegate_RootUI_BattleView RootUI_BattleView;
+
+	public static detegate_Godlist_setdrag RootUI_Godlist_setdrag;
+
+	public static delegate_newSpiritUI SpiritUp_ui;
+
+	public static delegate_GetnewSpiritUI SpiritBattleGet_ui;
+
+	public static delegate_MainUI_SetSubUI SpiritUI_2_SetSubUI;
+
+	public static __BaseUI.delegate_OnClose MainUI_spirit2;
+
+	public static delegate_MainUI_SetSubUI SpiritUI_3_SetSubUI;
+
+	public static delegate_FormationUI_wantBattle FormationUI_wantBattle;
+
+	public static delegate_BattleUI_SetReport BattleUI_SetReport;
+
+	public static delegate_Exchange_Equipment Exchange_Equipment;
+
+	public static GeneralSwitch_Myloading GeneralSwitchUI_Myloading;
+
+	public static Void_Ushort RootUI_startGrave;
+
+	public static Void_Ushort RootUI_startGraveChest;
+
+	public static Void_Noarg RootUI_Coin;
+
+	public static Void_Noarg ShopUI_Open;
+
+	public static Void_Noarg ShopDiamondUI_Open;
+
+	public static Void_Noarg EquipmentReinforceUI_Myloading;
+
+	public static Void_Noarg SpiritUI_2_Myloading;
+
+	public static Void_Noarg RescueUI_Myloading;
+
+	public static Void_Noarg EightGraphicUI_Myloading;
+
+	public static Void_Noarg Icon_Myloading;
+
+	public static Void_Noarg MainUI_resource_wealth_to_secrete_shop;
+
+	public static Void_Noarg MainUI_grave;
+
+	public static Void_Noarg RootUI_brawl_enter;
+
+	public static Void_Noarg MainUI_capital;
+
+	public static Void_Uint RootUI_skytower_enter;
+
+	public static Void_Noarg RootUI_EarthPavilion_formation_enter;
+
+	public static Void_Noarg RootUI_LakeTemple_formation_enter;
+
+	public static Void_LoadLevel RootUI_LoadLevel;
+
+	public static Void_Noarg TeamFightShopUI_Open;
+
+	public static Void_Noarg TeamFight_Sign;
+
+	public static detegate_TeamFightUI_Open TeamFightUI_Open;
+}

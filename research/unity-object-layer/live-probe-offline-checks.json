@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "scope": "offline only; no process handle or process memory reads",
+  "checks": [
+    {
+      "case": "syntax",
+      "pass": true
+    },
+    {
+      "case": "changed_module_hash_refused",
+      "pass": true
+    },
+    {
+      "case": "unsupported_accessor_refused",
+      "pass": true
+    },
+    {
+      "case": "invalid_read_ranges_refused_without_any_kernel_object",
+      "pass": true
+    },
+    {
+      "case": "read_budget_refused_without_any_kernel_object",
+      "pass": true
+    }
+  ]
+}

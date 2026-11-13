@@ -1,0 +1,127 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "TempEventMessage")]
+public class TempEventMessage : IExtensible
+{
+	private uint _id;
+
+	private string _name;
+
+	private string _url;
+
+	private string _md5;
+
+	private uint _file_size;
+
+	private uint _start_time;
+
+	private uint _end_time;
+
+	private readonly List<TempEventQuest> _quests = new List<TempEventQuest>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "name", DataFormat = DataFormat.Default)]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "url", DataFormat = DataFormat.Default)]
+	public string url
+	{
+		get
+		{
+			return _url;
+		}
+		set
+		{
+			_url = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = true, Name = "md5", DataFormat = DataFormat.Default)]
+	public string md5
+	{
+		get
+		{
+			return _md5;
+		}
+		set
+		{
+			_md5 = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = true, Name = "file_size", DataFormat = DataFormat.TwosComplement)]
+	public uint file_size
+	{
+		get
+		{
+			return _file_size;
+		}
+		set
+		{
+			_file_size = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = true, Name = "start_time", DataFormat = DataFormat.TwosComplement)]
+	public uint start_time
+	{
+		get
+		{
+			return _start_time;
+		}
+		set
+		{
+			_start_time = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = true, Name = "end_time", DataFormat = DataFormat.TwosComplement)]
+	public uint end_time
+	{
+		get
+		{
+			return _end_time;
+		}
+		set
+		{
+			_end_time = value;
+		}
+	}
+
+	[ProtoMember(8, Name = "quests", DataFormat = DataFormat.Default)]
+	public List<TempEventQuest> quests => _quests;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

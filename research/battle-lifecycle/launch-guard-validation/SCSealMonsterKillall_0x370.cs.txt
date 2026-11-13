@@ -1,0 +1,63 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCSealMonsterKillall_0x370")]
+public class SCSealMonsterKillall_0x370 : IExtensible
+{
+	private uint _exp;
+
+	private uint _result;
+
+	private uint _buff;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "exp", DataFormat = DataFormat.TwosComplement)]
+	public uint exp
+	{
+		get
+		{
+			return _exp;
+		}
+		set
+		{
+			_exp = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "buff", DataFormat = DataFormat.TwosComplement)]
+	public uint buff
+	{
+		get
+		{
+			return _buff;
+		}
+		set
+		{
+			_buff = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

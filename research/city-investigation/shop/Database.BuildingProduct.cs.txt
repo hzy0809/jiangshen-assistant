@@ -1,0 +1,135 @@
+using UnityEngine;
+
+namespace Database;
+
+public class BuildingProduct : _building_product
+{
+	public Texture2D texIcon;
+
+	public Texture2D texIconB;
+
+	public Texture2D texZi;
+
+	public GameObject mesh;
+
+	public ScenarioSection ssTime;
+
+	public int ConsumeCount
+	{
+		get
+		{
+			int num = 0;
+			if (gold_consume != 0)
+			{
+				num++;
+			}
+			if (wood_consume != 0)
+			{
+				num++;
+			}
+			if (mine_consume != 0)
+			{
+				num++;
+			}
+			if (mana_consume != 0)
+			{
+				num++;
+			}
+			return num;
+		}
+	}
+
+	public int OutputCount
+	{
+		get
+		{
+			int num = 0;
+			if (money_output != 0)
+			{
+				num++;
+			}
+			if (exp_output != 0)
+			{
+				num++;
+			}
+			if (spirit_output != 0)
+			{
+				num++;
+			}
+			if (enchant_output != 0)
+			{
+				num++;
+			}
+			if (mana_output != 0)
+			{
+				num++;
+			}
+			if (stone_output != 0)
+			{
+				num++;
+			}
+			return num;
+		}
+	}
+
+	public uint Output
+	{
+		get
+		{
+			if (money_output != 0)
+			{
+				return money_output;
+			}
+			if (spirit_output != 0)
+			{
+				return spirit_output;
+			}
+			if (enchant_output != 0)
+			{
+				return enchant_output;
+			}
+			if (mana_output != 0)
+			{
+				return mana_output;
+			}
+			if (stone_output != 0)
+			{
+				return stone_output;
+			}
+			return 0u;
+		}
+	}
+
+	public Texture2D OutputIcon
+	{
+		get
+		{
+			if (money_output != 0)
+			{
+				return __BaseUI._iconMoney;
+			}
+			if (spirit_output != 0)
+			{
+				return __BaseUI._iconFruit;
+			}
+			if (enchant_output != 0)
+			{
+				return __BaseUI._iconEnchant;
+			}
+			if (mana_output != 0)
+			{
+				return __BaseUI._iconMana;
+			}
+			if (stone_output != 0)
+			{
+				return __BaseUI._iconStone;
+			}
+			return null;
+		}
+	}
+
+	public BuildingProduct(_building_product d)
+	{
+		Set(d);
+	}
+}

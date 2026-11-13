@@ -1,0 +1,259 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class AllBonusUI : BaseUI
+{
+	private DateTime m_LoadOverTime = default(DateTime);
+
+	private GUIStyle titleStyle = new GUIStyle();
+
+	private GUIStyle ui_yiling = new GUIStyle();
+
+	private _ButtonStyle button_quanshi = new _ButtonStyle();
+
+	private GUIStyle zi_dianji = new GUIStyle();
+
+	private GUIStyle ui_icon1 = new GUIStyle();
+
+	private GUIStyle ui_icon2 = new GUIStyle();
+
+	public void MyLoading()
+	{
+		BaseAsset.lds.Visible_sub();
+		AddAsset("ui_allbonus");
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BroadcastMessage("DisableMouseDown", SendMessageOptions.DontRequireReceiver);
+		base.Show();
+		rmg.ToEnable();
+		GUI.enabled = true;
+		BaseAsset.lds.Hide();
+		m_LoadOverTime = DateTime.Now.AddSeconds(0.2);
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_allbonus");
+		titleStyle.normal.background = asset.Load("ui_biaoti") as Texture2D;
+		ui_yiling.normal.background = asset.Load("ui_yiling") as Texture2D;
+		button_quanshi.make(asset, "button_quanshi");
+		zi_dianji.normal.background = asset.Load("zi_dianji") as Texture2D;
+		ui_icon1.normal.background = asset.Load("ui_icon1") as Texture2D;
+		ui_icon2.normal.background = asset.Load("ui_icon2") as Texture2D;
+		Visible();
+	}
+
+	protected override void Web_OnGUI()
+	{
+		BeginGUI(436f, 218f, __BaseUI.UIDepth_Sub);
+		if (m_LoadOverTime > DateTime.Now)
+		{
+			double totalSeconds = (m_LoadOverTime - DateTime.Now).TotalSeconds;
+			double num = (0.5 - totalSeconds) / 0.5;
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = new Color(1f, 1f, 1f, (float)num);
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+		else
+		{
+			GUI.Label(__BaseUI._rect(0f, 0f, w, h), string.Empty, __BaseUI._bgStyle);
+			GUI.Label(__BaseUI._rect(10f, 9f, 150f, 41f), string.Empty, titleStyle);
+			__BaseUI.Label(_CalcRect(27, 59, 92, 92, 318, 68), string.Empty, __BaseUI._boxnew6Style);
+			bool flag = true;
+			int[] array = new int[4] { 0, 1, -1, -1 };
+			if (Global.character_.checkArenaToday() == -1 && Global.character_.arena.got == 0)
+			{
+				array = new int[4] { 1, -1, -1, -1 };
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				int num2 = array[i];
+				__BaseUI.Label(__BaseUI._rect(43 + i * 91, 71f, 64f, 64f), string.Empty, __BaseUI._icondiStyle2);
+				bool flag2 = false;
+				switch (num2)
+				{
+				case 0:
+					if (Global.character_.checkArenaToday() == -1)
+					{
+						flag2 = true;
+					}
+					else
+					{
+						flag = false;
+					}
+					GUI.Label(__BaseUI._rect(43 + i * 91 + 7, 78f, 50f, 50f), new GUIContent(string.Empty, __BaseUI.load_str(463u)), ui_icon1);
+					break;
+				case 1:
+					if (Global.character_.gotSalary())
+					{
+						flag2 = true;
+					}
+					else
+					{
+						flag = false;
+					}
+					GUI.Label(__BaseUI._rect(43 + i * 91 + 7, 78f, 50f, 50f), new GUIContent(string.Empty, __BaseUI.load_str(464u)), ui_icon2);
+					break;
+				}
+				if (flag2)
+				{
+					__BaseUI.Label(__BaseUI._rect(48 + i * 91, 91f, 53f, 36f), string.Empty, ui_yiling);
+				}
+				else if (GUI.Button(__BaseUI._rect(36 + i * 91 + 13, 77f, 52f, 52f), string.Empty, __BaseUI._btnIconLight))
+				{
+					switch (num2)
+					{
+					case 0:
+						getArenaBonus();
+						break;
+					case 1:
+						getSalary();
+						break;
+					}
+				}
+			}
+			if (button_quanshi.Button(IsEnable() && !flag, __BaseUI._rect(153f, 171f, 130f, 22f), string.Empty))
+			{
+				if (Global.character_.gotSalary() && Global.character_.checkArenaToday() != -1)
+				{
+					getArenaBonus();
+				}
+				if (!Global.character_.gotSalary() && Global.character_.checkArenaToday() == -1)
+				{
+					getSalary();
+				}
+				if (!Global.character_.gotSalary() && Global.character_.checkArenaToday() != -1)
+				{
+					cs_get_all_bonus_0x348();
+				}
+			}
+		}
+		if (Global.character_.gotSalary() && Global.character_.checkArenaToday() == -1)
+		{
+			MainUI.SetSubUI(null);
+			Hide();
+		}
+		if (EndGUI())
+		{
+			MainUI.SetSubUI(null);
+			Hide();
+		}
+	}
+
+	private void getArenaBonus()
+	{
+		ArenaUI component = BaseUI.GetRootUI().GetComponent<ArenaUI>();
+		if (component != null)
+		{
+			int idx = Global.character_.checkArenaToday();
+			component.cs_arena_bonusget_0x462(bFindBack: false, idx, closeArenaBonus);
+		}
+	}
+
+	private void closeArenaBonus()
+	{
+		EnableAll();
+	}
+
+	private void getSalary()
+	{
+		ReputationUI component = BaseUI.GetRootUI().GetComponent<ReputationUI>();
+		if (component != null)
+		{
+			component.cs_reputation_salary();
+		}
+	}
+
+	public void cs_get_all_bonus_0x348()
+	{
+		CSGetAllBonus_0x348 pkt = new CSGetAllBonus_0x348();
+		RootUI.m_client.Send(840, pkt, sc_get_all_bonus_0x348);
+	}
+
+	private void sc_get_all_bonus_0x348(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCGetAllBonus_0x348 sCGetAllBonus_0x = JSProtoBuf.Serializer.Deserialize<SCGetAllBonus_0x348>(stream);
+		if (sCGetAllBonus_0x.operate != SCGetAllBonus_0x348.Operate.OK)
+		{
+			return;
+		}
+		int money = (int)sCGetAllBonus_0x.money;
+		int reputation = (int)sCGetAllBonus_0x.reputation;
+		if (sCGetAllBonus_0x.arenatime != 0)
+		{
+			foreach (_character_arena_bonus bonuse in Global.character_.arena.bonuses)
+			{
+				if (bonuse.time == sCGetAllBonus_0x.arenatime)
+				{
+					Global.character_.arena.bonuses.Remove(bonuse);
+					break;
+				}
+			}
+			Global.character_.arena.got = 1;
+		}
+		if (sCGetAllBonus_0x.salarytime != 0)
+		{
+			Global.character_.patrol_last_time = (int)sCGetAllBonus_0x.salarytime;
+		}
+		List<_Treasure> list = new List<_Treasure>();
+		_Treasure treasure = null;
+		if (sCGetAllBonus_0x.money != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(4, 0, (int)sCGetAllBonus_0x.money);
+			list.Add(treasure);
+		}
+		if (sCGetAllBonus_0x.reputation != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(18, 0, (int)sCGetAllBonus_0x.reputation);
+			list.Add(treasure);
+		}
+		if (sCGetAllBonus_0x.fruit1 != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(48, 0, (int)sCGetAllBonus_0x.fruit1);
+			list.Add(treasure);
+		}
+		if (sCGetAllBonus_0x.fruit2 != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(49, 0, (int)sCGetAllBonus_0x.fruit2);
+			list.Add(treasure);
+		}
+		if (sCGetAllBonus_0x.fruit3 != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(50, 0, (int)sCGetAllBonus_0x.fruit3);
+			list.Add(treasure);
+		}
+		if (sCGetAllBonus_0x.fruit4 != 0)
+		{
+			treasure = new _Treasure();
+			treasure.make(51, 0, (int)sCGetAllBonus_0x.fruit4);
+			list.Add(treasure);
+		}
+		BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+		battleResultUI.Set(null, string.Empty, string.Empty, 0, 0, list, closeArenaBonus);
+		battleResultUI.MyLoading();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains(string.Empty))
+		{
+			tooltipUI.ShowTooltipCommon2(tip, string.Empty, 200);
+		}
+	}
+}

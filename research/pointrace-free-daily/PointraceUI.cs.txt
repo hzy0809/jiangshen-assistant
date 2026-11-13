@@ -1,0 +1,986 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class PointraceUI : BaseUI
+{
+	public class ResultInfo
+	{
+		public bool isWin;
+
+		public uint point;
+	}
+
+	private GUIStyle ui_newkuang6 = new GUIStyle();
+
+	private GUIStyle ui_xian_1 = new GUIStyle();
+
+	private GUIStyle ui_xian_2 = new GUIStyle();
+
+	private GUIStyle ui_di_1 = new GUIStyle();
+
+	private GUIStyle ui_di_2 = new GUIStyle();
+
+	private GUIStyle ui_di_3 = new GUIStyle();
+
+	private GUIStyle ui_di_4 = new GUIStyle();
+
+	private GUIStyle ui_jifen_1 = new GUIStyle();
+
+	private GUIStyle ui_jifen_2 = new GUIStyle();
+
+	private GUIStyle ui_jifen_3 = new GUIStyle();
+
+	private GUIStyle ui_jifen_4 = new GUIStyle();
+
+	private GUIStyle ui_zi_1 = new GUIStyle();
+
+	private GUIStyle ui_zi_2 = new GUIStyle();
+
+	private GUIStyle ui_zi_3 = new GUIStyle();
+
+	private GUIStyle ui_zi_4 = new GUIStyle();
+
+	private GUIStyle ui_zi_5 = new GUIStyle();
+
+	private GUIStyle ui_zi_6 = new GUIStyle();
+
+	private GUIStyle ui_zi_7 = new GUIStyle();
+
+	private GUIStyle ui_zi_paiming = new GUIStyle();
+
+	private GUIStyle ui_shuzi_1 = new GUIStyle();
+
+	private GUIStyle ui_shuzi_2 = new GUIStyle();
+
+	private GUIStyle ui_shuzi_3 = new GUIStyle();
+
+	private GUIStyle ui_baoxiang_unable = new GUIStyle();
+
+	private GUIStyle Ui_tomorrow = new GUIStyle();
+
+	private _ButtonStyle btnJia = new _ButtonStyle();
+
+	private _ButtonStyle btnJiaSu = new _ButtonStyle();
+
+	private _ButtonStyle btnBaoXiang = new _ButtonStyle();
+
+	private _ButtonStyle btnHelp = new _ButtonStyle();
+
+	private _ButtonStyle btnTzjl = new _ButtonStyle();
+
+	private bool m_bBattleLose;
+
+	private bool m_bWantChallenge;
+
+	private int mScrollbarIndex;
+
+	private int m_challengeIdx;
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private ResultInfo mResultInfo;
+
+	private Database.PointraceChallenger mTempChallenger;
+
+	private _ButtonStyle btnChaKan = new _ButtonStyle();
+
+	private _ButtonStyle btnShuaXin = new _ButtonStyle();
+
+	private _ButtonStyle btnMianFeiShuaxin = new _ButtonStyle();
+
+	private GameObject mScene;
+
+	private Database.Pointrace m_pointrace;
+
+	private Vector3[] mModelPos = new Vector3[5];
+
+	private Vector3[] mOpponentPos = new Vector3[5];
+
+	private List<GameObject> mModelList = new List<GameObject>();
+
+	private Database.PointraceChallenger cur_opponent;
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+		mScrollbarIndex = ScrollControl.RegisterInfo();
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		m_pointrace = Global.character_.pointrace;
+		RootUI.m_client.handler_add(1124, sc_pointrace_enter_0x464, null, -1f);
+		CSPointraceEnter_0x464 pkt = new CSPointraceEnter_0x464();
+		RootUI.m_client.Send(1124, pkt, null);
+		CSPointraceRank_0x469 cSPointraceRank_0x = new CSPointraceRank_0x469();
+		cSPointraceRank_0x.refresh_time = m_pointrace.rank_refresh_time;
+		RootUI.m_client.Send(1129, pkt, sc_pointrace_rank_0x469);
+		AddAsset("ui_pointrace");
+		AddAsset("ui_arena");
+		AddAsset("ui_divinity");
+		AddAsset("ui_main");
+		AddAsset("campaign/chapter_jifenjingjichang");
+		AddAsset("char_model/hero1_walk", bForce: false);
+		AddAsset("char_model/heroine1_walk", bForce: false);
+		CollectingStart(bCollecting: true);
+		StartLoading();
+	}
+
+	private void remindinit()
+	{
+		RemindTitleMsg component = BaseUI.GetRootUI().GetComponent<RemindTitleMsg>();
+		component.MyLoading(__BaseUI.load_str(36511u), __BaseUI._clrRed, 5f);
+	}
+
+	protected override void Show()
+	{
+		ref Vector3 reference = ref mModelPos[0];
+		reference = new Vector3(7.2f, 0f, 15.8f);
+		ref Vector3 reference2 = ref mModelPos[1];
+		reference2 = new Vector3(9.4f, 0f, 0.5f);
+		ref Vector3 reference3 = ref mModelPos[2];
+		reference3 = new Vector3(0f, 0f, -3.6f);
+		ref Vector3 reference4 = ref mModelPos[3];
+		reference4 = new Vector3(-13f, 0f, 0.5f);
+		ref Vector3 reference5 = ref mModelPos[4];
+		reference5 = new Vector3(-13.9f, 0f, 16f);
+		if (mScene == null)
+		{
+			AssetBundle asset = BaseAsset.was.GetAsset("campaign/chapter_jifenjingjichang");
+			if (asset != null)
+			{
+				mScene = UnityEngine.Object.Instantiate(asset.mainAsset) as GameObject;
+				mScene.transform.parent = base.gameObject.transform;
+			}
+			if (TimeUtil.Now >= TimeUtil.ThisDay + 18000 && TimeUtil.Now < TimeUtil.ThisDay + 75600)
+			{
+				resetModel();
+			}
+		}
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_pointrace");
+		AssetBundle asset3 = BaseAsset.was.GetAsset("ui_arena");
+		ui_newkuang6.normal.background = asset2.Load("ui_newkuang6") as Texture2D;
+		ui_newkuang6.border = new RectOffset(10, 10, 10, 10);
+		ui_xian_1.normal.background = asset2.Load("ui_xian_1") as Texture2D;
+		ui_xian_1.border = new RectOffset(10, 10, 10, 10);
+		ui_xian_2.normal.background = asset2.Load("ui_xian_2") as Texture2D;
+		ui_xian_2.border = new RectOffset(10, 10, 10, 10);
+		ui_di_1.normal.background = asset2.Load("ui_di_1") as Texture2D;
+		ui_di_2.normal.background = asset2.Load("ui_di_2") as Texture2D;
+		ui_di_2.border = new RectOffset(10, 10, 10, 10);
+		ui_di_3.normal.background = asset2.Load("ui_di_3") as Texture2D;
+		ui_di_3.border = new RectOffset(24, 24, 24, 24);
+		ui_di_4.normal.background = asset2.Load("ui_di_4") as Texture2D;
+		ui_jifen_1.normal.background = asset2.Load("ui_jifen_1") as Texture2D;
+		ui_jifen_2.normal.background = asset2.Load("ui_jifen_2") as Texture2D;
+		ui_jifen_3.normal.background = asset2.Load("ui_jifen_3") as Texture2D;
+		ui_jifen_4.normal.background = asset2.Load("ui_jifen_4") as Texture2D;
+		ui_zi_1.normal.background = asset2.Load("ui_zi_1") as Texture2D;
+		ui_zi_2.normal.background = asset2.Load("ui_zi_2") as Texture2D;
+		ui_zi_3.normal.background = asset2.Load("ui_zi_3") as Texture2D;
+		ui_zi_4.normal.background = asset2.Load("ui_zi_4") as Texture2D;
+		ui_zi_5.normal.background = asset2.Load("ui_zi_5") as Texture2D;
+		ui_zi_6.normal.background = asset2.Load("ui_zi_6") as Texture2D;
+		ui_zi_7.normal.background = asset2.Load("ui_zi_7") as Texture2D;
+		ui_zi_paiming.normal.background = asset2.Load("ui_zi_paiming") as Texture2D;
+		ui_shuzi_1.normal.background = asset2.Load("ui_shuzi_1") as Texture2D;
+		ui_shuzi_2.normal.background = asset2.Load("ui_shuzi_2") as Texture2D;
+		ui_shuzi_3.normal.background = asset2.Load("ui_shuzi_3") as Texture2D;
+		ui_baoxiang_unable.normal.background = asset2.Load("ui_baoxiang_unalbe") as Texture2D;
+		Ui_tomorrow.normal.background = asset2.Load("ui_zi_8") as Texture2D;
+		btnJia.make(asset2, "button_jia");
+		btnJiaSu.make(asset2, "button_jiasu");
+		btnShuaXin.make(asset2, "button_shuaxin");
+		btnMianFeiShuaxin.make(asset2, "button_mianfeishuaxin");
+		btnHelp.make(asset2, "button_bangzhu");
+		btnChaKan.make(asset2, "button_chakan");
+		btnBaoXiang.make(asset3, "button_baoxiang");
+		btnTzjl.make(asset3, "button_tiaozhanjilu");
+		btnRight.Clear();
+		GUI.depth = __BaseUI.UIDepth_Main;
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		remindinit();
+		EnableAll();
+	}
+
+	public void checkGameObject(GameObject obj)
+	{
+		int i;
+		for (i = 0; i < mModelList.Count && !(mModelList[i] == obj); i++)
+		{
+		}
+		int num = 0;
+		Cooldown cooldown = Global.character_.getCooldown(6);
+		foreach (Database.PointraceChallenger challenger in m_pointrace.challengers)
+		{
+			if (!challenger.killed && num == i)
+			{
+				m_challengeIdx = num;
+				DisableAll();
+				if (m_pointrace.challenge_count >= 10 + m_pointrace.challenge_buy)
+				{
+					if (m_pointrace.challenge_buy >= 10)
+					{
+						__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20010u), BaseAsset.lds.GetCurUI(), EnableAll);
+					}
+					else
+					{
+						_buy_template buyTemplate = Global.getBuyTemplate(_buy_template.TYPE.POINTRACE, m_pointrace.challenge_buy + 1);
+						int gold = buyTemplate.gold;
+						__BaseUI.GetConsumeUI().setConsume(gold, 80, ChallengeBuyOK);
+					}
+				}
+				else
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21373u, challenger.name), BaseAsset.lds.GetCurUI(), ChallengeOK, _bCancel: true);
+				}
+			}
+			num++;
+		}
+	}
+
+	private void ChallengeOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			Cooldown cooldown = Global.character_.getCooldown(6);
+			if (cooldown != null && cooldown.time > TimeUtil.Now)
+			{
+				m_bWantChallenge = true;
+				WantClearCD(bOK: true, objs);
+			}
+			else
+			{
+				WantChallenge();
+			}
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void Update()
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			Vector3 position = mModelPos[i];
+			position.x -= 1f;
+			position.y += 4.5f;
+			if (i == 3)
+			{
+				position.x += 3.5f;
+				position.y += 1f;
+			}
+			ref Vector3 reference = ref mOpponentPos[i];
+			reference = Camera.main.WorldToScreenPoint(position);
+			mOpponentPos[i].y = (float)Screen.height - mOpponentPos[i].y;
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Scene;
+		Cooldown cooldown = Global.character_.getCooldown(6);
+		if (MainUI.CalcServerOpenRefreshDays() != 0 && TimeUtil.Now >= TimeUtil.ThisDay + 18000 && TimeUtil.Now < TimeUtil.ThisDay + 75600)
+		{
+			drawLeft1(cooldown);
+			drawOpponent(cooldown);
+			drawDown();
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rectC(179f, 23f, 358f, 46f), string.Empty, Ui_tomorrow);
+		}
+		drawLeft2();
+		drawRight();
+		GUI.depth = __BaseUI.UIDepth_Main2;
+		drawRightBar();
+		drawTooltips();
+	}
+
+	private void drawLeft1(Cooldown cd)
+	{
+		__BaseUI.BeginGroup(__BaseUI._rect(20f, 115f, 170f, 96f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 170f, 96f), string.Empty, ui_di_1);
+		if (cd != null)
+		{
+			int num = (int)(cd.time - TimeUtil.Now);
+			if (num > 0 && 20 - m_pointrace.challenge_count != 0)
+			{
+				__BaseUI.Label(__BaseUI._rect(79f, 15f, 80f, 17f), Global.getFormatTime(num), __BaseUI._numNLeft, __BaseUI._clrRed);
+				if (btnJiaSu.Button(bBtn: true, __BaseUI._rect(138f, 12f, 23f, 23f), string.Empty))
+				{
+					m_bWantChallenge = false;
+					WantClearCD(bOK: true, null);
+				}
+			}
+			else
+			{
+				Global.character_.cooldowns.Remove(6);
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(79f, 15f, 80f, 17f), "--:--:--", __BaseUI._numNLeft, __BaseUI._clrGreen, 17);
+		}
+		int num2 = 10 - m_pointrace.challenge_count;
+		if (num2 < 0)
+		{
+			num2 = 0;
+		}
+		__BaseUI.Label(__BaseUI._rect(85f, 38f, 50f, 15f), new GUIContent(num2.ToString(), "PointraceTimes"), __BaseUI._textLeft, __BaseUI._clrGreen);
+		__BaseUI.EndGroup();
+		if (btnTzjl.Button(bBtn: true, __BaseUI._rect(65f, 182f, 80f, 22f), string.Empty))
+		{
+			DisableAll();
+			GetComponent<PointraceReportUI>().MyLoading(EnableAll);
+		}
+	}
+
+	private void drawLeft2()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rect(20f, 220f, 170f, 70f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 170f, 70f), string.Empty, ui_di_2);
+		__BaseUI.Label(__BaseUI._rect(25f, 12f, 65f, 18f), string.Empty, ui_zi_3);
+		string text = "00:00:00";
+		uint num = 0u;
+		if (TimeUtil.Now >= TimeUtil.ThisDay + 18000 && TimeUtil.Now < TimeUtil.ThisDay + 75600)
+		{
+			num = TimeUtil.ThisDay + 75600 - TimeUtil.Now;
+			text = Global.getFormatTime((int)num);
+			__BaseUI.Label(__BaseUI._rect(28f, 33f, 80f, 14f), text, __BaseUI.normalStyle, __BaseUI._clrGreen, 14);
+		}
+		if (m_pointrace.bonuses.Count > 0)
+		{
+			if (btnBaoXiang.Button(bBtn: true, __BaseUI._rect(100f, 5f, 56f, 47f), string.Empty))
+			{
+				DisableAll();
+				GetComponent<PointraceChestUI>().MyLoading(EnableAll);
+			}
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(100f, 5f, 56f, 47f), string.Empty, ui_baoxiang_unable);
+		}
+		__BaseUI.EndGroup();
+		if (__BaseUI._btnBonusList.Button(bBtn: true, __BaseUI._rect(65f, 275f, 80f, 26f), string.Empty))
+		{
+			DisableAll();
+			BaseUI.GetBonusListUI().SubLoading("pointrace", Enable);
+		}
+	}
+
+	private void drawDown()
+	{
+		__BaseUI.BeginGroup(__BaseUI._rectCT(100f, (float)Screen.height * 0.8f, 200f, 40f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 200f, 40f), string.Empty, ui_di_2);
+		if (m_pointrace.refresh_count == 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(30f, 12f, 134f, 18f), string.Empty, ui_zi_5);
+		}
+		else
+		{
+			__BaseUI.Label(__BaseUI._rect(50f, 12f, 32f, 18f), string.Empty, ui_zi_4);
+			__BaseUI.Box(__BaseUI._rect(95f, 9f, 23f, 23f), __BaseUI._iconGold);
+			__BaseUI.Label(__BaseUI._rect(130f, 12f, 50f, 16f), string.Empty + 20, __BaseUI.normalStyle, __BaseUI._clrWhite, 16);
+		}
+		__BaseUI.EndGroup();
+		if (m_pointrace.refresh_count == 0)
+		{
+			if (btnMianFeiShuaxin.Button(bBtn: true, __BaseUI._rectCT(-70f, (float)Screen.height * 0.8f - 12f, 65f, 65f), string.Empty))
+			{
+				DisableAll();
+				CSPointraceRefresh_0x467 cSPointraceRefresh_0x = new CSPointraceRefresh_0x467();
+				cSPointraceRefresh_0x.gold_consume = ((m_pointrace.refresh_count != 0) ? 20u : 0u);
+				RootUI.m_client.Send(1127, cSPointraceRefresh_0x, sc_pointrace_refresh_0x467);
+			}
+		}
+		else if (btnShuaXin.Button(bBtn: true, __BaseUI._rectCT(-70f, (float)Screen.height * 0.8f - 12f, 65f, 65f), string.Empty))
+		{
+			DisableAll();
+			BaseUI.GetRootUI().GetComponent<ConsumeUI>().setConsume(20, 77, refreshOk);
+		}
+	}
+
+	private void refreshOk(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			CSPointraceRefresh_0x467 cSPointraceRefresh_0x = new CSPointraceRefresh_0x467();
+			cSPointraceRefresh_0x.gold_consume = ((m_pointrace.refresh_count != 0) ? 20u : 0u);
+			RootUI.m_client.Send(1127, cSPointraceRefresh_0x, sc_pointrace_refresh_0x467);
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void drawRight()
+	{
+		Vector2 zero = Vector2.zero;
+		__BaseUI.BeginGroup(__BaseUI._rect((float)(Screen.width - 260) * 0.99f, (float)(Screen.height - 350) * 0.02f, 260f, 350f));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 260f, 350f), string.Empty, ui_di_3);
+		__BaseUI.Label(__BaseUI._rect(105f, 9f, 49f, 18f), string.Empty, ui_zi_paiming);
+		btnHelp.Button(bBtn: true, __BaseUI._rect(158f, 6f, 23f, 23f), new GUIContent(string.Empty, "PointRaceHelp"));
+		__BaseUI.BeginGroup(__BaseUI._rect(10f, 32f, 240f, 268f));
+		__BaseUI.Label(__BaseUI._rect(0f, -3f, 240f, 268f), string.Empty, ui_newkuang6);
+		__BaseUI.Label(__BaseUI._rect(35f, -2f, 9f, 264f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(70f, -2f, 9f, 264f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(160f, -2f, 9f, 264f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(215f, -2f, 9f, 264f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(1f, 19f, 218f, 9f), string.Empty, ui_xian_1);
+		__BaseUI.Label(__BaseUI._rect(7f, 6f, 199f, 16f), string.Empty, ui_zi_1);
+		m_pointrace.rankers.Sort((PointraceRank a, PointraceRank b) => (int)(a.rank - b.rank));
+		int count = m_pointrace.rankers.Count;
+		int num = 24;
+		Rect position = __BaseUI._rect(0f, 24f, 238f, 240f);
+		Rect contentRect = __BaseUI._rect(0f, 0f, 220f, count * num);
+		Vector2 scrollpos = ScrollControl.infos[mScrollbarIndex].scrollpos;
+		scrollpos = GUIHacks.BeginScrollView(position, scrollpos, contentRect, useHorizontal: false, useVertical: true, __BaseUI.normalStyle, __BaseUI._vertScroll1[0], num, 0, mScrollbarIndex);
+		ScrollControl.infos[mScrollbarIndex].scrollpos = scrollpos;
+		int num2;
+		for (num2 = 0; num2 < count; num2++)
+		{
+			float num3 = num * num2;
+			Color clr = __BaseUI._clrWhite;
+			PointraceRank pointraceRank = m_pointrace.rankers[num2];
+			switch (pointraceRank.rank)
+			{
+			case 1u:
+				clr = new Color(1f, 0.4f, 0f);
+				__BaseUI.Label(__BaseUI._rect(7f, num3 - 2f, 24f, 27f), string.Empty, ui_shuzi_1);
+				break;
+			case 2u:
+				clr = new Color(0.6f, 0.2f, 1f);
+				__BaseUI.Label(__BaseUI._rect(7f, num3 - 2f, 24f, 27f), string.Empty, ui_shuzi_2);
+				break;
+			case 3u:
+				clr = __BaseUI._clrCyanDark;
+				__BaseUI.Label(__BaseUI._rect(7f, num3 - 2f, 24f, 27f), string.Empty, ui_shuzi_3);
+				break;
+			default:
+				__BaseUI.Label(__BaseUI._rect((35f - __BaseUI.CalcSize(pointraceRank.rank.ToString(), __BaseUI.normalStyle, 15).x) / 2f, num3 + 4f, 35f, 15f), pointraceRank.rank.ToString(), __BaseUI.normalStyle, __BaseUI._clrYellowLight, 15);
+				break;
+			}
+			__BaseUI.Label(__BaseUI._rect(38f + (35f - __BaseUI.CalcSize(string.Empty + pointraceRank.level, __BaseUI.normalStyle, 14).x) / 2f, num3 + 4f, 35f, 14f), string.Empty + pointraceRank.level, __BaseUI.normalStyle, clr, 14);
+			__BaseUI.Label(__BaseUI._rect(77f, num3 + 4f, 86f, 14f), pointraceRank.name, __BaseUI.normalStyle, clr, 14);
+			__BaseUI.Label(__BaseUI._rect(169f, num3 + 4f, 55f, 14f), string.Empty + pointraceRank.point, __BaseUI.normalStyle, __BaseUI._clrYellowDark, 14);
+			if (num2 != count - 1)
+			{
+				__BaseUI.Label(__BaseUI._rect(1f, num3 + 19f, 218f, 9f), string.Empty, ui_xian_1);
+			}
+		}
+		GUIHacks.EndScrollView();
+		for (; num2 < 10; num2++)
+		{
+			float num4 = num * num2;
+			__BaseUI.Label(__BaseUI._rect(1f, num4 + 19f, 218f, 9f), string.Empty, ui_xian_1);
+		}
+		__BaseUI.EndGroup();
+		__BaseUI.Label(__BaseUI._rect(10f, 308f, 240f, 30f), string.Empty, ui_newkuang6);
+		__BaseUI.Label(__BaseUI._rect(100f, 300f, 60f, 18f), string.Empty, ui_zi_2);
+		__BaseUI.Label(__BaseUI._rect(45f, 309f, 9f, 27f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(80f, 309f, 9f, 27f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(170f, 309f, 9f, 27f), string.Empty, ui_xian_2);
+		__BaseUI.Label(__BaseUI._rect(10f + (35f - __BaseUI.CalcSize(string.Empty + Global.character_.pointrace.rank, __BaseUI.normalStyle, 14).x) / 2f, 317f, 35f, 15f), string.Empty + Global.character_.pointrace.rank, __BaseUI.normalStyle, __BaseUI._clrYellowLight, 15);
+		__BaseUI.Label(__BaseUI._rect(48f + (35f - __BaseUI.CalcSize(string.Empty + Global.character_.level, __BaseUI.normalStyle, 14).x) / 2f, 317f, 35f, 14f), string.Empty + Global.character_.level, __BaseUI.normalStyle, __BaseUI._clrWhite, 14);
+		__BaseUI.Label(__BaseUI._rect(87f, 317f, 86f, 14f), Global.character_.name, __BaseUI.normalStyle, __BaseUI._clrGreen, 14);
+		__BaseUI.Label(__BaseUI._rect(179f, 317f, 35f, 14f), string.Empty + Global.character_.pointrace.point, __BaseUI.normalStyle, __BaseUI._clrYellowDark, 14);
+		__BaseUI.EndGroup();
+	}
+
+	private void drawOpponent(Cooldown cd)
+	{
+		int num = 0;
+		foreach (Database.PointraceChallenger challenger in m_pointrace.challengers)
+		{
+			__BaseUI.Label(__BaseUI._rect(mOpponentPos[num].x, mOpponentPos[num].y, 135f, 76f), string.Empty, ui_di_4);
+			__BaseUI.Label(__BaseUI._rect(mOpponentPos[num].x + 25f, mOpponentPos[num].y + 4f, 100f, 16f), challenger.name, __BaseUI.normalStyle, 16, __BaseUI._clrWhite);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(mOpponentPos[num].x + 60f, mOpponentPos[num].y + 27f, 30f, 16f), challenger.level.ToString(), __BaseUI.normalStyle, __BaseUI._clrWhite, 16);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(mOpponentPos[num].x + 60f, mOpponentPos[num].y + 44f, 80f, 16f), challenger.battle_score.ToString(), __BaseUI.normalStyle, __BaseUI._clrWhite, 16);
+			__BaseUI.OutlinedLabel(__BaseUI._rect(mOpponentPos[num].x + 60f, mOpponentPos[num].y + 61f, 80f, 16f), challenger.point.ToString(), __BaseUI.normalStyle, __BaseUI._clrWhite, 16);
+			if (btnChaKan.Button(bBtn: true, __BaseUI._rect(mOpponentPos[num].x - 30f, mOpponentPos[num].y - 11f, 48f, 49f), string.Empty) && !challenger.killed)
+			{
+				m_challengeIdx = num;
+				if (challenger.isview)
+				{
+					cs_pointrace_view_0x46A(challenger.id, use_gold: false);
+				}
+				else
+				{
+					ConsumeUI component = BaseUI.GetRootUI().GetComponent<ConsumeUI>();
+					component.setConsume(5, 75, pointrace_view_OK, new object[1] { challenger.id });
+				}
+			}
+			num++;
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		if (tip.StartsWith("PointraceTimes"))
+		{
+			__BaseUI.GetTooltipUI().ShowTooltipCommon2(__BaseUI.load_str(21403u), string.Empty, 300);
+		}
+		if (tip.StartsWith("PointRaceHelp"))
+		{
+			__BaseUI.GetTooltipUI().ShowTooltipJXHelpContent(string.Empty, 330, 5, __BaseUI.load_str(21356u), __BaseUI.load_str(21357u), __BaseUI.load_str(21358u), __BaseUI.load_str(21371u), __BaseUI.load_str(21372u));
+		}
+	}
+
+	private void drawRightBar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void saveInfo(SCPointraceChallenge_0x465 pkt)
+	{
+		mResultInfo = new ResultInfo();
+		mResultInfo.isWin = pkt.iswin;
+		mResultInfo.point = pkt.point;
+	}
+
+	private void bubble()
+	{
+		if (mResultInfo != null)
+		{
+			Rect rc = __BaseUI._rectCT(0f, (float)Screen.height * 0.5f, 200f, 30f);
+			if (!mResultInfo.isWin)
+			{
+				RootBase._drawBubble(1L, rc, ui_zi_7.normal.background, 2f, 5f, -10f);
+			}
+			else
+			{
+				RootBase._drawBubble((int)mResultInfo.point, rc, ui_zi_6.normal.background, 2f, 5f, -10f);
+			}
+		}
+	}
+
+	public void pointrace_view_OK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			cs_pointrace_view_0x46A((ulong)objs[0], use_gold: true);
+		}
+	}
+
+	private void cs_pointrace_view_0x46A(ulong idother, bool use_gold)
+	{
+		CSPointraceView_0x46A cSPointraceView_0x46A = new CSPointraceView_0x46A();
+		cSPointraceView_0x46A.idother = idother;
+		cSPointraceView_0x46A.use_gold = use_gold;
+		RootUI.m_client.Send(1130, cSPointraceView_0x46A, sc_pointrace_view_0x46A);
+	}
+
+	private void sc_pointrace_view_0x46A(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		if (stream == null)
+		{
+			return;
+		}
+		SCPointraceView_0x46A sCPointraceView_0x46A = JSProtoBuf.Serializer.Deserialize<SCPointraceView_0x46A>(stream);
+		if (sCPointraceView_0x46A.result == 1)
+		{
+			if (sCPointraceView_0x46A.gold_consume != 0)
+			{
+				Global.character_.gold -= (int)sCPointraceView_0x46A.gold_consume;
+				__BaseUI.drawStateBubble("gold-" + sCPointraceView_0x46A.gold_consume);
+			}
+			Database.PointraceChallenger challenger = m_pointrace.getChallenger(sCPointraceView_0x46A.idother);
+			if (challenger != null)
+			{
+				challenger.isview = true;
+				challenger.SetLegion(sCPointraceView_0x46A.legion);
+				BattleFormation(challenger);
+			}
+		}
+	}
+
+	public void cs_pointrace_challenge_0x465()
+	{
+		DisableAll();
+		BaseAsset.lds.Visible_sub();
+		CSPointraceChallenge_0x465 cSPointraceChallenge_0x = new CSPointraceChallenge_0x465();
+		cSPointraceChallenge_0x.idother = m_pointrace.challengers[m_challengeIdx].id;
+		RootUI.m_client.Send(1125, cSPointraceChallenge_0x, sc_pointrace_challenge_0x465);
+	}
+
+	private void sc_pointrace_challenge_0x465(MemoryStream stream, object arg)
+	{
+		if (stream == null)
+		{
+			EnableAll();
+			BaseAsset.lds.Hide();
+			return;
+		}
+		SCPointraceChallenge_0x465 sCPointraceChallenge_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceChallenge_0x465>(stream);
+		if (sCPointraceChallenge_0x.result != 0)
+		{
+			return;
+		}
+		if (sCPointraceChallenge_0x.challengers != null)
+		{
+			m_pointrace.makeChallengers(sCPointraceChallenge_0x.challengers, bChanged: false);
+		}
+		else
+		{
+			Database.PointraceChallenger challenger = m_pointrace.getChallenger(sCPointraceChallenge_0x.idother);
+			if (sCPointraceChallenge_0x.iswin)
+			{
+				challenger.killed = true;
+			}
+		}
+		if (sCPointraceChallenge_0x.cooldown != null)
+		{
+			Global.character_.cooldowns[6] = new Cooldown(sCPointraceChallenge_0x.cooldown);
+		}
+		if (sCPointraceChallenge_0x.pointrace_report != null)
+		{
+			m_pointrace.reports.Add(new Database.PointraceReport(sCPointraceChallenge_0x.pointrace_report));
+		}
+		if (sCPointraceChallenge_0x.gold_consume != 0)
+		{
+			m_pointrace.challenge_buy++;
+			Global.character_.gold -= (int)sCPointraceChallenge_0x.gold_consume;
+			__BaseUI.drawStateBubble("gold-" + sCPointraceChallenge_0x.gold_consume);
+		}
+		saveInfo(sCPointraceChallenge_0x);
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		battleUI.setPrevUI(BaseAsset.lds.GetCurUI());
+		battleUI.setReport(sCPointraceChallenge_0x.pointrace_report.report.idbattle_report, sCPointraceChallenge_0x.report, isopponent: false);
+		battleUI.ViewType = enumBattleViewType.viewDefault;
+		battleUI.setClose(BattleClose);
+		string empty = string.Empty;
+		if (sCPointraceChallenge_0x.iswin)
+		{
+			empty = string.Format(__BaseUI.load_str(20026u), battleUI.getDefenderName());
+		}
+		else
+		{
+			empty = string.Format(__BaseUI.load_str(20029u), battleUI.getDefenderName());
+		}
+		m_pointrace.challenge_count++;
+		m_bBattleLose = !sCPointraceChallenge_0x.iswin;
+		BaseUI.GetRootUI().battle_enter();
+		BaseAsset.lds.SetBattling(bBattling: true);
+		Hideme();
+	}
+
+	private void BattleClose()
+	{
+		Visible();
+		EnableAll();
+		resetModel();
+		bubble();
+	}
+
+	public void BattleFormation(Database.PointraceChallenger d)
+	{
+		cur_opponent = d;
+		Hashtable hashtable = new Hashtable();
+		hashtable.Add("subui", "PlayerBattle");
+		hashtable.Add("substate", "nation");
+		hashtable.Add("viewonly", false);
+		hashtable.Add("legion", d.m_legion);
+		hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+		hashtable.Add("OnClose", new delegate_OnClose(OnFormationClose));
+		FormationUI componentInChildren = GetComponentInChildren<FormationUI>();
+		componentInChildren.SubLoading(hashtable);
+		MainUI.SetSubUI(componentInChildren);
+	}
+
+	private bool OnAttack()
+	{
+		if (m_pointrace.challenge_count >= 10 + m_pointrace.challenge_buy)
+		{
+			if (m_pointrace.challenge_buy >= 10)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20010u), BaseAsset.lds.GetCurUI(), EnableAll);
+			}
+			else
+			{
+				_buy_template buyTemplate = Global.getBuyTemplate(_buy_template.TYPE.POINTRACE, m_pointrace.challenge_buy + 1);
+				int gold = buyTemplate.gold;
+				__BaseUI.GetConsumeUI().setConsume(gold, 80, ChallengeBuyOK);
+			}
+		}
+		else
+		{
+			ChallengeOK(bOK: true, null);
+		}
+		return true;
+	}
+
+	private void OnFormationClose()
+	{
+		Visible();
+	}
+
+	private void ChallengeBuyOK(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			ChallengeOK(bOK: true, objs);
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	private void WantClearCD(bool bOK, object[] objs)
+	{
+		Enable();
+		if (bOK)
+		{
+			Cooldown cooldown = Global.character_.getCooldown(6);
+			if (cooldown != null && cooldown.time > TimeUtil.Now)
+			{
+				int num = (int)(cooldown.time - TimeUtil.Now);
+				int gold = (int)Math.Ceiling((double)num / 60.0) * cooldown.Template.gold_consume;
+				DisableAll();
+				_cooldown cooldown2 = Global.getTemplate("cooldown", 6u) as _cooldown;
+				__BaseUI.GetConsumeUI().setConsume(gold, cooldown2.idconsume_tip, ClearCD);
+			}
+		}
+	}
+
+	private void ClearCD(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			RootBase.cs_cooldown_clear_0x20(6, (!m_bWantChallenge) ? null : new delegate_OnClose(WantChallenge));
+			m_bWantChallenge = false;
+		}
+		EnableAll();
+	}
+
+	private void WantChallenge()
+	{
+		Hideme();
+		cs_pointrace_challenge_0x465();
+	}
+
+	public void resetModel()
+	{
+		int num = 0;
+		AssetBundle assetBundle = null;
+		foreach (GameObject mModel in mModelList)
+		{
+			UnityEngine.Object.Destroy(mModel);
+		}
+		mModelList.Clear();
+		foreach (Database.PointraceChallenger challenger in m_pointrace.challengers)
+		{
+			assetBundle = ((!challenger.sex) ? BaseAsset.was.GetAsset("char_model/heroine1_walk") : BaseAsset.was.GetAsset("char_model/hero1_walk"));
+			if (assetBundle != null)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(assetBundle.mainAsset) as GameObject;
+				gameObject.transform.position = mModelPos[num];
+				gameObject.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+				gameObject.transform.parent = mScene.transform;
+				gameObject.AddComponent<PointraceModelScript>().setParentUI(this);
+				if (challenger.killed && gameObject.animation["dead"] != null)
+				{
+					gameObject.animation.Play("dead");
+				}
+				mModelList.Add(gameObject);
+			}
+			num++;
+		}
+	}
+
+	private void _return()
+	{
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI != null)
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		foreach (GameObject mModel in mModelList)
+		{
+			UnityEngine.Object.Destroy(mModel);
+		}
+		mModelList.Clear();
+		UnityEngine.Object.Destroy(mScene);
+		mScene = null;
+	}
+
+	private void sc_pointrace_enter_0x464(MemoryStream stream, object arg)
+	{
+		SCPointraceEnter_0x464 sCPointraceEnter_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceEnter_0x464>(stream);
+		if (sCPointraceEnter_0x.pointrace != null)
+		{
+			m_pointrace.make(sCPointraceEnter_0x.pointrace);
+		}
+	}
+
+	private void sc_pointrace_rank_0x469(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		if (stream == null)
+		{
+			return;
+		}
+		SCPointraceRank_0x469 sCPointraceRank_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceRank_0x469>(stream);
+		if (sCPointraceRank_0x.refresh_time <= m_pointrace.rank_refresh_time)
+		{
+			return;
+		}
+		m_pointrace.rank_refresh_time = sCPointraceRank_0x.refresh_time;
+		m_pointrace.rankers.Clear();
+		foreach (PointraceRank rank in sCPointraceRank_0x.ranks)
+		{
+			m_pointrace.rankers.Add(rank);
+		}
+		m_pointrace.rankers.Sort((PointraceRank a, PointraceRank b) => a.rank.CompareTo(b.rank));
+	}
+
+	public void cs_pointrace_bonusget_0x466(bool bFindBack, int idx, delegate_OnClose onclose)
+	{
+		CSPointraceBonusGet_0x466 cSPointraceBonusGet_0x = new CSPointraceBonusGet_0x466();
+		cSPointraceBonusGet_0x.time = Global.character_.pointrace.bonuses[idx].time;
+		cSPointraceBonusGet_0x.find_back = bFindBack;
+		RootUI.m_client.Send(1126, cSPointraceBonusGet_0x, sc_pointrace_bonusget_0x466, onclose);
+	}
+
+	private void sc_pointrace_bonusget_0x466(MemoryStream stream, object arg)
+	{
+		delegate_OnClose delegate_OnClose = arg as delegate_OnClose;
+		if (stream == null)
+		{
+			delegate_OnClose?.Invoke();
+			return;
+		}
+		SCPointraceBonusGet_0x466 sCPointraceBonusGet_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceBonusGet_0x466>(stream);
+		if (sCPointraceBonusGet_0x.result == 0)
+		{
+			if (sCPointraceBonusGet_0x.gold_consume != 0)
+			{
+				Global.character_.gold -= (int)sCPointraceBonusGet_0x.gold_consume;
+				__BaseUI.drawStateBubble("gold-" + sCPointraceBonusGet_0x.gold_consume);
+			}
+			else
+			{
+				Global.character_.pointrace.isgot = true;
+			}
+			_pointrace_bonus pointrace_bonus = null;
+			foreach (_character_pointrace_bonus bonuse in Global.character_.pointrace.bonuses)
+			{
+				if (bonuse.time != sCPointraceBonusGet_0x.time)
+				{
+					continue;
+				}
+				pointrace_bonus = Database.Pointrace.getPointraceBonus(bonuse.rank);
+				if (pointrace_bonus != null)
+				{
+					List<_Treasure> list = new List<_Treasure>();
+					_Treasure treasure = new _Treasure();
+					treasure.make(4, 0, (int)sCPointraceBonusGet_0x.money);
+					list.Add(treasure);
+					treasure = new _Treasure();
+					treasure.make(18, 0, (int)sCPointraceBonusGet_0x.reputation);
+					list.Add(treasure);
+					if (pointrace_bonus.fruit1 != 0)
+					{
+						treasure = new _Treasure();
+						treasure.make(48, 0, (int)pointrace_bonus.fruit1);
+						list.Add(treasure);
+					}
+					if (pointrace_bonus.fruit2 != 0)
+					{
+						treasure = new _Treasure();
+						treasure.make(49, 0, (int)pointrace_bonus.fruit2);
+						list.Add(treasure);
+					}
+					if (pointrace_bonus.fruit3 != 0)
+					{
+						treasure = new _Treasure();
+						treasure.make(50, 0, (int)pointrace_bonus.fruit3);
+						list.Add(treasure);
+					}
+					if (pointrace_bonus.fruit4 != 0)
+					{
+						treasure = new _Treasure();
+						treasure.make(51, 0, (int)pointrace_bonus.fruit4);
+						list.Add(treasure);
+					}
+					BattleResultUI battleResultUI = __BaseUI.GetBattleResultUI();
+					battleResultUI.Set(null, string.Empty, string.Empty, 0, 0, list, delegate_OnClose);
+					battleResultUI.MyLoading();
+				}
+				Global.character_.pointrace.bonuses.Remove(bonuse);
+				break;
+			}
+			if (pointrace_bonus == null)
+			{
+				delegate_OnClose?.Invoke();
+			}
+		}
+		else if (sCPointraceBonusGet_0x.result == 1)
+		{
+			foreach (_character_pointrace_bonus bonuse2 in Global.character_.pointrace.bonuses)
+			{
+				if (bonuse2.time == sCPointraceBonusGet_0x.time)
+				{
+					Global.character_.pointrace.bonuses.Remove(bonuse2);
+					break;
+				}
+			}
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20030u), null, delegate_OnClose);
+		}
+		else if (sCPointraceBonusGet_0x.result == 2)
+		{
+			__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20031u), null, delegate_OnClose);
+		}
+	}
+
+	private void sc_pointrace_refresh_0x467(MemoryStream stream, object arg)
+	{
+		EnableAll();
+		SCPointraceRefresh_0x467 sCPointraceRefresh_0x = JSProtoBuf.Serializer.Deserialize<SCPointraceRefresh_0x467>(stream);
+		if (sCPointraceRefresh_0x.result == 0)
+		{
+			if (sCPointraceRefresh_0x.challengers != null)
+			{
+				m_pointrace.makeChallengers(sCPointraceRefresh_0x.challengers, bChanged: false);
+			}
+			m_pointrace.refresh_count++;
+			if (sCPointraceRefresh_0x.gold_consume != 0)
+			{
+				Global.character_.gold -= (int)sCPointraceRefresh_0x.gold_consume;
+				__BaseUI.drawStateBubble("gold-" + sCPointraceRefresh_0x.gold_consume);
+			}
+		}
+		resetModel();
+	}
+}

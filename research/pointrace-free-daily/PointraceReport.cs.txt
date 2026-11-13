@@ -1,0 +1,63 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "PointraceReport")]
+public class PointraceReport : IExtensible
+{
+	private db_character_pointrace_report _report;
+
+	private string _name;
+
+	private uint _server_sid = 0u;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "report", DataFormat = DataFormat.Default)]
+	public db_character_pointrace_report report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "name", DataFormat = DataFormat.Default)]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "server_sid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint server_sid
+	{
+		get
+		{
+			return _server_sid;
+		}
+		set
+		{
+			_server_sid = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

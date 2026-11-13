@@ -1,0 +1,1541 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class GeneralBookFormationUI : BaseUI
+{
+	private class EnemyLegionDisplayData
+	{
+		public Texture2D faceicon;
+
+		public uint icon;
+
+		public string name;
+
+		public byte color;
+
+		public int location;
+
+		public BoxCollider collider;
+
+		public _army_template army_temp;
+
+		public ushort skillid;
+	}
+
+	private class EnemyArmyDisplayData
+	{
+		public CampaignTroop troop;
+
+		public Texture2D faceicon;
+
+		public List<EnemyLegionDisplayData> legion_layout = new List<EnemyLegionDisplayData>();
+	}
+
+	private class GeneralDisplayData
+	{
+		public GameObject obj;
+
+		public int gen_id;
+
+		public int level;
+
+		public string asset_name;
+
+		public bool need_update;
+
+		public int idgeneral_template;
+
+		public _general_book_user_army gbua;
+
+		public ushort id_armytype;
+
+		public ushort id_skill;
+
+		public int faceid;
+
+		public GeneralDisplayData(int id)
+		{
+			Init(id);
+			need_update = true;
+		}
+
+		public void Init(int id)
+		{
+			gen_id = id;
+			string text = string.Empty;
+			if (Global.getTemplate("general_book_user_army", (ushort)id) is _general_book_user_army general_book_user_army)
+			{
+				_army army = Global.getTemplate("army", general_book_user_army.idarmy) as _army;
+				gbua = general_book_user_army;
+				if (army != null)
+				{
+					idgeneral_template = general_book_user_army.idgenernal_template;
+					id_armytype = army.idarmy_template;
+					id_skill = army.activeskill;
+					faceid = (int)army.icon;
+					if (general_book_user_army.idgenernal_template == 0)
+					{
+						faceid = Global.character_.icon;
+					}
+					if (Global.getTemplate("army_template", army.idarmy_template) is _army_template army_template)
+					{
+						text = ((general_book_user_army.idgenernal_template != 0 || Global.character_.sex || army_template.model_name_female.Length <= 0) ? army_template.model_name_male : army_template.model_name_female);
+					}
+				}
+			}
+			if (text != string.Empty)
+			{
+				text = "battle/" + text;
+			}
+			need_update = true;
+			asset_name = text;
+		}
+	}
+
+	private enum DragStat
+	{
+		Picking,
+		DraggingField,
+		DraggingNew
+	}
+
+	private delegate bool delegate_showPosEffect(int collide_location);
+
+	private _ButtonStyle embattleBtn = new _ButtonStyle();
+
+	private _ButtonStyle startEscort = new _ButtonStyle();
+
+	private _ButtonStyle refreshGuard = new _ButtonStyle();
+
+	private GUIStyle ui_jiangli2 = new GUIStyle();
+
+	private GUIStyle ui_jiangli4 = new GUIStyle();
+
+	private GUIStyle styleDi1 = new GUIStyle();
+
+	private uint troopid = 66u;
+
+	private string LabelType = " ";
+
+	private int book_gid;
+
+	private List<_ButtonMain> btnRight = new List<_ButtonMain>();
+
+	private List<_ButtonMain> btnBottom = new List<_ButtonMain>();
+
+	private int devilId;
+
+	private int lineIndex;
+
+	private EnemyArmyDisplayData enemy_layout = new EnemyArmyDisplayData();
+
+	private Dictionary<byte, GeneralDisplayData> group_layout = new Dictionary<byte, GeneralDisplayData>();
+
+	private List<_general_book_user_army> gens = new List<_general_book_user_army>();
+
+	private _general_book_user_army mainchar;
+
+	private string battle_field_name = "battle/battle28";
+
+	private uint current_npc_level;
+
+	private int[] m_gens = new int[16]
+	{
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1
+	};
+
+	private int GeneralSelectMaxnum;
+
+	private DragStat drag_stat;
+
+	private string onfield_obj_tooltip = string.Empty;
+
+	private int id_newgen_temp;
+
+	private string newgen_asset_name;
+
+	private GameObject new_gen_obj;
+
+	private int dragging_onfield_pos = -1;
+
+	private int tempcount = -1;
+
+	private bool mc;
+
+	private Texture2D generalSelectTitle;
+
+	private Texture2D texGenSelectDi;
+
+	private Texture2D texGenSelectZi;
+
+	private Texture2D weizhaomu;
+
+	private Texture2D texReadyFlag;
+
+	private Texture2D black;
+
+	private _ButtonStyle Btn_zhaomu = new _ButtonStyle();
+
+	private GUIStyle styleOnForm = new GUIStyle();
+
+	private int curlevel;
+
+	private GameObject m_pos_eff;
+
+	private BoxCollider[] m_drag_indicator = new BoxCollider[16];
+
+	private GameObject m_Battleground;
+
+	private GameObject[] m_ArmyFormation = new GameObject[2];
+
+	private GameObject[] m_PosIndicator = new GameObject[4];
+
+	private Dictionary<int, bool> general_drag_flag = new Dictionary<int, bool>();
+
+	private float gen_select_alpha = 1f;
+
+	private float gen_select_target_alpha = 1f;
+
+	private Dictionary<int, Texture2D> armyfaces = new Dictionary<int, Texture2D>();
+
+	private int Genselect_num;
+
+	private int Genselect_maxnum;
+
+	private GUIStyle styleGenSelect = new GUIStyle();
+
+	private GUIStyle bgStyle = new GUIStyle();
+
+	private bool sended;
+
+	private GeneralBook temp_book = new GeneralBook();
+
+	private string LabelTypeBack;
+
+	private int book_gidBack;
+
+	public int DevilId
+	{
+		get
+		{
+			return devilId;
+		}
+		set
+		{
+			devilId = value;
+		}
+	}
+
+	public int LineIndex
+	{
+		get
+		{
+			return lineIndex;
+		}
+		set
+		{
+			lineIndex = value;
+		}
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	public void SetTroopid(uint id)
+	{
+		troopid = id;
+	}
+
+	public void SetLabelGeneral(string label, int generalid)
+	{
+		LabelType = label;
+		book_gid = generalid;
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		if (id == "GeneralBookFormation")
+		{
+			AddAsset("ui_generalbookformation");
+			PrepareFixAsset();
+			CollectingStart();
+		}
+	}
+
+	private void PrepareFixAsset()
+	{
+		battle_field_name = "battle1";
+		if (Global.getTemplate("battle_field", 19u) is _battle_field battle_field)
+		{
+			battle_field_name = "battle" + battle_field.field;
+		}
+		AddAsset("battle/" + battle_field_name);
+		AddAsset("battle/cubeline");
+		AddAsset("battle/cubeff");
+		enemy_layout = new EnemyArmyDisplayData();
+		enemy_layout = createEnemyDisplayData(troopid);
+	}
+
+	private EnemyArmyDisplayData createEnemyDisplayData(uint idtroop)
+	{
+		uint id = 318u;
+		_general_book_template general_book_template = Global.getTemplate("general_book_template", troopid) as _general_book_template;
+		if (Global.getTemplate("campaign", id) is _campaign campaign && general_book_template != null && campaign.m_troops.ContainsKey(general_book_template.enemyid))
+		{
+			_campaign_troop campaign_troop = campaign.m_troops[general_book_template.enemyid] as _campaign_troop;
+			EnemyArmyDisplayData enemyArmyDisplayData = new EnemyArmyDisplayData();
+			enemyArmyDisplayData.troop = new CampaignTroop(campaign_troop, _anecdote: false, _fairy: false);
+			enemyArmyDisplayData.troop.limit_count = -1;
+			AddAssetSub("face" + enemyArmyDisplayData.troop.icon);
+			{
+				foreach (_campaign_troop_army army2 in campaign_troop.m_armys)
+				{
+					if (Global.getTemplate("army", army2.idarmy) is _army army)
+					{
+						EnemyLegionDisplayData enemyLegionDisplayData = new EnemyLegionDisplayData();
+						enemyLegionDisplayData.name = army2.army_name;
+						enemyLegionDisplayData.location = army2.location;
+						enemyLegionDisplayData.icon = army.icon;
+						enemyLegionDisplayData.skillid = army.activeskill;
+						AddAssetSub("face" + enemyLegionDisplayData.icon);
+						if (Global.getTemplate("army_template", army.idarmy_template) is _army_template army_template)
+						{
+							enemyLegionDisplayData.army_temp = army_template;
+							AddAssetSub("battle/" + army_template.model_name_male);
+						}
+						enemyArmyDisplayData.legion_layout.Add(enemyLegionDisplayData);
+					}
+				}
+				return enemyArmyDisplayData;
+			}
+		}
+		return null;
+	}
+
+	private void create_enemy_model()
+	{
+		if (m_ArmyFormation[1] != null)
+		{
+			foreach (Transform item in m_ArmyFormation[1].transform)
+			{
+				Object.Destroy(item.gameObject);
+			}
+		}
+		float[] array = new float[5] { 0f, -0.7f, 0.7f, -0.7f, 0.7f };
+		float[] array2 = new float[5] { 0f, 0.7f, 0.7f, -0.7f, -0.7f };
+		float[] array3 = new float[3] { 0f, -0.7f, 0.7f };
+		float[] array4 = new float[3] { 0.7f, -0.7f, -0.7f };
+		foreach (EnemyLegionDisplayData item2 in enemy_layout.legion_layout)
+		{
+			_army_template army_temp = item2.army_temp;
+			if (army_temp == null)
+			{
+				continue;
+			}
+			int num = item2.location / 4;
+			int num2 = item2.location % 4;
+			GameObject gameObject = new GameObject(item2.name);
+			gameObject.transform.parent = m_ArmyFormation[1].transform;
+			gameObject.transform.localPosition = new Vector3((-4.5f + (float)num2 * 3f) * -1f, 0f, 4.5f - (float)num * 3f);
+			gameObject.transform.localRotation = Quaternion.identity;
+			item2.collider = gameObject.AddComponent<BoxCollider>();
+			item2.collider.size = new Vector3(2.5f, 0.5f, 2.5f);
+			item2.collider.center = new Vector3(0f, 0.25f, 0f);
+			item2.collider.isTrigger = true;
+			for (int i = 0; i < army_temp.model_num; i++)
+			{
+				GameObject gameObject2 = BaseAsset.Instantiate_mainAsset("battle/" + army_temp.model_name_male) as GameObject;
+				if (gameObject2 != null)
+				{
+					Vector3 localPosition = gameObject2.transform.localPosition;
+					Quaternion localRotation = gameObject2.transform.localRotation;
+					gameObject2.transform.parent = gameObject.transform;
+					gameObject2.transform.localPosition = localPosition + new Vector3((army_temp.model_num != 3) ? array[i] : array3[i], 0f, (army_temp.model_num != 3) ? array2[i] : array4[i]);
+					gameObject2.transform.localRotation = localRotation;
+					AnimationTest component = gameObject2.GetComponent<AnimationTest>();
+					if (component != null)
+					{
+						component.enabled = false;
+					}
+				}
+			}
+		}
+		BaseAsset.SetLayerRecursively(m_ArmyFormation[1], 9);
+	}
+
+	public void PrepareGroup()
+	{
+		if (!base.enabled)
+		{
+			return;
+		}
+		List<byte> list = new List<byte>();
+		foreach (KeyValuePair<byte, GeneralDisplayData> item in group_layout)
+		{
+			if (m_gens[item.Key - 1] == -1)
+			{
+				Object.Destroy(item.Value.obj);
+				list.Add(item.Key);
+			}
+		}
+		for (int i = 0; i < list.Count; i++)
+		{
+			group_layout.Remove(list[i]);
+		}
+		for (int j = 0; j < 16; j++)
+		{
+			if (m_gens[j] != -1)
+			{
+				if (group_layout.ContainsKey((byte)(j + 1)))
+				{
+					group_layout[(byte)(j + 1)].Init(m_gens[j]);
+				}
+				else
+				{
+					group_layout[(byte)(j + 1)] = new GeneralDisplayData(m_gens[j]);
+				}
+			}
+		}
+		foreach (KeyValuePair<byte, GeneralDisplayData> item2 in group_layout)
+		{
+			if (item2.Value.need_update)
+			{
+				if (item2.Value.asset_name == string.Empty)
+				{
+					Object.Destroy(item2.Value.obj);
+					setup_general_obj(item2.Key, item2.Value, null);
+				}
+				else
+				{
+					AddAssetSub(item2.Value.asset_name);
+				}
+			}
+		}
+		current_npc_level = Global.character_.convoy.npc_level;
+	}
+
+	private void setup_general_obj(byte location, GeneralDisplayData gdata, GameObject gen_obj)
+	{
+		if (gen_obj == null)
+		{
+			gen_obj = new GameObject("genid:" + gdata.gen_id);
+		}
+		if (gen_obj.collider == null)
+		{
+			BoxCollider boxCollider = gen_obj.AddComponent<BoxCollider>();
+			boxCollider.size = new Vector3(0.8f, 1.5f, 0.8f);
+			boxCollider.center = new Vector3(0f, 0.75f, 0f);
+			boxCollider.isTrigger = true;
+		}
+		AnimationTest component = gen_obj.GetComponent<AnimationTest>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		BaseAsset.SetLayerRecursively(gen_obj, m_ArmyFormation[0].layer);
+		gen_obj.transform.parent = m_ArmyFormation[0].transform;
+		int num = (location - 1) / 4;
+		int num2 = (location - 1) % 4;
+		gen_obj.transform.localPosition = new Vector3(-4.5f + (float)num2 * 3f, 0f, 4.5f - (float)num * 3f);
+		gen_obj.transform.localRotation = Quaternion.identity;
+		gdata.obj = gen_obj;
+		gdata.need_update = false;
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		create_loaded_asset(AssetName);
+	}
+
+	private void create_loaded_asset(string AssetName)
+	{
+		foreach (KeyValuePair<byte, GeneralDisplayData> item in group_layout)
+		{
+			if (item.Value.need_update && item.Value.asset_name == AssetName)
+			{
+				Object.Destroy(item.Value.obj);
+				setup_general_obj(item.Key, item.Value, BaseAsset.Instantiate_mainAsset(AssetName) as GameObject);
+			}
+		}
+		float[] array = new float[5] { 0f, -0.7f, 0.7f, -0.7f, 0.7f };
+		float[] array2 = new float[5] { 0f, 0.7f, 0.7f, -0.7f, -0.7f };
+		float[] array3 = new float[3] { 0f, -0.7f, 0.7f };
+		float[] array4 = new float[3] { 0.7f, -0.7f, -0.7f };
+		foreach (EnemyLegionDisplayData item2 in enemy_layout.legion_layout)
+		{
+			if (item2.collider.transform.childCount != 0 || !(AssetName == "battle/" + item2.army_temp.model_name_male))
+			{
+				continue;
+			}
+			for (int i = 0; i < item2.army_temp.model_num; i++)
+			{
+				GameObject gameObject = BaseAsset.Instantiate_mainAsset(AssetName) as GameObject;
+				if (gameObject != null)
+				{
+					Vector3 localPosition = gameObject.transform.localPosition;
+					Quaternion localRotation = gameObject.transform.localRotation;
+					gameObject.transform.parent = item2.collider.transform;
+					gameObject.transform.localPosition = localPosition + new Vector3((item2.army_temp.model_num != 3) ? array[i] : array3[i], 0f, (item2.army_temp.model_num != 3) ? array2[i] : array4[i]);
+					gameObject.transform.localRotation = localRotation;
+					AnimationTest component = gameObject.GetComponent<AnimationTest>();
+					if (component != null)
+					{
+						component.enabled = false;
+					}
+				}
+			}
+		}
+		if (newgen_asset_name == AssetName)
+		{
+			GameObject gameObject2 = BaseAsset.Instantiate_mainAsset(AssetName) as GameObject;
+			if (gameObject2 != null)
+			{
+				BaseAsset.SetLayerRecursively(gameObject2, 9);
+				gameObject2.transform.parent = m_ArmyFormation[0].transform;
+				gameObject2.transform.position = new_gen_obj.transform.position;
+				gameObject2.transform.localRotation = Quaternion.identity;
+				AnimationTest component2 = gameObject2.GetComponent<AnimationTest>();
+				if (component2 != null)
+				{
+					component2.enabled = false;
+				}
+				Object.Destroy(new_gen_obj);
+				new_gen_obj = gameObject2;
+			}
+			newgen_asset_name = null;
+		}
+		if (!AssetName.Contains("face"))
+		{
+			return;
+		}
+		foreach (_general_book_user_army gen in gens)
+		{
+			if (gen.idgenernal_template == 0 && !armyfaces.ContainsKey(gen.id))
+			{
+				armyfaces.Add(gen.id, BaseAsset.LoadTexture("face" + Global.character_.icon));
+			}
+			else if (Global.getTemplate("army", gen.idarmy) is _army army && !armyfaces.ContainsKey(gen.id) && AssetName == "face" + army.icon)
+			{
+				armyfaces.Add(gen.id, BaseAsset.LoadTexture(AssetName));
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		sended = false;
+		InitUIResource();
+		InitScene();
+		Visible();
+		Enable();
+		Hashtable templates = Global.getTemplates("general_book_user_army");
+		gens.Clear();
+		_general_book_template general_book_template = Global.getTemplate("general_book_template", troopid) as _general_book_template;
+		foreach (object value in templates.Values)
+		{
+			_general_book_user_army general_book_user_army = (_general_book_user_army)value;
+			if (general_book_user_army.idgen != troopid)
+			{
+				continue;
+			}
+			gens.Add(general_book_user_army);
+			if (general_book_user_army.idgenernal_template != 0)
+			{
+				continue;
+			}
+			bool flag = false;
+			int[] array = m_gens;
+			foreach (int num in array)
+			{
+				if (num == general_book_user_army.id)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				m_gens[0] = general_book_user_army.id;
+			}
+			mainchar = general_book_user_army;
+		}
+		if (general_book_template != null)
+		{
+			GeneralSelectMaxnum = general_book_template.gennum;
+		}
+		PrepareGroup();
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		Object.Destroy(m_Battleground);
+		m_Battleground = null;
+		group_layout.Clear();
+	}
+
+	private void Update()
+	{
+		if (!Mathf.Approximately(gen_select_alpha, gen_select_target_alpha))
+		{
+			gen_select_alpha = Mathf.MoveTowards(gen_select_alpha, gen_select_target_alpha, Time.deltaTime * 5f);
+		}
+		onfield_obj_tooltip = string.Empty;
+		switch (drag_stat)
+		{
+		case DragStat.Picking:
+			pickOnFieldGen();
+			break;
+		case DragStat.DraggingField:
+			dragOnFieldGen();
+			break;
+		case DragStat.DraggingNew:
+			dragNewGeneral();
+			break;
+		}
+	}
+
+	private void pickOnFieldGen()
+	{
+		bool flag = false;
+		if (Camera.main == null)
+		{
+			return;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		foreach (KeyValuePair<byte, GeneralDisplayData> item in group_layout)
+		{
+			if (!(item.Value.obj != null) || !(item.Value.obj.collider != null) || !item.Value.obj.collider.Raycast(ray, out var _, float.PositiveInfinity))
+			{
+				continue;
+			}
+			if (Input.GetMouseButtonDown(0))
+			{
+				startDragOnFieldGeneral(item.Key);
+				break;
+			}
+			if (item.Value.idgeneral_template > 0)
+			{
+				onfield_obj_tooltip = "MineG:" + item.Key;
+			}
+			else if (item.Value.idgeneral_template == 0)
+			{
+				onfield_obj_tooltip = "MineG:" + item.Key;
+			}
+			else if (item.Value.idgeneral_template != -2)
+			{
+			}
+			flag = true;
+			break;
+		}
+		foreach (EnemyLegionDisplayData item2 in enemy_layout.legion_layout)
+		{
+			if (item2.collider.Raycast(ray, out var _, float.PositiveInfinity))
+			{
+				onfield_obj_tooltip = "FieldGen:" + item2.name + "|" + enemy_layout.troop.level + "|" + item2.icon + "|" + item2.color + "|" + item2.army_temp.id + "|" + item2.skillid;
+				break;
+			}
+		}
+	}
+
+	private void startDragNewGeneral(int idtemp)
+	{
+		if (!IsEnable() || !(Global.getTemplate("general_book_user_army", (uint)idtemp) is _general_book_user_army general_book_user_army))
+		{
+			return;
+		}
+		id_newgen_temp = idtemp;
+		if (!(Global.getTemplate("army", general_book_user_army.idarmy) is _army army))
+		{
+			return;
+		}
+		if (Global.getTemplate("army_template", army.idarmy_template) is _army_template army_template)
+		{
+			newgen_asset_name = "battle/" + army_template.model_name_male;
+			if (new_gen_obj != null)
+			{
+				Object.Destroy(new_gen_obj);
+			}
+			new_gen_obj = new GameObject("new_gen");
+			AddAssetSub(newgen_asset_name);
+			StartLoadingSub();
+		}
+		gen_select_target_alpha = 0f;
+		drag_stat = DragStat.DraggingNew;
+	}
+
+	private void startDragOnFieldGeneral(byte pos)
+	{
+		if (IsEnable())
+		{
+			drag_stat = DragStat.DraggingField;
+			dragging_onfield_pos = pos;
+		}
+	}
+
+	private void dragOnFieldGen()
+	{
+		if (dragging_onfield_pos < 0)
+		{
+			return;
+		}
+		if (Input.GetMouseButtonUp(0))
+		{
+			dropOnFieldGeneral();
+			return;
+		}
+		byte key = (byte)dragging_onfield_pos;
+		if (group_layout.ContainsKey(key))
+		{
+			dragging_obj(group_layout[key].obj, drag_onfield_gen_show_pos);
+		}
+	}
+
+	private void dragNewGeneral()
+	{
+		if (Input.GetMouseButtonUp(0))
+		{
+			if (tempcount != -1 && group_layout.ContainsKey((byte)tempcount) && group_layout[(byte)tempcount].idgeneral_template == 0)
+			{
+				mc = true;
+				tempcount = -1;
+			}
+			dropNewGeneral();
+		}
+		else
+		{
+			dragging_obj(new_gen_obj, drag_new_gen_show_pos);
+		}
+	}
+
+	private bool drag_new_gen_show_pos(int collide_location)
+	{
+		List<byte> list = new List<byte>();
+		foreach (KeyValuePair<byte, GeneralDisplayData> item in group_layout)
+		{
+			if (item.Value.gen_id > 0)
+			{
+				list.Add(item.Key);
+			}
+		}
+		tempcount = collide_location;
+		if (list.Count >= GeneralSelectMaxnum || group_layout.ContainsKey((byte)collide_location))
+		{
+			if (group_layout.ContainsKey((byte)collide_location) && group_layout[(byte)collide_location].idgeneral_template == 0)
+			{
+				return false;
+			}
+			return list.Contains((byte)collide_location);
+		}
+		return !group_layout.ContainsKey((byte)collide_location);
+	}
+
+	private bool drag_onfield_gen_show_pos(int collide_location)
+	{
+		return true;
+	}
+
+	private void dragging_obj(GameObject obj, delegate_showPosEffect show_pos_effect)
+	{
+		if (obj == null)
+		{
+			return;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		int num = 0;
+		for (num = 0; num < 16; num++)
+		{
+			if (m_drag_indicator[num].Raycast(ray, out var hitInfo, float.PositiveInfinity))
+			{
+				obj.transform.position = new Vector3(hitInfo.point.x, (!(hitInfo.point.y < m_ArmyFormation[0].transform.position.y)) ? hitInfo.point.y : m_ArmyFormation[0].transform.position.y, hitInfo.point.z);
+				if (show_pos_effect == null || show_pos_effect(num + 1))
+				{
+					m_pos_eff.SetActiveRecursively(state: true);
+					m_pos_eff.transform.position = m_drag_indicator[num].transform.position;
+				}
+				else
+				{
+					m_pos_eff.SetActiveRecursively(state: false);
+				}
+				break;
+			}
+		}
+		if (num >= 16)
+		{
+			Vector3 point = ray.GetPoint((m_ArmyFormation[0].transform.position.y - ray.origin.y) / ray.direction.y);
+			obj.transform.position = point;
+			m_pos_eff.SetActiveRecursively(state: false);
+		}
+	}
+
+	private void dropOnFieldGeneral()
+	{
+		if (dragging_onfield_pos < 0)
+		{
+			return;
+		}
+		byte b = (byte)dragging_onfield_pos;
+		if (!group_layout.ContainsKey(b))
+		{
+			return;
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		int num = 0;
+		for (num = 0; num < 16; num++)
+		{
+			if (!m_drag_indicator[num].Raycast(ray, out var _, float.PositiveInfinity))
+			{
+				continue;
+			}
+			group_layout[b].obj.transform.position = new Vector3(m_drag_indicator[num].transform.position.x, m_ArmyFormation[0].transform.position.y, m_drag_indicator[num].transform.position.z);
+			byte b2 = (byte)(num + 1);
+			if (b == b2)
+			{
+				break;
+			}
+			if (group_layout.ContainsKey(b2))
+			{
+				GeneralDisplayData generalDisplayData = group_layout[b2];
+				group_layout[b2] = group_layout[b];
+				if (generalDisplayData != null)
+				{
+					int num2 = (b - 1) / 4;
+					int num3 = (b - 1) % 4;
+					generalDisplayData.obj.transform.localPosition = new Vector3(-4.5f + (float)num3 * 3f, 0f, 4.5f - (float)num2 * 3f);
+				}
+				group_layout[b] = generalDisplayData;
+				int num4 = m_gens[b - 1];
+				m_gens[b - 1] = generalDisplayData.gen_id;
+				m_gens[b2 - 1] = num4;
+			}
+			else
+			{
+				group_layout[b2] = group_layout[b];
+				group_layout.Remove(b);
+				m_gens[b2 - 1] = group_layout[b2].gen_id;
+				m_gens[b - 1] = -1;
+			}
+			break;
+		}
+		if (num >= 16)
+		{
+			int num5 = (b - 1) / 4;
+			int num6 = (b - 1) % 4;
+			group_layout[b].obj.transform.localPosition = new Vector3(-4.5f + (float)num6 * 3f, 0f, 4.5f - (float)num5 * 3f);
+		}
+		drag_stat = DragStat.Picking;
+		m_pos_eff.SetActiveRecursively(state: false);
+		dragging_onfield_pos = -1;
+	}
+
+	private void dropNewGeneral()
+	{
+		if (id_newgen_temp == 0)
+		{
+			return;
+		}
+		if (m_pos_eff.active)
+		{
+			m_pos_eff.SetActiveRecursively(state: false);
+			uint num = (uint)((6f - m_pos_eff.transform.localPosition.z) / 3f);
+		}
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		int num2 = 0;
+		for (num2 = 0; num2 < 16; num2++)
+		{
+			if (m_drag_indicator[num2].Raycast(ray, out var _, float.PositiveInfinity))
+			{
+				if (drag_new_gen_show_pos(num2 + 1))
+				{
+					m_gens[num2] = id_newgen_temp;
+					PrepareGroup();
+					StartLoadingSub();
+				}
+				else if (mc)
+				{
+					mc = false;
+					tempcount = -1;
+					__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(20247u), rmg);
+				}
+				else
+				{
+					__BaseUI.GetMessageBox().setMessage(string.Empty, string.Format(__BaseUI.load_str(15506u), GeneralSelectMaxnum), rmg);
+				}
+				break;
+			}
+		}
+		gen_select_target_alpha = 1f;
+		drag_stat = DragStat.Picking;
+		id_newgen_temp = 0;
+		Object.Destroy(new_gen_obj);
+		new_gen_obj = null;
+		newgen_asset_name = null;
+	}
+
+	private void InitUIResource()
+	{
+		styleOnForm.alignment = TextAnchor.LowerLeft;
+		styleOnForm.fontStyle = FontStyle.Bold;
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_generalbookformation");
+		startEscort.make(asset, "button_tiaozhan");
+		weizhaomu = asset.Load("ui_zi_weizhaomu") as Texture2D;
+		black = asset.Load("ui_mengban") as Texture2D;
+		Btn_zhaomu.make(asset, "button_zhaomu");
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_main");
+		bgStyle.normal.background = asset2.Load("ui_zhu_bar1") as Texture2D;
+		bgStyle.border = new RectOffset(30, 30, 30, 30);
+		btnBottom.Clear();
+		_ButtonMain buttonMain = null;
+		buttonMain = new _ButtonMain(asset2, "icon_hufu", "amulet", 62f, __BaseUI._iconMask, MainUI._amulet, MainUI.checkUI);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_lingshou", "army_spirit", 62f, __BaseUI._iconMask, MainUI._army_spirit, MainUI.checkSpirit);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_lingshou", "spirit2", 62f, __BaseUI._iconMask, MainUI._spirit2, MainUI.checkSpirit2);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_lingshou", "spirit3", 62f, __BaseUI._iconMask, MainUI._spirit3, MainUI.checkSpirit3);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_zhuangbei", "general_person", 62f, __BaseUI._iconMask, MainUI._general_person, MainUI.checkUI);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_zhaomu", "army_recruit", 62f, __BaseUI._iconMask, MainUI._army_recruit, MainUI.checkUI);
+		btnBottom.Add(buttonMain);
+		buttonMain = new _ButtonMain(asset2, "icon_buzhen", "formation", 62f, __BaseUI._iconMask, MainUI._formation, MainUI.checkUI);
+		btnBottom.Add(buttonMain);
+		btnRight.Clear();
+		btnRight.Add(new _ButtonMain(__BaseUI._texReturn, string.Empty, 62f, __BaseUI._iconMask2, _return, null));
+		generalSelectTitle = asset.Load("ui_bar3") as Texture2D;
+		texGenSelectZi = asset.Load("ui_zi_chuzhan") as Texture2D;
+		styleDi1.normal.background = asset.Load("ui_di1") as Texture2D;
+		styleDi1.border = new RectOffset(17, 17, 17, 17);
+		AssetBundle asset3 = BaseAsset.was.GetAsset("ui_share2");
+		texGenSelectDi = asset3.Load("ui_buzhen_icon2") as Texture2D;
+		styleGenSelect.hover.background = asset3.Load("ui_buzhen_icon_hover") as Texture2D;
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Announce;
+		__BaseUI.my_enabled = IsEnable();
+		GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, __BaseUI._frame4Style);
+		GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, bgStyle);
+		draw_bottom_bar();
+		DrawDetail();
+		__BaseUI.my_enabled = true;
+		drawTooltips();
+	}
+
+	public override void drawTooltips()
+	{
+		if (IsEnable())
+		{
+			if (onfield_obj_tooltip != string.Empty)
+			{
+				GUI.tooltip = onfield_obj_tooltip;
+			}
+			TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+			if (Input.GetMouseButton(0))
+			{
+				GUI.tooltip = string.Empty;
+			}
+			if (Event.current.type == EventType.Repaint && GUI.tooltip != string.Empty)
+			{
+				TooltipUI.setTooltip(this, GUI.tooltip, bClear: true);
+			}
+		}
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (Global.getTemplate("general_book_template", troopid) is _general_book_template general_book_template)
+		{
+			curlevel = general_book_template.level;
+		}
+		if (tip.Contains("General:"))
+		{
+			ushort index = ushort.Parse(tip.Replace("General:", string.Empty));
+			tooltipUI.ShowTooltipGR_2(tt_owner, (uint)gens[index].idgenernal_template, armyfaces[gens[index].id], locked: false, gens[index].idarmy, curlevel, _generalbook: true);
+		}
+		else if (tip.Contains("MineG:"))
+		{
+			byte key = byte.Parse(tip.Replace("MineG:", string.Empty));
+			if (group_layout.ContainsKey(key))
+			{
+				tooltipUI.ShowTooltipGR_2(tt_owner, (uint)group_layout[key].idgeneral_template, null, locked: false, group_layout[key].gbua.idarmy, curlevel, _generalbook: true);
+			}
+		}
+		else if (tip.Contains("FieldGen:"))
+		{
+			string[] array = tip.Replace("FieldGen:", string.Empty).Split("|".ToCharArray());
+			if (array.Length == 2)
+			{
+				ushort id = ushort.Parse(array[0]);
+				int level = int.Parse(array[1]);
+				tooltipUI.ShowTooltipGeneralByTemplate("convoy", id, level);
+			}
+			else if (array.Length == 6)
+			{
+				int lvl = int.Parse(array[1]);
+				int icon = int.Parse(array[2]);
+				byte color = byte.Parse(array[3]);
+				ushort armyid = ushort.Parse(array[4]);
+				ushort skillid = ushort.Parse(array[5]);
+				tooltipUI.ShowTooltipGeneral("convoy", array[0], lvl, icon, color, armyid, skillid);
+			}
+		}
+	}
+
+	private void InitScene()
+	{
+		if (m_Battleground == null)
+		{
+			m_Battleground = BaseAsset.Instantiate_mainAsset("battle/" + battle_field_name) as GameObject;
+			if (m_Battleground == null)
+			{
+				m_Battleground = new GameObject();
+			}
+			m_Battleground.transform.parent = base.transform;
+			m_ArmyFormation[0] = new GameObject("Attacker");
+			m_ArmyFormation[0].transform.parent = m_Battleground.transform;
+			m_ArmyFormation[0].transform.localPosition = new Vector3(0f, 0f, 8f);
+			m_ArmyFormation[0].transform.localEulerAngles = new Vector3(0f, 180f, 0f);
+			m_ArmyFormation[0].layer = 9;
+			m_pos_eff = BaseAsset.Instantiate_mainAsset("battle/cubeff") as GameObject;
+			if (m_pos_eff == null)
+			{
+				m_pos_eff = new GameObject("cubeff");
+			}
+			m_pos_eff.SetActiveRecursively(state: false);
+			m_pos_eff.transform.parent = m_ArmyFormation[0].transform;
+			for (int i = 0; i < 16; i++)
+			{
+				GameObject gameObject = new GameObject();
+				gameObject.transform.parent = m_ArmyFormation[0].transform;
+				m_drag_indicator[i] = gameObject.AddComponent<BoxCollider>();
+				m_drag_indicator[i].isTrigger = true;
+				int num = i / 4;
+				int num2 = i % 4;
+				m_drag_indicator[i].transform.localPosition = new Vector3(-4.5f + (float)num2 * 3f, 0f, 4.5f - (float)num * 3f);
+				m_drag_indicator[i].size = new Vector3(3f, 0f, 3f);
+				m_drag_indicator[i].center = Vector3.zero;
+			}
+			m_ArmyFormation[1] = new GameObject("Defender");
+			m_ArmyFormation[1].transform.parent = m_Battleground.transform;
+			m_ArmyFormation[1].transform.localPosition = new Vector3(0f, 0f, -8f);
+			m_ArmyFormation[1].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+		}
+		else if (m_pos_eff != null)
+		{
+			m_pos_eff.SetActiveRecursively(state: false);
+		}
+		create_enemy_model();
+	}
+
+	private void draw_bottom_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnRight)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(78f, 83 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+		float num2 = 78f;
+		foreach (_ButtonMain item2 in btnBottom)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rectRB(num2 + item2.offset, 92f, 92f, 84f));
+			if (item2.Button(__BaseUI._rect(12f, 15f, 54f, 66f)))
+			{
+				num2 += item2.offset;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void _return()
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			m_gens[i] = -1;
+		}
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+		GeneralBookUI component = BaseUI.GetRootUI().GetComponent<GeneralBookUI>();
+		component.MyLoading(LabelTypeBack, book_gidBack);
+		MainUI.SetSubUI(component);
+		if (OnClose != null)
+		{
+			OnClose();
+			OnClose = null;
+		}
+	}
+
+	private void BattleEndReturn()
+	{
+		for (int i = 0; i < 16; i++)
+		{
+			m_gens[i] = -1;
+		}
+		RootMessenger oldMainUI = BaseAsset.lds.GetOldMainUI();
+		BaseAsset.lds.SetOldUI(rmg);
+		if (oldMainUI == null || oldMainUI.LevelID == "Login")
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel("Campaign", rmg);
+		}
+		else
+		{
+			GameObject.Find("/Root/RootUI").GetComponent<RootUI>().LoadLevel(oldMainUI.LevelID, rmg);
+		}
+		if (OnClose != null)
+		{
+			OnClose();
+		}
+	}
+
+	private void DrawDetail()
+	{
+		if (startEscort.Button(bBtn: true, __BaseUI._rectLC(Screen.width / 2 + 20, 45f, 91f, 91f), string.Empty))
+		{
+			if (Global.character_.generalbooks.ContainsKey((ushort)troopid))
+			{
+				if (Global.character_.generalbooks[(ushort)troopid].cd > TimeUtil.Now)
+				{
+					if (Global.getTemplate("general_template", troopid) is _general_template general_template)
+					{
+						string message = __BaseUI.format("battle_cd", new object[3]
+						{
+							general_template.name,
+							Global.character_.generalbooks[(ushort)troopid].fail_count,
+							Global.getFormatTime((int)(Global.character_.generalbooks[(ushort)troopid].cd - TimeUtil.Now))
+						});
+						__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20183u), message, null, EnableAll);
+					}
+				}
+				else
+				{
+					cs_general_bool_battle();
+				}
+			}
+			else
+			{
+				cs_general_bool_battle();
+			}
+		}
+		DrawGeneralSelect();
+	}
+
+	private void leave_confirm(bool bOK, object[] objs)
+	{
+		if (!bOK)
+		{
+		}
+	}
+
+	private void DrawGeneralSelect()
+	{
+		GUI.color = new Color(1f, 1f, 1f, gen_select_alpha);
+		int count = Global.character_.form_generals_.Values.Count;
+		if (count == 0)
+		{
+			return;
+		}
+		int num = ((count <= 5) ? 1 : ((count > 11) ? 3 : 2));
+		if (num > 0)
+		{
+			GUI.BeginGroup(__BaseUI._rect(20f, 20f, 392f, 101 + (num - 1) * 60));
+			GUI.Box(__BaseUI._rect(0f, 5f, 392f, 96 + (num - 1) * 60), string.Empty, styleDi1);
+			__BaseUI.Box(__BaseUI._rect(87f, 0f, 218f, 21f), generalSelectTitle);
+			__BaseUI.Label(__BaseUI._rect(225f, 6f, 100f, 15f), Genselect_num + "/" + GeneralSelectMaxnum, __BaseUI._numLeft);
+			for (int i = 0; i < num; i++)
+			{
+				if (i == 1)
+				{
+					for (int j = 0; j < 6; j++)
+					{
+						__BaseUI.Box(__BaseUI._rect(16 + j * 60 + 2, 23 + i * 60 + 2, 56f, 56f), texGenSelectDi);
+					}
+				}
+				else
+				{
+					for (int k = 0; k < 5; k++)
+					{
+						__BaseUI.Box(__BaseUI._rect(46 + k * 60 + 2, 23 + i * 60 + 2, 56f, 56f), texGenSelectDi);
+					}
+				}
+			}
+			int num2 = 0;
+			Genselect_num = 0;
+			foreach (_general_book_user_army gen in gens)
+			{
+				int num3 = ((num2 < 5) ? num2 : ((num2 >= 11) ? (num2 - 11) : (num2 - 5)));
+				int num4 = ((num2 >= 5) ? ((num2 < 11) ? 1 : 2) : 0);
+				if (!(Global.getTemplate("army", gen.idarmy) is _army army) || !(Global.getTemplate("army_template", army.idarmy_template) is _army_template))
+				{
+					continue;
+				}
+				if (armyfaces.ContainsKey(gen.id))
+				{
+					__BaseUI.Box(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 6, 23 + num4 * 60 + 6, 48f, 48f), new GUIContent(string.Empty, "General:" + num2), armyfaces[gen.id]);
+				}
+				else
+				{
+					AddAssetSub("face" + army.icon);
+					StartLoadingSub();
+				}
+				bool flag = true;
+				if (gen.idgenernal_template == 0)
+				{
+					__BaseUI.Box(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 4, 23 + num4 * 60 + 36, 51f, 18f), texGenSelectZi);
+					flag = false;
+					Genselect_num++;
+				}
+				else
+				{
+					foreach (KeyValuePair<byte, GeneralDisplayData> item in group_layout)
+					{
+						GeneralDisplayData value = item.Value;
+						if (value.gen_id == gen.id)
+						{
+							if (gen.id != 0 && GUI.Button(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 6, 23 + num4 * 60 + 6, 48f, 48f), string.Empty, __BaseUI.normalStyle))
+							{
+								Object.Destroy(value.obj);
+								group_layout.Remove(item.Key);
+								m_gens[item.Key - 1] = -1;
+							}
+							__BaseUI.Box(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 4, 23 + num4 * 60 + 36, 51f, 18f), texGenSelectZi);
+							flag = false;
+							Genselect_num++;
+							break;
+						}
+					}
+					if (!check_recruit_gen(gen.idgenernal_template))
+					{
+						__BaseUI.Box(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 4, 23 + num4 * 60 + 36 - 33, 53f, 52f), black);
+						__BaseUI.Box(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 4, 23 + num4 * 60 + 36, 52f, 18f), weizhaomu);
+						if (Btn_zhaomu.Button(IsEnable(), __BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 31, 5 + num4 * 60 + 16, 31f, 32f), string.Empty))
+						{
+							_general_template general_template = Global.getTemplate("general_template", (uint)gen.idgenernal_template) as _general_template;
+							DisableAll();
+							__BaseUI.GetMessageBox().setMessage(string.Empty, string.Format(__BaseUI.load_str(15500u), general_template.name), rmg, Recall, _bCancel: true, new object[1] { gen.idgenernal_template });
+						}
+						flag = false;
+					}
+				}
+				if (flag)
+				{
+					if (GUI.RepeatButton(__BaseUI._rect(16 + ((num4 != 1) ? 30 : 0) + num3 * 60 + 2, 23 + num4 * 60 + 2, 56f, 56f), string.Empty, styleGenSelect))
+					{
+						if (!general_drag_flag.ContainsKey(gen.id) || !general_drag_flag[gen.id])
+						{
+							general_drag_flag[gen.id] = true;
+							dropOnFieldGeneral();
+							dropNewGeneral();
+							startDragNewGeneral(gen.id);
+						}
+					}
+					else
+					{
+						general_drag_flag[gen.id] = false;
+					}
+				}
+				num2++;
+			}
+			GUI.EndGroup();
+		}
+		GUI.color = Color.white;
+	}
+
+	private void Recall(bool bOK, object[] objs)
+	{
+		if (bOK)
+		{
+			int id = (int)objs[0];
+			GeneralRecruitUI component = BaseUI.GetRootUI().GetComponent<GeneralRecruitUI>();
+			component.SubLoading((uint)id, null);
+			MainUI.SetSubUI(component);
+			EnableAll();
+		}
+		else
+		{
+			EnableAll();
+		}
+	}
+
+	public void cs_general_bool_battle()
+	{
+		DisableAll();
+		BaseAsset.lds.Visible_sub();
+		if (sended)
+		{
+			return;
+		}
+		sended = true;
+		CSGeneralBookBattle_0x384 cSGeneralBookBattle_0x = new CSGeneralBookBattle_0x384();
+		cSGeneralBookBattle_0x.id = troopid;
+		for (int i = 0; i < m_gens.Length; i++)
+		{
+			if (m_gens[i] >= 0)
+			{
+				CSGeneralBookBattle_0x384.SpotGen spotGen = new CSGeneralBookBattle_0x384.SpotGen();
+				spotGen.spot = (uint)(i + 1);
+				spotGen.armygenid = (uint)m_gens[i];
+				cSGeneralBookBattle_0x.spotgen.Add(spotGen);
+			}
+		}
+		RootUI.m_client.Send(900, cSGeneralBookBattle_0x, sc_general_bool_battle, null);
+	}
+
+	public void sc_general_bool_battle(MemoryStream stream, object arg)
+	{
+		sended = false;
+		if (stream == null)
+		{
+			BaseAsset.lds.Hide();
+			EnableAll();
+			return;
+		}
+		SCGeneralBookBattle_0x384 sCGeneralBookBattle_0x = JSProtoBuf.Serializer.Deserialize<SCGeneralBookBattle_0x384>(stream);
+		if (sCGeneralBookBattle_0x.ok)
+		{
+			LabelTypeBack = LabelType;
+			book_gidBack = book_gid;
+			if (sCGeneralBookBattle_0x.generalbook != null)
+			{
+				temp_book = new GeneralBook();
+				temp_book.Set(sCGeneralBookBattle_0x.generalbook);
+			}
+			BaseUI.GetBattleUI().setPrevUI(BaseAsset.lds.GetCurUI());
+			BaseUI.GetBattleUI().setReport(sCGeneralBookBattle_0x.battlereport, wait_for_end: true, use_battle_end: true, this, isopponent: false);
+			BaseUI.GetBattleUI().ViewType = enumBattleViewType.viewFull;
+			BaseUI.GetRootUI().battle_enter(fslds: false);
+			BaseAsset.lds.SetBattling(bBattling: true);
+		}
+	}
+
+	public void BattleEnd(bool bWin)
+	{
+		BattleUI battleUI = BaseUI.GetBattleUI();
+		if (bWin)
+		{
+			Global.character_.generalbooks[(ushort)troopid] = temp_book;
+			temp_book.cd = 0u;
+			temp_book.finish = true;
+			Hashtable templates = Global.getTemplates("general_book_template");
+			Global.character_.generalbookcount = 0;
+			foreach (DictionaryEntry item in templates)
+			{
+				_general_book_template general_book_template = item.Value as _general_book_template;
+				if (CheckGeneralbook(general_book_template.id))
+				{
+					Global.character_.addParam("generalbookcount", 0, 1);
+				}
+			}
+			battleUI.setClose(WinOpen);
+		}
+		else
+		{
+			Global.character_.generalbooks[(ushort)troopid] = temp_book;
+			battleUI.setClose(FailedOpen);
+		}
+	}
+
+	private void WinOpen()
+	{
+		Hashtable templates = Global.getTemplates("general_group");
+		int num = -1;
+		bool flag = true;
+		foreach (DictionaryEntry item in templates)
+		{
+			if (item.Value is _general_group general_group && general_group.idgen == troopid)
+			{
+				num = general_group.idgroup;
+				break;
+			}
+		}
+		if (num != -1)
+		{
+			foreach (DictionaryEntry item2 in templates)
+			{
+				if (item2.Value is _general_group general_group2 && general_group2.idgroup == num)
+				{
+					if (!Global.character_.generalbooks.ContainsKey(general_group2.idgen))
+					{
+						flag = false;
+						break;
+					}
+					if (!Global.character_.generalbooks[general_group2.idgen].finish)
+					{
+						flag = false;
+						break;
+					}
+				}
+			}
+		}
+		GeneralBookUI component = BaseUI.GetRootUI().GetComponent<GeneralBookUI>();
+		if (flag && num != -1)
+		{
+			component.MyLoading(LabelTypeBack, book_gidBack, num, flag);
+		}
+		else
+		{
+			component.MyLoading(LabelTypeBack, book_gidBack);
+		}
+		MainUI.SetSubUI(component);
+		BattleEndReturn();
+	}
+
+	private void FailedOpen()
+	{
+	}
+
+	public void OnFormationUIClose()
+	{
+		PrepareGroup();
+		StartLoadingSub();
+	}
+
+	private bool check_recruit_gen(int general_id)
+	{
+		_general_origin general_origin = Global.getTemplate("general_origin", (uint)general_id) as _general_origin;
+		List<ushort> list = new List<ushort>();
+		if (general_origin != null)
+		{
+			Hashtable templates = Global.getTemplates("general_origin");
+			foreach (DictionaryEntry item in templates)
+			{
+				_general_origin general_origin2 = item.Value as _general_origin;
+				if (general_origin2.origin == general_origin.origin && general_origin2.form > general_origin.form)
+				{
+					list.Add(general_origin2.idgeneral_template);
+				}
+			}
+		}
+		list.Add((ushort)general_id);
+		foreach (KeyValuePair<ushort, FormGeneral> item2 in Global.character_.form_generals_)
+		{
+			if (list.Contains(item2.Value.idgeneral_template))
+			{
+				return true;
+			}
+		}
+		foreach (GeneralsSimple item3 in Global.character_.GeneralsOutSquad)
+		{
+			if (list.Contains((ushort)item3.idtemplate))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static int GeneralBookCount()
+	{
+		CheckGeneralbook(out var allgens);
+		int num = 0;
+		foreach (int item in allgens)
+		{
+			if (!(Global.getTemplate("general_book_template", (uint)item) is _general_book_template))
+			{
+				continue;
+			}
+			if (Global.character_.generalbooks.ContainsKey((ushort)item))
+			{
+				if (!Global.character_.generalbooks[(ushort)item].finish)
+				{
+					num++;
+				}
+			}
+			else
+			{
+				num++;
+			}
+		}
+		return num;
+	}
+
+	public static void CheckGeneralbook(out List<int> allgens)
+	{
+		allgens = new List<int>();
+		AnecdoteSelectUI component = GameObject.Find("/Anecdote/AnecdoteUI").GetComponent<AnecdoteSelectUI>();
+		if (component != null)
+		{
+			component._makeCampaigns();
+		}
+		List<uint> all_chapters = component.get_all_chapters();
+		CampaignChapterUI component2 = GameObject.Find("/Campaign/CampaignUI").GetComponent<CampaignChapterUI>();
+		if (component2 != null)
+		{
+			component2._makeCampaigns();
+		}
+		List<uint> all_chapets = component2.get_all_chapets();
+		List<uint> list = new List<uint>();
+		foreach (uint item in all_chapters)
+		{
+			list.Add(item);
+		}
+		foreach (uint item2 in all_chapets)
+		{
+			list.Add(item2);
+		}
+		Hashtable templates = Global.getTemplates("general_template");
+		foreach (DictionaryEntry item3 in templates)
+		{
+			_general_template general_template = item3.Value as _general_template;
+			if (general_template.active && general_template.special_quest == 0 && general_template.special_event == 0 && general_template.special_nation == 0 && Global.character_.check_genshow(general_template) && list.Contains(general_template.idcampaign))
+			{
+				if (!allgens.Contains(general_template.id))
+				{
+					allgens.Add(general_template.id);
+				}
+			}
+			else if (general_template.special_event > 0 && general_template.active && Global.character_.check_special(general_template.id))
+			{
+				if (!allgens.Contains(general_template.id))
+				{
+					allgens.Add(general_template.id);
+				}
+			}
+			else if (general_template.special_nation > 0 && general_template.active && Global.character_.get_nation_rank_self() >= general_template.special_nation && !allgens.Contains(general_template.id))
+			{
+				allgens.Add(general_template.id);
+			}
+		}
+	}
+
+	public static bool CheckGeneralbook(int go_id)
+	{
+		CheckGeneralbook(out var allgens);
+		if (allgens.Contains(go_id))
+		{
+			if (!Global.character_.generalbooks.ContainsKey((ushort)go_id))
+			{
+				return true;
+			}
+			if (!Global.character_.generalbooks[(ushort)go_id].finish)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}

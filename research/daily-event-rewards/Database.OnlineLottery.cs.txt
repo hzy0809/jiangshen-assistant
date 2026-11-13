@@ -1,0 +1,29 @@
+using System;
+using System.Collections.Generic;
+
+namespace Database;
+
+public class OnlineLottery : _character_online_lottery
+{
+	public Dictionary<int, OnlineLotteryItem> m_onlineLotteryItems = new Dictionary<int, OnlineLotteryItem>();
+
+	public uint getOnlineTime()
+	{
+		uint num = online_time;
+		uint val = ((TimeUtil.Now <= TimeUtil.ThisDay + 18000) ? (TimeUtil.ThisDay - 86400 + 18000) : (TimeUtil.ThisDay + 18000));
+		uint num2 = Math.Max(val, Math.Max(Global.character_.last_login, last_lottery_time));
+		return num + ((TimeUtil.Now > num2) ? (TimeUtil.Now - num2) : 0);
+	}
+
+	public uint getcdtime()
+	{
+		uint result = 0u;
+		if (Global.getTemplate("online_lottery_template", (uint)(lottery_today + 1)) is _online_lottery_template online_lottery_template && online_lottery_template.time > getOnlineTime())
+		{
+			return online_lottery_template.time - getOnlineTime();
+		}
+		return result;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

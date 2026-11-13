@@ -1,0 +1,153 @@
+using System.Collections.Generic;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _building
+{
+	public enum AUTOMATIC
+	{
+		NONE = 1,
+		GATHER,
+		AUTOMATIC,
+		AUTOMATIC_NUMBER
+	}
+
+	public byte id;
+
+	public string name;
+
+	public string desc;
+
+	public byte type;
+
+	public uint icon;
+
+	public string model_name;
+
+	public ushort open_level;
+
+	public byte area;
+
+	public sbyte limit;
+
+	public sbyte population;
+
+	public byte automatic;
+
+	public uint gold_consume;
+
+	public uint wood_consume;
+
+	public uint mine_consume;
+
+	public uint mana_consume;
+
+	public uint wood_sell;
+
+	public uint mine_sell;
+
+	public uint mana_sell;
+
+	public uint capacity;
+
+	public byte prebuilding;
+
+	public uint build_time;
+
+	public bool interact;
+
+	public uint material_consume;
+
+	public string drawing_tips;
+
+	public List<_building_product> m_products = new List<_building_product>();
+
+	public List<_building_interact_drop> m_drops = new List<_building_interact_drop>();
+
+	public void Set(_building d)
+	{
+		id = d.id;
+		name = d.name;
+		desc = d.desc;
+		type = d.type;
+		icon = d.icon;
+		model_name = d.model_name;
+		open_level = d.open_level;
+		area = d.area;
+		limit = d.limit;
+		population = d.population;
+		automatic = d.automatic;
+		gold_consume = d.gold_consume;
+		wood_consume = d.wood_consume;
+		mine_consume = d.mine_consume;
+		mana_consume = d.mana_consume;
+		wood_sell = d.wood_sell;
+		mine_sell = d.mine_sell;
+		mana_sell = d.mana_sell;
+		capacity = d.capacity;
+		prebuilding = d.prebuilding;
+		build_time = d.build_time;
+		interact = d.interact;
+		material_consume = d.material_consume;
+		drawing_tips = d.drawing_tips;
+		m_products = d.m_products;
+		m_drops = d.m_drops;
+	}
+
+	public void Set(db_building d)
+	{
+		id = (byte)d.id;
+		name = d.name;
+		desc = d.desc;
+		type = (byte)d.type;
+		icon = d.icon;
+		model_name = d.model_name;
+		open_level = (ushort)d.open_level;
+		area = (byte)d.area;
+		limit = (sbyte)d.limit;
+		population = (sbyte)d.population;
+		automatic = (byte)d.automatic;
+		gold_consume = d.gold_consume;
+		wood_consume = d.wood_consume;
+		mine_consume = d.mine_consume;
+		mana_consume = d.mana_consume;
+		wood_sell = d.wood_sell;
+		mine_sell = d.mine_sell;
+		mana_sell = d.mana_sell;
+		capacity = d.capacity;
+		prebuilding = (byte)d.prebuilding;
+		build_time = d.build_time;
+		interact = d.interact;
+		material_consume = d.material_consume;
+		drawing_tips = d.drawing_tips;
+	}
+
+	public void Get(ref db_building d)
+	{
+		d.id = id;
+		d.name = name;
+		d.desc = desc;
+		d.type = type;
+		d.icon = icon;
+		d.model_name = model_name;
+		d.open_level = open_level;
+		d.area = area;
+		d.limit = limit;
+		d.population = population;
+		d.automatic = automatic;
+		d.gold_consume = gold_consume;
+		d.wood_consume = wood_consume;
+		d.mine_consume = mine_consume;
+		d.mana_consume = mana_consume;
+		d.wood_sell = wood_sell;
+		d.mine_sell = mine_sell;
+		d.mana_sell = mana_sell;
+		d.capacity = capacity;
+		d.prebuilding = prebuilding;
+		d.build_time = build_time;
+		d.interact = interact;
+		d.material_consume = material_consume;
+		d.drawing_tips = drawing_tips;
+	}
+}

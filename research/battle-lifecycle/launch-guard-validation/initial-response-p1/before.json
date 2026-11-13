@@ -1,0 +1,18 @@
+[
+  {
+    "path": "native/unity_bridge/managed/BattleLaunch.cs",
+    "sha256": "64cf5d38c5820bfde030b6d8ba0408f1760d486019574d63170822d530128c78"
+  },
+  {
+    "path": "native/unity_bridge/tests/BattleLaunchRaceFixture.cs",
+    "sha256": "e7a9c27e076d0367a81e9324312b35902681ebc4564c56911b319ca4419df8a0"
+  },
+  {
+    "path": "tests/test_battle_launch.py",
+    "sha256": "45e728359cb21e5b28ef0e11a19342d7460326fc132d50efa659698a43a56552"
+  },
+  {
+    "path": "native/unity_bridge/tests/run-battle-launch-race.ps1",
+    "sha256": "ab0fa4ccffcaa5b6ce654e910a3b5a462c8e67682ce695dc92ec28692bd85f9a"
+  }
+]

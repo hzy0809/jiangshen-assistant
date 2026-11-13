@@ -1,0 +1,74 @@
+{
+  "source": "C:\\Users\\yu\\AppData\\LocalLow\\GMarkSoft\\______\\assets\\db_template3.unity3d",
+  "sha256": "4904616bc89de8f4ba30ca11eb5a6ca383777e75b7a89c5c0d1044f9b7d21e72",
+  "scope": "cached client configuration; current server and account state unverified",
+  "text_asset": "db_template3",
+  "schema": "db_templates3 tag 401; db_online_awards_template fields 1..8",
+  "candidates": [
+    {
+      "serialized_name_offset": 4188,
+      "payload_size": 2968053,
+      "online_awards_templates": [
+        {
+          "id": 1,
+          "time": 5,
+          "award1_type": 7,
+          "award1_amout": 25,
+          "award2_type": -1,
+          "award3_type": -1
+        },
+        {
+          "id": 2,
+          "time": 5,
+          "award1_type": 7,
+          "award1_amout": 50,
+          "award2_type": -1,
+          "award3_type": -1
+        },
+        {
+          "id": 3,
+          "time": 15,
+          "award1_type": 7,
+          "award1_amout": 75,
+          "award2_type": 10,
+          "award2_amout": 25,
+          "award3_type": -1
+        },
+        {
+          "id": 4,
+          "time": 15,
+          "award1_type": 10,
+          "award1_amout": 25,
+          "award2_type": -1,
+          "award3_type": -1
+        },
+        {
+          "id": 5,
+          "time": 30,
+          "award1_type": 10,
+          "award1_amout": 25,
+          "award2_type": -1,
+          "award3_type": -1
+        },
+        {
+          "id": 6,
+          "time": 30,
+          "award1_type": 10,
+          "award1_amout": 25,
+          "award2_type": 4,
+          "award2_amout": 20000,
+          "award3_type": -1
+        },
+        {
+          "id": 7,
+          "time": 30,
+          "award1_type": 10,
+          "award1_amout": 50,
+          "award2_type": 4,
+          "award2_amout": 50000,
+          "award3_type": -1
+        }
+      ]
+    }
+  ]
+}

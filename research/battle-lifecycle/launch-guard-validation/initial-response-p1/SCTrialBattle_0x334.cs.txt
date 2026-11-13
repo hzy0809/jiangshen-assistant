@@ -1,0 +1,151 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCTrialBattle_0x334")]
+public class SCTrialBattle_0x334 : IExtensible
+{
+	private uint _result;
+
+	private uint _idtroop = 0u;
+
+	private bool _iswin = false;
+
+	private byte[] _report = null;
+
+	private uint _exp = 0u;
+
+	private bool _killall = false;
+
+	private uint _cooldown = 0u;
+
+	private readonly List<DemonArmySoldier> _soldiers = new List<DemonArmySoldier>();
+
+	private uint _stamina;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "idtroop", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idtroop
+	{
+		get
+		{
+			return _idtroop;
+		}
+		set
+		{
+			_idtroop = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "exp", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint exp
+	{
+		get
+		{
+			return _exp;
+		}
+		set
+		{
+			_exp = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "killall", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool killall
+	{
+		get
+		{
+			return _killall;
+		}
+		set
+		{
+			_killall = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "cooldown", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint cooldown
+	{
+		get
+		{
+			return _cooldown;
+		}
+		set
+		{
+			_cooldown = value;
+		}
+	}
+
+	[ProtoMember(8, Name = "soldiers", DataFormat = DataFormat.Default)]
+	public List<DemonArmySoldier> soldiers => _soldiers;
+
+	[ProtoMember(9, IsRequired = true, Name = "stamina", DataFormat = DataFormat.TwosComplement)]
+	public uint stamina
+	{
+		get
+		{
+			return _stamina;
+		}
+		set
+		{
+			_stamina = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

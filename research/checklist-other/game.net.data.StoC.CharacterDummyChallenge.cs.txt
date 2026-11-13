@@ -1,0 +1,194 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "CharacterDummyChallenge")]
+public class CharacterDummyChallenge : IExtensible
+{
+	private uint _rank;
+
+	private uint _challenge_level;
+
+	private uint _wave_count;
+
+	private uint _enemy_count;
+
+	private uint _total_damage;
+
+	private uint _next_challenge_level = 0u;
+
+	private uint _level = 0u;
+
+	private string _name = "";
+
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private bool _can_take = false;
+
+	private uint _fast_challenge_left_times = 0u;
+
+	private uint _sid = 0u;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "rank", DataFormat = DataFormat.TwosComplement)]
+	public uint rank
+	{
+		get
+		{
+			return _rank;
+		}
+		set
+		{
+			_rank = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "challenge_level", DataFormat = DataFormat.TwosComplement)]
+	public uint challenge_level
+	{
+		get
+		{
+			return _challenge_level;
+		}
+		set
+		{
+			_challenge_level = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "wave_count", DataFormat = DataFormat.TwosComplement)]
+	public uint wave_count
+	{
+		get
+		{
+			return _wave_count;
+		}
+		set
+		{
+			_wave_count = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = true, Name = "enemy_count", DataFormat = DataFormat.TwosComplement)]
+	public uint enemy_count
+	{
+		get
+		{
+			return _enemy_count;
+		}
+		set
+		{
+			_enemy_count = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = true, Name = "total_damage", DataFormat = DataFormat.TwosComplement)]
+	public uint total_damage
+	{
+		get
+		{
+			return _total_damage;
+		}
+		set
+		{
+			_total_damage = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "next_challenge_level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint next_challenge_level
+	{
+		get
+		{
+			return _next_challenge_level;
+		}
+		set
+		{
+			_next_challenge_level = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint level
+	{
+		get
+		{
+			return _level;
+		}
+		set
+		{
+			_level = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(9, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	[ProtoMember(10, IsRequired = false, Name = "can_take", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool can_take
+	{
+		get
+		{
+			return _can_take;
+		}
+		set
+		{
+			_can_take = value;
+		}
+	}
+
+	[ProtoMember(11, IsRequired = false, Name = "fast_challenge_left_times", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint fast_challenge_left_times
+	{
+		get
+		{
+			return _fast_challenge_left_times;
+		}
+		set
+		{
+			_fast_challenge_left_times = value;
+		}
+	}
+
+	[ProtoMember(12, IsRequired = false, Name = "sid", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint sid
+	{
+		get
+		{
+			return _sid;
+		}
+		set
+		{
+			_sid = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

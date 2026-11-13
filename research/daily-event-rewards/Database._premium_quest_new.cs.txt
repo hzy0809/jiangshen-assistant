@@ -1,0 +1,65 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _premium_quest_new
+{
+	public int id;
+
+	public uint need_treasure;
+
+	public int need_amount;
+
+	public uint award_treasure;
+
+	public int award_param;
+
+	public int award_amount;
+
+	public int desc;
+
+	public int friendship;
+
+	public int gold_cost;
+
+	public void Set(_premium_quest_new d)
+	{
+		id = d.id;
+		need_treasure = d.need_treasure;
+		need_amount = d.need_amount;
+		award_treasure = d.award_treasure;
+		award_param = d.award_param;
+		award_amount = d.award_amount;
+		desc = d.desc;
+		friendship = d.friendship;
+		gold_cost = d.gold_cost;
+	}
+
+	public void Set(db_premium_quest_new d)
+	{
+		id = d.id;
+		need_treasure = d.need_treasure;
+		need_amount = d.need_amount;
+		award_treasure = d.award_treasure;
+		award_param = d.award_param;
+		award_amount = d.award_amount;
+		desc = d.desc;
+		friendship = d.friendship;
+		gold_cost = d.gold_cost;
+	}
+
+	public void Get(ref db_premium_quest_new d)
+	{
+		d.id = id;
+		d.need_treasure = need_treasure;
+		d.need_amount = need_amount;
+		d.award_treasure = award_treasure;
+		d.award_param = award_param;
+		d.award_amount = award_amount;
+		d.desc = desc;
+		d.friendship = friendship;
+		d.gold_cost = gold_cost;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

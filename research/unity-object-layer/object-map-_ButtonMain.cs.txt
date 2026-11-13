@@ -1,0 +1,430 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class _ButtonMain
+{
+	public enum LIGHTSTYLE
+	{
+		LIGHTSTYLE1,
+		LIGHTSTYLE2,
+		LIGHTROTATE
+	}
+
+	public enum STATE
+	{
+		NONE,
+		COLLASPING,
+		EXPANDING1,
+		EXPANDING2,
+		EXPANDING3
+	}
+
+	public enum btnType
+	{
+		NOEXPANDING,
+		RESOURCE,
+		PLAY,
+		ELSE
+	}
+
+	public delegate void delegate_handle();
+
+	public delegate bool delegate_check(string name);
+
+	public delegate int delegate_mark_num();
+
+	public delegate bool delegate_mark_up();
+
+	public delegate bool delegate_light_check(string name);
+
+	private static Color _clrDark = new Color(0.7f, 0.7f, 0.7f, 1f);
+
+	public string name = string.Empty;
+
+	public GUIStyle btn = new GUIStyle();
+
+	public GUIStyle hover;
+
+	public GUIStyle mark;
+
+	public GUIStyle light;
+
+	private static DateTime lighttimer = DateTime.Now;
+
+	public delegate_handle handler;
+
+	public delegate_check checker;
+
+	public delegate_mark_num mark_num;
+
+	public delegate_mark_up mark_up;
+
+	public delegate_light_check light_checker;
+
+	public List<_ButtonMain> btnSubs;
+
+	public bool expand;
+
+	public bool current;
+
+	public bool handled;
+
+	public bool repeated;
+
+	public STATE state;
+
+	public float subWidth;
+
+	public float offset;
+
+	public float right_width;
+
+	public Rect rcScreen = new Rect(0f, 0f, 0f, 0f);
+
+	public _ButtonMain btnParent;
+
+	public bool enable = true;
+
+	public btnType btnMain_type;
+
+	private bool small_mark;
+
+	private float speed;
+
+	public int subCount
+	{
+		get
+		{
+			int num = 0;
+			foreach (_ButtonMain btnSub in btnSubs)
+			{
+				if (btnSub.Check())
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+	}
+
+	public float subOffset
+	{
+		get
+		{
+			if (btnSubs != null)
+			{
+				return btnSubs[0].offset;
+			}
+			return 0f;
+		}
+	}
+
+	public _ButtonMain(AssetBundle bundle, string path, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker)
+	{
+		init(bundle, path, _name, _offset, _hover, _handler, _checker, btnType.NOEXPANDING);
+	}
+
+	public _ButtonMain(AssetBundle bundle, string path, string _name, float _offset, string _hover_name, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		init(bundle, path, _name, _offset, new GUIStyle
+		{
+			hover = 
+			{
+				background = (bundle.Load(_hover_name) as Texture2D)
+			}
+		}, _handler, _checker, _btnType);
+	}
+
+	public _ButtonMain(AssetBundle bundle, string path, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		init(bundle, path, _name, _offset, _hover, _handler, _checker, _btnType);
+	}
+
+	public _ButtonMain(Texture2D tex, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker)
+	{
+		init(tex, _name, _offset, _hover, _handler, _checker, btnType.NOEXPANDING);
+	}
+
+	public _ButtonMain(Texture2D tex, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		btn.normal.background = tex;
+		btn.hover.background = tex;
+		btn.active.background = tex;
+		SetParam(_name, _offset, _hover, _handler, _checker, _btnType);
+	}
+
+	public Rect getRect()
+	{
+		if (btnParent != null && !btnParent.expand)
+		{
+			return btnParent.getRect();
+		}
+		return rcScreen;
+	}
+
+	public Texture2D getTex()
+	{
+		return btn.normal.background;
+	}
+
+	private void init(AssetBundle bundle, string path, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		if (bundle != null)
+		{
+			btn.normal.background = bundle.Load(path + "_normal") as Texture2D;
+			btn.hover.background = bundle.Load(path + "_hover") as Texture2D;
+			btn.active.background = bundle.Load(path + "_down") as Texture2D;
+			if (btn.hover.background == null)
+			{
+				btn.hover.background = btn.normal.background;
+			}
+			if (btn.active.background == null)
+			{
+				btn.active.background = btn.normal.background;
+			}
+		}
+		name = _name;
+		offset = _offset;
+		if (_hover != null)
+		{
+			hover = _hover;
+		}
+		handler = _handler;
+		checker = _checker;
+		SetParam(_name, _offset, _hover, _handler, _checker, _btnType);
+	}
+
+	private void init(Texture2D tex, string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		btn.normal.background = tex;
+		btn.hover.background = tex;
+		btn.active.background = tex;
+		SetParam(_name, _offset, _hover, _handler, _checker, _btnType);
+	}
+
+	private void SetParam(string _name, float _offset, GUIStyle _hover, delegate_handle _handler, delegate_check _checker, btnType _btnType)
+	{
+		name = _name;
+		offset = _offset;
+		if (_hover != null)
+		{
+			hover = _hover;
+		}
+		handler = _handler;
+		checker = _checker;
+		btnMain_type = _btnType;
+	}
+
+	public void Add(_ButtonMain btnSub)
+	{
+		btnSubs.Add(btnSub);
+		btnSub.btnParent = this;
+	}
+
+	public bool Check()
+	{
+		if (checker == null || checker(name))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public void setMarkNum(delegate_mark_num _mark_num, GUIStyle _mark)
+	{
+		mark_num = _mark_num;
+		mark = _mark;
+	}
+
+	public void setMarkNum_small(delegate_mark_num _mark_num, GUIStyle _mark)
+	{
+		mark_num = _mark_num;
+		mark = _mark;
+		small_mark = true;
+	}
+
+	public void setMarkUp(delegate_mark_up _mark_up, GUIStyle _mark)
+	{
+		mark_up = _mark_up;
+		mark = _mark;
+	}
+
+	public void setLight(delegate_light_check _light_check, GUIStyle _light)
+	{
+		light_checker = _light_check;
+		light = _light;
+	}
+
+	public bool Update()
+	{
+		if (state == STATE.EXPANDING1)
+		{
+			subWidth += 1000f * Time.deltaTime;
+			if (subWidth >= (float)subCount * subOffset - 30f)
+			{
+				state = STATE.EXPANDING2;
+				speed = 1000f;
+			}
+			return true;
+		}
+		if (state == STATE.EXPANDING2)
+		{
+			float num = subWidth - (float)subCount * subOffset + 30f;
+			speed -= num * 300f * Time.deltaTime;
+			subWidth += speed * Time.deltaTime;
+			if (speed < 0f && subWidth <= (float)subCount * subOffset)
+			{
+				subWidth = (float)subCount * subOffset;
+				state = STATE.NONE;
+			}
+			return true;
+		}
+		if (state == STATE.COLLASPING)
+		{
+			subWidth -= 1000f * Time.deltaTime;
+			if (subWidth <= 0f)
+			{
+				subWidth = 0f;
+				state = STATE.NONE;
+				current = false;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private void Button_light(Rect rc)
+	{
+		if (lighttimer < DateTime.Now)
+		{
+			lighttimer = DateTime.Now.AddSeconds(1.0);
+		}
+		double totalSeconds = (lighttimer - DateTime.Now).TotalSeconds;
+		double num = (totalSeconds - 0.5) / 0.5;
+		if (num < 0.0)
+		{
+			num *= -1.0;
+		}
+		Color backgroundColor = GUI.backgroundColor;
+		double num2 = ((!(totalSeconds >= 0.9)) ? ((totalSeconds - 0.9) / 0.9) : ((totalSeconds - 0.9) / 0.1));
+		if (num2 < 0.0)
+		{
+			num2 *= -1.0;
+		}
+		num2 *= 0.8;
+		backgroundColor = GUI.backgroundColor;
+		GUI.backgroundColor = new Color(1f, 1f, 1f, 1f - (float)num2);
+		GUI.Label(new Rect(rc.x - ((float)light.normal.background.width - rc.width) / 2f, rc.y - ((float)light.normal.background.height - rc.height) / 2f, light.normal.background.width, light.normal.background.height), string.Empty, light);
+		GUI.backgroundColor = backgroundColor;
+	}
+
+	public bool Button(Rect rc)
+	{
+		return Button(rc, bForceHover: false);
+	}
+
+	public bool Button(Rect rc, bool bForceHover)
+	{
+		if (BaseAsset._PHONEUI)
+		{
+			Vector2 vector = GUIUtility.GUIToScreenPoint(new Vector2(rc.x, rc.y));
+			rcScreen.x = vector.x;
+			rcScreen.y = vector.y;
+		}
+		else
+		{
+			rcScreen.x = __BaseUI._rcCur.x + rc.x;
+			rcScreen.y = __BaseUI._rcCur.y + rc.y;
+		}
+		rcScreen.width = rc.width;
+		rcScreen.height = rc.height;
+		handled = false;
+		bool result = false;
+		if (checker == null || checker(name))
+		{
+			result = true;
+			if (Global.character_.newuis_.Contains(name))
+			{
+				return result;
+			}
+			bool flag = false;
+			bool flag2 = false;
+			if (!bForceHover && __BaseUI.my_enabled && enable)
+			{
+				Vector2 point = new Vector2(Input.mousePosition.x - __BaseUI._rcCur.x, (float)Screen.height - Input.mousePosition.y - __BaseUI._rcCur.y);
+				if (rc.Contains(point))
+				{
+					flag = true;
+					if (Input.GetMouseButton(0))
+					{
+						flag2 = true;
+					}
+				}
+			}
+			if ((expand || bForceHover || flag) && hover != null)
+			{
+				GUI.Label(rc, string.Empty, hover);
+			}
+			if (flag2 || !__BaseUI.my_enabled)
+			{
+				GUI.backgroundColor = _clrDark;
+			}
+			if (!__BaseUI.my_enabled || !enable)
+			{
+				GUI.Label(rc, string.Empty, btn);
+			}
+			else if ((repeated && GUI.RepeatButton(rc, new GUIContent(string.Empty, name), btn)) || (!repeated && GUI.Button(rc, new GUIContent(string.Empty, name), btn)))
+			{
+				handled = true;
+				if (handler != null)
+				{
+					handler();
+				}
+				if (btnSubs != null)
+				{
+					expand = !expand;
+					current = true;
+					state = ((!expand) ? STATE.COLLASPING : STATE.EXPANDING1);
+				}
+			}
+			GUI.backgroundColor = Color.white;
+			if (mark != null && !expand)
+			{
+				float screenScale = __BaseUI._screenScale;
+				Rect position = new Rect(rc.x + rc.width - 17f, rc.y - 5f, 29f, 29f);
+				if (mark_up != null)
+				{
+					if (mark_up())
+					{
+						GUI.Label(position, string.Empty, mark);
+					}
+				}
+				else if (mark_num != null)
+				{
+					int num = mark_num();
+					if (num > 0)
+					{
+						if (!small_mark)
+						{
+							Vector2 vector2 = mark.CalcSize(new GUIContent(num.ToString()));
+							vector2.x = ((!(vector2.x > 8f)) ? 0f : (vector2.x - 8f));
+							position.x -= vector2.x;
+							position.width += vector2.x;
+							GUI.Label(position, num.ToString(), mark);
+						}
+						else
+						{
+							GUI.Label(new Rect(rc.x + 6f, rc.y - 6f, 20f, 11f), num.ToString(), mark);
+						}
+					}
+				}
+			}
+			if (light_checker != null && light_checker(name))
+			{
+				Button_light(rc);
+			}
+		}
+		return result;
+	}
+}

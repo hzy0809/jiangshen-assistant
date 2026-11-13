@@ -1,0 +1,50 @@
+{
+  "status": "PASS",
+  "pid": 12844,
+  "target_gold": 20000,
+  "write_attempts": 1,
+  "started_at_utc": "2026-10-30T18:05:14.398929+00:00",
+  "receipt_dir": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\local-gold-write\\20261031-020514",
+  "scope": "One four-byte client gold write; no game method, input, request, or installed-file modification",
+  "gold_before": 450,
+  "gold_address": "0x22b07054",
+  "page": {
+    "BaseAddress": "0x22b07000",
+    "AllocationBase": "0x21c00000",
+    "AllocationProtect": "0x40",
+    "PartitionId": "0x0",
+    "RegionSize": "0xfa000",
+    "State": "0x1000",
+    "Protect": "0x40",
+    "Type": "0x20000"
+  },
+  "write_at_utc": "2026-10-30T18:05:14.536748+00:00",
+  "write_api_success": true,
+  "bytes_written": 4,
+  "immediate_gold": 20000,
+  "neighbor_bytes_unchanged": true,
+  "independent_snapshots": [
+    {
+      "observed_at_utc": "2026-10-30T18:05:14.610841+00:00",
+      "same_identity": true,
+      "values": {
+        "level": 86,
+        "stamina": 20,
+        "gold": 20000
+      },
+      "status": "PASS"
+    },
+    {
+      "observed_at_utc": "2026-10-30T18:05:17.686007+00:00",
+      "same_identity": true,
+      "values": {
+        "level": 86,
+        "stamina": 20,
+        "gold": 20000
+      },
+      "status": "PASS"
+    }
+  ],
+  "persistent_or_server_balance": "UNVERIFIED",
+  "completed_at_utc": "2026-10-30T18:05:17.689419+00:00"
+}

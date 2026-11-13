@@ -1,0 +1,161 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCBuildingMonsterBattle_0x48D")]
+public class SCBuildingMonsterBattle_0x48D : IExtensible
+{
+	private uint _result;
+
+	private uint _id;
+
+	private bool _iswin = false;
+
+	private byte[] _report = null;
+
+	private ulong _idkiller = 0uL;
+
+	private string _killer_name = "";
+
+	private uint _next_monster_time = 0u;
+
+	private uint _cooldown = 0u;
+
+	private Treasures _bonuses = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "idkiller", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idkiller
+	{
+		get
+		{
+			return _idkiller;
+		}
+		set
+		{
+			_idkiller = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "killer_name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string killer_name
+	{
+		get
+		{
+			return _killer_name;
+		}
+		set
+		{
+			_killer_name = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "next_monster_time", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint next_monster_time
+	{
+		get
+		{
+			return _next_monster_time;
+		}
+		set
+		{
+			_next_monster_time = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "cooldown", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint cooldown
+	{
+		get
+		{
+			return _cooldown;
+		}
+		set
+		{
+			_cooldown = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = false, Name = "bonuses", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public Treasures bonuses
+	{
+		get
+		{
+			return _bonuses;
+		}
+		set
+		{
+			_bonuses = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

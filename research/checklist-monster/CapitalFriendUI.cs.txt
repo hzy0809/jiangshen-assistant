@@ -1,0 +1,278 @@
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+
+public class CapitalFriendUI : BaseUI
+{
+	public static GameObject mesh;
+
+	public static Friend myfriend;
+
+	private Texture2D texInteractBar;
+
+	private List<_ButtonMain> btnLeft = new List<_ButtonMain>();
+
+	public static Dictionary<byte, GameObject> floors = new Dictionary<byte, GameObject>();
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		AddAsset("ui_main");
+		AddAsset("ui_capital");
+		CapitalUI.Set(bFriend: true, myfriend.building_areas, myfriend.curArea);
+		string text = "capital0/";
+		AddAsset(text + "capital");
+		LoadArea(myfriend.curArea);
+		foreach (BuildingArea value in myfriend.building_areas.Values)
+		{
+			if (value.id != myfriend.curArea.id)
+			{
+				LoadArea(value);
+			}
+		}
+		foreach (BuildingMonster value2 in myfriend.building_monsters.Values)
+		{
+			AddAssetSub(value2.model_name);
+		}
+		if (myfriend.m_demon != null)
+		{
+			AddAssetSub(myfriend.m_demon.model_name);
+		}
+		CollectingStart();
+	}
+
+	private void LoadArea(BuildingArea area)
+	{
+		foreach (BuildingIsland value in area.m_islands.Values)
+		{
+		}
+		foreach (Building value2 in myfriend.buildings.Values)
+		{
+			if (value2.data.interact && value2.product != null)
+			{
+				AddAssetSub("product" + value2.product.icon + "_c");
+			}
+			if (area.m_islands.ContainsKey(value2.idisland))
+			{
+				AddAssetSub(value2.data.model_name);
+			}
+		}
+		foreach (object value3 in Global.getTemplates("building_default").Values)
+		{
+			_building_default building_default = (_building_default)value3;
+			bool flag = false;
+			foreach (Building value4 in myfriend.buildings.Values)
+			{
+				if (value4.idbuilding == building_default.idbuilding)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag && Global.getTemplate("building_floor", building_default.idisland) is _building_floor building_floor)
+			{
+				AddAssetSub(building_floor.floor_name);
+			}
+		}
+	}
+
+	private void CreateArea(BuildingArea area)
+	{
+		foreach (BuildingIsland value in area.m_islands.Values)
+		{
+		}
+		foreach (Building value2 in myfriend.buildings.Values)
+		{
+			if (value2.data.interact && value2.product != null && value2.product.texIcon == null)
+			{
+				value2.product.texIcon = BaseAsset.LoadTexture("product" + value2.product.icon + "_c");
+			}
+			if (!area.m_islands.ContainsKey(value2.idisland) || !(value2.mesh == null))
+			{
+				continue;
+			}
+			AssetBundle asset = BaseAsset.was.GetAsset(value2.data.model_name);
+			if (asset != null)
+			{
+				value2.root = new GameObject();
+				value2.root.transform.parent = mesh.transform;
+				value2.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+				value2.mesh.transform.parent = value2.root.transform;
+				if (value2.data.type != 1)
+				{
+					value2.mesh.transform.position = new Vector3(0f, 0f, 0f);
+				}
+				BaseAsset.SetLayerRecursively(value2.mesh, 10);
+				BuildingIsland island = myfriend.getIsland(value2.idisland);
+				value2.root.transform.position = value2.makePos(island.pos);
+				value2.root.transform.eulerAngles = new Vector3(0f, (float)(360 * value2.rotation) / 255f, 0f);
+				value2.mesh.AddComponent<BuildingBehaviourScript>().setBuilding(value2, bEdit: false, bFriend: true);
+			}
+		}
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		foreach (BuildingArea value in myfriend.building_areas.Values)
+		{
+			CreateArea(value);
+		}
+		foreach (BuildingMonster value2 in myfriend.building_monsters.Values)
+		{
+			if (!(value2.mesh == null))
+			{
+				continue;
+			}
+			AssetBundle asset = BaseAsset.was.GetAsset(value2.model_name);
+			if (asset != null)
+			{
+				value2.mesh = Object.Instantiate(asset.mainAsset) as GameObject;
+				BaseAsset.SetLayerRecursively(value2.mesh, 10);
+				value2.mesh.transform.position = value2.pos;
+				value2.mesh.transform.eulerAngles = value2.rot;
+				value2.mesh.transform.localScale = new Vector3(3f, 3f, 3f);
+				value2.mesh.transform.parent = mesh.transform;
+				BuildingMonsterScript buildingMonsterScript = value2.mesh.AddComponent<BuildingMonsterScript>();
+				buildingMonsterScript.setMonster(this, value2, bFriend: true);
+				if (value2.idkiller != 0L)
+				{
+					value2.mesh.animation.Play("dead");
+				}
+			}
+		}
+		if (myfriend.m_demon != null && myfriend.m_demon.mesh == null)
+		{
+			myfriend.m_demon.make(BaseAsset.was.GetAsset(myfriend.m_demon.model_name), mesh.transform, this, bFriend: true);
+		}
+		if (!AssetName.Contains("capital0/zc_xindiban"))
+		{
+			return;
+		}
+		foreach (object value3 in Global.getTemplates("building_floor").Values)
+		{
+			_building_floor building_floor = (_building_floor)value3;
+			if (building_floor.floor_name == AssetName)
+			{
+				AssetBundle asset2 = BaseAsset.was.GetAsset(AssetName);
+				GameObject gameObject = Object.Instantiate(BaseAsset.was.GetAsset(AssetName).mainAsset) as GameObject;
+				gameObject.transform.parent = mesh.transform;
+				if (Global.getTemplate("building_island", building_floor.idisland) is _building_island d)
+				{
+					BuildingIsland buildingIsland = new BuildingIsland(d);
+					buildingIsland.pos.x += 5f;
+					buildingIsland.pos.z += 5f;
+					gameObject.transform.position = buildingIsland.pos;
+					floors[building_floor.idisland] = gameObject;
+				}
+			}
+		}
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		Visible();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+		btnLeft.Clear();
+		btnLeft.Add(new _ButtonMain(asset, "icon_songhua", string.Empty, 62f, __BaseUI._iconMask2, _flower, null));
+		btnLeft.Add(new _ButtonMain(asset, "icon_huijia", string.Empty, 62f, __BaseUI._iconMask2, _home, null));
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_capital");
+		texInteractBar = asset2.Load("ui_zhu_hudong") as Texture2D;
+		CapitalUI.texSword = asset2.Load("ui_icon5") as Texture2D;
+		if (mesh == null)
+		{
+			mesh = Object.Instantiate(BaseAsset.was.GetAsset("capital0/capital").mainAsset) as GameObject;
+			mesh.transform.parent = base.gameObject.transform;
+		}
+	}
+
+	protected override void PostInit()
+	{
+		foreach (BuildingMonster value in myfriend.building_monsters.Values)
+		{
+			if (value.mesh != null && value.idkiller != 0L)
+			{
+				value.mesh.animation.Play("dead");
+			}
+		}
+		if (myfriend.m_demon != null && myfriend.m_demon.mesh != null && myfriend.m_demon.killed)
+		{
+			myfriend.m_demon.mesh.animation.Play("dead");
+		}
+	}
+
+	public override void Destroy()
+	{
+		base.Destroy();
+		if (mesh != null)
+		{
+			Object.Destroy(mesh);
+		}
+		mesh = null;
+		foreach (BuildingArea value in myfriend.building_areas.Values)
+		{
+			foreach (Building value2 in myfriend.buildings.Values)
+			{
+				value2.mesh = null;
+			}
+		}
+		foreach (BuildingMonster value3 in myfriend.building_monsters.Values)
+		{
+			value3.mesh = null;
+		}
+	}
+
+	private void Update()
+	{
+	}
+
+	protected override void Web_OnGUI()
+	{
+		__BaseUI.my_enabled = IsEnable();
+		draw_left_bar();
+		GUI.BeginGroup(__BaseUI._rect(20f, 110f, 176f, 31f));
+		__BaseUI.Box(__BaseUI._rect(0f, 0f, 176f, 31f), new GUIContent(string.Empty, "resource"), texInteractBar);
+		int num = 10 - Global.character_.building_interacts.Count;
+		if (num < 0)
+		{
+			num = 0;
+		}
+		__BaseUI.Label(__BaseUI._rect(100f, 0f, 36f, 31f), num.ToString(), __BaseUI._numCenter, __BaseUI._clrCyan);
+		GUI.EndGroup();
+		__BaseUI.my_enabled = true;
+	}
+
+	private void draw_left_bar()
+	{
+		int num = 0;
+		foreach (_ButtonMain item in btnLeft)
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(15f, 138 + num * 62, 75f, 75f));
+			if (item.Button(__BaseUI._rect(8f, 7f, 59f, 59f)))
+			{
+				num++;
+			}
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void _flower()
+	{
+		BuddyFlowerUI component = GameObject.Find("/Root/RootUI").GetComponent<BuddyFlowerUI>();
+		if (MainUI.handle_sub_ui(component, "buddyflower"))
+		{
+			MainUI.SetSubUI(component);
+			component.cs_buddy_flower_info(myfriend.id);
+		}
+	}
+
+	private void _home()
+	{
+		BaseUI.GetRootUI().LoadLevel("Capital", rmg);
+	}
+}

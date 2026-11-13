@@ -1,0 +1,16 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.CtoS;
+
+[Serializable]
+[ProtoContract(Name = "CSGetAllBonus_0x348")]
+public class CSGetAllBonus_0x348 : IExtensible
+{
+	private IExtension extensionObject;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

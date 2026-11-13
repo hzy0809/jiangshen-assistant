@@ -1,0 +1,44 @@
+{
+  "utc": "2026-10-30T17:05:06.170062+00:00",
+  "mode": "offline",
+  "mono_path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Mono\\mono.dll",
+  "mono_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "layout": {
+    "root_domain_slot_rva": 2041220,
+    "accessors": {
+      "mono_assembly_get_image": {
+        "rva": 77079,
+        "offset": 64,
+        "bytes": "558bec8b45088b40405dc3"
+      },
+      "mono_image_get_name": {
+        "rva": 91653,
+        "offset": 24,
+        "bytes": "558bec8b45088b40185dc3"
+      },
+      "mono_class_get_name": {
+        "rva": 91549,
+        "offset": 48,
+        "bytes": "558bec8b45088b40305dc3"
+      },
+      "mono_class_get_namespace": {
+        "rva": 91560,
+        "offset": 52,
+        "bytes": "558bec8b45088b40345dc3"
+      },
+      "mono_get_root_domain": {
+        "rva": 162334,
+        "bytes": "a184251f10c3"
+      }
+    },
+    "assembly_slot_rva": 2040824,
+    "assembly_foreach_callsite_rva": 76957,
+    "assembly_foreach_callsite_bytes": "ff750cff7508ff35f8231f10e82222ffff",
+    "list_foreach_rva": 20176,
+    "list_foreach_bytes": "568b742408eb0fff742410ff36ff5424148b7604595985f675ed5ec3",
+    "list_data_offset": 0,
+    "list_next_offset": 4
+  },
+  "status": "PASS",
+  "coverage": "offline pinned export decoding only; no process APIs called"
+}

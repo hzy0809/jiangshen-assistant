@@ -1,0 +1,159 @@
+{
+  "utc": "2026-10-30T17:54:30.095279+00:00",
+  "mode": "live",
+  "mono_path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Mono\\mono.dll",
+  "mono_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "layout": {
+    "root_domain_slot_rva": 2041220,
+    "accessors": {
+      "mono_assembly_get_image": {
+        "rva": 77079,
+        "offset": 64,
+        "bytes": "558bec8b45088b40405dc3"
+      },
+      "mono_image_get_name": {
+        "rva": 91653,
+        "offset": 24,
+        "bytes": "558bec8b45088b40185dc3"
+      },
+      "mono_class_get_name": {
+        "rva": 91549,
+        "offset": 48,
+        "bytes": "558bec8b45088b40305dc3"
+      },
+      "mono_class_get_namespace": {
+        "rva": 91560,
+        "offset": 52,
+        "bytes": "558bec8b45088b40345dc3"
+      },
+      "mono_get_root_domain": {
+        "rva": 162334,
+        "bytes": "a184251f10c3"
+      }
+    },
+    "assembly_slot_rva": 2040824,
+    "assembly_foreach_callsite_rva": 76957,
+    "assembly_foreach_callsite_bytes": "ff750cff7508ff35f8231f10e82222ffff",
+    "list_foreach_rva": 20176,
+    "list_foreach_bytes": "568b742408eb0fff742410ff36ff5424148b7604595985f675ed5ec3",
+    "list_data_offset": 0,
+    "list_next_offset": 4
+  },
+  "status": "PASS",
+  "coverage": "root domain pointer and assembly image metadata only; no domain fields or game state read",
+  "pid": 12844,
+  "process_creation_filetime": 134378531591407015,
+  "modules": {
+    "js.exe": {
+      "name": "js.exe",
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js.exe",
+      "base": 10551296,
+      "size": 10485760
+    },
+    "mono.dll": {
+      "name": "mono.dll",
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Mono\\mono.dll",
+      "base": 268435456,
+      "size": 2273280
+    }
+  },
+  "root_domain": "0x3354e70",
+  "root_domain_slot": "0x101f2584",
+  "read_calls": 376,
+  "requested_read_bytes": 816,
+  "assemblies": [
+    {
+      "name": "JSUnityProbe_c3fec61cde08ec23",
+      "assembly": "0x149fc570",
+      "image": "0x1560b3d8"
+    },
+    {
+      "name": "JSUnityProbe_1b17560a74d66532",
+      "assembly": "0x149fc2d0",
+      "image": "0x1560b780"
+    },
+    {
+      "name": "JSUnityProbe_e3462b1627879c4c",
+      "assembly": "0x149fc270",
+      "image": "0x1560b030"
+    },
+    {
+      "name": "Boo.Lang",
+      "assembly": "0x149fc930",
+      "image": "0x1560c9c8"
+    },
+    {
+      "name": "System",
+      "assembly": "0x44db9e0",
+      "image": "0x115fd808"
+    },
+    {
+      "name": "System.Core",
+      "assembly": "0x44dbc80",
+      "image": "0x113c9798"
+    },
+    {
+      "name": "protobuf-net",
+      "assembly": "0x44dbc20",
+      "image": "0x10815ae8"
+    },
+    {
+      "name": "pbdata",
+      "assembly": "0x107e7e80",
+      "image": "0x44dac00"
+    },
+    {
+      "name": "Ionic.Zlib",
+      "assembly": "0x107e7c08",
+      "image": "0x107e7458"
+    },
+    {
+      "name": "DBTSerializer3",
+      "assembly": "0x107e73f8",
+      "image": "0x107e6c18"
+    },
+    {
+      "name": "DBTSerializer2",
+      "assembly": "0x107aabb0",
+      "image": "0x107a9fc8"
+    },
+    {
+      "name": "DBTSerializer1",
+      "assembly": "0x44c3b98",
+      "image": "0x44c33b8"
+    },
+    {
+      "name": "dbdata",
+      "assembly": "0x447d350",
+      "image": "0x447cba0"
+    },
+    {
+      "name": "Assembly-UnityScript-firstpass",
+      "assembly": "0x447cb40",
+      "image": "0x4477fb0"
+    },
+    {
+      "name": "Assembly-CSharp",
+      "assembly": "0x1076af60",
+      "image": "0x1076a9b8"
+    },
+    {
+      "name": "Assembly-CSharp-firstpass",
+      "assembly": "0x1076a0e8",
+      "image": "0x107698d8"
+    },
+    {
+      "name": "UnityEngine",
+      "assembly": "0x42d6c28",
+      "image": "0x446cc10"
+    },
+    {
+      "name": "mscorlib",
+      "assembly": "0x42d9818",
+      "image": "0x43f0748"
+    }
+  ],
+  "assembly_metadata": "PASS: bounded native loaded-assembly list and image names",
+  "type_metadata": "UNVERIFIED: class traversal not enabled",
+  "live_game_scalars": "UNVERIFIED: no scalar whitelist enabled"
+}

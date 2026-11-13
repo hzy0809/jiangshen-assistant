@@ -1,0 +1,122 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "TempEventQuest")]
+public class TempEventQuest : IExtensible
+{
+	private uint _id;
+
+	private string _expression;
+
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private bool _isfinished;
+
+	private bool _isgot;
+
+	private readonly List<TempEventParam> _params = new List<TempEventParam>();
+
+	private string _name = "";
+
+	private string _content = "";
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "expression", DataFormat = DataFormat.Default)]
+	public string expression
+	{
+		get
+		{
+			return _expression;
+		}
+		set
+		{
+			_expression = value;
+		}
+	}
+
+	[ProtoMember(3, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	[ProtoMember(4, IsRequired = true, Name = "isfinished", DataFormat = DataFormat.Default)]
+	public bool isfinished
+	{
+		get
+		{
+			return _isfinished;
+		}
+		set
+		{
+			_isfinished = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = true, Name = "isgot", DataFormat = DataFormat.Default)]
+	public bool isgot
+	{
+		get
+		{
+			return _isgot;
+		}
+		set
+		{
+			_isgot = value;
+		}
+	}
+
+	[ProtoMember(6, Name = "params", DataFormat = DataFormat.Default)]
+	public List<TempEventParam> @params => _params;
+
+	[ProtoMember(7, IsRequired = false, Name = "name", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string name
+	{
+		get
+		{
+			return _name;
+		}
+		set
+		{
+			_name = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "content", DataFormat = DataFormat.Default)]
+	[DefaultValue("")]
+	public string content
+	{
+		get
+		{
+			return _content;
+		}
+		set
+		{
+			_content = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

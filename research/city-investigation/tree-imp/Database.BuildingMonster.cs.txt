@@ -1,0 +1,54 @@
+using System.Collections.Generic;
+using UnityEngine;
+using game.net.data.StoC;
+
+namespace Database;
+
+public class BuildingMonster : _character_building_monster
+{
+	public _building_monster_type type;
+
+	public _building_monster data;
+
+	public Vector3 pos;
+
+	public Vector3 rot;
+
+	public GameObject mesh;
+
+	public List<_character_building_monster_army> m_armys = new List<_character_building_monster_army>();
+
+	public string killer_name;
+
+	public string model_name => type.model_name;
+
+	public string name => type.name;
+
+	public BuildingMonster(game.net.data.StoC.BuildingMonster d)
+	{
+		Set(d.monster);
+		killer_name = d.killer_name;
+		type = Global.getTemplate("building_monster_type", difficulty) as _building_monster_type;
+		data = Global.getTemplate("building_monster", id) as _building_monster;
+		if (data.position.Length > 0)
+		{
+			string[] array = data.position.Split(',');
+			pos.x = float.Parse(array[0]);
+			pos.y = float.Parse(array[1]);
+			pos.z = float.Parse(array[2]);
+		}
+		if (data.rotation.Length > 0)
+		{
+			string[] array2 = data.rotation.Split(',');
+			rot.x = float.Parse(array2[0]);
+			rot.y = float.Parse(array2[1]);
+			rot.z = float.Parse(array2[2]);
+		}
+		foreach (db_character_building_monster_army army in d.armys)
+		{
+			_character_building_monster_army character_building_monster_army = new _character_building_monster_army();
+			character_building_monster_army.Set(army);
+			m_armys.Add(character_building_monster_army);
+		}
+	}
+}

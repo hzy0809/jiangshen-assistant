@@ -1,0 +1,165 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCGraveBattle_0x342")]
+public class SCGraveBattle_0x342 : IExtensible
+{
+	private uint _result;
+
+	private uint _idtroop = 0u;
+
+	private bool _iswin = false;
+
+	private byte[] _report = null;
+
+	private bool _isboss = false;
+
+	private int _soldier;
+
+	private readonly List<DemonArmySoldier> _soldiers = new List<DemonArmySoldier>();
+
+	private bool _showboss;
+
+	private bool _endgrave;
+
+	private Treasures _bonuses = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "idtroop", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint idtroop
+	{
+		get
+		{
+			return _idtroop;
+		}
+		set
+		{
+			_idtroop = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "iswin", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "report", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "isboss", DataFormat = DataFormat.Default)]
+	[DefaultValue(false)]
+	public bool isboss
+	{
+		get
+		{
+			return _isboss;
+		}
+		set
+		{
+			_isboss = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = true, Name = "soldier", DataFormat = DataFormat.ZigZag)]
+	public int soldier
+	{
+		get
+		{
+			return _soldier;
+		}
+		set
+		{
+			_soldier = value;
+		}
+	}
+
+	[ProtoMember(8, Name = "soldiers", DataFormat = DataFormat.Default)]
+	public List<DemonArmySoldier> soldiers => _soldiers;
+
+	[ProtoMember(9, IsRequired = true, Name = "showboss", DataFormat = DataFormat.Default)]
+	public bool showboss
+	{
+		get
+		{
+			return _showboss;
+		}
+		set
+		{
+			_showboss = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = true, Name = "endgrave", DataFormat = DataFormat.Default)]
+	public bool endgrave
+	{
+		get
+		{
+			return _endgrave;
+		}
+		set
+		{
+			_endgrave = value;
+		}
+	}
+
+	[ProtoMember(11, IsRequired = false, Name = "bonuses", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public Treasures bonuses
+	{
+		get
+		{
+			return _bonuses;
+		}
+		set
+		{
+			_bonuses = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

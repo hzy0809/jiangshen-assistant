@@ -1,0 +1,21 @@
+using game.net.data.StoC;
+
+namespace Database;
+
+public class _character_online_lottery
+{
+	public uint online_time;
+
+	public uint last_lottery_time;
+
+	public int lottery_today;
+
+	public void Set(db_character_online_lottery d)
+	{
+		online_time = d.online_time;
+		last_lottery_time = d.last_lottery_time;
+		lottery_today = d.lottery_today;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

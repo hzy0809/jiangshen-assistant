@@ -1,0 +1,206 @@
+{
+  "module_sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+  "preferred_imagebase": "0x10000000",
+  "accessors": [
+    {
+      "name": "mono_assembly_foreach",
+      "ordinal": 15,
+      "rva": "0x00012c77",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 73847,
+      "first16": "558bec5657becc231f1056ff1544f112",
+      "first128": "558bec5657becc231f1056ff1544f11210ff35f8231f10e87322ffff59568bf8ff1540f11210ff750cff7508ff35f8231f10e82222ffff57e88c20ffff83c4105f5e5dc35768cc231f10ff156cf112108b3dfc231f1085ff7417568b37e82ee6ffff56e81aedfeff8b7f045985ff75eb5eff35fc231f10e84d20ffff59e8f3ed"
+    },
+    {
+      "name": "mono_assembly_get_image",
+      "ordinal": 17,
+      "rva": "0x00012d17",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 74007,
+      "first16": "558bec8b45088b40405dc3558bec8b45",
+      "first128": "558bec8b45088b40405dc3558bec8b4508a3444d1f105dc3558bec8b45080fbe00ff450883f8547408c70101000000eb4b8b45088a00ff45083c0275ec8d450850ff7508e8e90d04008b5508595983f81072205356576a045933dbbf601013108bf2f3a75f5e5b750a03d08955080fbe025dc38b4d0c8d441001890133c05dc3"
+    },
+    {
+      "name": "mono_class_get_field_from_name",
+      "ordinal": 81,
+      "rva": "0x0001a87b",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 105595,
+      "first16": "558bec6a00ff750cff7508e841f7ffff",
+      "first128": "558bec6a00ff750cff7508e841f7ffff83c40c5dc3558bec81ecc8000000a1c0071f1033c58945fc56578b7d0833f63977780f85c3040000e8b6f30100397778740ae8dbf30100e9af0400008b8794000000533bc60f84050100008b3056e856240000807e200059750d56e8a5ffffff807e200059741b6890231310e87e71fe"
+    },
+    {
+      "name": "mono_class_get_fields",
+      "ordinal": 83,
+      "rva": "0x0001a254",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 104020,
+      "first16": "558bec56578b7d0c85ff74388b0785c0",
+      "first128": "558bec56578b7d0c85ff74388b0785c0751b8b750856e888f7ffff807e2000597522837e6400741c8b4674eb138b4d088b5164c1e20403517483c0103bc273048907eb0233c05f5e5dc3558bec578b7d088b078b4004a900800000740e8d45085057e826feffff5959eb10a9000100007407e8abdcffffeb0233c05f5dc3558b"
+    },
+    {
+      "name": "mono_class_get_flags",
+      "ordinal": 84,
+      "rva": "0x00016592",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88466,
+      "first16": "558bec8b45088b405c5dc3558bec8b45",
+      "first128": "558bec8b45088b405c5dc3558bec8b45088b40305dc3558bec8b45088b40345dc3558bec8b450805880000005dc3558bec8b450883c07c5dc3558bec8b45088b40645dc3558bec8b45088b406c5dc3558bec8b45088b000fb740045dc3558bec8b45088b400c5dc3558bec8b45088b40045dc3558bec8b45088b40185dc3558b"
+    },
+    {
+      "name": "mono_class_get_methods",
+      "ordinal": 90,
+      "rva": "0x0001d3dc",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 116700,
+      "first16": "558bec578b7d0c85ff750433c0eb4d56",
+      "first128": "558bec578b7d0c85ff750433c0eb4d568b7508f6461401750756e839f9ffff598b0785c0751d56e888d4ffff837e7800597426837e6c0074208b467889078b4678eb128b4e6c8b567883c0048d0c8a3bc1730689078b00eb0233c05e5f5dc3558bec578b7d0c85ff750433c0eb4c568b7508f6461401750756e8daf8ffff598b"
+    },
+    {
+      "name": "mono_class_get_name",
+      "ordinal": 91,
+      "rva": "0x0001659d",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88477,
+      "first16": "558bec8b45088b40305dc3558bec8b45",
+      "first128": "558bec8b45088b40305dc3558bec8b45088b40345dc3558bec8b450805880000005dc3558bec8b450883c07c5dc3558bec8b45088b40645dc3558bec8b45088b406c5dc3558bec8b45088b000fb740045dc3558bec8b45088b400c5dc3558bec8b45088b40045dc3558bec8b45088b40185dc3558bec83ec1c5333db895dfc39"
+    },
+    {
+      "name": "mono_class_get_namespace",
+      "ordinal": 92,
+      "rva": "0x000165a8",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88488,
+      "first16": "558bec8b45088b40345dc3558bec8b45",
+      "first128": "558bec8b45088b40345dc3558bec8b450805880000005dc3558bec8b450883c07c5dc3558bec8b45088b40645dc3558bec8b45088b406c5dc3558bec8b45088b000fb740045dc3558bec8b45088b400c5dc3558bec8b45088b40045dc3558bec8b45088b40185dc3558bec83ec1c5333db895dfc395e6c0f8690000000576a06"
+    },
+    {
+      "name": "mono_class_get_parent",
+      "ordinal": 95,
+      "rva": "0x00016570",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88432,
+      "first16": "558bec8b45088b40245dc3558bec8b45",
+      "first128": "558bec8b45088b40245dc3558bec8b45088b40285dc3558bec8b45080fb6400e5dc3558bec8b45088b405c5dc3558bec8b45088b40305dc3558bec8b45088b40345dc3558bec8b450805880000005dc3558bec8b450883c07c5dc3558bec8b45088b40645dc3558bec8b45088b406c5dc3558bec8b45088b000fb740045dc355"
+    },
+    {
+      "name": "mono_class_vtable",
+      "ordinal": 120,
+      "rva": "0x000618fe",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 396542,
+      "first16": "558bec6a00ff750cff7508e8c2f9ffff",
+      "first128": "558bec6a00ff750cff7508e8c2f9ffff83c40c5dc3558bec81ece8000000a1c0071f1033c58945fc8b45085356578bf98b770833db5650898524ffffff89bd1cffffff899d40ffffff899d3cffffffe8acffffff5959898534ffffff85c0751f68400e1a1068030800006870061a106828f512106a0450e853f7f9ff83c4188b"
+    },
+    {
+      "name": "mono_domain_foreach",
+      "ordinal": 201,
+      "rva": "0x00027afe",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 159486,
+      "first16": "558bec535657be60251f1056ff1544f1",
+      "first128": "558bec535657be60251f1056ff1544f112100fb73d78251f108bc7c1e0026a0050e8f8c4feff8bd80fb70578251f10c1e00250ff3580251f1053e8d36a0e0083c41456ff1540f1121033f685ff7e158b04b385c07409ff750c50ff55085959463bf77ceb53e8f9570500595f5e5b5dc3558bec538b5d08568d83f40000005750"
+    },
+    {
+      "name": "mono_domain_get",
+      "ordinal": 203,
+      "rva": "0x00027a24",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 159268,
+      "first16": "ff355c001f10ff1578f11210c3558bec",
+      "first128": "ff355c001f10ff1578f11210c3558bec5156e8e9ffffff8b75083bc60f84a400000056ff355c001f10ff157cf11210ff7628e8245d050083c04c50e81b5d050050e88dc7feff83c40c837d0c00747753e8065d05008d58288945fc8b0385c074648b008b4d0857bfbc391310be28f51210394808751868e83c131068ef060000"
+    },
+    {
+      "name": "mono_field_get_flags",
+      "ordinal": 230,
+      "rva": "0x000165e1",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88545,
+      "first16": "558bec8b45088b000fb740045dc3558b",
+      "first128": "558bec8b45088b000fb740045dc3558bec8b45088b400c5dc3558bec8b45088b40045dc3558bec8b45088b40185dc3558bec83ec1c5333db895dfc395e6c0f8690000000576a068d45e4508b466803c3506a06ff762ce88dd60300ff75f08b7d08ff762ce819d2030083c41c8a083a0f751884c974108a48013a4f01750c4040"
+    },
+    {
+      "name": "mono_field_get_name",
+      "ordinal": 231,
+      "rva": "0x000165fa",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88570,
+      "first16": "558bec8b45088b40045dc3558bec8b45",
+      "first128": "558bec8b45088b40045dc3558bec8b45088b40185dc3558bec83ec1c5333db895dfc395e6c0f8690000000576a068d45e4508b466803c3506a06ff762ce88dd60300ff75f08b7d08ff762ce819d2030083c41c8a083a0f751884c974108a48013a4f01750c4040474784c975e633c0eb051bc083d8ff85c075318b46688d4403"
+    },
+    {
+      "name": "mono_field_get_offset",
+      "ordinal": 233,
+      "rva": "0x000165ef",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88559,
+      "first16": "558bec8b45088b400c5dc3558bec8b45",
+      "first128": "558bec8b45088b400c5dc3558bec8b45088b40045dc3558bec8b45088b40185dc3558bec83ec1c5333db895dfc395e6c0f8690000000576a068d45e4508b466803c3506a06ff762ce88dd60300ff75f08b7d08ff762ce819d2030083c41c8a083a0f751884c974108a48013a4f01750c4040474784c975e633c0eb051bc083d8"
+    },
+    {
+      "name": "mono_field_get_type",
+      "ordinal": 235,
+      "rva": "0x000274bb",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 157883,
+      "first16": "558bec8b45088b005dc3558bec68364b",
+      "first128": "558bec8b45088b005dc3558bec68364b011068bb74021068a7600510ff7508e8cf1afeff83c4105dc3558bec8b4d088b4114a900008000740d25ff7f0000406bc01803c15dc333c05dc3558becff7508e8d4ffffff5985c074048b005dc333c05dc3558bec8b4508a35c251f105dc3558bec8b4508a34c251f105dc3558bec8b"
+    },
+    {
+      "name": "mono_get_root_domain",
+      "ordinal": 330,
+      "rva": "0x00027a1e",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 159262,
+      "first16": "a184251f10c3ff355c001f10ff1578f1",
+      "first128": "a184251f10c3ff355c001f10ff1578f11210c3558bec5156e8e9ffffff8b75083bc60f84a400000056ff355c001f10ff157cf11210ff7628e8245d050083c04c50e81b5d050050e88dc7feff83c40c837d0c00747753e8065d05008d58288945fc8b0385c074648b008b4d0857bfbc391310be28f51210394808751868e83c13"
+    },
+    {
+      "name": "mono_image_get_name",
+      "ordinal": 351,
+      "rva": "0x00016605",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 88581,
+      "first16": "558bec8b45088b40185dc3558bec83ec",
+      "first128": "558bec8b45088b40185dc3558bec83ec1c5333db895dfc395e6c0f8690000000576a068d45e4508b466803c3506a06ff762ce88dd60300ff75f08b7d08ff762ce819d2030083c41c8a083a0f751884c974108a48013a4f01750c4040474784c975e633c0eb051bc083d8ff85c075318b46688d440301560d0000000650ff762c"
+    },
+    {
+      "name": "mono_object_get_class",
+      "ordinal": 537,
+      "rva": "0x0005f495",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 387221,
+      "first16": "558bec8b45088b008b005dc3558bec56",
+      "first128": "558bec8b45088b008b005dc3558bec568b75088b068b083b0dc44b1f1075098b46088d440012eb3180781a00517424e8d06ffbff0faf460c83c018837e08005974178b0e0fb6491a83c00383e0fc8d04c8eb06e81a67fbff595e5dc3558bec568b75088b068b00f6401408752068940a1a1068771200006870061a106828f512"
+    },
+    {
+      "name": "mono_thread_get_main",
+      "ordinal": 677,
+      "rva": "0x0005db0f",
+      "section": ".text",
+      "file_backed": true,
+      "file_offset": 380687,
+      "first16": "a1fc281f10c3568b3560f1121068e428",
+      "first128": "a1fc281f10c3568b3560f1121068e4281f10ffd66a006a00e82740faff6a006a00a300291f10e81940faff83c4106820291f10a314291f10ffd65ec36820291f10ff156cf11210c3f6401c0453568b30578b78087520688c061a1068cd0000006870061a106828f512106a046a00e84b35faff83c4185733dbff1544f112108b"
+    }
+  ]
+}

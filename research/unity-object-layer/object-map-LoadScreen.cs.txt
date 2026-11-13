@@ -1,0 +1,414 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+
+public class LoadScreen : MonoBehaviour
+{
+	public const int load_in_prepare = 0;
+
+	public const int load_in_prepare_loading = 1;
+
+	public const int load_sub = 2;
+
+	private static List<uint> m_quotes = new List<uint>();
+
+	private static int m_quote_index = -1;
+
+	private static float m_quote_time = 0f;
+
+	public TextAsset m_quote_text;
+
+	private string m_process_info = "{0}";
+
+	public GUIStyle m_bg = new GUIStyle();
+
+	public GUIStyle m_blackStyle = new GUIStyle();
+
+	public GUIStyle m_main = new GUIStyle();
+
+	public Texture2D m_progress_bar;
+
+	public GUIStyle m_progress_light = new GUIStyle();
+
+	public GUIStyle m_quoteStyle = new GUIStyle();
+
+	private GUIStyle m_quote_font = new GUIStyle();
+
+	public Texture2D logo;
+
+	public Texture2D loading0_top;
+
+	public Texture2D loading0_bottom;
+
+	public Texture2D m_sub_progress_bar;
+
+	public GUIStyle m_sub_progress_light = new GUIStyle();
+
+	private int WantHide;
+
+	private static int bgx = 450;
+
+	private static int bgy = 600;
+
+	private int level_flag;
+
+	public static bool waitdb = false;
+
+	public static float db_percent = 0f;
+
+	private AsyncOperation m_loader_info;
+
+	public int m_load_state;
+
+	private RootMessenger oldmainrmg;
+
+	private RootMessenger oldrmg;
+
+	private RootMessenger currmg;
+
+	private RootMessenger oldrmg_bak;
+
+	private RootMessenger oldmainrmg_bak;
+
+	private RootMessenger currmg_bak;
+
+	private int MaxCount;
+
+	private int CurCount;
+
+	private bool isBattling;
+
+	public void Start()
+	{
+		m_quote_font.alignment = TextAnchor.MiddleCenter;
+		m_quote_font.normal.textColor = new Color(0.8f, 1f, 1f, 1f);
+		m_quote_font.wordWrap = true;
+		base.enabled = true;
+		if (m_load_state == 0)
+		{
+			StartCoroutine(Loader());
+		}
+	}
+
+	public bool isVisible()
+	{
+		return base.enabled;
+	}
+
+	public void Hide()
+	{
+		if (BaseAsset.memory_policy == 0 && m_load_state == 1)
+		{
+			Resources.UnloadUnusedAssets();
+		}
+		if (base.enabled)
+		{
+			if (m_load_state == 2)
+			{
+				WantHide = 1;
+				CurCount = 0;
+			}
+			else
+			{
+				MaxCount = (CurCount = 0);
+				base.enabled = false;
+				Application.runInBackground = Global.bgmode_run;
+			}
+		}
+	}
+
+	public void Visible()
+	{
+		if (!isVisible() && Global.character_ != null && Global.character_.level < 30 && Global.character_.level > 0)
+		{
+			level_flag = 1;
+		}
+		random_quote();
+		base.enabled = true;
+		m_load_state = 1;
+		MaxCount = (CurCount = 0);
+		Application.runInBackground = true;
+	}
+
+	public void Visible_sub()
+	{
+		base.enabled = true;
+		m_load_state = 2;
+		MaxCount = (CurCount = 0);
+		Application.runInBackground = true;
+	}
+
+	private void Update()
+	{
+		if (m_load_state == 1)
+		{
+			m_quote_time += Time.deltaTime;
+			if (m_quote_time > 5f)
+			{
+				random_quote();
+			}
+		}
+	}
+
+	private void OnGUI()
+	{
+		GUI.depth = -200;
+		float percent = get_percent();
+		if (m_load_state == 2)
+		{
+			_draw_sub(percent);
+		}
+		else
+		{
+			_draw(percent);
+		}
+		if (WantHide > 0)
+		{
+			if (WantHide == 2)
+			{
+				MaxCount = (CurCount = 0);
+				base.enabled = false;
+				Application.runInBackground = Global.bgmode_run;
+				WantHide = 0;
+			}
+			else
+			{
+				WantHide++;
+			}
+		}
+	}
+
+	private void draw_progress(int x, int y)
+	{
+		if (!(WebAssetsManager.LoadingNames == string.Empty))
+		{
+			string text = ((WebAssetsManager.speed > 1048576) ? (WebAssetsManager.speed / 1048576 + "MB/S") : ((WebAssetsManager.speed <= 1024) ? (WebAssetsManager.speed + "B/S") : (WebAssetsManager.speed / 1024 + "KB/S")));
+			Rect position = new Rect(x - 300, y, 300f, 20f);
+			m_quote_font.alignment = TextAnchor.MiddleRight;
+			GUI.Label(position, __BaseUI.load_str(20375u), m_quote_font);
+			position = new Rect(x + 20, y, 60f, 20f);
+			GUI.Label(position, text, m_quote_font);
+			m_quote_font.alignment = TextAnchor.MiddleCenter;
+		}
+	}
+
+	private void draw_progress_sub(int x, int y)
+	{
+		if (!(WebAssetsManager.LoadingNames == string.Empty))
+		{
+			string text = ((WebAssetsManager.speed > 1048576) ? (WebAssetsManager.speed / 1048576 + "MB/S") : ((WebAssetsManager.speed <= 1024) ? (WebAssetsManager.speed + "B/S") : (WebAssetsManager.speed / 1024 + "KB/S")));
+			Rect position = new Rect(x - 320, y, 300f, 20f);
+			m_quote_font.alignment = TextAnchor.MiddleRight;
+			GUI.Label(position, __BaseUI.load_str(20375u), m_quote_font);
+			position = new Rect(x + 20, y, 60f, 20f);
+			GUI.Label(position, text, m_quote_font);
+			m_quote_font.alignment = TextAnchor.MiddleCenter;
+		}
+	}
+
+	public void change_bg(Texture2D pic)
+	{
+	}
+
+	private void _draw(float precent)
+	{
+		GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, m_blackStyle);
+		bgx = (int)((float)bgx * (float)Screen.height / (float)bgy);
+		bgy = Screen.height;
+		GUI.Box(new Rect(0f, 0f, bgx, bgy), string.Empty, m_main);
+		int num = Screen.width / 2 - 268;
+		int num2 = Screen.height / 2 - 38;
+		GUI.DrawTexture(new Rect(num, num2, 537f, 76f), m_progress_bar);
+		float num3 = (float)m_progress_light.normal.background.width * precent;
+		if ((int)num3 < m_progress_light.border.right)
+		{
+			num3 = m_progress_light.border.right;
+		}
+		GUI.Box(new Rect(num + 171, num2 + 50, num3, 2f), string.Empty, m_progress_light);
+		GUI.DrawTexture(new Rect(20f, Screen.height - 150, 139f, 108f), logo);
+		string text = "读取中 ...";
+		if (Global.i18n == "zh-tw")
+		{
+			text = "讀取中 ...";
+		}
+		if (level_flag == 1)
+		{
+			GUI.Label(new Rect((Screen.width - 371) / 2, 0f, 371f, 115f), loading0_top, __BaseUI.normalStyle);
+			GUI.Label(new Rect((Screen.width - 976) / 2 + 200, Screen.height - 100, 776f, 50f), loading0_bottom, __BaseUI.normalStyle);
+		}
+		else
+		{
+			GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height - 80, 600f, 29f), string.Empty, m_quoteStyle);
+			if (m_quote_index != -1 && m_quote_index < m_quotes.Count)
+			{
+				string text2 = Global.getText(m_quotes[m_quote_index]);
+				GUI.Label(new Rect(Screen.width / 2 - 300, Screen.height - 80, 600f, 29f), text2, m_quote_font);
+			}
+		}
+		GUI.Box(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, m_bg);
+	}
+
+	private void _draw_sub(float precent)
+	{
+		GUI.BeginGroup(ScreenRect._rect_center(m_sub_progress_bar.width, m_sub_progress_bar.height));
+		GUI.DrawTexture(new Rect(0f, 0f, m_sub_progress_bar.width, m_sub_progress_bar.height), m_sub_progress_bar);
+		draw_progress_sub(230, 36);
+		float num = (float)m_sub_progress_light.normal.background.width * precent;
+		if ((int)num < m_sub_progress_light.border.right)
+		{
+			num = m_sub_progress_light.border.right;
+		}
+		GUI.Box(new Rect(69f, 62f, num, m_sub_progress_light.normal.background.height), string.Empty, m_sub_progress_light);
+		GUI.EndGroup();
+	}
+
+	private float get_percent()
+	{
+		if (m_load_state == 0)
+		{
+			return m_loader_info.progress;
+		}
+		if (waitdb)
+		{
+			return db_percent / 100f;
+		}
+		return (float)WebAssetsManager.perc / 100f;
+	}
+
+	private IEnumerator Loader()
+	{
+		Debug.Log("Loader");
+		m_loader_info = Application.LoadLevelAdditiveAsync("Loader");
+		yield return m_loader_info;
+		m_load_state = 1;
+		Debug.Log("m_load_state " + m_load_state);
+	}
+
+	public static void init_quote()
+	{
+		m_quotes.Clear();
+		Hashtable templates = Global.getTemplates("quote");
+		System.Random random = new System.Random();
+		foreach (DictionaryEntry item in templates)
+		{
+			_quote quote = item.Value as _quote;
+			int index = random.Next(m_quotes.Count + 1);
+			m_quotes.Insert(index, quote.idtext);
+		}
+		if (m_quotes.Count > 0)
+		{
+			m_quote_index = 0;
+			m_quote_time = 0f;
+		}
+	}
+
+	protected static void random_quote()
+	{
+		if (m_quotes.Count > 0)
+		{
+			m_quote_index++;
+			if (m_quote_index > m_quotes.Count)
+			{
+				init_quote();
+			}
+			m_quote_time = 0f;
+		}
+	}
+
+	public void SetOldUI(RootMessenger _oldrmg)
+	{
+		oldrmg_bak = oldrmg;
+		oldrmg = _oldrmg;
+		if (_oldrmg != null && (_oldrmg.LevelID == "Capital" || _oldrmg.LevelID == "Campaign" || _oldrmg.LevelID == "Area" || _oldrmg.LevelID == "World"))
+		{
+			oldmainrmg_bak = oldmainrmg;
+			oldmainrmg = _oldrmg;
+		}
+	}
+
+	public RootMessenger GetOldUI()
+	{
+		return oldrmg;
+	}
+
+	public RootMessenger GetOldMainUI()
+	{
+		return oldmainrmg;
+	}
+
+	public void SetCurUI(RootMessenger _currmg)
+	{
+		currmg_bak = currmg;
+		currmg = _currmg;
+	}
+
+	public RootMessenger GetCurUI()
+	{
+		return currmg;
+	}
+
+	public void StartLoading()
+	{
+		MaxCount = 0;
+		CurCount = 0;
+		Visible();
+	}
+
+	public void EndLoading(bool bDestroy)
+	{
+		MaxCount = 0;
+		CurCount = 0;
+		Hide();
+		__BaseUI.GetTooltipUI().HideTooltip(string.Empty);
+		if ((bool)oldrmg && bDestroy)
+		{
+			oldrmg.ToDestroy();
+		}
+		oldrmg_bak = null;
+		oldmainrmg_bak = null;
+		currmg_bak = null;
+	}
+
+	public void SetMaxCount(int count)
+	{
+		MaxCount += count;
+		CurCount += count;
+	}
+
+	public void SetCurCount(int count)
+	{
+		CurCount += count;
+	}
+
+	public void Clear()
+	{
+		if (currmg_bak != null)
+		{
+			currmg = currmg_bak;
+			currmg_bak = null;
+		}
+		if (oldrmg_bak != null)
+		{
+			oldrmg = oldrmg_bak;
+			oldrmg_bak = null;
+		}
+		if (oldmainrmg_bak != null)
+		{
+			oldmainrmg = oldmainrmg_bak;
+			oldmainrmg_bak = null;
+		}
+		Hide();
+	}
+
+	public void SetBattling(bool bBattling)
+	{
+		isBattling = bBattling;
+	}
+
+	public bool IsBattling()
+	{
+		return isBattling;
+	}
+}

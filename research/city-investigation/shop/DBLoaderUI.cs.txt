@@ -1,0 +1,226 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using Database;
+using UnityEngine;
+using game.net.data.StoC;
+
+public class DBLoaderUI : BaseUI
+{
+	private static bool waitdb_end = false;
+
+	private static bool bInBattleView = false;
+
+	private static Dictionary<int, byte[]> dbbytes = new Dictionary<int, byte[]>();
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+		if (LoadScreen.waitdb)
+		{
+			LoadScreen.db_percent += Time.deltaTime * 10f;
+			if (LoadScreen.db_percent > 100f)
+			{
+				LoadScreen.db_percent = 0f;
+			}
+		}
+		if (waitdb_end)
+		{
+			LoadDB_End();
+			waitdb_end = false;
+			LoadScreen.waitdb = false;
+			LoadScreen.db_percent = 0f;
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		if (LoadIndexScript._TEST && !bInBattleView)
+		{
+			Logger.Log("DBLoaderUI PrepareLoading txt");
+			StartCoroutine(LoadDB());
+			return;
+		}
+		Logger.Log("DBLoaderUI PrepareLoading");
+		for (int i = 1; i <= 3; i++)
+		{
+			AddAsset("db_template" + i);
+		}
+		CollectingStart();
+	}
+
+	private string loadDBTemplate(string name)
+	{
+		string text = string.Empty;
+		if (Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXEditor)
+		{
+			text = "file://" + Application.dataPath + "/../Assets/" + name;
+		}
+		else if (Application.platform == RuntimePlatform.OSXWebPlayer || Application.platform == RuntimePlatform.WindowsWebPlayer)
+		{
+			text = LoadIndexScript.getDataUrl("WebAssets/" + name);
+		}
+		else if (Application.platform == RuntimePlatform.IPhonePlayer)
+		{
+			text = ((!(Global.i18n == "zh-tw")) ? ("file://" + Application.dataPath + "/../IOSAssets_tw/" + name) : ("file://" + Application.dataPath + "/../IOSAssets/" + name));
+		}
+		else if (Application.platform == RuntimePlatform.Android)
+		{
+			text = "jar:file://" + Application.dataPath + "!/assets/AndroidAssets/" + name;
+		}
+		Logger.Log("load dbtemp from " + text);
+		return text;
+	}
+
+	private IEnumerator LoadDB()
+	{
+		for (int i = 1; i <= 3; i++)
+		{
+			WWW asset_www = new WWW(loadDBTemplate("db_template" + i + ".bytes"));
+			yield return asset_www;
+			Logger.Log("load dbtemp" + i + ":" + asset_www.bytes.Length);
+			dbbytes[i] = asset_www.bytes;
+		}
+		ThreadDB_Start();
+	}
+
+	protected override void Show()
+	{
+		Logger.Log("DB show");
+		if (LoadIndexScript._TEST && !bInBattleView)
+		{
+			return;
+		}
+		Logger.Log("DBLoaderUI Show");
+		for (int i = 1; i <= 3; i++)
+		{
+			AssetBundle asset = BaseAsset.was.GetAsset("db_template" + i);
+			TextAsset textAsset = asset.Load("db_template" + i) as TextAsset;
+			if (textAsset.bytes == null)
+			{
+				Logger.Log("No asset data");
+			}
+			else
+			{
+				Logger.Log("read data file length " + textAsset.bytes.Length);
+			}
+			dbbytes[i] = textAsset.bytes;
+		}
+		ThreadDB_Start();
+	}
+
+	private void SetInBattleView(bool flag)
+	{
+		bInBattleView = flag;
+	}
+
+	protected override void PostInit()
+	{
+	}
+
+	private void _PostInit()
+	{
+	}
+
+	private void LoadDB_End()
+	{
+		LoadScreen.init_quote();
+		ref Color reference = ref __BaseUI._clrQualitys[0];
+		reference = new Color(1f, 1f, 1f, 1f);
+		__BaseUI._clrQualityStrings[0] = "#c=FFFFFF";
+		Hashtable templates = Global.getTemplates("item_quality");
+		foreach (DictionaryEntry item in templates)
+		{
+			_item_quality item_quality = item.Value as _item_quality;
+			ref Color reference2 = ref __BaseUI._clrQualitys[item_quality.id];
+			reference2 = Global.ParseColor(item_quality.color);
+			__BaseUI._clrQualityStrings[item_quality.id] = "#c=" + item_quality.color;
+		}
+		Equipment._clrForgeLevel = new Color[5]
+		{
+			__BaseUI._clrQualitys[2],
+			__BaseUI._clrQualitys[3],
+			__BaseUI._clrQualitys[4],
+			__BaseUI._clrQualitys[5],
+			__BaseUI._clrQualitys[5]
+		};
+		Equipment._clrForgeRank = new Color[5]
+		{
+			__BaseUI._clrQualitys[4],
+			__BaseUI._clrQualitys[4],
+			__BaseUI._clrQualitys[5],
+			__BaseUI._clrQualitys[5],
+			__BaseUI._clrQualitys[5]
+		};
+		BaseAsset.was.RemoveAssets("db_template", ToString());
+		if (bInBattleView)
+		{
+			GameObject gameObject = GameObject.Find("/BattleView");
+			if (gameObject != null && gameObject.GetComponent<BattleViewFromURL>() != null)
+			{
+				gameObject.GetComponent<BattleViewFromURL>().StartLoadingBattle();
+			}
+		}
+		else
+		{
+			GameObject.Find("Login/LoginUI").GetComponent<LoginUI>().cs_playerinfo();
+		}
+		Hide();
+	}
+
+	private static void loading_db()
+	{
+		LoadScreen.waitdb = true;
+		LoadScreen.db_percent = 0f;
+		try
+		{
+			DBTSerializer1 dBTSerializer = new DBTSerializer1();
+			MemoryStream memoryStream = new MemoryStream(dbbytes[1]);
+			if (memoryStream != null)
+			{
+				DBProtoLoader._dts1 = (db_templates1)dBTSerializer.Deserialize(memoryStream, null, typeof(db_templates1));
+				memoryStream.Close();
+			}
+			DBTSerializer2 dBTSerializer2 = new DBTSerializer2();
+			MemoryStream memoryStream2 = new MemoryStream(dbbytes[2]);
+			if (memoryStream2 != null)
+			{
+				DBProtoLoader._dts2 = (db_templates2)dBTSerializer2.Deserialize(memoryStream2, null, typeof(db_templates2));
+				memoryStream2.Close();
+			}
+			DBTSerializer3 dBTSerializer3 = new DBTSerializer3();
+			MemoryStream memoryStream3 = new MemoryStream(dbbytes[3]);
+			if (memoryStream3 != null)
+			{
+				DBProtoLoader._dts3 = (db_templates3)dBTSerializer3.Deserialize(memoryStream3, null, typeof(db_templates3));
+				memoryStream3.Close();
+			}
+			DBProtoLoader.proto_2_db(out db_loader.Global);
+			db_loader.post_load();
+			DBProtoLoader._dts1 = null;
+			DBProtoLoader._dts2 = null;
+			DBProtoLoader._dts3 = null;
+			GC.Collect();
+		}
+		catch (Exception ex)
+		{
+			Logger.Log(ex.Message);
+			return;
+		}
+		waitdb_end = true;
+		Logger.Log("Global count is " + db_loader.Global.Count, bTime: true);
+	}
+
+	private void ThreadDB_Start()
+	{
+		Thread thread = new Thread(loading_db);
+		thread.Name = "LoadingDB";
+		thread.Start();
+	}
+}

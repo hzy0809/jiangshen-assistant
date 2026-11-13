@@ -1,0 +1,1157 @@
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class BattleUI : BaseUI
+{
+	private class PktBattleEnd
+	{
+		public SCBattleEnd_0x408 pkt;
+	}
+
+	public enum TopUIMode
+	{
+		Normal,
+		Woodwar
+	}
+
+	public delegate bool delegate_UserOverride();
+
+	public delegate void battle_end();
+
+	public delegate void delegate_ResultFunc();
+
+	private int m_battleLevel;
+
+	private RootMessenger m_prevUI;
+
+	private RootMessenger m_oldUI;
+
+	private BattleReportInterpreter2 interpreter;
+
+	private BattleTopUI top_ui;
+
+	private BattleSpiritTopUI spirit_top_ui;
+
+	private BattleWoodwarTopUI wood_top_ui;
+
+	private delegate_UserOverride delegateShowResultBtn;
+
+	private static string[] battle_param_name;
+
+	private static string[] battle_param_tip = new string[18]
+	{
+		"spec_strength", "spec_leadership", "spec_power", "battle_score", "spec_hp", "spec_attack", "spec_defence", "spec_spell", "spec_hit", "spec_dodge",
+		"spec_crit", "spec_crit_reduce", "spec_block", "spec_counter", "spec_heroic", "spec_resilience", "spec_fixeddamage", "spec_fixedprotection"
+	};
+
+	private static int[] battle_param_value = new int[18];
+
+	private bool bToggleDebugParam;
+
+	private bool bShowLeftParam;
+
+	private bool bShowRightParam;
+
+	private int currentLeftParamIndex;
+
+	private int currentRightParamIndex;
+
+	private GUIStyle paramLegionNameStyle = new GUIStyle();
+
+	private GUIStyle ui_zi_jl = new GUIStyle();
+
+	private GUIStyle ui_di_husong = new GUIStyle();
+
+	private GUIStyle ui_zi_srsd = new GUIStyle();
+
+	private GUIStyle ui_zi_gjxs = new GUIStyle();
+
+	private GUIStyle ui_zi_ldhd = new GUIStyle();
+
+	private GUIStyle ui_zi_qb = new GUIStyle();
+
+	private GUIStyle ui_zi_sh = new GUIStyle();
+
+	public int m_playerdamage;
+
+	private readonly string showEffectKey = "battle_show_effect";
+
+	private readonly string showHpKey = "battle_show_hp";
+
+	private readonly string showSpiritKey = "battle_show_spirit";
+
+	private battle_end m_battle_end;
+
+	private ulong m_reportid;
+
+	private bool m_show_defender_result;
+
+	private bool m_is_cross;
+
+	private bool m_use_crossid;
+
+	private uint m_crossid;
+
+	private bool m_battle_view_ui;
+
+	public float defaultTurnWaitSpan = 0.2f;
+
+	private bool bDoubleSpeed;
+
+	private bool bBattle_fighting;
+
+	private bool bNeedWaitForBattleEnd;
+
+	private bool bUseBattleSurrender = true;
+
+	private bool bUseBattleEnd;
+
+	private bool bBattle_surrended;
+
+	private bool bBattle_started;
+
+	private bool bSendBattleEnd = true;
+
+	private PktBattleEnd m_pktBattleEnd;
+
+	public ushort idcampaign;
+
+	public byte idtroop;
+
+	private bool bShowHpBar;
+
+	private GUIStyle bgStyle = new GUIStyle();
+
+	private _ButtonStyle resultBtn = new _ButtonStyle();
+
+	private _ButtonStyle surrenderBtn = new _ButtonStyle();
+
+	private GUIStyle styleHideHpBar = new GUIStyle();
+
+	private GUIStyle styleHideEffect = new GUIStyle();
+
+	private GUIStyle styleHideSpirit = new GUIStyle();
+
+	private GUIStyle styleViewParam = new GUIStyle();
+
+	private GUIStyle skillBannerStyle = new GUIStyle();
+
+	private GUIStyle skillBannerTextStyle = new GUIStyle();
+
+	private Texture2D tex_button_di;
+
+	private float startupTime;
+
+	private enumBattleViewType m_viewType = enumBattleViewType.viewDefault;
+
+	private bool m_bViewAll;
+
+	private int m_attacker_num;
+
+	private int m_defender_num;
+
+	private int m_attacker_lose_num;
+
+	private int m_defender_lose_num;
+
+	private Vector2 left_info_scroll_pos = Vector2.zero;
+
+	private Vector2 right_info_scroll_pos = Vector2.zero;
+
+	public __BaseUI m_parentUI;
+
+	private float m_BattleLength;
+
+	public static bool require_loading = false;
+
+	private delegate_ResultFunc resultFunc;
+
+	private bool bResult_opened;
+
+	public bool BattleFighting => bBattle_fighting;
+
+	public enumBattleViewType ViewType
+	{
+		get
+		{
+			return m_viewType;
+		}
+		set
+		{
+			m_viewType = value;
+		}
+	}
+
+	public BattleReport.BattleType BattleType => interpreter.packet.type;
+
+	public int BattleResultLevel => m_battleLevel;
+
+	public bool IsSurrended => bBattle_surrended;
+
+	public ulong ReportID => m_reportid;
+
+	public bool IsCrossServer => m_is_cross;
+
+	public bool UseCrossServerID => m_use_crossid;
+
+	public uint CrossServerID => m_crossid;
+
+	public bool InvertDisplaySide => m_show_defender_result;
+
+	public bool ArmyBehaviourCreated => interpreter.getArmyBehaviour(0) != null && interpreter.getArmyBehaviour(1) != null;
+
+	public void setClose(delegate_OnClose onClose)
+	{
+		OnClose = onClose;
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		interpreter = new BattleReportInterpreter2(this, base.gameObject);
+		top_ui = GetComponent<BattleTopUI>();
+		spirit_top_ui = GetComponent<BattleSpiritTopUI>();
+		wood_top_ui = GetComponent<BattleWoodwarTopUI>();
+		base.Start();
+	}
+
+	private void Update()
+	{
+		fight();
+	}
+
+	private void LateUpdate()
+	{
+		interpreter.LateUpdate();
+	}
+
+	private void AccumulateCameraShakeVertical(float v)
+	{
+		interpreter.AccumulateCameraShakeVertical(v);
+	}
+
+	private void AccumulateCameraShakeHorizontal(float v)
+	{
+		interpreter.AccumulateCameraShakeHorizontal(v);
+	}
+
+	protected override void ResourceLoadFailed(bool bOK, object[] objs)
+	{
+		base.ResourceLoadFailed(bOK, objs);
+		RootMessenger prevUI = m_prevUI;
+		if (prevUI != null)
+		{
+			__BaseUI.GetBattleResultUI().m_battleLevel = 0;
+			prevUI.gameObject.SetActiveRecursively(state: true);
+			prevUI.ToEnable();
+			prevUI.BroadcastMessage("PrepareLoading", prevUI.LevelID, SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("StartLoading", SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("ResetRendering", SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("MyMouseExit", SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("PostInit", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Announce;
+		__BaseUI.my_enabled = IsEnable();
+		GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, __BaseUI._frame4Style);
+		GUI.Label(new Rect(0f, 0f, Screen.width, Screen.height), string.Empty, bgStyle);
+		__BaseUI.Box(__BaseUI._rectRB(371f, 78f, 351f, 61f), tex_button_di);
+		bool flag = GUI.Toggle(__BaseUI._rectRB(120f, 60f, 80f, 22f), !interpreter.ShowEffect, string.Empty, styleHideEffect);
+		if (flag != !interpreter.ShowEffect)
+		{
+			interpreter.ShowEffect = !interpreter.ShowEffect;
+			PlayerPrefs.SetInt(showEffectKey, interpreter.ShowEffect ? 1 : 0);
+		}
+		bool flag2 = GUI.Toggle(__BaseUI._rectRB(210f, 60f, 80f, 22f), !bShowHpBar, string.Empty, styleHideHpBar);
+		if (flag2 != !bShowHpBar)
+		{
+			bShowHpBar = !bShowHpBar;
+			PlayerPrefs.SetInt(showHpKey, bShowHpBar ? 1 : 0);
+			BroadcastMessage("SwitchDisplayMode", bShowHpBar);
+		}
+		int num = 280;
+		if (interpreter.packet.left_army.beast != null || interpreter.packet.right_army.beast != null)
+		{
+			bool flag3 = GUI.Toggle(__BaseUI._rectRB(num + 20, 60f, 80f, 22f), !interpreter.ShowSpiritAnim, string.Empty, styleHideSpirit);
+			if (flag3 != !interpreter.ShowSpiritAnim)
+			{
+				interpreter.ShowSpiritAnim = !interpreter.ShowSpiritAnim;
+				PlayerPrefs.SetInt(showSpiritKey, interpreter.ShowSpiritAnim ? 1 : 0);
+			}
+			num += 90;
+		}
+		if (bNeedWaitForBattleEnd && bUseBattleSurrender && !showResultBtn() && (Global.character_.gm || Time.realtimeSinceStartup - startupTime > 10f))
+		{
+			if (surrenderBtn.Button(bBtn: true, __BaseUI._rectRB(num, 85f, 72f, 72f), string.Empty))
+			{
+				__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20086u), __BaseUI.load_str(20087u), null, ConfirmSurrender, _bCancel: true);
+			}
+			num += 90;
+		}
+		if (showResultBtn() && resultBtn.Button(bBtn: true, __BaseUI._rectRB(num + 20, 85f, 72f, 72f), string.Empty))
+		{
+			if (!canSkipBattle())
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.load_str(21331u, 1), rmg);
+			}
+			else
+			{
+				bBattle_fighting = false;
+				interpreter.SetArmyToFinalState();
+				if (bUseBattleEnd)
+				{
+					if (bSendBattleEnd)
+					{
+						if (idcampaign == 70)
+						{
+							Global.ExternalCall("CampaignComplete", idtroop.ToString());
+						}
+						cs_battle_end_0x408();
+						bSendBattleEnd = false;
+					}
+				}
+				else if (m_pktBattleEnd != null)
+				{
+					BattleEnd(m_pktBattleEnd.pkt);
+				}
+			}
+		}
+		if (!bBattle_fighting && bBattle_started && (!bNeedWaitForBattleEnd || !bUseBattleEnd) && (!interpreter.isFinished || interpreter.MainQueueFinished))
+		{
+			OpenResultWindow();
+		}
+		if (Global.character_.gm)
+		{
+			if (bToggleDebugParam = GUI.Toggle(new Rect(0f, 450f, 50f, 20f), bToggleDebugParam, "Param"))
+			{
+				drawDebugParam();
+			}
+			GUI.Label(new Rect(0f, 400f, 200f, 20f), "Time remain " + (int)m_BattleLength, __BaseUI._textLeft);
+			__BaseUI.Label(new Rect(0f, 600f, 20000f, 20f), "player_damage: " + m_playerdamage, __BaseUI._textLeft, __BaseUI._clrRed, 16);
+		}
+		BattleReport.ArmyInfo armyInfo = ((!m_show_defender_result) ? interpreter.packet.left_army : interpreter.packet.right_army);
+		BattleReport.ArmyInfo armyInfo2 = ((!m_show_defender_result) ? interpreter.packet.right_army : interpreter.packet.left_army);
+		if (m_viewType == enumBattleViewType.viewReport && !armyInfo.npc && (bShowLeftParam = GUI.Toggle(__BaseUI._rectCT(134f, 80f, 124f, 30f), bShowLeftParam, string.Empty, styleViewParam)))
+		{
+			drawBattleParam(__BaseUI._rectCT(360f, 105f, 350f, 490f), armyInfo, ref currentLeftParamIndex);
+		}
+		if (m_viewType == enumBattleViewType.viewReport && !armyInfo2.npc && (bShowRightParam = GUI.Toggle(__BaseUI._rectCT(-10f, 80f, 124f, 30f), bShowRightParam, string.Empty, styleViewParam)))
+		{
+			drawBattleParam(__BaseUI._rectCT(-10f, 105f, 350f, 490f), armyInfo2, ref currentRightParamIndex);
+		}
+		interpreter.drawBanners(skillBannerStyle, skillBannerTextStyle);
+		drawTooltips();
+		__BaseUI.my_enabled = true;
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip.Contains("property"))
+		{
+			string text = tip.Replace("property", "tip_");
+			if (text != string.Empty)
+			{
+				text = __BaseUI.get_string(text);
+				tooltipUI.ShowTooltipCommon2(text, string.Empty, 250);
+			}
+		}
+		else if (tip != null)
+		{
+			tooltipUI.ShowTooltipContent(string.Empty, tip, 500, 14);
+		}
+	}
+
+	private void ConfirmSurrender(bool bOK, object[] objs)
+	{
+		BaseAsset.lds.GetCurUI().ToEnable();
+		if (bOK)
+		{
+			cs_battle_surrender_0x407();
+		}
+	}
+
+	public void setShowResultBtnOverride(delegate_UserOverride func)
+	{
+		delegateShowResultBtn = func;
+	}
+
+	private bool showResultBtn()
+	{
+		if (delegateShowResultBtn != null && !delegateShowResultBtn())
+		{
+			return false;
+		}
+		return Global.character_.gm || (m_viewType == enumBattleViewType.viewDefault && Time.realtimeSinceStartup - startupTime > 1f) || m_viewType == enumBattleViewType.viewReport || (m_viewType == enumBattleViewType.viewFull && m_bViewAll) || (m_viewType == enumBattleViewType.viewVipSkip && (Global.character_.my_vip_template.skip_normal_battle || Global.character_.isFromOldSrv || m_bViewAll)) || interpreter.PlayedTurnCount > 10;
+	}
+
+	private bool canSkipBattle()
+	{
+		return Global.character_.gm || (m_viewType != enumBattleViewType.viewVipSkip && m_viewType != enumBattleViewType.viewFull) || m_bViewAll || interpreter.PlayedTurnCount > 10 || Global.character_.my_vip_template.skip_normal_battle;
+	}
+
+	private void drawBattleParam(Rect rc, BattleReport.ArmyInfo army_info, ref int current_index)
+	{
+		__BaseUI.BeginGroup(rc);
+		GUI.Box(__BaseUI._rect(0f, 0f, rc.width, rc.height), string.Empty, __BaseUI._bgStyle);
+		__BaseUI._box15Style.alignment = TextAnchor.MiddleCenter;
+		__BaseUI.Label(__BaseUI._rectCT(80f, 20f, 160f, 36f), army_info.name, __BaseUI._box15Style, Color.white);
+		for (int i = 0; i < army_info.legions.Count; i++)
+		{
+			if (GUI.Toggle(__BaseUI._rect(20f, 56 + i * 30, 140f, 30f), i == current_index, army_info.legions[i].name, paramLegionNameStyle))
+			{
+				current_index = i;
+			}
+		}
+		GUI.Box(__BaseUI._rect(160f, 56f, rc.width - 20f - 160f, 20 * (battle_param_tip.Length + 1) + 40), string.Empty, __BaseUI._box13Style);
+		for (int j = 0; j < battle_param_tip.Length; j++)
+		{
+			GUI.Box(__BaseUI._rect(180f, 96 + j * 20, rc.width - 20f - 160f - 40f, 20f), string.Empty, ShareUI.commonframe1);
+		}
+		__BaseUI.Label(__BaseUI._rect(160f, 66f, rc.width - 20f - 160f, 20f), __BaseUI.load_str(20088u, army_info.legions[current_index].level.ToString()), __BaseUI._textCenter, __BaseUI._clrCyanLight);
+		for (int k = 0; k < battle_param_tip.Length; k++)
+		{
+			__BaseUI.Label(__BaseUI._rect(185f, 76 + 20 * (k + 1), rc.width - 20f - 160f - 40f, 20f), battle_param_name[k], __BaseUI._textNLeft, __BaseUI._clrYellow);
+		}
+		BattleReport.ArmyInfo.LegionInfo.InternalParam internal_param = army_info.legions[current_index].internal_param;
+		battle_param_value[0] = internal_param.strength;
+		battle_param_value[1] = internal_param.leadership;
+		battle_param_value[2] = internal_param.power;
+		battle_param_value[3] = ((internal_param.battle_score == 0) ? ((int)((internal_param.hp + internal_param.attack + internal_param.defense + internal_param.spell) * (1f + (float)(internal_param.strength + internal_param.leadership + internal_param.power + internal_param.hit + internal_param.dodge + internal_param.crit + internal_param.crit_reduce + internal_param.damage_mod + internal_param.protection_mod) / 100f))) : ((int)internal_param.battle_score));
+		battle_param_value[4] = (int)internal_param.hp;
+		battle_param_value[5] = (int)internal_param.attack;
+		battle_param_value[6] = (int)internal_param.defense;
+		battle_param_value[7] = (int)internal_param.spell;
+		battle_param_value[8] = internal_param.hit;
+		battle_param_value[9] = internal_param.dodge;
+		battle_param_value[10] = internal_param.crit;
+		battle_param_value[11] = internal_param.crit_reduce;
+		battle_param_value[12] = internal_param.block;
+		battle_param_value[13] = internal_param.counter;
+		battle_param_value[14] = internal_param.heroic;
+		battle_param_value[15] = internal_param.resilience;
+		battle_param_value[16] = (int)internal_param.fixed_damage;
+		battle_param_value[17] = (int)internal_param.fixed_protection;
+		for (int l = 0; l < battle_param_value.Length; l++)
+		{
+			__BaseUI.Label(__BaseUI._rect(185f, 76 + 20 * (l + 1), rc.width - 20f - 160f - 40f - 10f, 20f), new GUIContent(battle_param_value[l].ToString(), "property" + battle_param_tip[l]), __BaseUI._textNRight, Color.white);
+		}
+		__BaseUI.EndGroup();
+	}
+
+	public void cs_save_report(ulong id, bool save)
+	{
+		Disable();
+		CSBattleReportSave_0x261 cSBattleReportSave_0x = new CSBattleReportSave_0x261();
+		cSBattleReportSave_0x.idbattle_report = id;
+		cSBattleReportSave_0x.saved = save;
+		RootUI.m_client.Send(609, cSBattleReportSave_0x, sc_save_report);
+	}
+
+	private void sc_save_report(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBattleReportSave_0x261 sCBattleReportSave_0x = JSProtoBuf.Serializer.Deserialize<SCBattleReportSave_0x261>(stream);
+			if (sCBattleReportSave_0x.result == 0)
+			{
+				if (sCBattleReportSave_0x.saved)
+				{
+					for (int i = 0; i < Global.character_.recent_battle_report.Count; i++)
+					{
+						if (Global.character_.recent_battle_report[i].idbattle_report == sCBattleReportSave_0x.idbattle_report)
+						{
+							Global.character_.recent_battle_report[i].saved = true;
+							Global.character_.saved_battle_report.Insert(0, Global.character_.recent_battle_report[i]);
+						}
+					}
+				}
+				else
+				{
+					for (int j = 0; j < Global.character_.saved_battle_report.Count; j++)
+					{
+						if (Global.character_.saved_battle_report[j].idbattle_report == sCBattleReportSave_0x.idbattle_report)
+						{
+							Global.character_.saved_battle_report[j].saved = false;
+							Global.character_.saved_battle_report.RemoveAt(j);
+							break;
+						}
+					}
+				}
+			}
+		}
+		Enable();
+	}
+
+	private void ResetPrevUI()
+	{
+		if (m_prevUI != null)
+		{
+			m_prevUI.gameObject.SetActiveRecursively(state: true);
+			m_prevUI.ToEnable();
+			m_prevUI.BroadcastMessage("ResetRendering", SendMessageOptions.DontRequireReceiver);
+			m_prevUI.BroadcastMessage("MyMouseExit", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	public void Replay()
+	{
+		InitTroop();
+		bResult_opened = false;
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		if (top_ui.first_visible)
+		{
+			top_ui.MyLoading();
+		}
+		if (spirit_top_ui.first_visible)
+		{
+			spirit_top_ui.MyLoading();
+		}
+		if (wood_top_ui != null && wood_top_ui.first_visible)
+		{
+			wood_top_ui.MyLoading();
+		}
+		CollectingStart();
+	}
+
+	private void InitUIResource()
+	{
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_main");
+		bgStyle.normal.background = asset.Load("ui_zhu_bar1") as Texture2D;
+		bgStyle.border = new RectOffset(30, 30, 30, 30);
+		AssetBundle asset2 = BaseAsset.was.GetAsset("ui_battle");
+		resultBtn.make(asset2, "button_jieguo");
+		surrenderBtn.make(asset2, "button_fangqi");
+		styleHideHpBar.normal.background = asset2.Load("button_yincangxuetiao_normal") as Texture2D;
+		styleHideHpBar.hover.background = asset2.Load("button_yincangxuetiao_hover") as Texture2D;
+		styleHideHpBar.active.background = asset2.Load("button_yincangxuetiao_down") as Texture2D;
+		styleHideHpBar.onNormal.background = asset2.Load("button_yincangxuetiao_down") as Texture2D;
+		styleHideHpBar.onHover.background = asset2.Load("button_yincangxuetiao_down") as Texture2D;
+		styleHideHpBar.onActive.background = asset2.Load("button_yincangxuetiao_down") as Texture2D;
+		styleHideEffect.normal.background = asset2.Load("button_guanxiao_normal") as Texture2D;
+		styleHideEffect.hover.background = asset2.Load("button_guanxiao_hover") as Texture2D;
+		styleHideEffect.active.background = asset2.Load("button_guanxiao_down") as Texture2D;
+		styleHideEffect.onNormal.background = asset2.Load("button_guanxiao_down") as Texture2D;
+		styleHideEffect.onHover.background = asset2.Load("button_guanxiao_down") as Texture2D;
+		styleHideEffect.onActive.background = asset2.Load("button_guanxiao_down") as Texture2D;
+		styleHideSpirit.normal.background = asset2.Load("button_yincanglingshou_normal") as Texture2D;
+		styleHideSpirit.hover.background = asset2.Load("button_yincanglingshou_hover") as Texture2D;
+		styleHideSpirit.active.background = asset2.Load("button_yincanglingshou_down") as Texture2D;
+		styleHideSpirit.onNormal.background = asset2.Load("button_yincanglingshou_down") as Texture2D;
+		styleHideSpirit.onHover.background = asset2.Load("button_yincanglingshou_down") as Texture2D;
+		styleHideSpirit.onActive.background = asset2.Load("button_yincanglingshou_down") as Texture2D;
+		styleViewParam.normal.background = asset2.Load("button_chakan_normal") as Texture2D;
+		styleViewParam.hover.background = asset2.Load("button_chakan_hover") as Texture2D;
+		styleViewParam.active.background = asset2.Load("button_chakan_down") as Texture2D;
+		styleViewParam.onActive.background = asset2.Load("button_chakan_down") as Texture2D;
+		styleViewParam.onHover.background = asset2.Load("button_chakan_down") as Texture2D;
+		styleViewParam.onNormal.background = asset2.Load("button_chakan_down") as Texture2D;
+		skillBannerStyle.normal.background = asset2.Load("ui_zhandou_zhanji") as Texture2D;
+		skillBannerStyle.fixedWidth = 498f;
+		skillBannerStyle.fixedHeight = 53f;
+		skillBannerTextStyle.fontSize = 32;
+		skillBannerTextStyle.fontStyle = (__BaseUI._isunity3_5 ? FontStyle.Bold : FontStyle.Normal);
+		skillBannerTextStyle.alignment = TextAnchor.MiddleCenter;
+		skillBannerTextStyle.normal.textColor = new Color(1f, 0.8f, 0.4f, 1f);
+		skillBannerTextStyle.fixedWidth = 498f;
+		skillBannerTextStyle.fixedHeight = 53f;
+		if (ArmyBehaviour.CriticalEffectTextures == null)
+		{
+			ArmyBehaviour.CriticalEffectTextures = new Texture2D[3];
+			for (int i = 0; i < 3; i++)
+			{
+				ArmyBehaviour.CriticalEffectTextures[i] = asset2.Load("lightred" + (i + 1)) as Texture2D;
+			}
+		}
+		if (ArmyBehaviour.ExecutionEffectTextures == null)
+		{
+			ArmyBehaviour.ExecutionEffectTextures = new Texture2D[3];
+			for (int j = 0; j < 3; j++)
+			{
+				ArmyBehaviour.ExecutionEffectTextures[j] = asset2.Load("zhansha" + (j + 1)) as Texture2D;
+			}
+		}
+		tex_button_di = asset2.Load("ui_di1") as Texture2D;
+		ui_zi_jl.normal.background = asset2.Load("ui_zi_jl") as Texture2D;
+		ui_di_husong.normal.background = asset2.Load("ui_di_husong") as Texture2D;
+		ui_zi_srsd.normal.background = asset2.Load("ui_zi_srsd") as Texture2D;
+		ui_zi_gjxs.normal.background = asset2.Load("ui_zi_gjxs") as Texture2D;
+		ui_zi_ldhd.normal.background = asset2.Load("ui_zi_ldhd") as Texture2D;
+		ui_zi_qb.normal.background = asset2.Load("ui_zi_qb") as Texture2D;
+		ui_zi_sh.normal.background = asset2.Load("ui_zi_sh") as Texture2D;
+		paramLegionNameStyle.normal.background = asset2.Load("button_di_normal") as Texture2D;
+		paramLegionNameStyle.active.background = asset2.Load("button_di_down") as Texture2D;
+		paramLegionNameStyle.hover.background = asset2.Load("button_di_hover") as Texture2D;
+		paramLegionNameStyle.onHover.background = asset2.Load("button_di_down") as Texture2D;
+		paramLegionNameStyle.onActive.background = asset2.Load("button_di_down") as Texture2D;
+		paramLegionNameStyle.onNormal.background = asset2.Load("button_di_down") as Texture2D;
+		paramLegionNameStyle.alignment = TextAnchor.MiddleCenter;
+		paramLegionNameStyle.normal.textColor = __BaseUI._clrGreen;
+		paramLegionNameStyle.active.textColor = __BaseUI._clrGreen;
+		paramLegionNameStyle.hover.textColor = __BaseUI._clrGreen;
+		paramLegionNameStyle.onHover.textColor = __BaseUI._clrGreen;
+		paramLegionNameStyle.onActive.textColor = __BaseUI._clrGreen;
+		paramLegionNameStyle.onNormal.textColor = __BaseUI._clrGreen;
+	}
+
+	public void setpdamage(int Point)
+	{
+		m_playerdamage += Point;
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		m_playerdamage = 0;
+		if (idcampaign == 70)
+		{
+			Global.ExternalCall("CampaignStart", idtroop.ToString());
+		}
+		interpreter.ShowEffect = PlayerPrefs.GetInt(showEffectKey, 1) > 0;
+		bShowHpBar = PlayerPrefs.GetInt(showHpKey, 1) > 0;
+		interpreter.ShowSpiritAnim = PlayerPrefs.GetInt(showSpiritKey, 1) > 0;
+		InitTroop();
+		if (m_prevUI != null)
+		{
+			m_prevUI.BroadcastMessage("MyMouseExit", SendMessageOptions.DontRequireReceiver);
+			m_prevUI.gameObject.SetActiveRecursively(state: false);
+		}
+		SendMessage("ArmyUIShow", SendMessageOptions.DontRequireReceiver);
+		InitUIResource();
+		battle_param_name = new string[battle_param_tip.Length];
+		for (int i = 0; i < battle_param_tip.Length; i++)
+		{
+			battle_param_name[i] = __BaseUI.get_string(battle_param_tip[i]);
+		}
+		startupTime = Time.realtimeSinceStartup;
+		if (top_ui.first_visible)
+		{
+			top_ui.MyShow();
+		}
+		if (spirit_top_ui.first_visible)
+		{
+			spirit_top_ui.MyShow();
+		}
+		if (wood_top_ui != null && wood_top_ui.first_visible)
+		{
+			wood_top_ui.MyShow();
+		}
+		BaseAsset.lds.Hide();
+		Visible();
+		rmg.ToEnable();
+	}
+
+	public override void Destroy()
+	{
+		interpreter.Destroy();
+		base.Destroy();
+		Time.timeScale = 1f;
+		if (m_oldUI != null)
+		{
+			BaseAsset.lds.SetOldUI(m_oldUI);
+		}
+		if (m_battle_end != null)
+		{
+			battle_end battle_end = m_battle_end;
+			m_battle_end = null;
+			battle_end();
+		}
+	}
+
+	public void setBattleViewUI(bool b)
+	{
+		if (GetComponent<BattleNormalResultUI>() != null)
+		{
+			GetComponent<BattleNormalResultUI>().setBattleViewUI(b);
+		}
+	}
+
+	public void setPrevUI(RootMessenger prevUI)
+	{
+		m_prevUI = prevUI;
+		m_oldUI = BaseAsset.lds.GetOldUI();
+		BaseAsset.lds.SetOldUI(null);
+	}
+
+	public void setCrossReport(ulong id, uint crossid, byte[] report_string, bool isopponent)
+	{
+		setReport(report_string, wait_for_end: false, isopponent);
+		m_reportid = id;
+		m_is_cross = true;
+		m_crossid = crossid;
+		m_use_crossid = true;
+	}
+
+	public void setCrossReport(ulong id, byte[] report_string, bool isopponent)
+	{
+		setReport(report_string, wait_for_end: false, isopponent);
+		m_reportid = id;
+		m_is_cross = true;
+		m_use_crossid = false;
+	}
+
+	public void setReport(ulong id, byte[] report_string, bool isopponent)
+	{
+		setReport(report_string, wait_for_end: false, isopponent);
+		m_reportid = id;
+		m_is_cross = false;
+	}
+
+	public void setReport(byte[] report_string, bool isopponent)
+	{
+		setReport(report_string, wait_for_end: false, isopponent);
+		m_reportid = 0uL;
+		m_is_cross = false;
+	}
+
+	public void setReport(byte[] report_string, bool wait_for_end, bool isopponent)
+	{
+		setReport(report_string, wait_for_end, wait_for_end, null, isopponent);
+	}
+
+	public void setReport(byte[] report_string, bool wait_for_end, bool use_battle_end, __BaseUI parentUI, bool isopponent)
+	{
+		setReport(report_string, wait_for_end, use_battle_end, use_battle_surrender: true, parentUI, isopponent);
+	}
+
+	public void setReport(byte[] report_string, bool wait_for_end, bool use_battle_end, bool use_battle_surrender, __BaseUI parentUI, bool isopponent)
+	{
+		m_reportid = 0uL;
+		Logger.Log("setReport");
+		bBattle_fighting = false;
+		bNeedWaitForBattleEnd = wait_for_end;
+		bUseBattleEnd = use_battle_end;
+		bUseBattleSurrender = use_battle_surrender;
+		bSendBattleEnd = true;
+		m_parentUI = parentUI;
+		m_show_defender_result = isopponent;
+		interpreter.setReport(report_string);
+		delegateShowResultBtn = null;
+		resultFunc = GetComponent<BattleNormalResultUI>().PrepareOpen;
+		SetTopMode(TopUIMode.Normal);
+		bResult_opened = false;
+		bBattle_started = false;
+		interpreter.getArmyNum(out m_attacker_num, out m_attacker_lose_num, out m_defender_num, out m_defender_lose_num);
+		interpreter.initBattleAsset(brawl_mode: false);
+		m_battle_end = null;
+		m_bViewAll = false;
+		m_viewType = enumBattleViewType.viewDefault;
+		m_battleLevel = getBattleLevel();
+	}
+
+	public string getDefenderName()
+	{
+		if (m_show_defender_result)
+		{
+			return interpreter.packet.left_army.name;
+		}
+		return interpreter.packet.right_army.name;
+	}
+
+	public int getBattleLevel()
+	{
+		int num = 0;
+		switch (interpreter.packet.result_status)
+		{
+		case BattleReport.ResultStatus.LEFT_WIN:
+			num = (int)(5f * (float)m_attacker_lose_num / (float)m_attacker_num);
+			if (num > 4)
+			{
+				num = 4;
+			}
+			if (num < 0)
+			{
+				num = 0;
+			}
+			if (!m_show_defender_result)
+			{
+				num = 4 - num + 6;
+			}
+			break;
+		case BattleReport.ResultStatus.DRAW:
+			num = 5;
+			break;
+		case BattleReport.ResultStatus.LEFT_LOSE:
+			num = (int)(5f * (float)m_defender_lose_num / (float)m_defender_num);
+			if (num > 4)
+			{
+				num = 4;
+			}
+			if (num < 0)
+			{
+				num = 0;
+			}
+			if (m_show_defender_result)
+			{
+				num = 4 - num + 6;
+			}
+			break;
+		}
+		return num;
+	}
+
+	public int getBattleRank()
+	{
+		if (m_battleLevel > 8)
+		{
+			return 3;
+		}
+		if (m_battleLevel > 7)
+		{
+			return 2;
+		}
+		if (m_battleLevel > 5)
+		{
+			return 1;
+		}
+		return 0;
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		interpreter.CheckAssetLoaded(AssetName);
+	}
+
+	protected void InitTroop()
+	{
+		m_BattleLength = interpreter.packet.battle_length;
+		Time.timeScale = ((!bDoubleSpeed) ? 1f : 3f);
+		interpreter.InitTroop(m_show_defender_result);
+		bBattle_fighting = true;
+		bBattle_surrended = false;
+		bBattle_started = true;
+		BroadcastMessage("SwitchDisplayMode", bShowHpBar, SendMessageOptions.DontRequireReceiver);
+	}
+
+	private void fight()
+	{
+		if (bBattle_fighting || !interpreter.allLegionFinished() || !interpreter.MainQueueFinished)
+		{
+			m_BattleLength -= Time.deltaTime;
+			bBattle_fighting = interpreter.fight();
+			if (!bBattle_fighting)
+			{
+				m_bViewAll = true;
+				if (bUseBattleEnd)
+				{
+					if (bSendBattleEnd)
+					{
+						if (idcampaign == 70)
+						{
+							Global.ExternalCall("CampaignComplete", idtroop.ToString());
+						}
+						cs_battle_end_0x408();
+						bSendBattleEnd = false;
+					}
+				}
+				else if (m_pktBattleEnd != null)
+				{
+					BattleEnd(m_pktBattleEnd.pkt);
+				}
+			}
+		}
+		interpreter.Update();
+	}
+
+	public void newBattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		if (pkt != null)
+		{
+			m_pktBattleEnd = new PktBattleEnd();
+			m_pktBattleEnd.pkt = pkt;
+		}
+		else
+		{
+			m_pktBattleEnd = null;
+		}
+	}
+
+	private void drawDebugParam()
+	{
+		GUILayout.BeginArea(__BaseUI._rect(50f, 80f, 100f, 300f));
+		left_info_scroll_pos = GUILayout.BeginScrollView(left_info_scroll_pos);
+		drawDebugLegionParam(interpreter.packet.left_army.legions);
+		GUILayout.EndScrollView();
+		GUILayout.EndArea();
+		GUILayout.BeginArea(__BaseUI._rectR(150f, 80f, 100f, 300f));
+		right_info_scroll_pos = GUILayout.BeginScrollView(right_info_scroll_pos);
+		drawDebugLegionParam(interpreter.packet.right_army.legions);
+		GUILayout.EndScrollView();
+		GUILayout.EndArea();
+	}
+
+	private void drawDebugLegionParam(List<BattleReport.ArmyInfo.LegionInfo> info_list)
+	{
+		GUILayout.BeginVertical();
+		for (int i = 0; i < info_list.Count; i++)
+		{
+			if (info_list[i].internal_param != null)
+			{
+				GUILayout.Label(info_list[i].name);
+				GUILayout.Label("勇武:" + info_list[i].internal_param.strength);
+				GUILayout.Label("统帅:" + info_list[i].internal_param.leadership);
+				GUILayout.Label("智力:" + info_list[i].internal_param.power);
+				GUILayout.Label("攻击:" + (info_list[i].internal_param.attack + info_list[i].internal_param.hidden_attack));
+				GUILayout.Label("防御:" + (info_list[i].internal_param.defense + info_list[i].internal_param.hidden_defense));
+				GUILayout.Label("法力:" + (info_list[i].internal_param.spell + info_list[i].internal_param.hidden_spell));
+				GUILayout.Label("兵力:" + info_list[i].internal_param.hp);
+				GUILayout.Label("命中:" + info_list[i].internal_param.hit);
+				GUILayout.Label("躲闪:" + info_list[i].internal_param.dodge);
+				GUILayout.Label("暴击:" + info_list[i].internal_param.crit);
+				GUILayout.Label("减暴:" + info_list[i].internal_param.crit_reduce);
+				GUILayout.Label("格挡:" + info_list[i].internal_param.block);
+				GUILayout.Label("先制:" + info_list[i].internal_param.counter);
+				GUILayout.Label("攻击mod:" + info_list[i].internal_param.damage_mod);
+				GUILayout.Label("防御mod:" + info_list[i].internal_param.protection_mod);
+				GUILayout.Label("固定伤害:" + info_list[i].internal_param.fixed_damage);
+				GUILayout.Label("固定免伤:" + info_list[i].internal_param.fixed_protection);
+				GUILayout.Label("---------");
+			}
+		}
+		GUILayout.EndVertical();
+	}
+
+	private void cs_battle_surrender_0x407()
+	{
+		CSBattleSurrender_0x407 pkt = new CSBattleSurrender_0x407();
+		RootUI.m_client.Send(1031, pkt, sc_battle_surrender_0x407);
+	}
+
+	private void sc_battle_surrender_0x407(Stream stream, object arg)
+	{
+		if (stream == null)
+		{
+			return;
+		}
+		SCBattleSurrender_0x407 sCBattleSurrender_0x = JSProtoBuf.Serializer.Deserialize<SCBattleSurrender_0x407>(stream);
+		__BaseUI.GetBattleResultUI().m_battleLevel = 0;
+		m_battleLevel = 0;
+		m_attacker_lose_num = m_attacker_num;
+		m_defender_lose_num = 0;
+		bNeedWaitForBattleEnd = false;
+		bUseBattleEnd = false;
+		bBattle_fighting = false;
+		bBattle_surrended = true;
+		if (sCBattleSurrender_0x.type == 0)
+		{
+			CampaignUI campaignUI = (CampaignUI)m_parentUI;
+			if (Global.character_.campaigns_[idcampaign].troops_[idtroop].isNewbie == 1)
+			{
+				campaignUI.setBattleGuide(idcampaign, idtroop);
+			}
+			else
+			{
+				campaignUI.setBattleFailed();
+			}
+		}
+		else if (sCBattleSurrender_0x.type != 1 && sCBattleSurrender_0x.type == 6)
+		{
+			battle_exit();
+		}
+		interpreter.SetArmyToFinalState();
+	}
+
+	private void cs_battle_end_0x408()
+	{
+		CSBattleEnd_0x408 pkt = new CSBattleEnd_0x408();
+		RootUI.m_client.Send(1032, pkt, sc_battle_end_0x408);
+	}
+
+	private void BattleEnd(SCBattleEnd_0x408 pkt)
+	{
+		switch (pkt.result)
+		{
+		case 0u:
+			if (pkt.type == 0)
+			{
+				(m_parentUI as CampaignUI).BattleEnd(pkt);
+			}
+			else if (pkt.type == 1)
+			{
+				(m_parentUI as BuildingMonsterScript).BattleEnd(pkt);
+			}
+			else if (pkt.type == 2)
+			{
+				(m_parentUI as TrialLevelUI).BattleEnd(pkt.iswin);
+			}
+			else if (pkt.type == 3)
+			{
+				(m_parentUI as TrialUI).BattleEnd(pkt.iswin);
+			}
+			else if (pkt.type == 4)
+			{
+				(m_parentUI as GraveLevelUI).BattleEnd(pkt);
+			}
+			else if (pkt.type == 5)
+			{
+				(m_parentUI as DivinityUI).BattleEnd(pkt);
+			}
+			else if (pkt.type == 6)
+			{
+				BattleWoodwarResultUI component = GetComponent<BattleWoodwarResultUI>();
+				if ((bool)component)
+				{
+					component.resultStatus = pkt.dummy_challenge_status;
+					component.resultChallengeLevelFinished = pkt.dummy_challenge_level_finished;
+				}
+			}
+			else if (pkt.type == 7)
+			{
+				(m_parentUI as SealMonsterUI).BattleEnd(pkt);
+			}
+			else if (pkt.type == 8)
+			{
+				(m_parentUI as GeneralBookFormationUI).BattleEnd(pkt.iswin);
+			}
+			break;
+		case 1u:
+			__BaseUI.GetMessageBox().setMessage(__BaseUI.load_str(20090u), __BaseUI.get_string("accel_warning"), null);
+			break;
+		}
+		m_reportid = pkt.idbattle_report;
+		bUseBattleEnd = false;
+		bSendBattleEnd = true;
+		bNeedWaitForBattleEnd = false;
+		m_pktBattleEnd = null;
+	}
+
+	private void sc_battle_end_0x408(Stream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCBattleEnd_0x408 pkt = JSProtoBuf.Serializer.Deserialize<SCBattleEnd_0x408>(stream);
+			BattleEnd(pkt);
+		}
+	}
+
+	private bool isContainCard(int id_card)
+	{
+		foreach (BattleReport.ArmyInfo.CardInfo card in interpreter.packet.left_army.cards)
+		{
+			if (card.id == id_card)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void battle_exit()
+	{
+		rmg.ToHide();
+		rmg.ToDisable();
+		RootMessenger prevUI = m_prevUI;
+		if (prevUI != null)
+		{
+			prevUI.gameObject.SetActiveRecursively(state: true);
+			prevUI.ToEnable();
+			prevUI.BroadcastMessage("PrepareLoading", prevUI.LevelID, SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("StartLoading", SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("ResetRendering", SendMessageOptions.DontRequireReceiver);
+			prevUI.BroadcastMessage("MyMouseExit", SendMessageOptions.DontRequireReceiver);
+			Destroy();
+			prevUI.BroadcastMessage("PostInit", SendMessageOptions.DontRequireReceiver);
+		}
+		else
+		{
+			BaseAsset.lds.Visible();
+			Destroy();
+			RootMessenger oldUI = BaseAsset.lds.GetOldUI();
+			BaseAsset.lds.SetOldUI(rmg);
+			GameObject.Find("Root/RootUI").GetComponent<RootUI>().LoadLevel(oldUI.LevelID, rmg);
+		}
+		BaseAsset.lds.SetBattling(bBattling: false);
+		if (OnClose != null)
+		{
+			OnClose();
+			OnClose = null;
+		}
+	}
+
+	public BattleReport.ArmyInfo getArmyInfo(int index)
+	{
+		return (index != 0) ? interpreter.packet.right_army : interpreter.packet.left_army;
+	}
+
+	public ArmyBehaviour getArmyBehaviour(int index)
+	{
+		return interpreter.getArmyBehaviour(index);
+	}
+
+	public int getArmyCurrentNum(int index)
+	{
+		ArmyBehaviour armyBehaviour = interpreter.getArmyBehaviour(index);
+		return (armyBehaviour != null) ? armyBehaviour.GetTotalNum() : 0;
+	}
+
+	public int getArmyTotalNum(int index)
+	{
+		return (index != 0) ? m_defender_num : m_attacker_num;
+	}
+
+	public int getArmyLoseNum(int index)
+	{
+		return (index != 0) ? m_defender_lose_num : m_attacker_lose_num;
+	}
+
+	public SpiritBeastTooltip getSpiritTooltip(int index)
+	{
+		return interpreter.getSpiritTooltip(index);
+	}
+
+	private void OpenResultWindow()
+	{
+		if (!bResult_opened && resultFunc != null)
+		{
+			bResult_opened = true;
+			resultFunc();
+		}
+	}
+
+	public void SetResultFunc(delegate_ResultFunc func)
+	{
+		resultFunc = func;
+	}
+
+	public void SetTopMode(TopUIMode mode)
+	{
+		switch (mode)
+		{
+		case TopUIMode.Normal:
+			top_ui.first_visible = true;
+			spirit_top_ui.first_visible = true;
+			if (wood_top_ui != null)
+			{
+				wood_top_ui.first_visible = false;
+			}
+			break;
+		case TopUIMode.Woodwar:
+			top_ui.first_visible = false;
+			spirit_top_ui.first_visible = true;
+			if (wood_top_ui != null)
+			{
+				wood_top_ui.first_visible = true;
+			}
+			break;
+		}
+	}
+
+	public void SetHandleCallback(BattleReport.GameTurn.Action.ActionType type, BattleReportInterpreter2.HandleCallback c)
+	{
+		interpreter.setCallback(type, c);
+	}
+
+	public void SetNewTurnCallback(BattleReportInterpreter2.NewTurnCallback c)
+	{
+		interpreter.setNewTurnCallback(c);
+	}
+}

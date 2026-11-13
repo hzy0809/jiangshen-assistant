@@ -1,0 +1,46 @@
+{
+  "status": "PASS",
+  "checked_file_count": 8,
+  "checks": [
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Assembly-CSharp.dll",
+      "sha256": "c1c8ebac7ddef4173c873a00774975a5ca366f95b19164c4ca775165eb994911",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\Assembly-CSharp-firstpass.dll",
+      "sha256": "29d8fa2cb55e800ccdf1cdc6c5b274b924ea7d03c989296dfa569731e02a8d87",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\dbdata.dll",
+      "sha256": "d32bb2b6c58b7cafcd4be5cbcdabbdb6a76c7003c0e2a160def80835be412a2d",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\pbdata.dll",
+      "sha256": "905cf19394545e2c4b5d49d994a7d981e13ae38a2a629f7d02329f27c6d2d5ab",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js.exe",
+      "sha256": "5cc05ce27aa4d2fc0474603b4867fb00e3247fa437e459ef36a7075eab4bbc70",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Mono\\mono.dll",
+      "sha256": "51941db23fd29380039924d1a44964fec18ab2a80e72f14410fe0163d2cae500",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\UnityEngine.dll",
+      "sha256": "d479befc03afb0f2071ffcf108847f06a0d560075eb8a76980f0ae929115ed73",
+      "matches": true
+    },
+    {
+      "path": "C:\\Users\\yu\\AppData\\Local\\JiangShen\\pc\\js_Data\\Managed\\mscorlib.dll",
+      "sha256": "3f34c90ab282e8f3546946263087fb5002cf96ef9f412dd4011dab3f0f7cd8a4",
+      "matches": true
+    }
+  ]
+}

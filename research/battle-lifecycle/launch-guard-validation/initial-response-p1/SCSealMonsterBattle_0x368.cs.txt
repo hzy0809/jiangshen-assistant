@@ -1,0 +1,123 @@
+using System;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCSealMonsterBattle_0x368")]
+public class SCSealMonsterBattle_0x368 : IExtensible
+{
+	private uint _result;
+
+	private uint _idtroop;
+
+	private bool _iswin;
+
+	private byte[] _report;
+
+	private uint _exp;
+
+	private uint _buff;
+
+	private uint _cd;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "idtroop", DataFormat = DataFormat.TwosComplement)]
+	public uint idtroop
+	{
+		get
+		{
+			return _idtroop;
+		}
+		set
+		{
+			_idtroop = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "iswin", DataFormat = DataFormat.Default)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = true, Name = "report", DataFormat = DataFormat.Default)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = true, Name = "exp", DataFormat = DataFormat.TwosComplement)]
+	public uint exp
+	{
+		get
+		{
+			return _exp;
+		}
+		set
+		{
+			_exp = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = true, Name = "buff", DataFormat = DataFormat.TwosComplement)]
+	public uint buff
+	{
+		get
+		{
+			return _buff;
+		}
+		set
+		{
+			_buff = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = true, Name = "cd", DataFormat = DataFormat.TwosComplement)]
+	public uint cd
+	{
+		get
+		{
+			return _cd;
+		}
+		set
+		{
+			_cd = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

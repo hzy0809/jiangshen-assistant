@@ -1,0 +1,830 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class ScenarioUI : BaseUI
+{
+	public class newUIBtn
+	{
+		public string name;
+
+		public float width;
+
+		public float height;
+
+		public Texture2D tex;
+
+		public Vector2 curPos;
+
+		public Vector2 targetPos;
+
+		public bool bMovingEnd;
+
+		public newUIBtn(string n)
+		{
+			name = n;
+			width = 0f;
+			height = 0f;
+			tex = null;
+			curPos = Vector2.zero;
+			targetPos = Vector2.zero;
+			bMovingEnd = false;
+		}
+	}
+
+	private GUIStyle bgStyle = new GUIStyle();
+
+	private Texture2D texFrameLeft;
+
+	private Texture2D texFrameRight;
+
+	private GUIStyle centerStyle = new GUIStyle();
+
+	private GUIStyle portraitStyle = new GUIStyle();
+
+	private Texture2D texNext;
+
+	private Texture2D texEnd;
+
+	private _ButtonStyle nextStyle = new _ButtonStyle();
+
+	private _ButtonStyle skipStyle = new _ButtonStyle();
+
+	private GUIStyle nameStyle = new GUIStyle();
+
+	private GUIStyle btnStyle = new GUIStyle();
+
+	private Scenario m_scenario;
+
+	private int m_iSection;
+
+	private bool m_bFirst = true;
+
+	private DateTime m_starttime;
+
+	private double m_time;
+
+	private RootMessenger m_prevUI;
+
+	private bool m_bIngoreTextSpeed;
+
+	private bool m_bSectionEnd;
+
+	private bool m_bNext;
+
+	private bool m_bTrigger;
+
+	private Rect rcSkip = __BaseUI._rectCB(78f, 79f, 157f, 58f);
+
+	private List<newUIBtn> newUIList = new List<newUIBtn>();
+
+	private uint debugId;
+
+	private bool m_bWantNewUI;
+
+	private bool m_bHasNewUI;
+
+	private bool m_bMoving;
+
+	private bool m_showLight;
+
+	private Texture2D texNewUiBg;
+
+	private Texture2D texNewUI;
+
+	private GUIStyle lightSty = new GUIStyle();
+
+	private int newUI_anim;
+
+	private float newUI_alpha = 1f;
+
+	public override void Start()
+	{
+		base.Start();
+	}
+
+	private void Update()
+	{
+		if (!m_bSectionEnd && Input.GetMouseButtonDown(0) && !rcSkip.Contains(new Vector3(Input.mousePosition.x, (float)Screen.height - Input.mousePosition.y, 0f)))
+		{
+			m_bIngoreTextSpeed = true;
+		}
+		if ((m_scenario.sections.Count == 0 || m_bSectionEnd) && Input.GetMouseButtonDown(0) && !m_bHasNewUI && !rcSkip.Contains(new Vector3(Input.mousePosition.x, (float)Screen.height - Input.mousePosition.y, 0f)))
+		{
+			m_bNext = true;
+		}
+		if (m_bHasNewUI && !m_bMoving && Input.GetMouseButtonDown(0))
+		{
+			m_bMoving = true;
+		}
+		if (m_bMoving)
+		{
+			for (int i = 0; i < newUIList.Count; i++)
+			{
+				newUIList[i].curPos = newUIMove(newUIList[i].curPos, newUIList[i].targetPos);
+				if (newUIList[i].curPos == newUIList[i].targetPos)
+				{
+					newUIList[i].bMovingEnd = true;
+				}
+			}
+		}
+		int j;
+		for (j = 0; j < newUIList.Count && newUIList[j].bMovingEnd; j++)
+		{
+		}
+		if (j == newUIList.Count && newUIList.Count != 0)
+		{
+			m_bNext = true;
+			for (int k = 0; k < newUIList.Count; k++)
+			{
+				newUIList[k].bMovingEnd = false;
+			}
+			newUIList.Clear();
+			Global.character_.newuis_.Clear();
+		}
+		if (m_showLight && !m_bMoving)
+		{
+			if (newUI_anim == 0)
+			{
+				newUI_alpha -= Time.deltaTime;
+				if ((double)newUI_alpha < 0.1)
+				{
+					newUI_alpha = 0.1f;
+					newUI_anim = 1;
+				}
+			}
+			else if (newUI_anim == 1)
+			{
+				newUI_alpha += Time.deltaTime;
+				if (newUI_alpha > 1f)
+				{
+					newUI_alpha = 1f;
+					newUI_anim = 0;
+				}
+			}
+		}
+		else
+		{
+			newUI_anim = 0;
+		}
+	}
+
+	public void setScenario(Scenario s, RootMessenger prevUI, delegate_OnClose onClose)
+	{
+		m_prevUI = prevUI;
+		m_bIngoreTextSpeed = false;
+		m_bSectionEnd = false;
+		m_bNext = false;
+		OnClose = onClose;
+		AddAsset("ui_scenario");
+		m_scenario = s;
+		if (s.sections == null)
+		{
+			s.make(__BaseUI._scenarioText);
+		}
+		foreach (ScenarioSection section in s.sections)
+		{
+			if (section.texIcon == null && section.idgeneral_template >= 0)
+			{
+				if (section.idgeneral_template == 0)
+				{
+					AddAsset("face" + Global.character_.icon, bForce: false);
+				}
+				else if (Global.getTemplate("general_template", section.idgeneral_template) is _general_template general_template)
+				{
+					AddAsset("face" + general_template.icon, bForce: false);
+				}
+			}
+		}
+		m_iSection = 0;
+		m_bFirst = true;
+		m_starttime = DateTime.Now;
+		m_time = 0.0;
+		m_bTrigger = false;
+		BaseAsset.lds.Visible_sub();
+		CollectingStart(bCollecting: false);
+		StartLoading();
+	}
+
+	protected override void Show()
+	{
+		BaseAsset.lds.Hide();
+		if (m_scenario.sections.Count == 0)
+		{
+			if (OnClose != null)
+			{
+				OnClose();
+				OnClose = null;
+			}
+			else if ((bool)m_prevUI)
+			{
+				m_prevUI.ToEnable();
+			}
+			return;
+		}
+		Visible();
+		foreach (ScenarioSection section in m_scenario.sections)
+		{
+			if (!(section.texIcon == null))
+			{
+				continue;
+			}
+			string asset_name = string.Empty;
+			if (section.idgeneral_template >= 0)
+			{
+				if (section.idgeneral_template == 0)
+				{
+					asset_name = "face" + Global.character_.icon;
+				}
+				else if (Global.getTemplate("general_template", section.idgeneral_template) is _general_template general_template)
+				{
+					asset_name = "face" + general_template.icon;
+				}
+			}
+			section.texIcon = BaseAsset.LoadTexture(asset_name);
+		}
+		m_bInit = true;
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_scenario");
+		bgStyle.normal.background = asset.Load("ui_di") as Texture2D;
+		texFrameLeft = asset.Load("ui_di2") as Texture2D;
+		texFrameRight = asset.Load("ui_di3") as Texture2D;
+		centerStyle.normal.background = asset.Load("ui_di5") as Texture2D;
+		portraitStyle.normal.background = asset.Load("ui_di4") as Texture2D;
+		portraitStyle.border = new RectOffset(40, 40, 40, 40);
+		portraitStyle.overflow = new RectOffset(20, 20, 20, 20);
+		texNext = asset.Load("ui_zi") as Texture2D;
+		texEnd = asset.Load("ui_zi2") as Texture2D;
+		nextStyle.make(asset, "button_juqing", unable: false);
+		btnStyle.alignment = TextAnchor.MiddleCenter;
+		btnStyle.normal.textColor = new Color(1f, 1f, 0.8f, 1f);
+		skipStyle.make(asset, "button_tiaoguo");
+		nameStyle.alignment = TextAnchor.MiddleCenter;
+		nameStyle.fontSize = 18;
+		nameStyle.normal.textColor = new Color(0f, 1f, 0f, 1f);
+		texNewUiBg = asset.Load("ui_gongxi") as Texture2D;
+		lightSty.normal.background = asset.Load("ui_light") as Texture2D;
+		rcSkip = __BaseUI._rectCB(78f, 74f, 157f, 58f);
+	}
+
+	private void Close()
+	{
+		m_bIngoreTextSpeed = false;
+		m_bSectionEnd = false;
+		m_bMoving = false;
+		m_bNext = false;
+		Hide();
+		if (OnClose != null)
+		{
+			OnClose();
+			OnClose = null;
+		}
+		else if ((bool)m_prevUI)
+		{
+			m_prevUI.ToEnable();
+		}
+	}
+
+	private void Close(Rect rc)
+	{
+		if (m_bNext)
+		{
+			FunctionLoad(null);
+			if (!(m_scenario.param0 == "system"))
+			{
+				Close();
+				return;
+			}
+			cs_scenario_end();
+		}
+		if (!m_bMoving)
+		{
+			GUI.DrawTexture(rc, texNext);
+		}
+	}
+
+	protected override void Web_OnGUI()
+	{
+		bool flag = false;
+		if (m_scenario.m_sections.Count > 0 && m_scenario.m_sections[0].layout != 3)
+		{
+			flag = true;
+		}
+		if (m_bMoving)
+		{
+			if (flag)
+			{
+				if (!BeginGUI(Screen.width - 10, Screen.height - 10, __BaseUI.UIDepth_Scenario, __BaseUI.normalStyle, null))
+				{
+					return;
+				}
+			}
+			else if (!BeginGUI(__BaseUI._rect(Screen.width / 2 - 345, Screen.height / 2 - 85 - 30, 690f, 200f), __BaseUI.UIDepth_Scenario, __BaseUI.normalStyle, null, null, __BaseUI._rect(0f, 30f, 690f, 170f)))
+			{
+				return;
+			}
+		}
+		else if (flag)
+		{
+			if (!BeginGUI(Screen.width - 10, Screen.height - 10, __BaseUI.UIDepth_Scenario, bgStyle, null))
+			{
+				return;
+			}
+		}
+		else if (!BeginGUI(__BaseUI._rect(Screen.width / 2 - 345, Screen.height / 2 - 85 - 30, 690f, 200f), __BaseUI.UIDepth_Scenario, centerStyle, null, null, __BaseUI._rect(0f, 30f, 690f, 170f)))
+		{
+			return;
+		}
+		if (m_bFirst)
+		{
+			m_starttime = DateTime.Now;
+			m_bFirst = false;
+		}
+		Rect rect = __BaseUI._rectRB(200f, 60f, 154f, 39f);
+		if (flag)
+		{
+			rect = __BaseUI._rectRB(250f, 60f, 154f, 39f);
+		}
+		if (m_scenario.sections.Count > m_iSection)
+		{
+			ScenarioSection scenarioSection = m_scenario.sections[m_iSection];
+			Rect position = __BaseUI._rect(64f, 25f, 96f, 96f);
+			Rect texCoords = new Rect(0f, 0f, 1f, 1f);
+			Rect position2 = __BaseUI._rect(70f, 136f, 80f, 20f);
+			float x = 200f;
+			if (flag)
+			{
+				if (scenarioSection.layout == 1)
+				{
+					__BaseUI.BeginGroup(__BaseUI._rectB(10f, 290f, 689f, 201f));
+					__BaseUI.Box(__BaseUI._rect(0f, 30f, 689f, 171f), texFrameLeft);
+				}
+				else if (scenarioSection.layout == 2)
+				{
+					__BaseUI.BeginGroup(__BaseUI._rectRB(700f, 290f, 689f, 201f));
+					__BaseUI.Box(__BaseUI._rect(0f, 30f, 689f, 171f), texFrameRight);
+					position = __BaseUI._rectR(160f, 25f, 96f, 96f);
+					texCoords = new Rect(1f, 0f, -1f, 1f);
+					position2 = __BaseUI._rectR(150f, 136f, 80f, 20f);
+					x = 70f;
+				}
+			}
+			if (scenarioSection.texIcon != null)
+			{
+				GUI.DrawTextureWithTexCoords(position, scenarioSection.texIcon, texCoords);
+			}
+			GUI.Label(position, string.Empty, portraitStyle);
+			__BaseUI.BeginGroup(__BaseUI._rect(0f, 30f, 690f, 170f));
+			string empty = string.Empty;
+			if (scenarioSection.idgeneral_template >= 0)
+			{
+				if (scenarioSection.idgeneral_template == 0)
+				{
+					empty = Global.character_.name;
+				}
+				else if (Global.getTemplate("general_template", scenarioSection.idgeneral_template) is _general_template general_template)
+				{
+					empty = general_template.name;
+				}
+			}
+			GUI.Label(position2, empty, nameStyle);
+			int iText = 999999;
+			if (!m_bIngoreTextSpeed)
+			{
+				TimeSpan timeSpan = DateTime.Now - m_starttime;
+				m_starttime = DateTime.Now;
+				m_time += timeSpan.TotalMilliseconds;
+				if (m_scenario.text_speed > 0)
+				{
+					iText = (int)(m_time / (double)m_scenario.text_speed);
+				}
+			}
+			scenarioSection.draw(x, 38f, 430f, 30f, __BaseUI._scenarioText, ref iText, bSystem: false);
+			__BaseUI.EndGroup();
+			if (flag)
+			{
+				__BaseUI.EndGroup();
+			}
+			if (!m_bMoving)
+			{
+				bool flag2 = __BaseUI.my_enabled;
+				__BaseUI.my_enabled = true;
+				if (skipStyle.Button(bBtn: true, rcSkip, new GUIContent(string.Empty, string.Empty)))
+				{
+					scenarioSkip(rect);
+				}
+				__BaseUI.my_enabled = flag2;
+			}
+			if (iText > 0)
+			{
+				m_bSectionEnd = true;
+			}
+			if (m_bSectionEnd)
+			{
+				if (!m_bTrigger)
+				{
+					triggerFunction(scenarioSection);
+				}
+				if (m_scenario.sections.Count > m_iSection + 1)
+				{
+					if (m_bNext)
+					{
+						FunctionLoad(FunctionClose);
+						m_iSection++;
+						m_starttime = DateTime.Now;
+						m_time = 0.0;
+						m_bIngoreTextSpeed = false;
+						m_bTrigger = false;
+						m_bSectionEnd = false;
+						m_bNext = false;
+					}
+					if (!m_bMoving)
+					{
+						GUI.DrawTexture(rect, texNext);
+					}
+				}
+				else if (newUIList.Count > 0)
+				{
+					if (m_scenario.sections.Count == m_iSection + 1 && m_bNext)
+					{
+						m_iSection++;
+						m_bSectionEnd = false;
+						m_bNext = false;
+						Logger.Log("NewUI Next");
+						setNewUITargetPos();
+					}
+					if (m_bWantNewUI)
+					{
+						m_bWantNewUI = false;
+						setNewUIParma();
+					}
+					if (!m_bMoving)
+					{
+						GUI.DrawTexture(rect, texNext);
+					}
+				}
+				else
+				{
+					Close(rect);
+				}
+			}
+		}
+		else
+		{
+			if (newUIList.Count != 0)
+			{
+				m_bHasNewUI = true;
+				drawNewUI();
+			}
+			else
+			{
+				m_bHasNewUI = false;
+			}
+			Close(rect);
+		}
+		EndGUI(hasClose: false);
+	}
+
+	private void triggerFunction(ScenarioSection ss)
+	{
+		m_bTrigger = true;
+		if (ss.triggers == null)
+		{
+			return;
+		}
+		foreach (_scenario_section_trigger trigger in ss.m_triggers)
+		{
+			if (!(Global.getTemplate("scenario_trigger", trigger.idtrigger) is _scenario_trigger scenario_trigger))
+			{
+				continue;
+			}
+			if (scenario_trigger.type == "button")
+			{
+				uint result = 0u;
+				uint.TryParse(trigger.param0, out result);
+				if (!(Global.getTemplate("ui_button", result) is _ui_button ui_button))
+				{
+					continue;
+				}
+				if (ui_button.main)
+				{
+					newUIBtn item = new newUIBtn(ui_button.name);
+					newUIList.Add(item);
+					if (ui_button.name == "quiz")
+					{
+						Global.character_.newuis_.Add("huodong");
+					}
+					else
+					{
+						Global.character_.newuis_.Add(ui_button.name);
+					}
+					m_bWantNewUI = true;
+				}
+				else if (ui_button.name == "mg_yangjian")
+				{
+					newUIBtn item2 = new newUIBtn("chengjiang");
+					newUIList.Add(item2);
+					m_bWantNewUI = true;
+				}
+				else if (ui_button.name == "mg_doumuyuanjun")
+				{
+					newUIBtn item3 = new newUIBtn("chengjiang");
+					newUIList.Add(item3);
+					m_bWantNewUI = true;
+				}
+				Global.character_.addUI(ui_button.name);
+				Global.setFirstCheck(ui_button.name, bCheck: true);
+				MainUI componentInChildren = BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+				if (componentInChildren != null)
+				{
+					componentInChildren.expandUI(ui_button.name);
+				}
+				if (result == 50)
+				{
+					Global.character_.grave.buytimes = 0;
+					Global.character_.grave.times = 6;
+					Global.character_.grave.newgrave = 1;
+					if (Global.character_.graves.Count < 1)
+					{
+						_character_grave character_grave = new _character_grave();
+						character_grave.idgrave = 1;
+						character_grave.isfinish = false;
+						character_grave.isopen = true;
+						Global.character_.graves.Add(character_grave.idgrave, character_grave);
+					}
+				}
+			}
+			else if (scenario_trigger.type == "guide")
+			{
+				uint result2 = 0u;
+				uint.TryParse(trigger.param0, out result2);
+				if (Global.getTemplate("ui_button", result2) is _ui_button ui_button2)
+				{
+					Global.setGuideCheck(ui_button2.name, bCheck: true);
+				}
+			}
+		}
+	}
+
+	private void FunctionLoad(delegate_OnClose onClose)
+	{
+		if (m_scenario.sections.Count == 0)
+		{
+			return;
+		}
+		ScenarioSection scenarioSection = m_scenario.sections[m_scenario.sections.Count - 1];
+		if (scenarioSection.triggers == null)
+		{
+			return;
+		}
+		foreach (_scenario_section_trigger trigger in scenarioSection.m_triggers)
+		{
+			if (Global.getTemplate("scenario_trigger", trigger.idtrigger) is _scenario_trigger { type: "button_function" })
+			{
+				uint result = 0u;
+				uint.TryParse(trigger.param0, out result);
+				uint result2 = 0u;
+				uint.TryParse(trigger.param1, out result2);
+				if (Global.getTemplate("ui_button", result) is _ui_button)
+				{
+					ScenarioFunctionUI component = GetComponent<ScenarioFunctionUI>();
+					component.MyLoading(result, result2 == 1, onClose);
+					Hide();
+				}
+			}
+		}
+	}
+
+	private void FunctionClose()
+	{
+		Visible();
+	}
+
+	private void cs_scenario_end()
+	{
+		CSScenarioEnd_0x410 cSScenarioEnd_0x = new CSScenarioEnd_0x410();
+		cSScenarioEnd_0x.idscenario = m_scenario.id;
+		RootUI.m_client.Send(1040, cSScenarioEnd_0x, sc_scenario_end);
+	}
+
+	private void sc_scenario_end(MemoryStream stream, object arg)
+	{
+		Close();
+		if (stream == null)
+		{
+			return;
+		}
+		SCScenarioEnd_0x410 sCScenarioEnd_0x = JSProtoBuf.Serializer.Deserialize<SCScenarioEnd_0x410>(stream);
+		Scenario scenario = m_scenario;
+		if (scenario == null || scenario.sections.Count <= 0)
+		{
+			return;
+		}
+		foreach (ScenarioSection section in scenario.sections)
+		{
+			if (section.triggers == null)
+			{
+				continue;
+			}
+			foreach (_scenario_section_trigger trigger in section.m_triggers)
+			{
+				if (Global.getTemplate("scenario_trigger", trigger.idtrigger) is _scenario_trigger scenario_trigger)
+				{
+					if (scenario_trigger.type == "tutorial")
+					{
+						int result = 0;
+						int.TryParse(trigger.param0, out result);
+					}
+					else if (!(scenario_trigger.type == "quest") && !(scenario_trigger.type == "formation") && !(scenario_trigger.type == "formation_location") && scenario_trigger.type == "newbie")
+					{
+						int result2 = 0;
+						int.TryParse(trigger.param0, out result2);
+						NewbieQuest item = new NewbieQuest((ushort)result2);
+						Global.character_.newbiequests.Add(item);
+					}
+				}
+			}
+		}
+	}
+
+	public void scenarioSkip(Rect rcNext)
+	{
+		for (int i = m_iSection; i < m_scenario.sections.Count; i++)
+		{
+			if (!m_bTrigger)
+			{
+				triggerFunction(m_scenario.sections[i]);
+			}
+			m_bTrigger = false;
+			m_iSection++;
+		}
+		m_bTrigger = true;
+		if (newUIList.Count > 0)
+		{
+			m_iSection++;
+			m_bSectionEnd = false;
+			m_bNext = false;
+			setNewUITargetPos();
+			setNewUIParma();
+			if (!m_bMoving)
+			{
+				GUI.DrawTexture(rcNext, texNext);
+			}
+		}
+		else
+		{
+			FunctionLoad(null);
+			if (m_scenario.param0 == "system")
+			{
+				cs_scenario_end();
+			}
+			else
+			{
+				Close();
+			}
+		}
+	}
+
+	public void setNewUITargetPos()
+	{
+		MainUI componentInChildren = BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+		for (int i = 0; i < newUIList.Count; i++)
+		{
+			if (newUIList[i].name == "quiz")
+			{
+				newUIList[i].targetPos = componentInChildren.getButtonPos("huodong");
+			}
+			else if (newUIList[i].name == "chengjiang")
+			{
+				if (MainUI.topBarMood == MainUI.TOPBARMOOD.NORMAL)
+				{
+					newUIList[i].targetPos = componentInChildren.getButtonPos("divine_general");
+				}
+				else if (MainUI.topBarMood == MainUI.TOPBARMOOD.SHRINK)
+				{
+					newUIList[i].targetPos = new Vector2(Screen.width - 260 - 87, 11f);
+				}
+			}
+			else if (!componentInChildren.isButtonShrinked(newUIList[i].name))
+			{
+				newUIList[i].targetPos = componentInChildren.getButtonPos(newUIList[i].name);
+			}
+			else
+			{
+				newUIList[i].targetPos = new Vector2(Screen.width - 260 - 87, 11f);
+			}
+		}
+	}
+
+	public void setNewUIParma()
+	{
+		MainUI componentInChildren = BaseAsset.lds.GetCurUI().GetComponentInChildren<MainUI>();
+		for (int i = 0; i < newUIList.Count; i++)
+		{
+			if (newUIList[i].name == "quiz")
+			{
+				newUIList[i].width = componentInChildren.getButtonRect("huodong").width;
+				newUIList[i].height = componentInChildren.getButtonRect("huodong").height;
+				newUIList[i].tex = componentInChildren.getButtonTex("huodong");
+				if (newUIList[i].width == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].width = newUIList[i].tex.width;
+				}
+				if (newUIList[i].height == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].height = newUIList[i].tex.height;
+				}
+			}
+			else if (newUIList[i].name == "chengjiang")
+			{
+				newUIList[i].width = componentInChildren.getButtonRect("divine_general").width;
+				newUIList[i].height = componentInChildren.getButtonRect("divine_general").height;
+				newUIList[i].tex = componentInChildren.getButtonTex("divine_general");
+				if (newUIList[i].width == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].width = newUIList[i].tex.width;
+				}
+				if (newUIList[i].height == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].height = newUIList[i].tex.height;
+				}
+			}
+			else
+			{
+				string text = newUIList[i].name;
+				newUIList[i].width = componentInChildren.getButtonRect(text).width;
+				newUIList[i].height = componentInChildren.getButtonRect(text).height;
+				newUIList[i].tex = componentInChildren.getButtonTex(text);
+				if (newUIList[i].width == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].width = newUIList[i].tex.width;
+				}
+				if (newUIList[i].height == 0f && newUIList[i].tex != null)
+				{
+					newUIList[i].height = newUIList[i].tex.height;
+				}
+			}
+			newUIList[i].curPos.y = (float)(Screen.height / 2) - newUIList[i].height / 2f;
+		}
+		if (newUIList.Count % 2 != 0)
+		{
+			int index = newUIList.Count / 2;
+			newUIList[index].curPos.x = (float)(Screen.width / 2) - newUIList[index].width / 2f;
+			newUIList[0].curPos.x = newUIList[index].curPos.x - (float)(155 * (newUIList.Count / 2));
+		}
+		else
+		{
+			int index2 = newUIList.Count / 2 - 1;
+			newUIList[index2].curPos.x = (float)(Screen.width / 2) - (155f + newUIList[index2].width) / 2f;
+			newUIList[0].curPos.x = newUIList[index2].curPos.x - (float)(155 * (newUIList.Count / 2 - 1));
+		}
+		for (int j = 1; j < newUIList.Count; j++)
+		{
+			newUIList[j].curPos.x = newUIList[0].curPos.x + (float)(155 * j);
+		}
+	}
+
+	public void drawNewUI()
+	{
+		m_showLight = true;
+		if (!m_bMoving)
+		{
+			GUI.DrawTexture(__BaseUI._rectC(142f, 70f, 284f, 141f), texNewUiBg);
+		}
+		for (int i = 0; i < newUIList.Count; i++)
+		{
+			if (!m_bMoving)
+			{
+				Color backgroundColor = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(GUI.backgroundColor.r, GUI.backgroundColor.g, GUI.backgroundColor.b, newUI_alpha);
+				GUI.Label(__BaseUI._rect(newUIList[i].curPos.x - (155f - newUIList[i].width) / 2f, Screen.height / 2 - 79, 155f, 158f), string.Empty, lightSty);
+				GUI.backgroundColor = backgroundColor;
+			}
+			if (newUIList[i] != null && newUIList[i].tex != null)
+			{
+				GUI.DrawTexture(__BaseUI._rect(newUIList[i].curPos.x, newUIList[i].curPos.y, newUIList[i].width, newUIList[i].height), newUIList[i].tex);
+			}
+		}
+	}
+
+	public Vector2 newUIMove(Vector2 current, Vector2 target)
+	{
+		if (target == current)
+		{
+			return current;
+		}
+		Vector2 vector = target - current;
+		Vector2 normalized = vector.normalized;
+		current += normalized * Time.deltaTime * 500f;
+		if (vector.magnitude < 15f)
+		{
+			current = target;
+		}
+		return current;
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

@@ -1,0 +1,22 @@
+using System;
+using System.Collections.Generic;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCDummyChallengeGetReward_0x266")]
+public class SCDummyChallengeGetReward_0x266 : IExtensible
+{
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}

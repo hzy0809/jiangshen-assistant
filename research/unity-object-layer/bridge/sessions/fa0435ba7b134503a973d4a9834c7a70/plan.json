@@ -1,0 +1,29 @@
+{
+  "nonce": "fa0435ba7b134503a973d4a9834c7a70",
+  "session": "G:\\development\\enjoy\\jiangshen-assistant\\research\\unity-object-layer\\bridge\\sessions\\fa0435ba7b134503a973d4a9834c7a70",
+  "pid": 12844,
+  "tid": 21756,
+  "hwnd": "0x90638",
+  "title": "双线985区-将神-三端805区",
+  "phase": "bootstrap_readonly_only",
+  "prior_known_no_action_sessions": [
+    "64731d2da0864727a8d6cf0ce6eecd0c",
+    "bebdb0d9f3b349b48ef191585f2b43b5"
+  ],
+  "payload_sha256": "5cca9f8804454ea34a6aba9d3ecb28a74ad06b56a5ca071da77a02a5fad9aff1",
+  "artifacts": [
+    {
+      "file": "bridge.dll",
+      "sha256": "68d2e7d624606f10b0fd921fae77446ce0a2bfcf958fb89ee8d24cb26bdd7fff"
+    },
+    {
+      "file": "bridge_host.exe",
+      "sha256": "bf79ce4a7684c2954b5bf68c8f090c98fc9db29936f9d92967d69bb91fdc8725"
+    },
+    {
+      "file": "JSUnityProbe.dll",
+      "sha256": "5cca9f8804454ea34a6aba9d3ecb28a74ad06b56a5ca071da77a02a5fad9aff1"
+    }
+  ],
+  "host_pid": 688
+}

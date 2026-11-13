@@ -1,0 +1,181 @@
+using UnityEngine;
+
+public class _ButtonStyle
+{
+	public GUIStyle btnStyle = new GUIStyle();
+
+	public GUIStyle normalStyle = new GUIStyle();
+
+	public GUIStyle disableStyle;
+
+	public void setBorder(RectOffset rc)
+	{
+		btnStyle.border = rc;
+		normalStyle.border = rc;
+		if (disableStyle != null)
+		{
+			disableStyle.border = rc;
+		}
+	}
+
+	public void setOverflow(RectOffset rc)
+	{
+		btnStyle.overflow = rc;
+		normalStyle.overflow = rc;
+		if (disableStyle != null)
+		{
+			disableStyle.overflow = rc;
+		}
+	}
+
+	public void setPadding(RectOffset rc)
+	{
+		btnStyle.padding = rc;
+		normalStyle.padding = rc;
+		if (disableStyle != null)
+		{
+			disableStyle.padding = rc;
+		}
+	}
+
+	public bool ismaked()
+	{
+		return !(btnStyle.normal.background == null);
+	}
+
+	public void make(AssetBundle bundle, string name)
+	{
+		make(bundle, name, unable: true);
+	}
+
+	public void make(AssetBundle bundle, string name, bool unable)
+	{
+		make(bundle, name, unable, isClose: false, "_unable");
+	}
+
+	public void make(AssetBundle bundle, string name, string disable_name)
+	{
+		make(bundle, name, unable: true, isClose: false, disable_name);
+	}
+
+	public void make(AssetBundle bundle, string name, bool unable, bool isClose, string disable_name)
+	{
+		btnStyle.normal.background = bundle.Load(name + "_normal") as Texture2D;
+		btnStyle.hover.background = bundle.Load(name + "_hover") as Texture2D;
+		btnStyle.active.background = bundle.Load(name + "_down") as Texture2D;
+		normalStyle.normal.background = btnStyle.normal.background;
+		if (unable)
+		{
+			Texture2D texture2D = bundle.Load(name + disable_name) as Texture2D;
+			if (texture2D != null)
+			{
+				disableStyle = new GUIStyle();
+				disableStyle.clipping = TextClipping.Overflow;
+				disableStyle.normal.background = texture2D;
+			}
+		}
+	}
+
+	public void make_nonormal_1pic(AssetBundle bundle, string name, int border, int overflow)
+	{
+		btnStyle.hover.background = bundle.Load(name) as Texture2D;
+		btnStyle.active.background = bundle.Load(name) as Texture2D;
+		GUIStyle gUIStyle = normalStyle;
+		RectOffset border2 = new RectOffset(border, border, border, border);
+		btnStyle.border = border2;
+		gUIStyle.border = border2;
+		GUIStyle gUIStyle2 = normalStyle;
+		border2 = new RectOffset(overflow, overflow, overflow, overflow);
+		btnStyle.overflow = border2;
+		gUIStyle2.overflow = border2;
+	}
+
+	public void setFont(TextAnchor ta, Color clr)
+	{
+		btnStyle.alignment = ta;
+		btnStyle.normal.textColor = clr;
+		btnStyle.hover.textColor = clr;
+		btnStyle.active.textColor = clr;
+		normalStyle.alignment = ta;
+		normalStyle.normal.textColor = clr;
+		if (disableStyle != null)
+		{
+			disableStyle.alignment = ta;
+			disableStyle.normal.textColor = clr;
+		}
+	}
+
+	public void setFont(Font font)
+	{
+		btnStyle.font = font;
+		normalStyle.font = font;
+		if (disableStyle != null)
+		{
+			disableStyle.font = font;
+		}
+	}
+
+	public bool Button_changeSize(bool bBtn, Rect rc, string text)
+	{
+		return Button(bBtn, rc, new GUIContent(text), bRepeat: false, bPixelPerfect: false);
+	}
+
+	public bool Button(bool bBtn, Rect rc, string text)
+	{
+		return Button(bBtn, rc, new GUIContent(text));
+	}
+
+	public bool Button(bool bBtn, Rect rc, string text, bool bRepeat)
+	{
+		return Button(bBtn, rc, new GUIContent(text), bRepeat);
+	}
+
+	public bool Button(bool bBtn, Rect rc, GUIContent content)
+	{
+		return Button(bBtn, rc, content, bRepeat: false);
+	}
+
+	public bool Button(bool bBtn, Rect rc, GUIContent content, bool bRepeat)
+	{
+		return Button(bBtn, rc, content, bRepeat, bPixelPerfect: true);
+	}
+
+	public bool Button(bool bBtn, Rect rc, GUIContent content, bool bRepeat, bool bPixelPerfect)
+	{
+		if (!bBtn || !__BaseUI.my_enabled)
+		{
+			bool enabled = GUI.enabled;
+			GUI.enabled = true;
+			if (disableStyle == null)
+			{
+				Color backgroundColor = GUI.backgroundColor;
+				GUI.backgroundColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+				GUI.Box(rc, content, normalStyle);
+				GUI.backgroundColor = backgroundColor;
+			}
+			else
+			{
+				GUI.Box(rc, content, disableStyle);
+			}
+			GUI.enabled = enabled;
+			return false;
+		}
+		bool flag = false;
+		flag = ((!bRepeat) ? GUI.Button(rc, content, btnStyle) : GUI.RepeatButton(rc, content, btnStyle));
+		if (flag && !bRepeat)
+		{
+			SoundEffectHandler.Instance.Play(__BaseUI._audBtnClick);
+		}
+		return flag;
+	}
+
+	public int width()
+	{
+		return btnStyle.normal.background.width;
+	}
+
+	public int height()
+	{
+		return btnStyle.normal.background.height;
+	}
+}

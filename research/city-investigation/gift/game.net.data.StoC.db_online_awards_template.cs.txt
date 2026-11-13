@@ -1,0 +1,147 @@
+using System;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "db_online_awards_template")]
+public class db_online_awards_template : IExtensible
+{
+	private uint _id;
+
+	private int _time;
+
+	private int _award1_type;
+
+	private int _award1_amout;
+
+	private int _award2_type;
+
+	private int _award2_amout;
+
+	private int _award3_type;
+
+	private int _award3_amout;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = false, Name = "id", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint id
+	{
+		get
+		{
+			return _id;
+		}
+		set
+		{
+			_id = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = false, Name = "time", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int time
+	{
+		get
+		{
+			return _time;
+		}
+		set
+		{
+			_time = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = false, Name = "award1_type", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award1_type
+	{
+		get
+		{
+			return _award1_type;
+		}
+		set
+		{
+			_award1_type = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "award1_amout", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award1_amout
+	{
+		get
+		{
+			return _award1_amout;
+		}
+		set
+		{
+			_award1_amout = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "award2_type", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award2_type
+	{
+		get
+		{
+			return _award2_type;
+		}
+		set
+		{
+			_award2_type = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "award2_amout", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award2_amout
+	{
+		get
+		{
+			return _award2_amout;
+		}
+		set
+		{
+			_award2_amout = value;
+		}
+	}
+
+	[ProtoMember(7, IsRequired = false, Name = "award3_type", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award3_type
+	{
+		get
+		{
+			return _award3_type;
+		}
+		set
+		{
+			_award3_type = value;
+		}
+	}
+
+	[ProtoMember(8, IsRequired = false, Name = "award3_amout", DataFormat = DataFormat.ZigZag)]
+	[DefaultValue(0)]
+	public int award3_amout
+	{
+		get
+		{
+			return _award3_amout;
+		}
+		set
+		{
+			_award3_amout = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

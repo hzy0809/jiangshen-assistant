@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using ProtoBuf;
+
+namespace game.net.data.StoC;
+
+[Serializable]
+[ProtoContract(Name = "SCCampaignBattle_0x402")]
+public class SCCampaignBattle_0x402 : IExtensible
+{
+	[ProtoContract(Name = "Result")]
+	public enum Result
+	{
+		[ProtoEnum(Name = "OK", Value = 0)]
+		OK,
+		[ProtoEnum(Name = "TESTER", Value = 1)]
+		TESTER
+	}
+
+	private uint _idcampaign;
+
+	private uint _idtroop;
+
+	private bool _iswin;
+
+	private uint _exp_get = 0u;
+
+	private uint _level = 0u;
+
+	private uint _experience = 0u;
+
+	private readonly List<Treasure> _bonuses = new List<Treasure>();
+
+	private ulong _idbattle_report = 0uL;
+
+	private byte[] _report;
+
+	private db_character_cooldown _cooldown = null;
+
+	private readonly List<db_character_treasure> _treasures = new List<db_character_treasure>();
+
+	private uint _stamina_consume = 0u;
+
+	private uint _result = 0u;
+
+	private readonly List<db_character_talent_army> _nextarmys = new List<db_character_talent_army>();
+
+	private SCBattleEnd_0x408 _battle_end = null;
+
+	private IExtension extensionObject;
+
+	[ProtoMember(1, IsRequired = true, Name = "idcampaign", DataFormat = DataFormat.TwosComplement)]
+	public uint idcampaign
+	{
+		get
+		{
+			return _idcampaign;
+		}
+		set
+		{
+			_idcampaign = value;
+		}
+	}
+
+	[ProtoMember(2, IsRequired = true, Name = "idtroop", DataFormat = DataFormat.TwosComplement)]
+	public uint idtroop
+	{
+		get
+		{
+			return _idtroop;
+		}
+		set
+		{
+			_idtroop = value;
+		}
+	}
+
+	[ProtoMember(3, IsRequired = true, Name = "iswin", DataFormat = DataFormat.Default)]
+	public bool iswin
+	{
+		get
+		{
+			return _iswin;
+		}
+		set
+		{
+			_iswin = value;
+		}
+	}
+
+	[ProtoMember(4, IsRequired = false, Name = "exp_get", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint exp_get
+	{
+		get
+		{
+			return _exp_get;
+		}
+		set
+		{
+			_exp_get = value;
+		}
+	}
+
+	[ProtoMember(5, IsRequired = false, Name = "level", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint level
+	{
+		get
+		{
+			return _level;
+		}
+		set
+		{
+			_level = value;
+		}
+	}
+
+	[ProtoMember(6, IsRequired = false, Name = "experience", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint experience
+	{
+		get
+		{
+			return _experience;
+		}
+		set
+		{
+			_experience = value;
+		}
+	}
+
+	[ProtoMember(7, Name = "bonuses", DataFormat = DataFormat.Default)]
+	public List<Treasure> bonuses => _bonuses;
+
+	[ProtoMember(8, IsRequired = false, Name = "idbattle_report", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0f)]
+	public ulong idbattle_report
+	{
+		get
+		{
+			return _idbattle_report;
+		}
+		set
+		{
+			_idbattle_report = value;
+		}
+	}
+
+	[ProtoMember(9, IsRequired = true, Name = "report", DataFormat = DataFormat.Default)]
+	public byte[] report
+	{
+		get
+		{
+			return _report;
+		}
+		set
+		{
+			_report = value;
+		}
+	}
+
+	[ProtoMember(10, IsRequired = false, Name = "cooldown", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public db_character_cooldown cooldown
+	{
+		get
+		{
+			return _cooldown;
+		}
+		set
+		{
+			_cooldown = value;
+		}
+	}
+
+	[ProtoMember(11, Name = "treasures", DataFormat = DataFormat.Default)]
+	public List<db_character_treasure> treasures => _treasures;
+
+	[ProtoMember(12, IsRequired = false, Name = "stamina_consume", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint stamina_consume
+	{
+		get
+		{
+			return _stamina_consume;
+		}
+		set
+		{
+			_stamina_consume = value;
+		}
+	}
+
+	[ProtoMember(13, IsRequired = false, Name = "result", DataFormat = DataFormat.TwosComplement)]
+	[DefaultValue(0L)]
+	public uint result
+	{
+		get
+		{
+			return _result;
+		}
+		set
+		{
+			_result = value;
+		}
+	}
+
+	[ProtoMember(14, Name = "nextarmys", DataFormat = DataFormat.Default)]
+	public List<db_character_talent_army> nextarmys => _nextarmys;
+
+	[ProtoMember(15, IsRequired = false, Name = "battle_end", DataFormat = DataFormat.Default)]
+	[DefaultValue(null)]
+	public SCBattleEnd_0x408 battle_end
+	{
+		get
+		{
+			return _battle_end;
+		}
+		set
+		{
+			_battle_end = value;
+		}
+	}
+
+	IExtension IExtensible.GetExtensionObject(bool createIfMissing)
+	{
+		return Extensible.GetExtensionObject(ref extensionObject, createIfMissing);
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '11.2.0.10050' (yours is '9.1.0.7988')

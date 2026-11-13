@@ -1,0 +1,2011 @@
+using System;
+using System.Collections.Generic;
+using Database;
+using UnityEngine;
+using game.net.data.StoC;
+
+public class TooltipUI : __BaseUI
+{
+	private static string tooltip = string.Empty;
+
+	private static __BaseUI ownerUI;
+
+	private static bool clear_tooltip = false;
+
+	private static string last_tooltip = string.Empty;
+
+	private static MonoBehaviour last_ownerUI;
+
+	private GUIStyle tttextstyle = new GUIStyle();
+
+	private GUIStyle tticonstyle = new GUIStyle();
+
+	private GUIStyle ttdescstyle = new GUIStyle();
+
+	private GUIStyle ttspecstyle = new GUIStyle();
+
+	private GUIStyle ttcommonstyle = new GUIStyle();
+
+	private GUIStyle ttdropstyle = new GUIStyle();
+
+	private GUIStyle text_right_green;
+
+	private GUIStyle text_left_gold;
+
+	private GUIStyle text_left_green;
+
+	private GUIStyle text_warp_white;
+
+	private string ttowner = string.Empty;
+
+	private string tttitle = string.Empty;
+
+	private bool ttgenspec = true;
+
+	private bool ttgenskill = true;
+
+	private bool ttitem_isenchantable = true;
+
+	private bool ttitem_base = true;
+
+	private bool ttitem_add = true;
+
+	private bool ttitem_spec = true;
+
+	private bool ttitem_set = true;
+
+	private string TooltipFlag = string.Empty;
+
+	private TooltipGeneral GenInfo = new TooltipGeneral();
+
+	private TooltipItem ItemInfo = new TooltipItem();
+
+	private TooltipSkill SkillInfo = new TooltipSkill();
+
+	private TooltipSpeciality SpecialityInfo = new TooltipSpeciality();
+
+	private TooltipCommon CommonInfo = new TooltipCommon();
+
+	private TooltipSimple SimpleInfo = new TooltipSimple();
+
+	private TooltipArmy ArmyInfo = new TooltipArmy();
+
+	private TooltipDraw_Skill m_tdSkill = new TooltipDraw_Skill();
+
+	private TooltipDraw_TalSkill m_tdTalSkill = new TooltipDraw_TalSkill();
+
+	private TooltipDraw_TalSpeciality m_tdTalSpeciality = new TooltipDraw_TalSpeciality();
+
+	private TooltipDraw_TalCondition m_tdTalCondition = new TooltipDraw_TalCondition();
+
+	private TooltipDraw_General m_tdGeneral = new TooltipDraw_General();
+
+	private TooltipDraw_General_R m_tdGeneralR = new TooltipDraw_General_R();
+
+	private TooltipDraw_Artifact m_tdArtifact = new TooltipDraw_Artifact();
+
+	private TooltipDraw_CombatPoint m_tdCombatPoint = new TooltipDraw_CombatPoint();
+
+	private TooltipDraw_Item m_tdItem = new TooltipDraw_Item();
+
+	private TooltipDraw_ItemPart m_tdItemPart = new TooltipDraw_ItemPart();
+
+	private TooltipDraw_Material m_tdMaterial = new TooltipDraw_Material();
+
+	private TooltipDraw_Drops m_tdDrops = new TooltipDraw_Drops();
+
+	private TooltipDraw_Troop m_tdTroop = new TooltipDraw_Troop();
+
+	private TooltipDraw_Chest m_tdChest = new TooltipDraw_Chest();
+
+	private TooltipDraw_ArenaBonus m_tdArenaBonus = new TooltipDraw_ArenaBonus();
+
+	private TooltipDraw_Content m_tdContent = new TooltipDraw_Content();
+
+	private TooltipDraw_StarTechSummary m_tdStarTechSum = new TooltipDraw_StarTechSummary();
+
+	private TooltipDraw_Building m_tdBuilding = new TooltipDraw_Building();
+
+	private TooltipDraw_BuildingTemplate m_tdBuildingTemplate = new TooltipDraw_BuildingTemplate();
+
+	private TooltipDraw_Amulet m_tdAmulet = new TooltipDraw_Amulet();
+
+	private TooltipDraw_AmuletTemplate m_tdAmuletTemplate = new TooltipDraw_AmuletTemplate();
+
+	private TooltipDraw_Gem m_tdGem = new TooltipDraw_Gem();
+
+	private TooltipDraw_ArenaChallenger m_tdChallenger = new TooltipDraw_ArenaChallenger();
+
+	private TooltipDraw_DivineGenSkill m_dgSkill = new TooltipDraw_DivineGenSkill();
+
+	private TooltipDraw_CraftBonus m_craftBonus = new TooltipDraw_CraftBonus();
+
+	private TooltipDraw_CrossCraftPlayer m_tdCCP = new TooltipDraw_CrossCraftPlayer();
+
+	private TooltipDraw_JXHelpContent m_jxHelpContent = new TooltipDraw_JXHelpContent();
+
+	private TooltipDraw_GeneralUpragdeMultiParam m_generalUpragdeMultiParam = new TooltipDraw_GeneralUpragdeMultiParam();
+
+	private TooltipDraw_JxBonusList m_jxBonusList = new TooltipDraw_JxBonusList();
+
+	private TooltipDraw_FlowerMess m_flower = new TooltipDraw_FlowerMess();
+
+	private TooltipDraw_Buddy m_buddy = new TooltipDraw_Buddy();
+
+	private TooltipDraw_WoodWarHelp m_woodwarhelp = new TooltipDraw_WoodWarHelp();
+
+	private TooltipDraw_WoodWarXQ m_woodwarxq = new TooltipDraw_WoodWarXQ();
+
+	private TooltipDraw_WoodWarBX m_woodwarbx = new TooltipDraw_WoodWarBX();
+
+	private TooltipDraw_Rune m_rune = new TooltipDraw_Rune();
+
+	private TooltipDraw_Bet m_bet = new TooltipDraw_Bet();
+
+	private TooltipDraw_RuneSlot m_runeslot = new TooltipDraw_RuneSlot();
+
+	private TooltipDraw_RuneActive m_runeactive = new TooltipDraw_RuneActive();
+
+	private TooltipDraw_TechTree m_techtree = new TooltipDraw_TechTree();
+
+	private TooltipDraw_FairyCond m_tdFairyCond = new TooltipDraw_FairyCond();
+
+	private TooltipDraw m_tdCur;
+
+	private TooltipDraw_TechTreeCD m_techtreecd = new TooltipDraw_TechTreeCD();
+
+	private TooltipDraw_LongEight m_longeight = new TooltipDraw_LongEight();
+
+	private TooltipDraw_DragonHead m_dragonhead = new TooltipDraw_DragonHead();
+
+	private TooltipDraw_SpiritSkill m_spiritskill = new TooltipDraw_SpiritSkill();
+
+	private TooltipDraw_ConvoyPlayers m_tdConvoyPlayer = new TooltipDraw_ConvoyPlayers();
+
+	private TooltipDraw_NationCard m_tdNationCard = new TooltipDraw_NationCard();
+
+	private TooltipDraw_NationCity m_tdNationCity = new TooltipDraw_NationCity();
+
+	private TooltipDraw_NationPlayer m_tdNationPlayer = new TooltipDraw_NationPlayer();
+
+	private TooltipDraw_NationServers m_tdNationServers = new TooltipDraw_NationServers();
+
+	private TooltipDraw_LadderPlayer m_tdLadderPlayers = new TooltipDraw_LadderPlayer();
+
+	private TooltipDraw_TeamFightCity m_tdTeamFightCity = new TooltipDraw_TeamFightCity();
+
+	private TooltipDraw_TeamFightPlayer m_tdTeamFightPlayer = new TooltipDraw_TeamFightPlayer();
+
+	private TooltipDraw_LakeTempBouns m_tdLakeTempBouns = new TooltipDraw_LakeTempBouns();
+
+	private TooltipDraw_LakeTempbaoxiang m_tdLakeTempbaoxiang = new TooltipDraw_LakeTempbaoxiang();
+
+	private TooltipDraw_CraftWorldCalendar m_craftcalendar = new TooltipDraw_CraftWorldCalendar();
+
+	private TooltipDraw_GodListSolt m_tdGodListSolt = new TooltipDraw_GodListSolt();
+
+	private TooltipDraw_GiftBag m_gfitbag = new TooltipDraw_GiftBag();
+
+	private TooltipDraw_EverydayLogin m_everydaylogin = new TooltipDraw_EverydayLogin();
+
+	private TooltipDraw_Cardbag m_cardbag = new TooltipDraw_Cardbag();
+
+	private TooltipDraw_GeneralShengJie m_generalshengjie = new TooltipDraw_GeneralShengJie();
+
+	private TooltipDraw_Talentdata m_talentdata = new TooltipDraw_Talentdata();
+
+	private bool needadjust;
+
+	public static bool clickTooltip = false;
+
+	public static Vector2 tippos = new Vector2(0f, 0f);
+
+	private static string tip_side = string.Empty;
+
+	public static void setTooltip(__BaseUI ui, string tip)
+	{
+		setTooltip(ui, tip, bClear: false);
+	}
+
+	public static void setTooltip(__BaseUI ui, string tip, bool bClear)
+	{
+		ownerUI = ui;
+		tooltip = tip;
+		clear_tooltip = bClear;
+	}
+
+	public void setTDCur(TooltipDraw td)
+	{
+		m_tdCur = td;
+	}
+
+	public override void Start()
+	{
+		visible_count = false;
+		base.Start();
+	}
+
+	private void Update()
+	{
+		if (clear_tooltip || ownerUI != last_ownerUI || tooltip != last_tooltip)
+		{
+			if (ownerUI == null || tooltip == string.Empty || tooltip == "Background")
+			{
+				HideTooltip(string.Empty);
+			}
+			else
+			{
+				ownerUI.drawTooltips(tooltip);
+			}
+			last_ownerUI = ownerUI;
+			last_tooltip = tooltip;
+		}
+		if (clear_tooltip)
+		{
+			ownerUI = null;
+			tooltip = string.Empty;
+		}
+		tttitle = TooltipFlag;
+		if (needadjust && TooltipFlag == "General")
+		{
+			if (GenInfo.gen_active_skill == string.Empty)
+			{
+				ttgenskill = false;
+			}
+			else
+			{
+				ttgenskill = true;
+			}
+			if (GenInfo.gen_speicalies == string.Empty)
+			{
+				ttgenspec = false;
+			}
+			else
+			{
+				ttgenspec = true;
+			}
+			needadjust = false;
+		}
+		else if (needadjust && TooltipFlag == "Item")
+		{
+			if (ItemInfo.maxlevel > 0)
+			{
+				ttitem_isenchantable = true;
+			}
+			else
+			{
+				ttitem_isenchantable = false;
+			}
+			if (ItemInfo.basecount > 0)
+			{
+				ttitem_base = true;
+			}
+			else
+			{
+				ttitem_base = false;
+			}
+			if (ItemInfo.addcount > 0)
+			{
+				ttitem_add = true;
+			}
+			else
+			{
+				ttitem_add = false;
+			}
+			if (ItemInfo.specname == string.Empty)
+			{
+				ttitem_spec = false;
+			}
+			else
+			{
+				ttitem_spec = true;
+			}
+			if (ItemInfo.setname == string.Empty)
+			{
+				ttitem_set = false;
+			}
+			else
+			{
+				ttitem_set = true;
+			}
+			needadjust = false;
+		}
+	}
+
+	public void set_tip_side(string side)
+	{
+		tip_side = side;
+	}
+
+	private void tiponleft()
+	{
+	}
+
+	protected override void Web_OnGUI()
+	{
+		GUI.depth = __BaseUI.UIDepth_Tooltip;
+		tippos.x = Input.mousePosition.x;
+		tippos.y = Input.mousePosition.y;
+		if (tippos.x < 0f || tippos.y < 0f || tippos.x >= (float)Screen.width || tippos.y >= (float)Screen.height)
+		{
+			TooltipFlag = string.Empty;
+			tttitle = string.Empty;
+		}
+		if (tttitle == "General")
+		{
+			DrawTooltipGen();
+		}
+		else if (tttitle == "Skill2")
+		{
+			DrawTooltip(m_tdSkill);
+		}
+		else if (tttitle == "General2")
+		{
+			DrawTooltip(m_tdGeneral);
+		}
+		else if (tttitle == "GeneralR")
+		{
+			DrawTooltip(m_tdGeneralR);
+		}
+		else if (tttitle == "Item")
+		{
+			DrawTooltip(m_tdItem);
+		}
+		else if (tttitle == "ItemPart")
+		{
+			DrawTooltip(m_tdItemPart);
+		}
+		else if (tttitle == "Material")
+		{
+			DrawTooltip(m_tdMaterial);
+		}
+		else if (tttitle == "Skill")
+		{
+			DrawTooltipSkill();
+		}
+		else if (tttitle == "TalSkill")
+		{
+			DrawTooltip(m_tdTalSkill);
+		}
+		else if (tttitle == "TalSpeciality")
+		{
+			DrawTooltip(m_tdTalSpeciality);
+		}
+		else if (tttitle == "TalCondition")
+		{
+			DrawTooltip(m_tdTalCondition);
+		}
+		else if (tttitle == "Common")
+		{
+			DrawTooltipCommon();
+		}
+		else if (tttitle == "Simple")
+		{
+			DrawTooltipSimple();
+		}
+		else if (tttitle == "Army")
+		{
+			DrawTooltipArmy();
+		}
+		else if (tttitle == "Drops")
+		{
+			DrawTooltip(m_tdDrops);
+		}
+		else
+		{
+			if (tttitle == "Resource" || tttitle == "Area" || tttitle == "AreaMonster")
+			{
+				return;
+			}
+			if (tttitle == "Troop")
+			{
+				DrawTooltip(m_tdTroop);
+			}
+			else if (tttitle == "Chest")
+			{
+				DrawTooltip(m_tdChest);
+			}
+			else if (!(tttitle == "WorldCity"))
+			{
+				if (tttitle == "ArenaBonus")
+				{
+					DrawTooltip(m_tdArenaBonus);
+				}
+				else if (tttitle == "Artifact")
+				{
+					DrawTooltip(m_tdArtifact);
+				}
+				else if (tttitle == "CombatPoint")
+				{
+					DrawTooltip(m_tdCombatPoint);
+				}
+				else if (tttitle == "Content")
+				{
+					DrawTooltip(m_tdContent);
+				}
+				else if (tttitle == "StarTechSum")
+				{
+					DrawTooltip(m_tdStarTechSum);
+				}
+				else if (tttitle == "Building")
+				{
+					DrawTooltip(m_tdBuilding);
+				}
+				else if (tttitle == "BuildingTemplate")
+				{
+					DrawTooltip(m_tdBuildingTemplate);
+				}
+				else if (tttitle == "Amulet")
+				{
+					DrawTooltip(m_tdAmulet);
+				}
+				else if (tttitle == "AmuletTemplate")
+				{
+					DrawTooltip(m_tdAmuletTemplate);
+				}
+				else if (tttitle == "Gem")
+				{
+					DrawTooltip(m_tdGem);
+				}
+				else if (tttitle == "ArenaChallenger")
+				{
+					DrawTooltip(m_tdChallenger);
+				}
+				else if (tttitle == "flowermess")
+				{
+					DrawTooltip(m_flower);
+				}
+				else if (tttitle == "buddy")
+				{
+					DrawTooltip(m_buddy);
+				}
+				else if (tttitle == "woodwarhelp")
+				{
+					DrawTooltip(m_woodwarhelp);
+				}
+				else if (tttitle == "woodwarxq")
+				{
+					DrawTooltip(m_woodwarxq);
+				}
+				else if (tttitle == "woodwarbx")
+				{
+					DrawTooltip(m_woodwarbx);
+				}
+				else if (tttitle == "FairyCond")
+				{
+					DrawTooltip(m_tdFairyCond);
+				}
+				else if (tttitle == "divineGenskill")
+				{
+					DrawTooltip(m_dgSkill);
+				}
+				else if (tttitle == "fuwen")
+				{
+					DrawTooltip(m_longeight);
+				}
+				else if (tttitle == "longtou")
+				{
+					DrawTooltip(m_dragonhead);
+				}
+				else if (tttitle == "craftBonus")
+				{
+					DrawTooltip(m_craftBonus);
+				}
+				else if (tttitle == "crosscraftplayer")
+				{
+					DrawTooltip(m_tdCCP);
+				}
+				else if (tttitle == "convoyplayer")
+				{
+					DrawTooltip(m_tdConvoyPlayer);
+				}
+				else if (tttitle == "spiritskill")
+				{
+					DrawTooltip(m_spiritskill);
+				}
+				else if (tttitle == "nationcard")
+				{
+					DrawTooltip(m_tdNationCard);
+				}
+				else if (tttitle == "nationcity")
+				{
+					DrawTooltip(m_tdNationCity);
+				}
+				else if (tttitle == "nationplayer")
+				{
+					DrawTooltip(m_tdNationPlayer);
+				}
+				else if (tttitle == "nationservers")
+				{
+					DrawTooltip(m_tdNationServers);
+				}
+				else if (tttitle == "ladderplayer")
+				{
+					DrawTooltip(m_tdLadderPlayers);
+				}
+				else if (tttitle == "teamfightcity")
+				{
+					DrawTooltip(m_tdTeamFightCity);
+				}
+				else if (tttitle == "teamfightplayer")
+				{
+					DrawTooltip(m_tdTeamFightPlayer);
+				}
+				else if (tttitle == "rune")
+				{
+					DrawTooltip(m_rune);
+				}
+				else if (tttitle == "runeslot")
+				{
+					DrawTooltip(m_runeslot);
+				}
+				else if (tttitle == "runeactive")
+				{
+					DrawTooltip(m_runeactive);
+				}
+				else if (tttitle == "craftcalendar")
+				{
+					DrawTooltip(m_craftcalendar);
+				}
+				else if (tttitle == "JxHelpContent")
+				{
+					DrawTooltip(m_jxHelpContent);
+				}
+				else if (tttitle == "JxBonusList")
+				{
+					DrawTooltip(m_jxBonusList);
+				}
+				else if (tttitle == "GeneralUpragdeMultiParam")
+				{
+					DrawTooltip(m_generalUpragdeMultiParam);
+				}
+				else if (tttitle == "techtree")
+				{
+					DrawTooltip(m_techtree);
+				}
+				else if (tttitle == "ttcd")
+				{
+					DrawTooltip(m_techtreecd);
+				}
+				else if (tttitle == "giftbag")
+				{
+					DrawTooltip(m_gfitbag);
+				}
+				else if (tttitle == "everydaylogin")
+				{
+					DrawTooltip(m_everydaylogin);
+				}
+				else if (tttitle == "bet")
+				{
+					DrawTooltip(m_bet);
+				}
+				else if (tttitle == "laketempbouns")
+				{
+					DrawTooltip(m_tdLakeTempBouns);
+				}
+				else if (tttitle == "laketempbaoxiang")
+				{
+					DrawTooltip(m_tdLakeTempbaoxiang);
+				}
+				else if (tttitle == "godlistslot")
+				{
+					DrawTooltip(m_tdGodListSolt);
+				}
+				else if (tttitle == "cardbag")
+				{
+					DrawTooltip(m_cardbag);
+				}
+				else if (tttitle == "generalshengjie")
+				{
+					DrawTooltip(m_generalshengjie);
+				}
+				else if (tttitle == "talentdata")
+				{
+					DrawTooltip(m_talentdata);
+				}
+			}
+		}
+	}
+
+	public override void PrepareLoading(string id)
+	{
+		if (id == rmg.LevelID)
+		{
+			BaseAsset.lds.SetMaxCount(1);
+		}
+	}
+
+	protected override void PostInit()
+	{
+		TooltipInit();
+	}
+
+	protected override void AssetLoaded(string AssetName)
+	{
+		if (m_tdCur != null)
+		{
+			m_tdCur.AssetLoaded(BaseAsset.was, AssetName);
+		}
+	}
+
+	public void ShowTooltipTroop(CampaignTroop t, string owner)
+	{
+		m_tdTroop.setTroop(t);
+		ttowner = owner;
+		TooltipFlag = "Troop";
+		needadjust = true;
+	}
+
+	public void ShowTooltipChest(CampaignChest c, string owner)
+	{
+		m_tdChest.setChest(c);
+		ttowner = owner;
+		TooltipFlag = "Chest";
+		needadjust = true;
+	}
+
+	public void ShowTooltipArenaBonus(string owner, byte id)
+	{
+		m_tdArenaBonus.setBonuse(id);
+		ttowner = owner;
+		TooltipFlag = "ArenaBonus";
+	}
+
+	public void ShowTooltipContent(string owner, string text, int max_width, int font_size)
+	{
+		ttowner = owner;
+		m_tdContent.setText(text, max_width, font_size);
+		TooltipFlag = "Content";
+	}
+
+	public void ShowTooltipGeneral(TooltipGeneral ttGen)
+	{
+		GenInfo = ttGen;
+		ttowner = ttGen.owner;
+		TooltipFlag = "General";
+		needadjust = true;
+		ttGen.skill_desc_height = text_warp_white.CalcHeight(new GUIContent(ttGen.gen_skill_desc), 250f);
+	}
+
+	public void ShowTooltipItem(TooltipItem ttItem)
+	{
+		ItemInfo = ttItem;
+		TooltipFlag = "Item";
+		needadjust = true;
+	}
+
+	public void ShowTooltipSkill(TooltipSkill ttSkill)
+	{
+		SkillInfo = ttSkill;
+		ttowner = ttSkill.owner;
+		TooltipFlag = "Skill";
+		needadjust = true;
+		tticonstyle.normal.background = SkillInfo.texIcon;
+	}
+
+	public void ShowTooltipSpeciality(TooltipSpeciality ttSpec)
+	{
+		SpecialityInfo = ttSpec;
+		ttowner = ttSpec.owner;
+		TooltipFlag = "Speciality";
+		needadjust = true;
+		tticonstyle.normal.background = SpecialityInfo.texIcon;
+	}
+
+	public void ShowTooltipCommon(string name, string owner)
+	{
+		ttowner = owner;
+		m_tdContent.setText(name, 500, __BaseUI._fontSize);
+		TooltipFlag = "Content";
+	}
+
+	public void ShowTooltipDragonHead(string msg1, string msg2, int herioc, int resilience, int rank, int level, string name)
+	{
+		m_dragonhead.setContent(msg1, msg2, herioc, resilience, rank, level, name);
+		TooltipFlag = "longtou";
+	}
+
+	public void ShowTooltipCommonB(string name)
+	{
+		m_buddy.setContent(name);
+		TooltipFlag = "buddy";
+	}
+
+	public void ShowTooltipCommonF(string name, int num)
+	{
+		m_flower.setContent(name, num);
+		TooltipFlag = "flowermess";
+	}
+
+	public void ShowTooltipCommonM(string name)
+	{
+		m_flower.setContent(name);
+		TooltipFlag = "flowermess";
+	}
+
+	public void ShowTooltipCommonH()
+	{
+		m_woodwarhelp.setContent();
+		TooltipFlag = "woodwarhelp";
+	}
+
+	public void ShowTooltipRune(int idrune, Texture2D texicon)
+	{
+		m_rune.setContent(idrune, texicon);
+		TooltipFlag = "rune";
+	}
+
+	public void ShowTooltipBet(int key, List<ulong> choices)
+	{
+		m_bet.setContent(key, choices);
+		TooltipFlag = "bet";
+	}
+
+	public void ShowTooltipLakeTempbouns(uint idlevel)
+	{
+		m_tdLakeTempBouns.setContent(idlevel);
+		TooltipFlag = "laketempbouns";
+	}
+
+	public void ShowTooltipLakeTempbaoxiang()
+	{
+		m_tdLakeTempbaoxiang.setContent();
+		TooltipFlag = "laketempbaoxiang";
+	}
+
+	public void ShowTooltipGodListSlot(uint slotid, int level, bool needendstr)
+	{
+		m_tdGodListSolt.setContent(slotid, level, needendstr);
+		TooltipFlag = "godlistslot";
+	}
+
+	public void ShowTooltipCardBag(uint bagid)
+	{
+		m_cardbag.setContent(bagid);
+		TooltipFlag = "cardbag";
+	}
+
+	public void ShowTooltipGeneralshengjie(string owner, uint generalid, int level)
+	{
+		ttowner = owner;
+		m_generalshengjie.setContent(generalid, level);
+		TooltipFlag = "generalshengjie";
+	}
+
+	public void ShowTooltipTalentData(string name, int mAttack, int mDefence, int mSpell, int mHp, int mFixeddamage, int mFixedprotection, int mHeroic, int mResilience)
+	{
+		m_talentdata.setContent(name, mAttack, mDefence, mSpell, mHp, mFixeddamage, mFixedprotection, mHeroic, mResilience);
+		TooltipFlag = "talentdata";
+	}
+
+	public void ShowTooltipRuneSlot(_equipment_slot_price esp, int id, int num)
+	{
+		m_runeslot.setContent(esp, id, num);
+		TooltipFlag = "runeslot";
+	}
+
+	public void ShowTooltipRuneActive(int rank, int ok)
+	{
+		m_runeactive.setContent(rank, ok);
+		TooltipFlag = "runeactive";
+	}
+
+	public void ShowTooltipTechTree(_tech_tree_node_template ttnt, int nextid, int nowlevel)
+	{
+		m_techtree.setContent(ttnt, nextid, nowlevel);
+		TooltipFlag = "techtree";
+	}
+
+	public void ShowTooltipTechTreeCD()
+	{
+		m_techtreecd.setContent();
+		TooltipFlag = "ttcd";
+	}
+
+	public void ShowTooltipCommonXQ(string name, int playerlevel, int lcount, int armlevel, int kills, int damage)
+	{
+		m_woodwarxq.setContent(name, playerlevel, lcount, armlevel, kills, damage);
+		TooltipFlag = "woodwarxq";
+	}
+
+	public void ShowTooltipCommonBX(int lvcount, int lvlevel, int boshu, int rank, CharacterDummyChallenge T_Player)
+	{
+		m_woodwarbx.setContent(lvcount, lvlevel, boshu, rank, T_Player);
+		TooltipFlag = "woodwarbx";
+	}
+
+	public void ShowTooltipCommonLongZ1(string skillname, int skilllevel, string skilldesc, Texture2D icon, string nextdesc, int needexp, int playerexp)
+	{
+		m_longeight.setContent1(skillname, skilllevel, skilldesc, icon, nextdesc, needexp, playerexp);
+		TooltipFlag = "fuwen";
+	}
+
+	public void ShowTooltipCommonLongZ2(string skillname, int skilllevel, string skilldesc, Texture2D icon)
+	{
+		m_longeight.setContent2(skillname, skilllevel, skilldesc, icon);
+		TooltipFlag = "fuwen";
+	}
+
+	public void ShowTooltipCommonLongZ3(string skillname, int playerlevel, string needname, int needskilllevel, int needspiritlevel, int idx, Texture2D icon)
+	{
+		m_longeight.setContent3(skillname, playerlevel, needname, needskilllevel, needspiritlevel, idx, icon);
+		TooltipFlag = "fuwen";
+	}
+
+	public void ShowTooltipStarTechSummary(string[] cont, string owner)
+	{
+		ttowner = owner;
+		m_tdStarTechSum.setContent(cont);
+		TooltipFlag = "StarTechSum";
+	}
+
+	public void ShowTooltipBuilding(Building d, string owner)
+	{
+		ttowner = owner;
+		m_tdBuilding.setContent(d);
+		TooltipFlag = "Building";
+	}
+
+	public void ShowTooltipBuildingTemplate(_building d, string owner)
+	{
+		ttowner = owner;
+		m_tdBuildingTemplate.setContent(d);
+		TooltipFlag = "BuildingTemplate";
+	}
+
+	public void ShowTooltipAmulet(Amulet d, string owner)
+	{
+		ShowTooltipAmulet(d, owner, bShowAuto: false);
+	}
+
+	public void ShowTooltipAmulet(Amulet d, string owner, bool bShowAuto)
+	{
+		ttowner = owner;
+		m_tdAmulet.setContent(d, bShowAuto);
+		TooltipFlag = "Amulet";
+		m_tdCur = m_tdAmulet;
+	}
+
+	public void ShowTooltipAmuletTemplate(byte idamulet_template, Texture2D tex)
+	{
+		m_tdAmuletTemplate.setContent(idamulet_template, tex);
+		TooltipFlag = "AmuletTemplate";
+	}
+
+	public void ShowTooltipGem(Gem d, string owner)
+	{
+		ttowner = owner;
+		m_tdGem.setContent(d);
+		TooltipFlag = "Gem";
+	}
+
+	public void ShowTooltipFairyCond(CampaignTroop ct, int sl)
+	{
+		m_tdFairyCond.setContent(ct, sl);
+		TooltipFlag = "FairyCond";
+	}
+
+	public void ShowTooltipArenaChallenger(Database.ArenaChallenger d, string owner)
+	{
+		ttowner = owner;
+		m_tdChallenger.setContent(d);
+		TooltipFlag = "ArenaChallenger";
+	}
+
+	public void ShowTooltipCrossCraftPlayer(CrossCraftPlayer d, string owner)
+	{
+		ttowner = owner;
+		m_tdCCP.setContent(d);
+		TooltipFlag = "crosscraftplayer";
+	}
+
+	public void ShowTooltipCrossCraftPlayer(CrossCraftPlayer d, bool isWorldCraft, string owner)
+	{
+		ttowner = owner;
+		m_tdCCP.setContent(d, isWorldCraft);
+		TooltipFlag = "crosscraftplayer";
+	}
+
+	public void ShowTooltipConvoyPlayer(ConvoyPlayer _cp, string owner)
+	{
+		ttowner = owner;
+		m_tdConvoyPlayer.setContent(_cp);
+		TooltipFlag = "convoyplayer";
+	}
+
+	public void ShowTooltipNationCard(int _cardid, Texture2D _icon, string owner)
+	{
+		ttowner = owner;
+		m_tdNationCard.setContent(_cardid, _icon);
+		TooltipFlag = "nationcard";
+	}
+
+	public void ShowTooltipNationCity(int _city, string owner)
+	{
+		ttowner = owner;
+		m_tdNationCity.setContent(_city);
+		TooltipFlag = "nationcity";
+	}
+
+	public void ShowTooltipNationPlayer(string owner, Database.NationPlayer _player, bool isOpponent, bool isNPC)
+	{
+		ShowTooltipNationPlayer(owner, _player, isOpponent, isNPC, 0);
+	}
+
+	public void ShowTooltipNationPlayer(string owner, Database.NationPlayer _player, bool isOpponent, bool isNPC, int idx)
+	{
+		ttowner = owner;
+		m_tdNationPlayer.setContent(_player, isOpponent, isNPC, idx);
+		TooltipFlag = "nationplayer";
+	}
+
+	public void ShowTooltipNationServers(string owner)
+	{
+		ttowner = owner;
+		m_tdNationServers.setContent();
+		TooltipFlag = "nationservers";
+	}
+
+	public void ShowTooltipLadderPlayer(string owner, Database.LadderPlayer _player)
+	{
+		ttowner = owner;
+		m_tdLadderPlayers.setContent(_player);
+		TooltipFlag = "ladderplayer";
+	}
+
+	public void ShowTooltipTeamFightCity(int _city, string owner)
+	{
+		ttowner = owner;
+		m_tdTeamFightCity.setContent(_city);
+		TooltipFlag = "teamfightcity";
+	}
+
+	public void ShowTooltipTeamFightPlayer(string owner, Database.TeamFightPlayer _player, bool isOpponent, bool isNPC)
+	{
+		ttowner = owner;
+		m_tdTeamFightPlayer.setContent(_player, isOpponent, isNPC);
+		TooltipFlag = "teamfightplayer";
+	}
+
+	public void draw_list_string(List<string> str, string owner, string _break)
+	{
+		int num = 0;
+		int num2 = 0;
+		string text = string.Empty;
+		foreach (string item in str)
+		{
+			Vector2 vector = tttextstyle.CalcSize(new GUIContent(item + _break));
+			num = Mathf.Max(num, (int)vector.x);
+			num2 = Mathf.Max(num2, (int)vector.y);
+			text = text + item + _break;
+		}
+		CommonInfo.name = text;
+		CommonInfo.owner = owner;
+		CommonInfo.width = num + 30;
+		CommonInfo.height = num2 * str.Count - 40;
+		ttowner = owner;
+		TooltipFlag = "Common";
+	}
+
+	public void draw_list_string(List<string> str, string owner)
+	{
+		draw_list_string(str, owner, "\n\n");
+	}
+
+	public void ShowTooltipCommon2(string name, string owner, int maxw)
+	{
+		ttowner = owner;
+		m_tdContent.setText(name, maxw, __BaseUI._fontSize);
+		TooltipFlag = "Content";
+	}
+
+	public void ShowTooltipCommon(string name, string owner, int w, int h)
+	{
+		CommonInfo.name = name;
+		CommonInfo.owner = owner;
+		CommonInfo.width = w;
+		CommonInfo.height = h;
+		ttowner = owner;
+		TooltipFlag = "Common";
+	}
+
+	public void ShowTooltipSimple(string name, bool loadflag, string owner)
+	{
+		SimpleInfo.name = name;
+		ttowner = owner;
+		TooltipFlag = "Simple";
+		SimpleInfo.loadflag = loadflag;
+	}
+
+	public override void Hide()
+	{
+		base.Hide();
+	}
+
+	public void HideTooltip(string owner)
+	{
+		if (owner == string.Empty)
+		{
+			TooltipFlag = string.Empty;
+		}
+		else if (owner == ttowner)
+		{
+			TooltipFlag = string.Empty;
+		}
+	}
+
+	public void ShowTooltipArmy(TooltipArmy tta)
+	{
+		ArmyInfo = tta;
+		ttowner = tta.owner;
+		TooltipFlag = "Army";
+		tticonstyle.normal.background = tta.icon;
+	}
+
+	public void ShowTooltipSkill(string owner, ushort id, string general_name, string etc)
+	{
+		TooltipFlag = "Skill2";
+		ttowner = owner;
+		m_tdSkill.setSkill(id, general_name, etc);
+		m_tdCur = m_tdSkill;
+	}
+
+	public void ShowTooltipTalSkill(string owner, ushort id)
+	{
+		TooltipFlag = "TalSkill";
+		ttowner = owner;
+		m_tdTalSkill.setData(id);
+		m_tdCur = m_tdTalSkill;
+	}
+
+	public void ShowTooltipTalSpeciality(string owner, ushort id)
+	{
+		TooltipFlag = "TalSpeciality";
+		ttowner = owner;
+		m_tdTalSpeciality.setData(id);
+		m_tdCur = m_tdTalSpeciality;
+	}
+
+	public void ShowTooltipJXHelpContent(string owner, int w, int count, params string[] str)
+	{
+		TooltipFlag = "JxHelpContent";
+		ttowner = owner;
+		m_jxHelpContent.set(w, count, str);
+		m_tdCur = m_jxHelpContent;
+	}
+
+	public void ShowTooltipGeneralUpragdeMultiParam(string owner)
+	{
+		TooltipFlag = "GeneralUpragdeMultiParam";
+		ttowner = owner;
+		m_generalUpragdeMultiParam.set();
+		m_tdCur = m_generalUpragdeMultiParam;
+	}
+
+	public void ShowTooltipJxBonusList(string owner, int w, List<_Treasure> treasure)
+	{
+		TooltipFlag = "JxBonusList";
+		ttowner = owner;
+		m_jxBonusList.set(w, treasure);
+		m_tdCur = m_jxBonusList;
+	}
+
+	public void ShowTooltipTalCondition(string owner, int storeyLevel, int requireLevel, int armyId, int requireStar, int showStorey, int showLevel, int showStar)
+	{
+		TooltipFlag = "TalCondition";
+		ttowner = owner;
+		m_tdTalCondition.setData(storeyLevel, requireLevel, armyId, requireStar, showStorey, showLevel, showStar);
+		m_tdCur = m_tdTalCondition;
+	}
+
+	public void ShowTooltipSpiritSkill(string owner, ushort id, string general_name, string etc)
+	{
+		TooltipFlag = "spiritskill";
+		ttowner = owner;
+		m_spiritskill.setSkill(id, general_name, etc);
+		m_tdCur = m_spiritskill;
+	}
+
+	public void ShowTooltipGeneral(string owner, ushort id, bool refresh)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneral(id, refresh);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipGR(string owner, uint id, Texture2D face, bool locked)
+	{
+		TooltipFlag = "GeneralR";
+		ttowner = owner;
+		m_tdGeneralR.setGeneral(id, face, locked);
+		m_tdCur = m_tdGeneralR;
+	}
+
+	public void ShowTooltipGR(string owner, uint id, Texture2D face, bool locked, bool drawClickNotic)
+	{
+		TooltipFlag = "GeneralR";
+		ttowner = owner;
+		m_tdGeneralR.setGeneral(id, face, locked, drawClickNotic);
+		m_tdCur = m_tdGeneralR;
+	}
+
+	public void ShowTooltipGR_2(string owner, uint id, Texture2D face, bool locked, uint idarmy, int level, bool _generalbook)
+	{
+		TooltipFlag = "GeneralR";
+		ttowner = owner;
+		if (BaseAsset.lds.GetCurUI().LevelID == "StrongHoldFormation")
+		{
+			m_tdGeneralR.setGeneralStronghold(id, face, locked, idarmy, level, _generalbook);
+		}
+		else
+		{
+			m_tdGeneralR.setGeneral(id, face, locked, idarmy, level, _generalbook);
+		}
+		m_tdCur = m_tdGeneralR;
+	}
+
+	public void ShowTooltipGeneral(string owner, ushort id)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneral(id, refresh: false);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipGeneralTemplate(string owner, ushort id)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneralByTemplate(id, Global.character_.level, refresh: false);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipGeneral(string owner, string _name, int _lvl, int _icon, byte _color, ushort _armyid, ushort _skillid)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneralByArmyTemplate(_name, _lvl, _icon, _color, _armyid, _skillid);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipArtifact(string owner, ushort id)
+	{
+		ShowTooltipArtifact(owner, id, _showAuto: false);
+	}
+
+	public void ShowTooltipArtifact(string owner, ushort id, bool _showAuto)
+	{
+		TooltipFlag = "Artifact";
+		ttowner = owner;
+		m_tdArtifact.setArtifact(id, _showAuto);
+		m_tdCur = m_tdArtifact;
+	}
+
+	public void ShowTooltipArtifact(string owner, Database.Artifact item)
+	{
+		TooltipFlag = "Artifact";
+		ttowner = owner;
+		m_tdArtifact.setArtifact(item);
+		m_tdCur = m_tdArtifact;
+	}
+
+	public void ShowTooltipArtifacTemplate(string owner, ushort id)
+	{
+		TooltipFlag = "Artifact";
+		ttowner = owner;
+		m_tdArtifact.setArtifactByTemplate((byte)id);
+		m_tdCur = m_tdArtifact;
+	}
+
+	public void ShowTooltipArtifacTemplateOfOld(string owner, ushort id, ushort level)
+	{
+		TooltipFlag = "Artifact";
+		ttowner = owner;
+		m_tdArtifact.setArtifactByTemplateOfOld((byte)id, (byte)level);
+		m_tdCur = m_tdArtifact;
+	}
+
+	public void ShowTooltipArtifacTemplateOfNew(string owner, ushort id, ushort forge_level, ushort level_advanced)
+	{
+		TooltipFlag = "Artifact";
+		ttowner = owner;
+		m_tdArtifact.setArtifactByTemplateOfNew((byte)id, (byte)forge_level, (byte)level_advanced);
+		m_tdCur = m_tdArtifact;
+	}
+
+	public void ShowTooltipArtifacTemplate(string owner, ushort id, ushort forge_level, ushort level)
+	{
+		if (forge_level == 0)
+		{
+			ShowTooltipArtifacTemplateOfOld(owner, id, level);
+		}
+		else
+		{
+			ShowTooltipArtifacTemplateOfNew(owner, id, forge_level, level);
+		}
+	}
+
+	public void ShowTooltipCombatPoint(string owner, ushort id)
+	{
+		TooltipFlag = "CombatPoint";
+		ttowner = owner;
+		FormGeneral gen = Global.character_.form_generals_[id];
+		m_tdCombatPoint.setGen(gen);
+		m_tdCur = m_tdCombatPoint;
+	}
+
+	public void ShowTooltipGeneralByTemplate(string owner, ushort id, int level)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneralByTemplate(id, level, refresh: true);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipGeneralByTemplate(string owner, ushort id)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneralByTemplate(id);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipGiftBag(string owner, List<_Treasure> t)
+	{
+		TooltipFlag = "giftbag";
+		ttowner = owner;
+		m_gfitbag.setContent(t);
+		m_tdCur = m_gfitbag;
+	}
+
+	public void ShowTooltipEverydayLogin(string owner, List<_Treasure> t)
+	{
+		TooltipFlag = "everydaylogin";
+		ttowner = owner;
+		m_everydaylogin.setContent(t);
+		m_tdCur = m_everydaylogin;
+	}
+
+	public void ShowTooltipGeneral(string owner, GeneralInfo gi)
+	{
+		TooltipFlag = "General2";
+		ttowner = owner;
+		m_tdGeneral.setGeneral(gi);
+		m_tdCur = m_tdGeneral;
+	}
+
+	public void ShowTooltipItem(string owner, byte id)
+	{
+		ShowTooltipItem(owner, id, bShowChange: false);
+	}
+
+	public void ShowTooltipItem(string owner, byte id, bool bShowChange)
+	{
+		TooltipFlag = "Item";
+		ttowner = owner;
+		m_tdItem.setEquipment(id, bShowChange);
+		m_tdCur = m_tdItem;
+	}
+
+	public void ShowTooltipItem(string owner, Equipment item)
+	{
+		TooltipFlag = "Item";
+		ttowner = owner;
+		m_tdItem.setEquipment(item);
+		m_tdCur = m_tdItem;
+	}
+
+	public void ShowTooltipItemByTemplate(string owner, byte id)
+	{
+		TooltipFlag = "Item";
+		ttowner = owner;
+		m_tdItem.setEquipmentByTemplate(id);
+		m_tdCur = m_tdItem;
+	}
+
+	public void ShowTooltipItemByTemplate(string owner, byte id, uint enchant_level, List<short> typelist, List<short> paramlist, short rank)
+	{
+		TooltipFlag = "Item";
+		ttowner = owner;
+		m_tdItem.setEquipmentByTemplate(id, enchant_level, typelist, paramlist, rank, new List<byte>());
+		m_tdCur = m_tdItem;
+	}
+
+	public void ShowTooltipItemByTemplate(string owner, byte id, uint enchant_level, List<short> typelist, List<short> paramlist, short rank, List<byte> runelist)
+	{
+		TooltipFlag = "Item";
+		ttowner = owner;
+		m_tdItem.setEquipmentByTemplate(id, enchant_level, typelist, paramlist, rank, runelist);
+		m_tdCur = m_tdItem;
+	}
+
+	public void ShowTooltipItemPart(string owner, EquipmentPart ep)
+	{
+		TooltipFlag = "ItemPart";
+		ttowner = owner;
+		m_tdItemPart.setEquipmentPart(ep);
+		m_tdCur = m_tdItemPart;
+	}
+
+	public void ShowTooltipMaterial(string owner, ushort id)
+	{
+		TooltipFlag = "Material";
+		ttowner = owner;
+		m_tdMaterial.setMaterial(id);
+		m_tdCur = m_tdMaterial;
+	}
+
+	public void ShowTooltipDrops(string owner, List<_CampaignTroopDrop> drops)
+	{
+		TooltipFlag = "Drops";
+		ttowner = owner;
+		m_tdDrops.setDrops(drops);
+		m_tdCur = m_tdDrops;
+	}
+
+	public void ShowTooltipDivineGenSkill(string owner, int id, int treeId)
+	{
+		TooltipFlag = "divineGenskill";
+		ttowner = owner;
+		m_dgSkill.setDivineGenSkill(id, treeId);
+		m_tdCur = m_dgSkill;
+	}
+
+	public void ShowTooltipCraftBonus(string owner, int mt, int bt, uint ts, uint cs, int team)
+	{
+		TooltipFlag = "craftBonus";
+		ttowner = owner;
+		m_craftBonus.setContent(mt, bt, ts, cs, team);
+		m_tdCur = m_craftBonus;
+	}
+
+	public void ShowTooltipnewCraftBonus(string owner)
+	{
+		TooltipFlag = "craftcalendar";
+		ttowner = owner;
+		m_craftcalendar.setContent();
+		m_tdCur = m_craftcalendar;
+	}
+
+	private void DrawTooltipGen()
+	{
+		int num = 270;
+		int num2 = 220 + (int)GenInfo.skill_desc_height;
+		if (!ttgenskill)
+		{
+			num2 -= 20;
+		}
+		if (!ttgenspec)
+		{
+			num2 -= 20;
+		}
+		if (GenInfo.armyhp == 0)
+		{
+			num2 -= 20;
+		}
+		if (GenInfo.army_desc == string.Empty)
+		{
+			num2 -= 20;
+		}
+		float num3 = tippos.x + 10f;
+		float num4 = (float)Screen.height - tippos.y;
+		if (num3 + (float)num > (float)Screen.width)
+		{
+			num3 = Screen.width - num;
+		}
+		if (num4 + (float)num2 > (float)Screen.height)
+		{
+			num4 = Screen.height - num2;
+		}
+		GUI.Box(new Rect(num3, num4, num, num2), string.Empty, __BaseUI._bgTooltip);
+		GUI.BeginGroup(new Rect(num3 + 5f, num4 + 5f, num - 10, num2 - 10));
+		__BaseUI.Label(__BaseUI._rect(0f, 0f, 80f, 20f), GenInfo.name, __BaseUI._textNLeft, Color.white);
+		if (GenInfo.level != 0)
+		{
+			__BaseUI.Label(__BaseUI._rect(0f, 40f, 45f, 20f), __BaseUI.load_str(20547u), __BaseUI._textNLeft, __BaseUI._clrYellow);
+		}
+	}
+
+	protected override void Show()
+	{
+	}
+
+	private void TooltipInit()
+	{
+		newtextstyle(tttextstyle);
+		ttdescstyle.wordWrap = true;
+		ttdescstyle.alignment = TextAnchor.UpperLeft;
+		ttdescstyle.normal.textColor = new Color(1f, 0.8f, 0.4f, 1f);
+		ttspecstyle.alignment = TextAnchor.MiddleLeft;
+		ttspecstyle.normal.textColor = new Color(0.5f, 1f, 0.5f);
+		ttcommonstyle.normal.textColor = new Color(1f, 1f, 1f, 1f);
+		ttcommonstyle.alignment = TextAnchor.UpperLeft;
+		ttcommonstyle.wordWrap = true;
+		ttdropstyle.normal.textColor = new Color(1f, 1f, 1f, 1f);
+		ttdropstyle.alignment = TextAnchor.MiddleCenter;
+		text_left_gold = new GUIStyle();
+		RectOffset padding = text_left_gold.padding;
+		int num = 3;
+		text_left_gold.padding.left = num;
+		padding.top = num;
+		text_left_gold.normal.textColor = new Color(1f, 0.8f, 0f);
+		text_left_green = new GUIStyle();
+		RectOffset padding2 = text_left_green.padding;
+		num = 3;
+		text_left_green.padding.left = num;
+		padding2.top = num;
+		text_left_green.normal.textColor = new Color(0f, 1f, 0f);
+		text_right_green = new GUIStyle();
+		text_right_green.alignment = TextAnchor.MiddleRight;
+		RectOffset padding3 = text_right_green.padding;
+		num = 3;
+		text_left_green.padding.left = num;
+		padding3.top = num;
+		text_right_green.normal.textColor = new Color(0f, 1f, 0f);
+		text_warp_white = new GUIStyle();
+		RectOffset padding4 = text_warp_white.padding;
+		num = 3;
+		text_warp_white.padding.left = num;
+		padding4.top = num;
+		text_warp_white.normal.textColor = new Color(1f, 1f, 1f);
+		text_warp_white.wordWrap = true;
+		text_warp_white.alignment = TextAnchor.UpperLeft;
+		m_tdSkill.make(BaseAsset.was);
+		m_tdGeneral.make(BaseAsset.was);
+		m_tdGeneralR.make(BaseAsset.was);
+		m_tdItem.make(BaseAsset.was);
+		m_tdItemPart.make(BaseAsset.was);
+		m_tdMaterial.make(BaseAsset.was);
+		m_tdDrops.make(BaseAsset.was);
+		m_tdTroop.make(BaseAsset.was);
+		m_tdChest.make(BaseAsset.was);
+		m_tdArenaBonus.make(BaseAsset.was);
+		m_tdContent.make(BaseAsset.was);
+		m_tdBuilding.make(BaseAsset.was);
+		m_tdBuildingTemplate.make(BaseAsset.was);
+		m_tdAmulet.make(BaseAsset.was);
+		m_tdGem.make(BaseAsset.was);
+		m_tdFairyCond.make(BaseAsset.was);
+	}
+
+	private void DrawTooltipItem()
+	{
+		int num = 205;
+		int num2 = 334;
+		float num3 = tippos.x + 10f;
+		float num4 = (float)Screen.height - tippos.y;
+		int num5 = 18;
+		int num6 = 0;
+		if (!ttitem_isenchantable)
+		{
+			num6++;
+		}
+		num6 += 4 - ItemInfo.basecount;
+		if (ItemInfo.basecount == 0)
+		{
+			num6++;
+		}
+		num6 += 3 - ItemInfo.addcount;
+		if (ItemInfo.addcount == 0)
+		{
+			num6++;
+		}
+		if (!ttitem_spec)
+		{
+			num6 += 2;
+		}
+		else
+		{
+			num2 += (int)text_warp_white.CalcHeight(new GUIContent(ItemInfo.specdesc), 190f);
+		}
+		if (!ttitem_set)
+		{
+			num6 += 2;
+		}
+		else
+		{
+			num2 += (int)text_warp_white.CalcHeight(new GUIContent(ItemInfo.setdesc), 190f);
+		}
+		if (!ttitem_spec || !ttitem_set)
+		{
+			num6++;
+		}
+		num2 -= num5 * num6;
+		if (num3 + (float)num > (float)Screen.width)
+		{
+			num3 = Screen.width - num;
+		}
+		if (num4 + (float)num2 > (float)Screen.height)
+		{
+			num4 = Screen.height - num2;
+		}
+		GUI.Label(new Rect(num3, num4, num, num2), string.Empty, __BaseUI._bgTooltip);
+		GUILayout.BeginArea(new Rect(num3 + 6f, num4 + 5f, num - 15, num2 - 10));
+		GUILayout.BeginVertical();
+		GUIStyle gUIStyle = new GUIStyle();
+		newtextstyle(gUIStyle);
+		gUIStyle.normal.textColor = ItemInfo.name_color;
+		GUILayout.BeginHorizontal();
+		GUILayout.Label(ItemInfo.type, text_left_gold);
+		GUILayout.EndHorizontal();
+		string text;
+		if (ttitem_isenchantable)
+		{
+			text = __BaseUI.load_str(20548u) + ItemInfo.level + "/" + ItemInfo.maxlevel;
+			GUILayout.Label(text, tttextstyle, GUILayout.MaxWidth(150f));
+		}
+		text = __BaseUI.load_str(20549u) + ItemInfo.require_level;
+		GUILayout.Label(text, tttextstyle, GUILayout.MaxWidth(150f));
+		GUILayout.Space(16f);
+		GUILayout.EndVertical();
+		if (ttitem_base)
+		{
+			if (ItemInfo.base_attack != 0)
+			{
+				GUILayout.BeginHorizontal();
+				GUILayout.Label(__BaseUI.load_str(20550u) + ItemInfo.base_attack, tttextstyle);
+				if (ItemInfo.enchantable)
+				{
+					GUILayout.Label(__BaseUI.load_str(20551u) + ItemInfo.max_attack + ")", text_right_green);
+				}
+				GUILayout.EndHorizontal();
+			}
+			if (ItemInfo.base_defense != 0)
+			{
+				GUILayout.BeginHorizontal();
+				GUILayout.Label(__BaseUI.load_str(20552u) + ItemInfo.base_defense, tttextstyle);
+				if (ItemInfo.enchantable)
+				{
+					GUILayout.Label(__BaseUI.load_str(20551u) + ItemInfo.max_defense + ")", text_right_green);
+				}
+				GUILayout.EndHorizontal();
+			}
+			if (ItemInfo.base_spell != 0)
+			{
+				GUILayout.BeginHorizontal();
+				GUILayout.Label(__BaseUI.load_str(20553u) + ItemInfo.base_spell, tttextstyle);
+				if (ItemInfo.enchantable)
+				{
+					GUILayout.Label(__BaseUI.load_str(20551u) + ItemInfo.max_spell + ")", text_right_green);
+				}
+				GUILayout.EndHorizontal();
+			}
+			if (ItemInfo.base_troop != 0)
+			{
+				GUILayout.BeginHorizontal();
+				GUILayout.Label(__BaseUI.load_str(20554u) + ItemInfo.base_troop, tttextstyle);
+				if (ItemInfo.enchantable)
+				{
+					GUILayout.Label(__BaseUI.load_str(20551u) + ItemInfo.max_troop + ")", text_right_green);
+				}
+				GUILayout.EndHorizontal();
+			}
+			GUILayout.Space(16f);
+		}
+		if (ttitem_add)
+		{
+			GUIStyle gUIStyle2 = new GUIStyle();
+			newtextstyle(gUIStyle2);
+			gUIStyle2.normal.textColor = new Color(0f, 1f, 0f, 1f);
+			GUIStyle gUIStyle3 = new GUIStyle();
+			newtextstyle(gUIStyle3);
+			gUIStyle3.normal.textColor = new Color(1f, 0f, 0f, 1f);
+			if (ItemInfo.add_strength > 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20555u) + "+" + ItemInfo.add_strength, gUIStyle2);
+			}
+			else if (ItemInfo.add_strength < 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20555u) + ItemInfo.add_strength, gUIStyle3);
+			}
+			if (ItemInfo.add_leadership > 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20556u) + "+" + ItemInfo.add_leadership, gUIStyle2);
+			}
+			else if (ItemInfo.add_leadership < 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20556u) + ItemInfo.add_leadership, gUIStyle3);
+			}
+			if (ItemInfo.add_power > 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20557u) + "+" + ItemInfo.add_power, gUIStyle2);
+			}
+			else if (ItemInfo.add_power < 0)
+			{
+				GUILayout.Label(__BaseUI.load_str(20557u) + ItemInfo.add_power, gUIStyle3);
+			}
+			GUILayout.Space(16f);
+		}
+		if (ttitem_spec)
+		{
+			GUILayout.Label(__BaseUI.load_str(20558u), text_left_gold);
+			GUILayout.Label(ItemInfo.specname, text_left_green);
+			GUILayout.Label(ItemInfo.specdesc, text_warp_white);
+		}
+		if (ttitem_set)
+		{
+			GUILayout.BeginHorizontal();
+			GUILayout.Label(__BaseUI.load_str(20559u), text_left_gold);
+			if (ItemInfo.set_count >= 3)
+			{
+				GUILayout.Label(__BaseUI.load_str(20560u), text_left_gold);
+			}
+			else if (ItemInfo.set_count > 0)
+			{
+				GUILayout.Label(ItemInfo.set_count + __BaseUI.load_str(20561u), text_left_gold);
+			}
+			GUILayout.EndHorizontal();
+			GUILayout.Label(ItemInfo.setname, text_left_green);
+			GUILayout.Label(ItemInfo.setdesc, tttextstyle);
+		}
+		GUILayout.EndArea();
+	}
+
+	private void DrawTooltipSkill()
+	{
+		int num = 200;
+		int num2 = 80;
+		num2 += SkillInfo.desc.Length / 14 * 20;
+		float num3 = tippos.x + 10f;
+		float num4 = (float)Screen.height - tippos.y;
+		if (num3 + (float)num > (float)Screen.width)
+		{
+			num3 = Screen.width - num;
+		}
+		if (num4 + (float)num2 > (float)Screen.height)
+		{
+			num4 = Screen.height - num2;
+		}
+		GUI.BeginGroup(new Rect(num3, num4, num, num2));
+		GUI.Label(new Rect(0f, 0f, num, num2), string.Empty, __BaseUI._bgTooltip);
+		GUI.Label(new Rect(7f, 7f, 180f, 20f), SkillInfo.name, tttextstyle);
+		GUI.Label(new Rect(150f, 10f, 32f, 32f), string.Empty, tticonstyle);
+		GUI.Label(new Rect(7f, 27f, 180f, 20f), SkillInfo.general_name, tttextstyle);
+		GUI.Label(new Rect(10f, 50f, 180f, 80f), SkillInfo.desc, ttdescstyle);
+		GUI.EndGroup();
+	}
+
+	private void DrawTooltipSpeciality()
+	{
+		int num = 200;
+		int num2 = 80;
+		num2 += SpecialityInfo.desc.Length / 14 * 20;
+		float num3 = tippos.x + 10f;
+		float num4 = (float)Screen.height - tippos.y;
+		if (num3 + (float)num > (float)Screen.width)
+		{
+			num3 = Screen.width - num;
+		}
+		if (num4 + (float)num2 > (float)Screen.height)
+		{
+			num4 = Screen.height - num2;
+		}
+		GUI.BeginGroup(new Rect(num3, num4, num, num2));
+		GUI.Label(new Rect(0f, 0f, num, num2), string.Empty, __BaseUI._bgTooltip);
+		GUI.Label(new Rect(7f, 7f, 180f, 20f), SpecialityInfo.name, tttextstyle);
+		GUI.Label(new Rect(150f, 10f, 32f, 32f), string.Empty, tticonstyle);
+		GUI.Label(new Rect(7f, 27f, 180f, 20f), SpecialityInfo.general_name, tttextstyle);
+		GUI.Label(new Rect(10f, 50f, 180f, 60f), SpecialityInfo.desc, ttdescstyle);
+		GUI.EndGroup();
+	}
+
+	private void DrawTooltipCommon()
+	{
+		int width = CommonInfo.width;
+		int height = CommonInfo.height;
+		float num = tippos.x + 10f;
+		float num2 = (float)Screen.height - tippos.y;
+		if (num + (float)width > (float)Screen.width)
+		{
+			num = Screen.width - width;
+		}
+		if (num2 + (float)height > (float)Screen.height)
+		{
+			num2 = Screen.height - height;
+		}
+		GUI.BeginGroup(new Rect(num, num2, width, height));
+		GUI.Label(new Rect(0f, 0f, width, height), string.Empty, __BaseUI._bgTooltip);
+		GUI.Label(new Rect(15f, 15f, width - 30, height - 30), CommonInfo.name, ttcommonstyle);
+		GUI.EndGroup();
+	}
+
+	private void newtextstyle(GUIStyle style)
+	{
+		style.padding.top = 3;
+		style.padding.left = 3;
+		style.normal.textColor = new Color(1f, 1f, 1f, 1f);
+	}
+
+	private void DrawTooltipSimple()
+	{
+		int num = 200;
+		int num2 = 50;
+		float left = tippos.x + 10f;
+		float top = (float)Screen.height - tippos.y;
+		GUI.BeginGroup(new Rect(left, top, num, num2));
+		GUI.Label(new Rect(0f, 0f, num, num2), string.Empty, __BaseUI._bgTooltip);
+		GUI.Label(new Rect(7f, 7f, 180f, 20f), SimpleInfo.name, tttextstyle);
+		string hint = SimpleInfo.hint;
+		if (SimpleInfo.loadflag)
+		{
+			hint = SimpleInfo.loading;
+		}
+		GUI.Label(new Rect(7f, 27f, 180f, 20f), hint, tttextstyle);
+		GUI.EndGroup();
+	}
+
+	private void DrawTooltipArmy()
+	{
+		int num = 250;
+		int num2 = 95;
+		float num3 = ttdescstyle.CalcHeight(new GUIContent(ArmyInfo.desc), 230f);
+		if (num3 > 20f)
+		{
+			num2 += (int)(num3 - 20f);
+		}
+		float left = tippos.x + 10f;
+		float top = (float)Screen.height - tippos.y;
+		GUI.BeginGroup(new Rect(left, top, num, num2));
+		GUI.Label(new Rect(0f, 0f, num, num2), string.Empty, __BaseUI._bgTooltip);
+		__BaseUI.Label(new Rect(7f, 7f, 230f, 20f), ArmyInfo.name, __BaseUI._textLeft, __BaseUI._clrQualitys[5], 20);
+		GUI.Label(new Rect(200f, 10f, 32f, 32f), string.Empty, tticonstyle);
+		GUI.Label(new Rect(7f, 27f, 230f, 20f), ArmyInfo.school, tttextstyle);
+		GUI.Label(new Rect(37f, 27f, 230f, 20f), ArmyInfo.general_name, tttextstyle);
+		if (num3 > 20f)
+		{
+			GUI.Label(new Rect(10f, 47f, 230f, num3), ArmyInfo.desc, ttdescstyle);
+			GUI.Label(new Rect(10f, 70f + num3 - 20f, 230f, 20f), ArmyInfo.spec, ttspecstyle);
+		}
+		else
+		{
+			GUI.Label(new Rect(10f, 47f, 230f, 20f), ArmyInfo.desc, ttdescstyle);
+			GUI.Label(new Rect(10f, 70f, 230f, 20f), ArmyInfo.spec, ttspecstyle);
+		}
+		GUI.EndGroup();
+	}
+
+	private void DrawTooltip(TooltipDraw td)
+	{
+		float num = tippos.x + 10f;
+		float num2 = (float)Screen.height - tippos.y;
+		if (num + (float)td.width > (float)Screen.width)
+		{
+			num = Screen.width - td.width;
+		}
+		if (num2 + (float)td.height > (float)Screen.height)
+		{
+			num2 = Math.Max(Screen.height - td.height, 0);
+		}
+		GUI.BeginGroup(new Rect(num, num2, td.width, td.height));
+		GUI.Label(new Rect(0f, 0f, td.width, td.height), string.Empty, __BaseUI._bgTooltip);
+		td.draw();
+		GUI.EndGroup();
+	}
+
+	public TooltipGeneral make_TooltipGeneral(uint id, int level, uint armyid, int hp, uint skillid, string tt_owner)
+	{
+		TooltipGeneral tooltipGeneral = new TooltipGeneral();
+		if (id == 0)
+		{
+			tooltipGeneral.name = Global.character_.name;
+		}
+		else if (Global.getTemplate("general_template", id) is _general_template general_template)
+		{
+			tooltipGeneral.name = general_template.name;
+		}
+		tooltipGeneral.level = level;
+		tooltipGeneral.armyhp = hp;
+		_army_template armyTemplate = Global.getArmyTemplate(armyid);
+		tooltipGeneral.armytype = armyTemplate.name;
+		tooltipGeneral.army_desc = armyTemplate.desc_common;
+		tooltipGeneral.army_spec = string.Empty;
+		tooltipGeneral.army_spec = string.Empty;
+		if (armyTemplate.spec1 > 0)
+		{
+			_speciality speciality = Global.getTemplate("speciality", armyTemplate.spec1) as _speciality;
+			tooltipGeneral.army_spec += __BaseUI.load_str(20440u, speciality.name);
+		}
+		if (armyTemplate.spec2 > 0)
+		{
+			_speciality speciality2 = Global.getTemplate("speciality", armyTemplate.spec2) as _speciality;
+			tooltipGeneral.army_spec += __BaseUI.load_str(20440u, speciality2.name);
+		}
+		if (armyTemplate.spec3 > 0)
+		{
+			_speciality speciality3 = Global.getTemplate("speciality", armyTemplate.spec3) as _speciality;
+			tooltipGeneral.army_spec += __BaseUI.load_str(20440u, speciality3.name);
+		}
+		_skill skillTemplate = Global.getSkillTemplate(skillid);
+		tooltipGeneral.gen_active_skill = skillTemplate.name;
+		tooltipGeneral.gen_skill_desc = skillTemplate.desc_common;
+		tooltipGeneral.gen_speicalies = string.Empty;
+		tooltipGeneral.owner = tt_owner;
+		return tooltipGeneral;
+	}
+
+	public TooltipGeneral make_TooltipGeneralTemp(uint id, string tt_owner)
+	{
+		if (id == 0)
+		{
+			return null;
+		}
+		if (!(Global.getTemplate("general_template", id) is _general_template general_template))
+		{
+			return null;
+		}
+		return make_TooltipGeneral(id, 0, general_template.idarmy_template, 0, general_template.first_skill1, tt_owner);
+	}
+
+	private TooltipGeneral make_TooltipGeneralChar(string tt_owner)
+	{
+		FormGeneral formGeneral = Global.character_.form_generals_[0];
+		return make_TooltipGeneral(0u, Global.character_.level, formGeneral.idarmy_template, (int)formGeneral.param.hp, formGeneral.activeskill, tt_owner);
+	}
+
+	public TooltipGeneral make_TooltipGeneralSquad(ushort id, string tt_owner)
+	{
+		if (id < 0)
+		{
+			return null;
+		}
+		if (id == 0)
+		{
+			return make_TooltipGeneralChar(tt_owner);
+		}
+		FormGeneral formGeneral = Global.character_.form_generals_[id];
+		return make_TooltipGeneral(id, formGeneral.get_level(), formGeneral.idarmy_template, (int)formGeneral.param.hp, formGeneral.activeskill, tt_owner);
+	}
+
+	public TooltipSkill make_TooltipSkill(uint id, string tt_owner)
+	{
+		TooltipSkill tooltipSkill = new TooltipSkill();
+		_skill skillTemplate = Global.getSkillTemplate(id);
+		tooltipSkill.name = skillTemplate.name;
+		tooltipSkill.desc = skillTemplate.desc_detail;
+		tooltipSkill.texIcon = BaseAsset.LoadTexture("skill" + skillTemplate.icon);
+		tooltipSkill.owner = tt_owner;
+		return tooltipSkill;
+	}
+
+	public TooltipSkill make_TooltipSpec(uint id, string tt_owner)
+	{
+		TooltipSkill tooltipSkill = new TooltipSkill();
+		_speciality speciality = Global.getTemplate("speciality", id) as _speciality;
+		tooltipSkill.name = speciality.name;
+		tooltipSkill.desc = speciality.desc;
+		tooltipSkill.texIcon = BaseAsset.LoadTexture("skill" + speciality.icon);
+		tooltipSkill.owner = tt_owner;
+		return tooltipSkill;
+	}
+
+	public TooltipArmy make_TooltipArmy(uint id, string tt_owner)
+	{
+		TooltipArmy tooltipArmy = new TooltipArmy();
+		_army_template armyTemplate = Global.getArmyTemplate(id);
+		tooltipArmy.name = armyTemplate.name;
+		tooltipArmy.desc = armyTemplate.desc_detail;
+		tooltipArmy.school = (Global.getTemplate("army_school", (uint)armyTemplate.army_school) as _army_school).name;
+		tooltipArmy.spec = make_ArmySpecString(armyTemplate);
+		tooltipArmy.icon = BaseAsset.LoadTexture("army" + armyTemplate.icon);
+		tooltipArmy.owner = tt_owner;
+		return tooltipArmy;
+	}
+
+	public static string make_ArmySpecString(_army_template army_temp)
+	{
+		string text = string.Empty;
+		if (army_temp.spec1 != 0)
+		{
+			_speciality speciality = Global.getTemplate("speciality", army_temp.spec1) as _speciality;
+			text = text + "【" + speciality.name + "】";
+		}
+		if (army_temp.spec2 != 0)
+		{
+			_speciality speciality2 = Global.getTemplate("speciality", army_temp.spec2) as _speciality;
+			text = text + "【" + speciality2.name + "】";
+		}
+		if (army_temp.spec3 != 0)
+		{
+			_speciality speciality3 = Global.getTemplate("speciality", army_temp.spec3) as _speciality;
+			text = text + "【" + speciality3.name + "】";
+		}
+		if (Global.character_.armystars.ContainsKey(army_temp.id))
+		{
+			text = string.Empty;
+			ushort id = army_temp.id;
+			ushort num = Global.character_.armystars[id];
+			if (Global.getTemplate("army_star_start", id) is _army_star_start { start_id: var start_id, max_id: var max_id })
+			{
+				int num2 = start_id + num - 1;
+				if (num2 <= max_id)
+				{
+					int num3 = 0;
+					for (int i = start_id; i <= num2; i++)
+					{
+						if (Global.getTemplate("army_star", (uint)i) is _army_star { type: "spec" } army_star)
+						{
+							_speciality speciality4 = Global.getTemplate("speciality", (uint)army_star.param) as _speciality;
+							num3++;
+							text = text + "【" + speciality4.name + "】";
+							if (num3 == 3)
+							{
+								break;
+							}
+						}
+					}
+				}
+			}
+			foreach (object value in Global.getTemplates("talent_template").Values)
+			{
+				_talent_template talent_template = (_talent_template)value;
+				if (talent_template.armyid == id && talent_template.spec == 18 && Global.character_.campaigns_.ContainsKey(talent_template.idcampaign) && Global.character_.campaigns_[talent_template.idcampaign].finished && Global.getTemplate("speciality", (uint)talent_template.param) is _speciality speciality5)
+				{
+					text = text + "【" + speciality5.name + "】";
+				}
+			}
+		}
+		return text;
+	}
+
+	private int get_item_base_count(TooltipItem ttitem)
+	{
+		int num = 0;
+		if (ttitem.base_attack > 0)
+		{
+			num++;
+		}
+		if (ttitem.base_defense > 0)
+		{
+			num++;
+		}
+		if (ttitem.base_spell > 0)
+		{
+			num++;
+		}
+		if (ttitem.base_troop > 0)
+		{
+			num++;
+		}
+		return num;
+	}
+
+	public TooltipItem make_TooltipItemTemp(uint id, string tt_owner, int count)
+	{
+		TooltipItem tooltipItem = new TooltipItem();
+		_equipment_main equipment_main = Global.getTemplate("equipment_main", id) as _equipment_main;
+		tooltipItem.type = (Global.getTemplate("equipment_type", equipment_main.idequipment_type) as _equipment_type).name;
+		tooltipItem.name_color = __BaseUI.clrQuality(equipment_main.idequipment_color);
+		tooltipItem.require_level = equipment_main.require_level;
+		tooltipItem.base_troop = (int)equipment_main.soldier;
+		tooltipItem.max_troop = (int)equipment_main.soldier + (int)(equipment_main.soldier_add * Global.character_.level);
+		tooltipItem.base_attack = (int)equipment_main.attack;
+		tooltipItem.max_attack = (int)equipment_main.attack + (int)(equipment_main.attack_add * Global.character_.level);
+		tooltipItem.base_defense = (int)equipment_main.defence;
+		tooltipItem.max_defense = (int)equipment_main.defence + (int)(equipment_main.defence_add * Global.character_.level);
+		tooltipItem.base_spell = (int)equipment_main.spell;
+		tooltipItem.max_spell = (int)equipment_main.spell + (int)(equipment_main.spell_add * Global.character_.level);
+		tooltipItem.basecount = get_item_base_count(tooltipItem);
+		tooltipItem.specname = string.Empty;
+		tooltipItem.enchantable = true;
+		return tooltipItem;
+	}
+
+	private int get_item_add_count(TooltipItem ttitem)
+	{
+		int num = 0;
+		if (ttitem.add_strength != 0)
+		{
+			num++;
+		}
+		if (ttitem.add_leadership != 0)
+		{
+			num++;
+		}
+		if (ttitem.add_power != 0)
+		{
+			num++;
+		}
+		return num;
+	}
+}

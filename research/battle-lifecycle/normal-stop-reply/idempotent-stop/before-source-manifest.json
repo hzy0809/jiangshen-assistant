@@ -1,0 +1,17 @@
+[
+  {
+    "path": "native/unity_bridge/managed/DailyArenaBattleModel.cs",
+    "sha256": "e8f7c399f49b3bb8b92386f3c6966c17db67428c498498a054f0b622a8e4de25",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyArenaBattleModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyPointRaceModel.cs",
+    "sha256": "aecaa64e897a600b161c53f4d192fc68175b45527b897bcd4f76964ee21808f7",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyPointRaceModel.cs"
+  },
+  {
+    "path": "native/unity_bridge/managed/DailyMonsterModel.cs",
+    "sha256": "f186536d515679598d5b84ea69a6a6f1d3cb9cd91a7ea02b0dd87e90bda20097",
+    "frozen_path": "research\\battle-lifecycle\\normal-stop-reply\\frozen-source\\native\\unity_bridge\\managed\\DailyMonsterModel.cs"
+  }
+]

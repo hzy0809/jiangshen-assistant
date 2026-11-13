@@ -1,0 +1,88 @@
+using UnityEngine;
+
+public class EventDispatcher : MonoBehaviour
+{
+	public delegate void EventHandler(GameObject e);
+
+	public delegate void CollisionHandler(GameObject e, Collision c);
+
+	public event EventHandler MouseOver;
+
+	public event EventHandler MouseDown;
+
+	public event EventHandler MouseEnter;
+
+	public event EventHandler MouseExit;
+
+	public event EventHandler BecameVisible;
+
+	public event EventHandler BecameInvisible;
+
+	public event CollisionHandler CollisionEnter;
+
+	public event CollisionHandler CollisionExit;
+
+	private void OnMouseOver()
+	{
+		if (this.MouseOver != null)
+		{
+			this.MouseOver(base.gameObject);
+		}
+	}
+
+	private void OnMouseDown()
+	{
+		if (this.MouseDown != null)
+		{
+			this.MouseDown(base.gameObject);
+		}
+	}
+
+	private void OnMouseEnter()
+	{
+		if (this.MouseEnter != null)
+		{
+			this.MouseEnter(base.gameObject);
+		}
+	}
+
+	private void OnMouseExit()
+	{
+		if (this.MouseExit != null)
+		{
+			this.MouseExit(base.gameObject);
+		}
+	}
+
+	private void OnBecameVisible()
+	{
+		if (this.BecameVisible != null)
+		{
+			this.BecameVisible(base.gameObject);
+		}
+	}
+
+	private void OnBecameInvisible()
+	{
+		if (this.BecameInvisible != null)
+		{
+			this.BecameInvisible(base.gameObject);
+		}
+	}
+
+	private void OnCollisionEnter(Collision c)
+	{
+		if (this.CollisionEnter != null)
+		{
+			this.CollisionEnter(base.gameObject, c);
+		}
+	}
+
+	private void OnCollisionExit(Collision c)
+	{
+		if (this.CollisionExit != null)
+		{
+			this.CollisionExit(base.gameObject, c);
+		}
+	}
+}

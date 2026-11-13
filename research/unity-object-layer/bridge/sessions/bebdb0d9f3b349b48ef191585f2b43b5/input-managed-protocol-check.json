@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-30T17:42:48.0154769Z",
+  "mode": "desktop-framework protocol/resource tests only; no Unity/game assembly load",
+  "exit_code": 0,
+  "output": "PASS 38 protocol/resource checks; no game code loaded or Unity API called",
+  "source_hashes": [
+    {
+      "file": "Protocol.cs",
+      "sha256": "396AF9F6FC6EF101F800FE0F5F3FC4E5555F2EC8BBA39B435622900B1AAF2CBD"
+    },
+    {
+      "file": "ProtocolTests.cs",
+      "sha256": "F31FBF01A3F6A84156FBC9204CF2442DA39E29CFB62DB04179247D010CFD593E"
+    }
+  ]
+}

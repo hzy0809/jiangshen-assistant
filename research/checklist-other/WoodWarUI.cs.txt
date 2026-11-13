@@ -1,0 +1,650 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Database;
+using UnityEngine;
+using game.net.data.CtoS;
+using game.net.data.StoC;
+
+public class WoodWarUI : BaseUI
+{
+	public enum PlayState
+	{
+		init,
+		no,
+		ok
+	}
+
+	private int temptime;
+
+	private BattleUI m_battleUI;
+
+	private PlayState PS_state;
+
+	private Texture2D textitle;
+
+	private GUIStyle bgframe = new GUIStyle();
+
+	private GUIStyle bar2 = new GUIStyle();
+
+	private GUIStyle bar3 = new GUIStyle();
+
+	private GUIStyle zi1 = new GUIStyle();
+
+	private GUIStyle zi2 = new GUIStyle();
+
+	private GUIStyle zi3 = new GUIStyle();
+
+	private GUIStyle zi4 = new GUIStyle();
+
+	private GUIStyle zi5 = new GUIStyle();
+
+	private GUIStyle zi8 = new GUIStyle();
+
+	private GUIStyle zi9 = new GUIStyle();
+
+	private Texture2D zi10;
+
+	private GUIStyle loseNumStyle = new GUIStyle();
+
+	private GUIStyle killnumstyle = new GUIStyle();
+
+	private _ButtonStyle btn_start = new _ButtonStyle();
+
+	private _ButtonStyle btn_help = new _ButtonStyle();
+
+	private _ButtonStyle btn_xiangxi = new _ButtonStyle();
+
+	private GUIStyle btn_lingqu = new GUIStyle();
+
+	private _ButtonStyle btn_lingqu2 = new _ButtonStyle();
+
+	private _ButtonStyle btn_kuaisu = new _ButtonStyle();
+
+	private Vector2 scrollpaihang = new Vector2(0f, 0f);
+
+	private int scroll_index_paihang;
+
+	private SCDummyChallengeFight_0x265 OK_fight;
+
+	private List<byte[]> _report_list;
+
+	private List<int> _turn_index;
+
+	private int current_report_index;
+
+	private int current_turn_index;
+
+	private int display_turn_index;
+
+	private bool is_init_turn = true;
+
+	private int start_total_troop_num;
+
+	public int CurrentReportIndex => current_report_index;
+
+	public int DisplayTurnIndex => display_turn_index;
+
+	public override void Start()
+	{
+		base.Start();
+		scroll_index_paihang = ScrollControl.RegisterInfo();
+		m_battleUI = BaseUI.GetBattleUI();
+	}
+
+	protected override void Show()
+	{
+		base.Show();
+		AssetBundle asset = BaseAsset.was.GetAsset("ui_woodwar");
+		scrollpaihang.y = 0f;
+		textitle = asset.Load("ui_biaoti1") as Texture2D;
+		__BaseUI.init_lable(asset, "ui_di1", ref bgframe);
+		__BaseUI.init_lable(asset, "ui_bar2", ref bar2);
+		__BaseUI.init_lable(asset, "ui_zi1", ref zi1);
+		__BaseUI.init_lable(asset, "ui_zi2", ref zi2);
+		__BaseUI.init_lable(asset, "ui_zi3", ref zi3);
+		__BaseUI.init_lable(asset, "ui_zi4", ref zi4);
+		__BaseUI.init_lable(asset, "ui_zi5", ref zi5);
+		__BaseUI.init_lable(asset, "ui_zi8", ref zi8);
+		__BaseUI.init_lable(asset, "ui_zi9", ref zi9);
+		__BaseUI.init_lable(asset, "ui_bar3", ref bar3);
+		__BaseUI.init_lable(asset, "button_lingqu_normal", ref btn_lingqu);
+		zi10 = asset.Load("ui_zi10") as Texture2D;
+		btn_start.make(asset, "button_kaishi");
+		btn_help.make(asset, "button_bangzhu");
+		btn_xiangxi.make(asset, "button_xiangxi");
+		btn_lingqu2.make(asset, "button_lingqu2");
+		btn_kuaisu.make(asset, "button_kuaisu");
+		loseNumStyle.font = __BaseUI.GetFontCache().NumFont;
+		loseNumStyle.fontSize = 25;
+		loseNumStyle.alignment = TextAnchor.MiddleCenter;
+		killnumstyle.font = __BaseUI.GetFontCache().NumFont;
+		killnumstyle.fontSize = 40;
+		killnumstyle.alignment = TextAnchor.MiddleRight;
+		BaseAsset.lds.Hide();
+		EnableAll();
+		Visible();
+	}
+
+	public void MyLoading()
+	{
+		cs_dummy_challenge_info();
+	}
+
+	private void cs_dummy_challenge_info()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSDummyChallengeInfo_0x264 pkt = new CSDummyChallengeInfo_0x264();
+		RootUI.m_client.Send(612, pkt, sc_dummy_challenge_info);
+	}
+
+	private void sc_dummy_challenge_info(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCDummyChallengeInfo_0x264 sCDummyChallengeInfo_0x = JSProtoBuf.Serializer.Deserialize<SCDummyChallengeInfo_0x264>(stream);
+			if (sCDummyChallengeInfo_0x != null)
+			{
+				Global.character_.dummy_challenge_status = sCDummyChallengeInfo_0x.status;
+				temptime = (int)sCDummyChallengeInfo_0x.finish_timestamp;
+				if (Global.character_.dummy_challenge_status != null && !base.enabled)
+				{
+					AddAsset("ui_woodwar");
+					CollectingStart(bCollecting: false);
+					StartLoading();
+					return;
+				}
+			}
+		}
+		BaseAsset.lds.Hide();
+		EnableAll();
+	}
+
+	public void BattleFormation()
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable.Add("subui", "Woodwar");
+		hashtable.Add("viewonly", false);
+		hashtable.Add("OnAttack", new FormationUI.delegate_OnAttack(OnAttack));
+		hashtable.Add("OnClose", new delegate_OnClose(OnFormationClose));
+		FormationUI component = BaseUI.GetRootUI().GetComponent<FormationUI>();
+		component.SubLoading(hashtable);
+		MainUI.SetSubUI(component);
+	}
+
+	private void OnFormationClose()
+	{
+		MainUI._muren();
+	}
+
+	private bool OnAttack()
+	{
+		cs_dummy_challenge_fight();
+		return true;
+	}
+
+	private void cs_dummy_challenge_fight()
+	{
+		BaseAsset.lds.Visible_sub();
+		DisableAll();
+		CSDummyChallengeFight_0x265 pkt = new CSDummyChallengeFight_0x265();
+		RootUI.m_client.Send(613, pkt, sc_dummy_challenge_fight);
+	}
+
+	private void sc_dummy_challenge_fight(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCDummyChallengeFight_0x265 sCDummyChallengeFight_0x = (OK_fight = JSProtoBuf.Serializer.Deserialize<SCDummyChallengeFight_0x265>(stream));
+			if (sCDummyChallengeFight_0x != null)
+			{
+				if (sCDummyChallengeFight_0x.report != null && sCDummyChallengeFight_0x.report.Count > 0 && m_battleUI != null)
+				{
+					_report_list = sCDummyChallengeFight_0x.report;
+					_turn_index = sCDummyChallengeFight_0x.start_turn_index;
+					current_report_index = 0;
+					current_turn_index = 0;
+					display_turn_index = 0;
+					start_total_troop_num = 0;
+					m_battleUI.setPrevUI(BaseAsset.lds.GetCurUI());
+					m_battleUI.SetTopMode(BattleUI.TopUIMode.Woodwar);
+					m_battleUI.GetComponent<BattleWoodwarTopUI>().ResetKillCount();
+					NextFight();
+					Hide();
+					return;
+				}
+				if (sCDummyChallengeFight_0x.reward_status != null && sCDummyChallengeFight_0x.reward_status.player.can_take)
+				{
+					Global.character_.dummy_challenge_status = sCDummyChallengeFight_0x.reward_status;
+					PS_state = PlayState.ok;
+				}
+			}
+		}
+		BaseAsset.lds.Hide();
+		EnableAll();
+	}
+
+	private void NextFight()
+	{
+		if (current_report_index < _report_list.Count)
+		{
+			current_turn_index = _turn_index[current_report_index];
+			is_init_turn = true;
+			if (current_report_index < _report_list.Count - 1)
+			{
+				m_battleUI.setReport(_report_list[current_report_index], wait_for_end: true, use_battle_end: false, use_battle_surrender: false, null, isopponent: false);
+			}
+			else
+			{
+				m_battleUI.setReport(_report_list[current_report_index], wait_for_end: true, use_battle_end: true, use_battle_surrender: false, null, isopponent: false);
+			}
+			if (current_report_index == 0)
+			{
+				start_total_troop_num = m_battleUI.getArmyTotalNum(0);
+			}
+			m_battleUI.SetTopMode(BattleUI.TopUIMode.Woodwar);
+			m_battleUI.SetNewTurnCallback(_on_new_turn);
+			m_battleUI.SetHandleCallback(BattleReport.GameTurn.Action.ActionType.dead, m_battleUI.GetComponent<BattleWoodwarTopUI>().update_enemy_kill_count);
+			m_battleUI.ViewType = enumBattleViewType.viewDefault;
+			if (current_report_index < _report_list.Count - 1)
+			{
+				m_battleUI.SetResultFunc(NextFight);
+			}
+			else
+			{
+				m_battleUI.GetComponent<BattleWoodwarResultUI>().total_lose_num = start_total_troop_num - (m_battleUI.getArmyTotalNum(0) - m_battleUI.getArmyLoseNum(0));
+				m_battleUI.setClose(_woodwar_battle_close);
+				m_battleUI.GetComponent<BattleWoodwarResultUI>().SetClose(m_battleUI.battle_exit);
+				m_battleUI.SetResultFunc(m_battleUI.GetComponent<BattleWoodwarResultUI>().PrepareOpen);
+			}
+			current_report_index++;
+			BaseUI.GetRootUI().battle_enter(fslds: false);
+		}
+	}
+
+	private void reshow_window()
+	{
+		MainUI.SetSubUI(this);
+		MyLoading();
+	}
+
+	public override void drawTooltips(string tip)
+	{
+		TooltipUI tooltipUI = __BaseUI.GetTooltipUI();
+		if (tip == "help")
+		{
+			tooltipUI.ShowTooltipCommonH();
+		}
+		else if (tip.StartsWith("xiangxi:"))
+		{
+			string s = tip.Substring("xiangxi:".Length);
+			int index = int.Parse(s);
+			List<CharacterDummyChallenge> first_ = Global.character_.dummy_challenge_status.first_10;
+			string text = string.Format(__BaseUI.load_str(20546u), (int)first_[index].level, (int)calcChallengeUILevel(first_[index].challenge_level), (int)first_[index].challenge_level, (int)first_[index].enemy_count, (int)first_[index].total_damage);
+			tooltipUI.ShowTooltipContent(null, first_[index].name + text, 300, __BaseUI._fontSize);
+		}
+		else if (tip == "baoxiang")
+		{
+			CharacterDummyChallenge player = Global.character_.dummy_challenge_status.player;
+			int num = 0;
+			if (player.bonuses.Count >= 2)
+			{
+				num += player.bonuses[0].param1 + player.bonuses[1].param1;
+			}
+			if (player.bonuses.Count >= 4)
+			{
+				num += player.bonuses[2].param1;
+			}
+			string text2 = string.Empty;
+			if (player.bonuses.Count >= 2)
+			{
+				text2 += string.Format(__BaseUI.load_str(20582u), (int)calcChallengeUILevel(player.challenge_level), player.bonuses[0].param1);
+				text2 += string.Format(__BaseUI.load_str(20583u), (int)player.wave_count, player.bonuses[1].param1);
+			}
+			if (player.bonuses.Count >= 4)
+			{
+				text2 += string.Format(__BaseUI.load_str(20581u), (int)player.rank, player.bonuses[2].param1, player.bonuses[3].param1);
+				text2 += string.Format(__BaseUI.load_str(20584u), num, player.bonuses[3].param1);
+			}
+			else
+			{
+				text2 += string.Format(__BaseUI.load_str(20585u), num);
+			}
+			tooltipUI.ShowTooltipContent(null, text2, 300, __BaseUI._fontSize);
+		}
+		else if (tip.StartsWith("common:"))
+		{
+			tooltipUI.ShowTooltipCommon(tip.Replace("common:", string.Empty), "woodwar");
+		}
+	}
+
+	private void Update()
+	{
+	}
+
+	protected override void Web_OnGUI()
+	{
+		if (!BeginGUI(719f, 404f, __BaseUI.UIDepth_Sub, __BaseUI._bgStyle, textitle))
+		{
+			return;
+		}
+		uint t = 0u;
+		if (temptime > TimeUtil.Now)
+		{
+			t = (uint)(temptime - TimeUtil.Now);
+		}
+		if (Global.character_.dummy_challenge_status.player.rank == 0)
+		{
+			PS_state = PlayState.init;
+		}
+		else
+		{
+			PS_state = PlayState.no;
+		}
+		if (Global.character_.dummy_challenge_status.player.can_take)
+		{
+			PS_state = PlayState.ok;
+		}
+		__BaseUI.Label(__BaseUI._rect(33f, 60f, 659f, 189f), string.Empty, bgframe);
+		__BaseUI.Label(__BaseUI._rect(255f, 24f, 207f, 15f), string.Empty, zi9);
+		switch (PS_state)
+		{
+		case PlayState.init:
+			DrawInit();
+			break;
+		case PlayState.no:
+			DrawNO();
+			__BaseUI.Label(__BaseUI._rect(612f, 300f, 100f, 20f), Global.getFormatTime((int)t), __BaseUI._numLeft, __BaseUI._clrRed);
+			break;
+		case PlayState.ok:
+			DrawOK();
+			break;
+		}
+		Drawpaihang();
+		if (PS_state == PlayState.no || PS_state == PlayState.init)
+		{
+			if (btn_start.Button(IsEnable(), __BaseUI._rect(200f, 345f, 146f, 36f), string.Empty))
+			{
+				BattleFormation();
+			}
+			bool flag = Global.character_.dummy_challenge_status.player.fast_challenge_left_times != 0;
+			string empty = string.Empty;
+			empty = ((!flag) ? ("common:" + __BaseUI.get_string(20636u)) : ("common:" + __BaseUI.get_string(20643u)));
+			if (btn_kuaisu.Button(IsEnable() && flag, __BaseUI._rect(370f, 345f, 146f, 40f), new GUIContent(string.Empty, empty)))
+			{
+				cs_dummy_challenge_fast_complete();
+			}
+		}
+		else if (btn_lingqu2.Button(IsEnable(), __BaseUI._rect(285f, 345f, 146f, 36f), new GUIContent(string.Empty, "baoxiang")))
+		{
+			cs_dummy_challenge_get_reward();
+		}
+		btn_help.Button(IsEnable(), __BaseUI._rect(53f, 188f, 38f, 57f), new GUIContent(string.Empty, "help"));
+		if (EndGUI())
+		{
+			MainUI.SetSubUI(null);
+		}
+	}
+
+	private void Drawpaihang()
+	{
+		int num = Math.Max(5, Global.character_.dummy_challenge_status.first_10.Count + 1) * 20;
+		if (num > 105)
+		{
+			scrollpaihang = ScrollControl.infos[scroll_index_paihang].scrollpos;
+			scrollpaihang = GUIHacks.BeginScrollView(__BaseUI._rect(302f, 110f, 345f, 105f), scrollpaihang, __BaseUI._rect(0f, 0f, 348f, num), useHorizontal: false, useVertical: true, new GUIStyle(), __BaseUI._vertScroll1[0], 20, 0, scroll_index_paihang);
+			ScrollControl.infos[scroll_index_paihang].scrollpos = scrollpaihang;
+		}
+		else
+		{
+			__BaseUI.BeginGroup(__BaseUI._rect(302f, 110f, 345f, 105f));
+		}
+		List<CharacterDummyChallenge> first_ = Global.character_.dummy_challenge_status.first_10;
+		if (first_.Count > 0)
+		{
+			for (int i = 0; i < first_.Count; i++)
+			{
+				Drawpaihang(first_[i], (int)(first_[i].rank - 1));
+			}
+		}
+		if (num > 105)
+		{
+			GUIHacks.EndScrollView();
+		}
+		else
+		{
+			__BaseUI.EndGroup();
+		}
+	}
+
+	private void Drawpaihang(CharacterDummyChallenge Tempplayer, int num)
+	{
+		__BaseUI.Label(__BaseUI._rect(13f, 20 * num + 5, 20f, 15f), Tempplayer.rank.ToString(), __BaseUI._textLeft, new Color(0.8f, 1f, 1f), 13);
+		__BaseUI.Label(__BaseUI._rect(50f, 20 * num + 3, 120f, 20f), Global.character_.makeFullName(Tempplayer.name, Tempplayer.sid), __BaseUI._textCenter, new Color(0.6f, 1f, 0f), 13);
+		__BaseUI.Label(__BaseUI._rect(197f, 20 * num + 5, 45f, 16f), __BaseUI.format(20576u, new object[1] { calcChallengeUILevel(Tempplayer.challenge_level) }), __BaseUI._textLeft, new Color(0.8f, 1f, 1f), 13);
+		__BaseUI.Label(__BaseUI._rect(247f, 20 * num + 5, 54f, 16f), __BaseUI.format(20577u, new object[1] { Tempplayer.enemy_count }), __BaseUI._textRight, __BaseUI._clrWhite, 13);
+		btn_xiangxi.Button(IsEnable(), __BaseUI._rect(308f, 20 * num + 5, 15f, 15f), new GUIContent(string.Empty, "xiangxi:" + num));
+	}
+
+	private void DrawInit()
+	{
+		__BaseUI.Label(__BaseUI._rect(36f, 253f, 314f, 83f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(59f, 278f, 203f, 33f), string.Empty, zi8);
+		__BaseUI.Label(__BaseUI._rect(367f, 253f, 314f, 83f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(380f, 267f, 87f, 18f), string.Empty, zi2);
+		__BaseUI.Label(__BaseUI._rect(380f, 298f, 58f, 18f), string.Empty, zi3);
+		__BaseUI.ShadowLabel(__BaseUI._rect(478f, 266f, 98f, 20f), __BaseUI.format(20576u, new object[1] { calcChallengeUILevel(Global.character_.dummy_challenge_status.player.next_challenge_level) }) + "(" + Global.character_.dummy_challenge_status.player.next_challenge_level + __BaseUI.load_str(231u) + ")", __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		__BaseUI.ShadowLabel(__BaseUI._rect(478f, 298f, 120f, 20f), __BaseUI.load_str(21401u), __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+	}
+
+	private void DrawNO()
+	{
+		__BaseUI.Label(__BaseUI._rect(36f, 253f, 314f, 83f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(367f, 253f, 314f, 83f), string.Empty, __BaseUI._boxnew6Style);
+		__BaseUI.Label(__BaseUI._rect(50f, 264f, 87f, 18f), string.Empty, zi1);
+		__BaseUI.Label(__BaseUI._rect(380f, 267f, 87f, 18f), string.Empty, zi2);
+		__BaseUI.Label(__BaseUI._rect(380f, 298f, 58f, 18f), string.Empty, zi3);
+		__BaseUI.Label(__BaseUI._rect(256f, 253f, 49f, 51f), string.Empty, zi4);
+		__BaseUI.Label(__BaseUI._rect(167f, 310f, 148f, 18f), string.Empty, zi5);
+		__BaseUI.ShadowLabel(__BaseUI._rect(158f, 254f, 102f, 50f), Global.character_.dummy_challenge_status.player.enemy_count.ToString(), killnumstyle, new Color(1f, 1f, 0.8f), 40, new Vector2(2f, 2f));
+		int total_damage = (int)Global.character_.dummy_challenge_status.player.total_damage;
+		if (total_damage >= 100000)
+		{
+			total_damage /= 10000;
+			__BaseUI.ShadowLabel(__BaseUI._rect(207f, 310f, 40f, 22f), total_damage.ToString(), loseNumStyle, new Color(1f, 0f, 0f), 25, new Vector2(2f, 2f));
+			__BaseUI.ShadowLabel(__BaseUI._rect(245f, 310f, 20f, 22f), __BaseUI.get_string(20387u), __BaseUI._textLeft, new Color(1f, 0f, 0f), 19, new Vector2(2f, 2f));
+		}
+		else
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(206f, 310f, 70f, 22f), Global.character_.dummy_challenge_status.player.total_damage.ToString(), loseNumStyle, new Color(1f, 0f, 0f), 25, new Vector2(2f, 2f));
+		}
+		__BaseUI.ShadowLabel(__BaseUI._rect(50f, 308f, 120f, 20f), __BaseUI.format(20576u, new object[1] { calcChallengeUILevel(Global.character_.dummy_challenge_status.player.challenge_level) }) + "(" + Global.character_.dummy_challenge_status.player.challenge_level + __BaseUI.load_str(231u) + ")", __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 16, new Vector2(2f, 2f));
+		__BaseUI.ShadowLabel(__BaseUI._rect(478f, 266f, 98f, 20f), __BaseUI.format(20576u, new object[1] { calcChallengeUILevel(Global.character_.dummy_challenge_status.player.next_challenge_level) }) + "(" + Global.character_.dummy_challenge_status.player.next_challenge_level + __BaseUI.load_str(231u) + ")", __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		if (Global.character_.dummy_challenge_status.player.rank > 50)
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(478f, 298f, 100f, 20f), __BaseUI.format(20579u, new object[1] { Global.character_.dummy_challenge_status.player.rank }), __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		}
+		else
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(478f, 298f, 100f, 20f), __BaseUI.format(20523u, new object[1] { Global.character_.dummy_challenge_status.player.rank }), __BaseUI._textLeft, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		}
+		GUI.Label(__BaseUI._rect(606f, 262f, 60f, 60f), new GUIContent(string.Empty, "baoxiang"), btn_lingqu);
+	}
+
+	private void DrawOK()
+	{
+		__BaseUI.Label(__BaseUI._rect(140f, 265f, 473f, 67f), string.Empty, bar3);
+		int total_damage = (int)Global.character_.dummy_challenge_status.player.total_damage;
+		if (total_damage >= 100000)
+		{
+			total_damage /= 10000;
+			__BaseUI.ShadowLabel(__BaseUI._rect(221f, 306f, 175f, 20f), __BaseUI.format(20577u, new object[1] { Global.character_.dummy_challenge_status.player.enemy_count }) + "(" + total_damage + __BaseUI.get_string(20387u) + __BaseUI.get_string(706u) + ")", __BaseUI._textCenter, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		}
+		else
+		{
+			__BaseUI.ShadowLabel(__BaseUI._rect(221f, 306f, 175f, 20f), __BaseUI.format(20577u, new object[1] { Global.character_.dummy_challenge_status.player.enemy_count }) + "(" + Global.character_.dummy_challenge_status.player.total_damage + __BaseUI.get_string(706u) + ")", __BaseUI._textCenter, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+		}
+		__BaseUI.ShadowLabel(__BaseUI._rect(433f, 306f, 69f, 20f), Global.character_.dummy_challenge_status.player.rank + __BaseUI.load_str(21400u), __BaseUI._textCenter, new Color(1f, 1f, 0.8f), 14, new Vector2(2f, 2f));
+	}
+
+	private void cs_dummy_challenge_get_reward()
+	{
+		Disable();
+		CSDummyChallengeGetReward_0x266 pkt = new CSDummyChallengeGetReward_0x266();
+		RootUI.m_client.Send(614, pkt, sc_dummy_challenge_get_reward);
+	}
+
+	private void sc_dummy_challenge_get_reward(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCDummyChallengeGetReward_0x266 sCDummyChallengeGetReward_0x = JSProtoBuf.Serializer.Deserialize<SCDummyChallengeGetReward_0x266>(stream);
+			if (sCDummyChallengeGetReward_0x != null && sCDummyChallengeGetReward_0x.bonuses.Count > 0)
+			{
+				List<_Treasure> list = new List<_Treasure>();
+				for (int i = 0; i < sCDummyChallengeGetReward_0x.bonuses.Count; i++)
+				{
+					_Treasure treasure = new _Treasure();
+					treasure.make(sCDummyChallengeGetReward_0x.bonuses[i]);
+					list.Add(treasure);
+				}
+				__BaseUI.GetBattleResultUI().Set(null, string.Empty, string.Empty, 0, 0, list, closeRewardResult);
+				__BaseUI.GetBattleResultUI().MyLoading();
+			}
+		}
+		else
+		{
+			closeRewardResult();
+		}
+	}
+
+	private void cs_dummy_challenge_fast_complete()
+	{
+		Disable();
+		CSDummyChallengeFastComplete_0x268 pkt = new CSDummyChallengeFastComplete_0x268();
+		RootUI.m_client.Send(616, pkt, sc_dummy_challenge_fast_complete);
+	}
+
+	private void sc_dummy_challenge_fast_complete(MemoryStream stream, object arg)
+	{
+		if (stream != null)
+		{
+			SCDummyChallengeFastComplete_0x268 sCDummyChallengeFastComplete_0x = JSProtoBuf.Serializer.Deserialize<SCDummyChallengeFastComplete_0x268>(stream);
+			if (sCDummyChallengeFastComplete_0x == null)
+			{
+				return;
+			}
+			if (sCDummyChallengeFastComplete_0x.state == SCDummyChallengeFastComplete_0x268.State.FAILED)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string(20641u), rmg);
+				return;
+			}
+			Global.character_.dummy_challenge_status = sCDummyChallengeFastComplete_0x.status;
+			if (sCDummyChallengeFastComplete_0x.state == SCDummyChallengeFastComplete_0x268.State.REWARD)
+			{
+				PS_state = PlayState.ok;
+				Enable();
+				return;
+			}
+			BattleWoodwarResultUI component = m_battleUI.GetComponent<BattleWoodwarResultUI>();
+			component.resultStatus = sCDummyChallengeFastComplete_0x.result;
+			component.resultChallengeLevelFinished = sCDummyChallengeFastComplete_0x.level_finished;
+			component.used_all_turns = sCDummyChallengeFastComplete_0x.used_all_turns;
+			component.total_lose_num = sCDummyChallengeFastComplete_0x.lose_num;
+			component.SetClose(_fast_finish_close);
+			component.PrepareOpen();
+			Enable();
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void closeRewardResult()
+	{
+		cs_dummy_challenge_info();
+	}
+
+	public static uint calcChallengeUILevel(uint clevel)
+	{
+		Hashtable templates = Global.getTemplates("dummy_challenge_setting");
+		IDictionaryEnumerator dictionaryEnumerator = templates.GetEnumerator();
+		try
+		{
+			if (dictionaryEnumerator.MoveNext())
+			{
+				_dummy_challenge_setting dummy_challenge_setting = (_dummy_challenge_setting)((DictionaryEntry)dictionaryEnumerator.Current).Value;
+				if (clevel < dummy_challenge_setting.start_level)
+				{
+					return 0u;
+				}
+				return (clevel - dummy_challenge_setting.start_level) / dummy_challenge_setting.level_increase + 1;
+			}
+		}
+		finally
+		{
+			IDisposable disposable = dictionaryEnumerator as IDisposable;
+			if (disposable != null)
+			{
+				disposable.Dispose();
+			}
+		}
+		return 0u;
+	}
+
+	private void _woodwar_battle_close()
+	{
+		m_battleUI.SetTopMode(BattleUI.TopUIMode.Normal);
+		BattleWoodwarResultUI component = m_battleUI.GetComponent<BattleWoodwarResultUI>();
+		if (component.resultChallengeLevelFinished)
+		{
+			if (component.resultStatus.challenge_level == component.resultStatus.next_challenge_level)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string("no_dummy_troop"), rmg, reshow_window);
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(picmode: true, zi10, new Rect(28f, 55f, 299f, 64f), null, new Rect(0f, 0f, 0f, 0f), null, rmg, reshow_window);
+			}
+		}
+		else
+		{
+			reshow_window();
+		}
+	}
+
+	private void _fast_finish_close()
+	{
+		BattleWoodwarResultUI component = m_battleUI.GetComponent<BattleWoodwarResultUI>();
+		if (component.resultChallengeLevelFinished)
+		{
+			if (component.resultStatus.challenge_level == component.resultStatus.next_challenge_level)
+			{
+				__BaseUI.GetMessageBox().setMessage(string.Empty, __BaseUI.get_string("no_dummy_troop"), null);
+			}
+			else
+			{
+				__BaseUI.GetMessageBox().setMessage(picmode: true, zi10, new Rect(28f, 55f, 299f, 64f), null, new Rect(0f, 0f, 0f, 0f), null, rmg, null);
+			}
+		}
+		else
+		{
+			Enable();
+		}
+	}
+
+	private void _on_new_turn()
+	{
+		if (is_init_turn)
+		{
+			is_init_turn = false;
+		}
+		else
+		{
+			display_turn_index = current_turn_index++;
+		}
+	}
+}
